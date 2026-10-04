@@ -1,0 +1,16 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "Games",
+  "Description": "seige2222 — a robot colony under siege",
+  "Modules": [{"Name": "Seige", "Type": "Runtime", "LoadingPhase": "Default"}],
+  "Plugins": [
+    {"Name": "PythonScriptPlugin", "Enabled": true, "TargetAllowList": ["Editor"]},
+    {"Name": "AndroidFileServer", "Enabled": false},
+    {"Name": "UdpMessaging", "Enabled": false},
+    {"Name": "TcpMessaging", "Enabled": false},
+    {"Name": "StudioTelemetry", "Enabled": false},
+    {"Name": "RuntimeTelemetry", "Enabled": false},
+    {"Name": "TraceUtilities", "Enabled": false}
+  ]
+}

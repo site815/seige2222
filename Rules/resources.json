@@ -1,0 +1,95 @@
+{
+  "version": "prototype-1.0",
+  "resources": [
+    {
+      "id": "iron_ore",
+      "name": "Iron ore",
+      "tier": 0,
+      "color": [
+        0.75,
+        0.4,
+        0.24
+      ]
+    },
+    {
+      "id": "copper_ore",
+      "name": "Copper ore",
+      "tier": 0,
+      "color": [
+        0.96,
+        0.52,
+        0.25
+      ]
+    },
+    {
+      "id": "silica",
+      "name": "Silica",
+      "tier": 0,
+      "color": [
+        0.4,
+        0.8,
+        0.95
+      ]
+    },
+    {
+      "id": "carbon",
+      "name": "Carbon",
+      "tier": 0,
+      "color": [
+        0.31,
+        0.35,
+        0.44
+      ]
+    },
+    {
+      "id": "alloy",
+      "name": "Alloy stock",
+      "tier": 1,
+      "color": [
+        0.7,
+        0.8,
+        0.87
+      ]
+    },
+    {
+      "id": "conductors",
+      "name": "Conductors",
+      "tier": 1,
+      "color": [
+        1,
+        0.65,
+        0.25
+      ]
+    },
+    {
+      "id": "substrates",
+      "name": "Substrates",
+      "tier": 1,
+      "color": [
+        0.48,
+        0.9,
+        0.83
+      ]
+    },
+    {
+      "id": "circuits",
+      "name": "Control circuits",
+      "tier": 2,
+      "color": [
+        0.46,
+        1,
+        0.55
+      ]
+    },
+    {
+      "id": "components",
+      "name": "Robot components",
+      "tier": 3,
+      "color": [
+        0.85,
+        0.6,
+        1
+      ]
+    }
+  ]
+}

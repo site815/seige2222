@@ -1,0 +1,7 @@
+* text=auto
+*.json text eol=lf
+*.uasset binary
+*.umap binary
+*.blend binary
+*.fbx binary
+*.png binary

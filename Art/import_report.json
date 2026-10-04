@@ -1,0 +1,145 @@
+{
+  "master_material": "/Game/Art/M_Colony",
+  "meshes": {
+    "SM_Core": {
+      "path": "/Game/Art/SM_Core.SM_Core",
+      "dimensions_cm": [
+        218.0,
+        210.0,
+        192.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_DeepTeal",
+        "MAT_Teal",
+        "MAT_Pearl",
+        "MAT_Ivory",
+        "MAT_Coral",
+        "MAT_Lens",
+        "MAT_Gold"
+      ]
+    },
+    "SM_Extractor": {
+      "path": "/Game/Art/SM_Extractor.SM_Extractor",
+      "dimensions_cm": [
+        161.00001525878906,
+        137.00001525878906,
+        161.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Gold",
+        "MAT_Teal",
+        "MAT_Steel",
+        "MAT_Ivory",
+        "MAT_Lens",
+        "MAT_Signal"
+      ]
+    },
+    "SM_Factory": {
+      "path": "/Game/Art/SM_Factory.SM_Factory",
+      "dimensions_cm": [
+        209.50000762939453,
+        168.00001525878906,
+        173.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Coral",
+        "MAT_Lens",
+        "MAT_Steel",
+        "MAT_Teal",
+        "MAT_Ivory"
+      ]
+    },
+    "SM_Depot": {
+      "path": "/Game/Art/SM_Depot.SM_Depot",
+      "dimensions_cm": [
+        182.00001525878906,
+        161.00001525878906,
+        124.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Teal",
+        "MAT_Coral",
+        "MAT_Ivory",
+        "MAT_Gold"
+      ]
+    },
+    "SM_Sensor": {
+      "path": "/Game/Art/SM_Sensor.SM_Sensor",
+      "dimensions_cm": [
+        112.0,
+        112.0,
+        199.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Teal",
+        "MAT_Gold",
+        "MAT_Lens",
+        "MAT_Steel",
+        "MAT_Signal"
+      ]
+    },
+    "SM_Turret": {
+      "path": "/Game/Art/SM_Turret.SM_Turret",
+      "dimensions_cm": [
+        143.5,
+        124.0,
+        111.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Teal",
+        "MAT_Coral",
+        "MAT_Steel",
+        "MAT_Lens"
+      ]
+    },
+    "SM_Robot": {
+      "path": "/Game/Art/SM_Robot.SM_Robot",
+      "dimensions_cm": [
+        33.75,
+        44.0,
+        58.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_DeepTeal",
+        "MAT_Teal",
+        "MAT_Pearl",
+        "MAT_Coral",
+        "MAT_Ivory",
+        "MAT_Lens",
+        "MAT_Steel"
+      ]
+    },
+    "SM_Bug": {
+      "path": "/Game/Art/SM_Bug.SM_Bug",
+      "dimensions_cm": [
+        117.79032897949219,
+        116.91650390625,
+        58.95853042602539
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "MAT_Chitin",
+        "MAT_RedChitin",
+        "MAT_Bone",
+        "MAT_BugEye"
+      ]
+    }
+  }
+}

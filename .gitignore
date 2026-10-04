@@ -1,0 +1,15 @@
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Builds/
+.tools/
+.vs/
+*.sln
+*.suo
+*.VC.db
+*.opensdf
+*.log
+Art/Exports/*
+!Art/Exports/asset_manifest.json
+Art/*.blend1

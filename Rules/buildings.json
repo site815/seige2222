@@ -1,0 +1,368 @@
+{
+  "version": "prototype-1.0",
+  "buildings": [
+    {
+      "id": "command_core",
+      "name": "Command core",
+      "category": "command",
+      "role": "core",
+      "description": "Central command, robot assembly, maintenance and emergency escape shuttle.",
+      "visual": "core",
+      "cost": {},
+      "jobs": 6,
+      "health": 1800,
+      "footprint": 240,
+      "storage_capacity": 1400,
+      "recipe": "",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 2050,
+      "attack_range": 1200,
+      "damage_per_second": 30,
+      "color": [
+        0.9,
+        0.97,
+        1
+      ]
+    },
+    {
+      "id": "extract_iron_ore",
+      "name": "Iron ore extractor",
+      "category": "resource",
+      "role": "extractor",
+      "description": "Place on a matching deposit. Automatically extracts and dispatches physical cargo.",
+      "visual": "extractor",
+      "cost": {
+        "alloy": 12,
+        "circuits": 3
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "",
+      "extract_resource": "iron_ore",
+      "extract_rate": 1,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.75,
+        0.4,
+        0.24
+      ]
+    },
+    {
+      "id": "extract_copper_ore",
+      "name": "Copper ore extractor",
+      "category": "resource",
+      "role": "extractor",
+      "description": "Place on a matching deposit. Automatically extracts and dispatches physical cargo.",
+      "visual": "extractor",
+      "cost": {
+        "alloy": 12,
+        "circuits": 3
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "",
+      "extract_resource": "copper_ore",
+      "extract_rate": 1,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.96,
+        0.52,
+        0.25
+      ]
+    },
+    {
+      "id": "extract_silica",
+      "name": "Silica extractor",
+      "category": "resource",
+      "role": "extractor",
+      "description": "Place on a matching deposit. Automatically extracts and dispatches physical cargo.",
+      "visual": "extractor",
+      "cost": {
+        "alloy": 12,
+        "circuits": 3
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "",
+      "extract_resource": "silica",
+      "extract_rate": 1,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.4,
+        0.8,
+        0.95
+      ]
+    },
+    {
+      "id": "extract_carbon",
+      "name": "Carbon extractor",
+      "category": "resource",
+      "role": "extractor",
+      "description": "Place on a matching deposit. Automatically extracts and dispatches physical cargo.",
+      "visual": "extractor",
+      "cost": {
+        "alloy": 12,
+        "circuits": 3
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "",
+      "extract_resource": "carbon",
+      "extract_rate": 1,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.31,
+        0.35,
+        0.44
+      ]
+    },
+    {
+      "id": "alloy_refinery",
+      "name": "Alloy refinery",
+      "category": "resource",
+      "role": "processor",
+      "description": "Receives inputs by courier and produces locally.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 18,
+        "circuits": 5
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "smelt_alloy",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ]
+    },
+    {
+      "id": "conductor_works",
+      "name": "Conductor works",
+      "category": "resource",
+      "role": "processor",
+      "description": "Receives inputs by courier and produces locally.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 16,
+        "circuits": 5
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "draw_conductors",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ]
+    },
+    {
+      "id": "substrate_works",
+      "name": "Substrate works",
+      "category": "resource",
+      "role": "processor",
+      "description": "Receives inputs by courier and produces locally.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 16,
+        "circuits": 5
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "make_substrates",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ]
+    },
+    {
+      "id": "circuit_works",
+      "name": "Circuit works",
+      "category": "resource",
+      "role": "processor",
+      "description": "Receives inputs by courier and produces locally.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 20,
+        "circuits": 5
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "make_circuits",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ]
+    },
+    {
+      "id": "component_works",
+      "name": "Component works",
+      "category": "resource",
+      "role": "processor",
+      "description": "Receives inputs by courier and produces locally.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 24,
+        "circuits": 5
+      },
+      "jobs": 2,
+      "health": 250,
+      "footprint": 115,
+      "storage_capacity": 70,
+      "recipe": "make_components",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ]
+    },
+    {
+      "id": "sensor",
+      "name": "Sensor mast",
+      "category": "logistics",
+      "role": "sensor",
+      "description": "Extends live visibility. Remote sensors are exposed.",
+      "visual": "sensor",
+      "cost": {
+        "alloy": 8,
+        "circuits": 5
+      },
+      "jobs": 1,
+      "health": 140,
+      "footprint": 65,
+      "storage_capacity": 70,
+      "recipe": "",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 1700,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ]
+    },
+    {
+      "id": "turret",
+      "name": "Sentinel turret",
+      "category": "defense",
+      "role": "defense",
+      "description": "Automatically engages visible bugs and repairs using delivered alloy.",
+      "visual": "turret",
+      "cost": {
+        "alloy": 18,
+        "circuits": 5,
+        "components": 2
+      },
+      "jobs": 2,
+      "health": 460,
+      "footprint": 90,
+      "storage_capacity": 70,
+      "recipe": "",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 1100,
+      "damage_per_second": 25,
+      "color": [
+        0.9,
+        0.95,
+        1
+      ]
+    },
+    {
+      "id": "depot",
+      "name": "Cargo depot",
+      "category": "logistics",
+      "role": "storage",
+      "description": "Receives overflow cargo and redistributes it to local demand.",
+      "visual": "depot",
+      "cost": {
+        "alloy": 12,
+        "circuits": 2
+      },
+      "jobs": 1,
+      "health": 250,
+      "footprint": 140,
+      "storage_capacity": 450,
+      "recipe": "",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "damage_per_second": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ]
+    }
+  ],
+  "build_menu": [
+    "extract_iron_ore",
+    "extract_copper_ore",
+    "extract_silica",
+    "extract_carbon",
+    "alloy_refinery",
+    "conductor_works",
+    "substrate_works",
+    "circuit_works",
+    "component_works",
+    "sensor",
+    "turret",
+    "depot"
+  ]
+}

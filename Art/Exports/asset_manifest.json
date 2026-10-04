@@ -1,0 +1,362 @@
+{
+  "units": "centimeters",
+  "forward": "+X",
+  "palette": {
+    "MAT_Pearl": {
+      "color": [
+        0.79,
+        0.88,
+        0.87,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Ivory": {
+      "color": [
+        0.94,
+        0.92,
+        0.78,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Teal": {
+      "color": [
+        0.018,
+        0.42,
+        0.39,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_DeepTeal": {
+      "color": [
+        0.018,
+        0.063,
+        0.085,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Coral": {
+      "color": [
+        0.95,
+        0.19,
+        0.09,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Gold": {
+      "color": [
+        0.95,
+        0.61,
+        0.08,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Violet": {
+      "color": [
+        0.35,
+        0.12,
+        0.63,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Lens": {
+      "color": [
+        0.06,
+        0.88,
+        0.94,
+        1
+      ],
+      "emission": 1.6
+    },
+    "MAT_Signal": {
+      "color": [
+        1.0,
+        0.37,
+        0.13,
+        1
+      ],
+      "emission": 1.2
+    },
+    "MAT_Steel": {
+      "color": [
+        0.19,
+        0.27,
+        0.3,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Chitin": {
+      "color": [
+        0.085,
+        0.013,
+        0.022,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_RedChitin": {
+      "color": [
+        0.31,
+        0.034,
+        0.035,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_Bone": {
+      "color": [
+        0.54,
+        0.43,
+        0.25,
+        1
+      ],
+      "emission": 0.0
+    },
+    "MAT_BugEye": {
+      "color": [
+        0.85,
+        0.12,
+        0.015,
+        1
+      ],
+      "emission": 1.2
+    }
+  },
+  "meshes": {
+    "SM_Core": {
+      "fbx": "SM_Core.fbx",
+      "bounds_min": [
+        -109.0,
+        -105.0,
+        0.0
+      ],
+      "bounds_max": [
+        109.0,
+        105.0,
+        192.0
+      ],
+      "dimensions": [
+        218.0,
+        210.0,
+        192.0
+      ],
+      "triangles": 3976,
+      "materials": [
+        "MAT_DeepTeal",
+        "MAT_Teal",
+        "MAT_Pearl",
+        "MAT_Ivory",
+        "MAT_Coral",
+        "MAT_Lens",
+        "MAT_Gold"
+      ],
+      "unreal_path": "/Game/Art/SM_Core"
+    },
+    "SM_Extractor": {
+      "fbx": "SM_Extractor.fbx",
+      "bounds_min": [
+        -80.5,
+        -68.5,
+        0.0
+      ],
+      "bounds_max": [
+        80.5,
+        68.5,
+        161.0
+      ],
+      "dimensions": [
+        161.0,
+        137.0,
+        161.0
+      ],
+      "triangles": 4116,
+      "materials": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Gold",
+        "MAT_Teal",
+        "MAT_Steel",
+        "MAT_Ivory",
+        "MAT_Lens",
+        "MAT_Signal"
+      ],
+      "unreal_path": "/Game/Art/SM_Extractor"
+    },
+    "SM_Factory": {
+      "fbx": "SM_Factory.fbx",
+      "bounds_min": [
+        -104.75,
+        -84.0,
+        0.0
+      ],
+      "bounds_max": [
+        104.75,
+        84.0,
+        173.0
+      ],
+      "dimensions": [
+        209.5,
+        168.0,
+        173.0
+      ],
+      "triangles": 3460,
+      "materials": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Coral",
+        "MAT_Lens",
+        "MAT_Steel",
+        "MAT_Teal",
+        "MAT_Ivory"
+      ],
+      "unreal_path": "/Game/Art/SM_Factory"
+    },
+    "SM_Depot": {
+      "fbx": "SM_Depot.fbx",
+      "bounds_min": [
+        -91.0,
+        -80.5,
+        0.0
+      ],
+      "bounds_max": [
+        91.0,
+        80.5,
+        124.0
+      ],
+      "dimensions": [
+        182.0,
+        161.0,
+        124.0
+      ],
+      "triangles": 3196,
+      "materials": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Teal",
+        "MAT_Coral",
+        "MAT_Ivory",
+        "MAT_Gold"
+      ],
+      "unreal_path": "/Game/Art/SM_Depot"
+    },
+    "SM_Sensor": {
+      "fbx": "SM_Sensor.fbx",
+      "bounds_min": [
+        -56.0,
+        -56.0,
+        0.0
+      ],
+      "bounds_max": [
+        56.0,
+        56.0,
+        199.0
+      ],
+      "dimensions": [
+        112.0,
+        112.0,
+        199.0
+      ],
+      "triangles": 2612,
+      "materials": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Teal",
+        "MAT_Gold",
+        "MAT_Lens",
+        "MAT_Steel",
+        "MAT_Signal"
+      ],
+      "unreal_path": "/Game/Art/SM_Sensor"
+    },
+    "SM_Turret": {
+      "fbx": "SM_Turret.fbx",
+      "bounds_min": [
+        -71.75,
+        -62.0,
+        0.0
+      ],
+      "bounds_max": [
+        71.75,
+        62.0,
+        111.0
+      ],
+      "dimensions": [
+        143.5,
+        124.0,
+        111.0
+      ],
+      "triangles": 2504,
+      "materials": [
+        "MAT_DeepTeal",
+        "MAT_Pearl",
+        "MAT_Teal",
+        "MAT_Coral",
+        "MAT_Steel",
+        "MAT_Lens"
+      ],
+      "unreal_path": "/Game/Art/SM_Turret"
+    },
+    "SM_Robot": {
+      "fbx": "SM_Robot.fbx",
+      "bounds_min": [
+        -16.875,
+        -22.0,
+        0.0
+      ],
+      "bounds_max": [
+        16.875,
+        22.0,
+        58.0
+      ],
+      "dimensions": [
+        33.75,
+        44.0,
+        58.0
+      ],
+      "triangles": 2616,
+      "materials": [
+        "MAT_DeepTeal",
+        "MAT_Teal",
+        "MAT_Pearl",
+        "MAT_Coral",
+        "MAT_Ivory",
+        "MAT_Lens",
+        "MAT_Steel"
+      ],
+      "unreal_path": "/Game/Art/SM_Robot"
+    },
+    "SM_Bug": {
+      "fbx": "SM_Bug.fbx",
+      "bounds_min": [
+        -58.895164489746094,
+        -58.458251953125,
+        0.0
+      ],
+      "bounds_max": [
+        58.895164489746094,
+        58.458251953125,
+        58.95853042602539
+      ],
+      "dimensions": [
+        117.79032897949219,
+        116.91650390625,
+        58.95853042602539
+      ],
+      "triangles": 5456,
+      "materials": [
+        "MAT_Chitin",
+        "MAT_RedChitin",
+        "MAT_Bone",
+        "MAT_BugEye"
+      ],
+      "unreal_path": "/Game/Art/SM_Bug"
+    }
+  }
+}

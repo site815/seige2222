@@ -1,0 +1,50 @@
+{
+  "version": "prototype-1.0",
+  "scenario": {
+    "title": "seige2222 - First Landing",
+    "core_definition": "command_core",
+    "world_half_size": 5000,
+    "random_seed": 815,
+    "starting_population": 6,
+    "starting_shuttle_cargo": {},
+    "starting_inventory": {
+      "alloy": 260,
+      "circuits": 110,
+      "components": 50
+    },
+    "core_position": [
+      0,
+      0
+    ],
+    "deposits": [
+      {
+        "resource": "iron_ore",
+        "position": [
+          -1500,
+          600
+        ]
+      },
+      {
+        "resource": "copper_ore",
+        "position": [
+          1450,
+          800
+        ]
+      },
+      {
+        "resource": "silica",
+        "position": [
+          1500,
+          -1550
+        ]
+      },
+      {
+        "resource": "carbon",
+        "position": [
+          -1700,
+          -1300
+        ]
+      }
+    ]
+  }
+}
