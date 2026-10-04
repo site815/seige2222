@@ -25,7 +25,7 @@ Sector layout, information coverage, adjacent colonies, escape, and permanent lo
 
 ### Current local scenario implementation
 
-Each sector is **600 m × 600 m**, giving the 3×3 overview a **1.8 km side**. The source template contains **25 irregularly clustered resource nodes**, repeated in each instantiated colony's local sector. This is a finite prototype map, not procedural planetary geography or a final scale decision.
+The logical sector is **60,000 units square**, with **25 irregularly clustered resource nodes** repeated in each instantiated colony's local sector. The v0.3 graphics mapping is six Unreal centimeters per unit: **3.6 km × 3.6 km** rendered sectors and a **10.8 km** neighborhood side. v0.2 used one centimeter per unit, yielding the earlier 600 m sectors and 1.8 km neighborhood. Logical travel times, rates, positions, and balance are unchanged. This is a finite prototype map, not procedural planetary geography or a final scale decision; see [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md).
 
 Human core selection pauses the scenario and displays a resource survey. Placement rejects sector-edge and deposit conflicts through normal simulation validation. After placement, ordinary finite live coverage applies. Neighbor building and threat rendering respects the human colony's coverage; observer mode deliberately shows the simulated colonies for observation.
 

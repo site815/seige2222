@@ -10,12 +10,13 @@
 #include "Misc/FileHelper.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformMisc.h"
+#include "Camera/PlayerCameraManager.h"
 
 // Explicit opt-in render/interaction smoke. It never loads or writes player saves.
 void ASeigeGameMode::RunPresentationSmoke()
 {
     if(!FParse::Param(FCommandLine::Get(),TEXT("UiSmoke")))return;
-    static const double Times[]={1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20,21,22,24,26};
+    static const double Times[]={2,3,4,5,7,8,10,11,12,13,14,15,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40};
     if(PresentationSmokeStage>=UE_ARRAY_COUNT(Times)||RenderClock<Times[PresentationSmokeStage])return;
     const int32 Stage=PresentationSmokeStage++;
     auto* Controller=Cast<ASeigeController>(UGameplayStatics::GetPlayerController(this,0));
@@ -27,7 +28,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     };
     auto Capture=[&](const TCHAR* Name)
     {
-        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v02"));
+        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v03"));
         if(!Require(IFileManager::Get().MakeDirectory(*Directory,true),TEXT("Could not create screenshot directory")))return;
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Name)+TEXT(".png")),true,false);
         UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CAPTURE %s stage=%d screen=%s"),Name,Stage,*Screen);
@@ -44,10 +45,17 @@ void ASeigeGameMode::RunPresentationSmoke()
     auto WorldClick=[&](FVector2D Position)
     {
         if(!Require(Controller&&Hud,TEXT("Cannot route a world click without controller and HUD")))return;
-        CursorOnWorld=true;CursorWorld=Position;
-        // This empty point is outside every top bar, popup and context-card hit region.
-        // The actual handler is identical to PlayerTick's mouse-input path, with no Canvas.
-        Controller->HandlePrimaryClick(900*Hud->Ui.Scale,600*Hud->Ui.Scale);
+        UpdateCamera();if(Controller->PlayerCameraManager)Controller->PlayerCameraManager->UpdateCamera(0);
+        FVector2D Pixel;
+        if(!Require(Controller->ProjectWorldLocationToScreen(RenderPosition(Position),Pixel),TEXT("Ground target could not project to screen")))return;
+        const bool Hit=Controller->UpdateCursorFromScreen(Pixel.X,Pixel.Y);
+        FVector RayOrigin=FVector::ZeroVector,RayDirection=FVector::ZeroVector;Controller->ScreenRay(Pixel,RayOrigin,RayDirection);
+        UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_PICK stage=%d screen=%s target=%s pixel=%s hit=%d cursor=%s delta=%.8f origin=%s direction=%s zoom=%.2f yaw=%.2f pitch=%.2f ui=%s"),
+            Stage,*Screen,*Position.ToString(),*Pixel.ToString(),Hit?1:0,*CursorWorld.ToString(),Hit?FVector2D::Distance(CursorWorld,Position):-1.,*RayOrigin.ToString(),*RayDirection.ToString(),Zoom,CameraYaw,CameraPitch,*Hud->Ui.HitTest(Pixel.X,Pixel.Y));
+        if(!Require(Hit,TEXT("Perspective screen ray did not hit terrain")))return;
+        if(!Require(FVector2D::Distance(CursorWorld,Position)<.2,TEXT("Perspective terrain pick did not roundtrip")))return;
+        Controller->HandlePrimaryClick(Pixel.X,Pixel.Y);
+        UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CLICK stage=%d screen=%s cursor=%s buildings=%d selected=%d notice=%s"),Stage,*Screen,*CursorWorld.ToString(),Sim.Buildings.Num(),SelectedId,*Notice);
     };
     UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_STAGE %d t=%.2f screen=%s"),Stage,RenderClock,*Screen);
     switch(Stage)
@@ -75,7 +83,19 @@ void ASeigeGameMode::RunPresentationSmoke()
         WorldClick(FVector2D(700,0));Require(Sim.Buildings.Num()==2,TEXT("World click did not construct the selected sensor"));
         if(Sim.Buildings.Num()==2)Require(Sim.Definition(Sim.Buildings.Last())&&Sim.Definition(Sim.Buildings.Last())->Role==TEXT("sensor"),TEXT("Shortcut constructed the wrong building role"));break;
     case 11:
-        Require(Sim.Buildings.Num()==2,TEXT("Constructed building disappeared before capture"));Capture(TEXT("placed"));break;
+    {
+        Require(Sim.Buildings.Num()==2,TEXT("Constructed building disappeared before capture"));
+        SelectedBuild.Empty();CameraYaw=35;CameraPitch=25;Zoom=1700;UpdateCamera();
+        if(Controller&&Controller->PlayerCameraManager)Controller->PlayerCameraManager->UpdateCamera(0);
+        FVector2D RoofPixel;
+        if(Require(Controller&&Controller->ProjectWorldLocationToScreen(RenderPosition(HomePosition(),1000),RoofPixel),TEXT("Could not project the visible command-center upper floor")))
+        {
+            FVector RayOrigin,RayDirection;
+            Require(Controller->ScreenRay(RoofPixel,RayOrigin,RayDirection)&&SelectBuildingRay(RayOrigin,RayDirection),TEXT("Visible building geometry did not answer a selection ray"));
+            SelectedId=0;Controller->HandlePrimaryClick(RoofPixel.X,RoofPixel.Y);Require(SelectedId==Sim.Buildings[0].Id,TEXT("Clicking the tall command center at low tilt did not select it"));
+        }
+        SelectedId=0;CameraYaw=135;CameraPitch=52;Zoom=DefaultZoom;UpdateCamera();Capture(TEXT("placed"));break;
+    }
     case 12: Zoom=Sim.WorldHalfSize*12;UpdateCamera();break;
     case 13: Capture(TEXT("overview"));break;
     case 14: ShowScreen(TEXT("credits"));break;
@@ -90,10 +110,15 @@ void ASeigeGameMode::RunPresentationSmoke()
         Require(ScenarioSlots.Num()==9&&ScenarioSlots[4]==TEXT("developed")&&ScenarioSlots[0]==TEXT("developed")&&ScenarioSlots[2]==TEXT("starting"),TEXT("Scenario cell clicks did not configure the requested AI types"));break;
     case 19:
         ClickAction(TEXT("start-scenario"));Require(Ready&&Observer&&Screen==TEXT("playing")&&Neighbors.Num()==2,TEXT("AI scenario did not start observation with two neighbors"));break;
-    case 20: Zoom=13000;UpdateCamera();break;
+    case 20: Zoom=5500;UpdateCamera();break;
     case 21:
         Require(Observer&&Neighbors.Num()==2,TEXT("Observer scenario state changed unexpectedly"));Capture(TEXT("observer"));break;
-    case 22:
+    case 22: Zoom=1300;CameraYaw=35;CameraPitch=35;UpdateCamera();break;
+    case 23: Capture(TEXT("closeup"));WorldClick(HomePosition());break;
+    case 24: CameraYaw=220;CameraPitch=65;Zoom=3000;UpdateCamera();break;
+    case 25: Capture(TEXT("rotated"));WorldClick(HomePosition());break;
+    case 26: CameraYaw=135;CameraPitch=52;Zoom=DefaultZoom;UpdateCamera();break;
+    case 27:
     {
         Require(Ready&&Observer&&Neighbors.Num()==2&&Screen==TEXT("playing"),TEXT("Final observer state is invalid"));
         const float Dt=GetWorld()?GetWorld()->GetDeltaSeconds():0;

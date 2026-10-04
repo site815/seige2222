@@ -1,0 +1,325 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0-1.0",
+  "license_url": "https://polyhaven.com/license",
+  "legal_code": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "assets": {
+    "fir_tree_01": {
+      "name": "Fir Tree 01",
+      "source_page": "https://polyhaven.com/a/fir_tree_01",
+      "authors": {
+        "Rob Tuytel": "photography",
+        "Rico Cilliers": "modeling"
+      },
+      "maps": {
+        "bark": {
+          "color": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_bark_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_bark_diff_2k.jpg",
+            "bytes": 2839282,
+            "sha256": "c3dbce0207d9b0e6d1ef3d2e3c3ba394722464c898e6d4eb6b76439ada76e0b3",
+            "official_md5": "e9375177560503904ece137474cfde0b"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_bark_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_bark_nor_gl_2k.jpg",
+            "bytes": 3920997,
+            "sha256": "fc12db22e058f81340a4d4d08c0f2a50bb0a8960c9fc23a760e625bf2d9d1970",
+            "official_md5": "5fa93c73d145cacdb258a29e3860a1ae"
+          },
+          "roughness": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_bark_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_bark_rough_1k.jpg",
+            "bytes": 506828,
+            "sha256": "fcb506a5aa2ad2bc88282b6ba7aa9d4403bc55c15d5b414a3697946a315aef3f",
+            "official_md5": "1c095254a3b7545cce9282badc9b27d0"
+          }
+        },
+        "trunk_a": {
+          "roughness": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_a_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_a_rough_1k.jpg",
+            "bytes": 582912,
+            "sha256": "19cc1e0ab2d6242c49b03683acdb97b5331d8dc8a456eda9dc727cbda908d95c",
+            "official_md5": "c691593393033785cfd297e9747e08c9"
+          },
+          "color": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_a_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_trunk_a_diff_2k.jpg",
+            "bytes": 3028704,
+            "sha256": "34dc75688c783a9ecbbd79f072449f270baededb5787f556846c03759fa2f818",
+            "official_md5": "44fd71883c0e29551243c8937c47b65c"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_a_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_trunk_a_nor_gl_2k.jpg",
+            "bytes": 3642074,
+            "sha256": "783e714a9916f411ed6686e2558f469e4b3e0de407c9e2ed797f97020b7bf6e9",
+            "official_md5": "97ce92fcba67201ace1c4ed3d6e154f6"
+          }
+        },
+        "trunk_b": {
+          "roughness": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_b_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_b_rough_1k.jpg",
+            "bytes": 556834,
+            "sha256": "c995b5a58fb518847ad41a4d1d646d9ec71ccb1c2812d6da1e6c35a3d50028b6",
+            "official_md5": "c9cd5f6871dbf8737284d496699c965d"
+          },
+          "color": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_b_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_trunk_b_diff_2k.jpg",
+            "bytes": 2548347,
+            "sha256": "ce30477f492b6aeee5c467350024fa375eb5f95e19f4ab60a2dc778c1559b696",
+            "official_md5": "cba156ed09519ca12bea8c7ff90585ee"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_b_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_trunk_b_nor_gl_2k.jpg",
+            "bytes": 3269280,
+            "sha256": "e8c30af34534ae51f24f445b4a77f650f52f3e0771ef92ce834bbc148b2ad979",
+            "official_md5": "007dee669d056d81043ed0d171a731c2"
+          }
+        },
+        "trunk_c": {
+          "roughness": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_c_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_c_rough_1k.jpg",
+            "bytes": 644084,
+            "sha256": "5206dc656eef39335636432c0f48c94bc21389663d112dd1f957f830ed166450",
+            "official_md5": "d7e5ff7a03f0fa495f86f1d739f3b10e"
+          },
+          "color": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_c_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_trunk_c_diff_2k.jpg",
+            "bytes": 2946273,
+            "sha256": "b29ee16eeefa3131e0823f8142d6ae95bcba3cc7b8c7ec153dfb8ad72fc43c89",
+            "official_md5": "d3b48fba7c02c8a962e8848716293937"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_trunk_c_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_trunk_c_nor_gl_2k.jpg",
+            "bytes": 3837350,
+            "sha256": "8d875d2d76339998c0e788d27937d39b44cbe06786398991b75bc2b8389398c0",
+            "official_md5": "84612b5efe7fb059c4cc74d75b6f519f"
+          }
+        },
+        "twig": {
+          "alpha": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_twig_alpha_2k.png",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/fir_tree_01/fir_tree_01_twig_alpha_2k.png",
+            "bytes": 996187,
+            "sha256": "6eecd1cf1e059488be2a41d15bb3c8cb3d844765ed11be8087e6e02acd58b181",
+            "official_md5": "1d93929d869e5539ec245ae3eddb7243"
+          },
+          "color": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_twig_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_twig_diff_2k.jpg",
+            "bytes": 1141996,
+            "sha256": "5504646d484a08649a9cd14402860063e69fd10072238f5afe72214e6bf478be",
+            "official_md5": "6d023f52dab632b031a2ab8e5a27541f"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_twig_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fir_tree_01/fir_tree_01_twig_nor_gl_2k.jpg",
+            "bytes": 1611490,
+            "sha256": "874596561e6fa69ae6fc381e77180298441bd469b3918bb493436ea829ccd815",
+            "official_md5": "2072f6b164184f0ca9b41f8623bfec06"
+          },
+          "roughness": {
+            "local_path": "Art/Nature/Textures/fir_tree_01/fir_tree_01_twig_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_twig_rough_1k.jpg",
+            "bytes": 310356,
+            "sha256": "7f949fd95956ab3d24cdff13cc05619f74284a3c847ac023c14b1e0fef972e2d",
+            "official_md5": "38b05bca08a0ba9f07463fb5ac727e0b"
+          }
+        }
+      },
+      "original_source": {
+        "local_path": ".tools/nature-downloads/fir_tree_01/fir_tree_01_1k.blend",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/fir_tree_01/fir_tree_01_1k.blend",
+        "bytes": 218986261,
+        "sha256": "153d20aae6d7c63a4c52689d91e8bead78f6d17a70e11ef4d03d19953383de00",
+        "official_md5": "a08031ea8ffb49711b294e1c8213a909"
+      }
+    },
+    "tree_small_02": {
+      "name": "Tree Small 02",
+      "source_page": "https://polyhaven.com/a/tree_small_02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "maps": {
+        "branch": {
+          "color": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_branch_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/tree_small_02/tree_small_02_branch_diff_2k.jpg",
+            "bytes": 1425692,
+            "sha256": "9032de9e063ee7e3763a6b10d19d89302f5776e85a966b6dd1c3a5634b2a80e1",
+            "official_md5": "5ba327fc166360fcbb44f2eb04fbd8d8"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_branch_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/tree_small_02/tree_small_02_branch_nor_gl_2k.jpg",
+            "bytes": 1781975,
+            "sha256": "368505992d867bb50eccc00d77940a7a3eaf32f42de9f536d105407b0d6df3fd",
+            "official_md5": "12286d5b329b4fb4203fc155a01b0a04"
+          },
+          "roughness": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_branch_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_branch_rough_1k.jpg",
+            "bytes": 266513,
+            "sha256": "1207c31513860d783b2574dc210493768f62123dca6746690add3b95a8f8ffa1",
+            "official_md5": "c06234172d5155971fab2a90436739d5"
+          }
+        },
+        "leaves": {
+          "alpha": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_leaves_alpha_2k.png",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/tree_small_02/tree_small_02_leaves_alpha_2k.png",
+            "bytes": 636661,
+            "sha256": "566484c7047ce67af5a4435c1e4da2b773578d73f83ae45dfad0fd442df7b9d5",
+            "official_md5": "4d94de8e4677e92ce6d812871f9cf541"
+          },
+          "color": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_leaves_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/tree_small_02/tree_small_02_leaves_diff_2k.jpg",
+            "bytes": 961870,
+            "sha256": "6c984a46861562f2a20381c54106aa5e07ce0d3fce785907f8d263157e7561af",
+            "official_md5": "021ddc0cf1d94b99716a106cede576c7"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_leaves_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/tree_small_02/tree_small_02_leaves_nor_gl_2k.jpg",
+            "bytes": 2395771,
+            "sha256": "40c956e345430562cdb4d0470c7d499aa160f1fa3dd7555d88be2dedf0d7ff2e",
+            "official_md5": "ab509e55b5d763f68195e0eb257bb5e3"
+          },
+          "roughness": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_leaves_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_leaves_rough_1k.jpg",
+            "bytes": 307562,
+            "sha256": "864b7d6eba1e62b242e8ffc7c99dd32092ca6c3bf0a7a3537ad29fad2d2ce39e",
+            "official_md5": "df8afe55f9d3de3b179a41496645a4f9"
+          }
+        },
+        "surface": {
+          "color": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/tree_small_02/tree_small_02_diff_2k.jpg",
+            "bytes": 3170612,
+            "sha256": "4ab3210b6ec6bb1181145500bca71d1c1f81ead6baaa8600f5979c2cec50c6a4",
+            "official_md5": "ff4d82640b7e0daaec0b71bfc1cef76c"
+          },
+          "roughness": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_rough_1k.jpg",
+            "bytes": 507997,
+            "sha256": "2039e90e000a6cb14d8b38c7f25b6a428b489cecbc400327f89c511b22ae5c7b",
+            "official_md5": "01312422f52dcb069fa4866251cec22d"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/tree_small_02/tree_small_02_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/tree_small_02/tree_small_02_nor_gl_2k.jpg",
+            "bytes": 4555311,
+            "sha256": "cb7897fc0aea602964836116ecf631614ece2970f579647fe1070bccb428fe89",
+            "official_md5": "064c3e1d08f010c732e7af6395a66769"
+          }
+        }
+      },
+      "original_source": {
+        "local_path": ".tools/nature-downloads/tree_small_02/tree_small_02_1k.blend",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/tree_small_02/tree_small_02_1k.blend",
+        "bytes": 63805841,
+        "sha256": "af3fef6da3eb97057d9d4d3c4281c5944696b8d518715deddd8500482d30b1bd",
+        "official_md5": "d602d9e4df77457454ac427fd37d0b53"
+      }
+    },
+    "fern_02": {
+      "name": "Fern 02",
+      "source_page": "https://polyhaven.com/a/fern_02",
+      "authors": {
+        "Rob Tuytel": "scanning",
+        "Rico Cilliers": "modeling"
+      },
+      "maps": {
+        "surface": {
+          "color": {
+            "local_path": "Art/Nature/Textures/fern_02/fern_02_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fern_02/fern_02_diff_2k.jpg",
+            "bytes": 993703,
+            "sha256": "9ee18172170728050871772e2cd6d8d37b52f9138e61b49b04486623f9caf84b",
+            "official_md5": "ba8bbb9dc9ff55bdc081565cd926d776"
+          },
+          "alpha": {
+            "local_path": "Art/Nature/Textures/fern_02/fern_02_alpha_2k.png",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/fern_02/fern_02_alpha_2k.png",
+            "bytes": 230089,
+            "sha256": "f51eb9b8f9f4b25a882f8fe12d1ef53ba69448bac7e71396ec1f05b684e9ea75",
+            "official_md5": "ff18f7e8e869c58eac8f9c7d7c519f4a"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/fern_02/fern_02_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/fern_02/fern_02_nor_gl_2k.jpg",
+            "bytes": 1365615,
+            "sha256": "dfe1ac4a428d21f7c134411500177d66b8dd800c8fec6f0040c50f44414a777b",
+            "official_md5": "00936dff4661dc9fe1f2fbe6c000615a"
+          },
+          "roughness": {
+            "local_path": "Art/Nature/Textures/fern_02/fern_02_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_rough_1k.jpg",
+            "bytes": 208576,
+            "sha256": "a7386298267ae30662b66c381815bc1f496ef1a2f1fe167abfa7eedfeac08f3e",
+            "official_md5": "282cac24b4e68c9848b64271b320a6a1"
+          }
+        }
+      },
+      "original_source": {
+        "local_path": ".tools/nature-downloads/fern_02/fern_02_1k.blend",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/fern_02/fern_02_1k.blend",
+        "bytes": 261459,
+        "sha256": "1bfb6e12d805cc97035c8cbd051187ca6db650e3157fd8884afcf66a6c4e78eb",
+        "official_md5": "6ad31e08091b148241683d48486be258"
+      }
+    },
+    "rock_moss_set_01": {
+      "name": "Rock Moss Set 01",
+      "source_page": "https://polyhaven.com/a/rock_moss_set_01",
+      "authors": {
+        "Kless Gyzen": "All"
+      },
+      "maps": {
+        "surface": {
+          "color": {
+            "local_path": "Art/Nature/Textures/rock_moss_set_01/rock_moss_set_01_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rock_moss_set_01/rock_moss_set_01_diff_2k.jpg",
+            "bytes": 649415,
+            "sha256": "bdee6da8baba67bd7e85e414e669cd46aab9afaf755114fb5163f0e68775c3d6",
+            "official_md5": "d3e1292c9e34bd6b4a236698a1b41290"
+          },
+          "roughness": {
+            "local_path": "Art/Nature/Textures/rock_moss_set_01/rock_moss_set_01_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_rough_1k.jpg",
+            "bytes": 82624,
+            "sha256": "4d6ec46623abd8e2cdb855f59c7ce31873ad61b36b60e4de579e9e776a497c6b",
+            "official_md5": "ed9d8a2c863262f76f881346e8047c6a"
+          },
+          "normal": {
+            "local_path": "Art/Nature/Textures/rock_moss_set_01/rock_moss_set_01_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rock_moss_set_01/rock_moss_set_01_nor_gl_2k.jpg",
+            "bytes": 840957,
+            "sha256": "f11c238a203eebd5e82da3a50468040a78d25fd2e46783c4ad79b1022b144c0d",
+            "official_md5": "88be6d9cf2927a09182e2bfccc9b8b56"
+          }
+        }
+      },
+      "original_source": {
+        "local_path": ".tools/nature-downloads/rock_moss_set_01/rock_moss_set_01_1k.blend",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/rock_moss_set_01/rock_moss_set_01_1k.blend",
+        "bytes": 2697968,
+        "sha256": "ca584d6e9b00405666d2ada80ab9065b3f84a52f22de1972fb9da46fe9bbc9f3",
+        "official_md5": "8e45da22c52aa6d1f2cc685d56591065"
+      }
+    }
+  }
+}

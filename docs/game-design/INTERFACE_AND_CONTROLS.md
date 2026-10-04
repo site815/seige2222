@@ -24,7 +24,13 @@ The user wants to improve on aspects of Manor Lords using the perceived polish o
 
 Hover and keyboard behavior must preserve ordinary world controls. Interface clicks must not place a building behind a menu or dialog, and menu shortcuts must not simultaneously move the camera. Input handling must work between rendering passes; drawing state cannot be required to process a click.
 
-The displayed version must match the delivered build's version. These are acceptance requirements, not a claim that the latest package has passed interaction or visual testing.
+The displayed version must match the delivered build's version. The v0.3 package passed its 28-stage rendered interaction route, including menus, construction shortcuts, and perspective world clicks. This does not establish exhaustive human usability or completed visual polish.
+
+## Perspective camera revision
+
+**Confirmed v0.3 direction:** The world uses a rotatable, tiltable perspective camera. Panning follows the camera's yaw; clicks and construction previews must intersect the visible terrain in front of the camera. Camera motion must not turn a UI action into a world command or accept a point behind the camera.
+
+Delivered v0.3 bindings use Q/E to rotate, middle-mouse drag to rotate/tilt, WASD/arrows to pan, the wheel to zoom, and Home to return to the core view. Saved camera yaw and pitch are added without requiring them in older format-2 saves. Native camera tests and the packaged rendered route pass; save-format compatibility was tested natively, without a separate packaged save/load roundtrip. See [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md).
 
 ## Colony controls
 

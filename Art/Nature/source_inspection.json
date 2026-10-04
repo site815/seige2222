@@ -1,0 +1,1930 @@
+{
+  "fir_tree_01": {
+    "objects": [
+      {
+        "name": "fir_tree_01_a_LOD0",
+        "polys": 2107255,
+        "verts": 5337567,
+        "dimensions": [
+          6.533779144287109,
+          6.426823139190674,
+          18.92510986328125
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_trunk_a",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_a_LOD1",
+        "polys": 88980,
+        "verts": 138058,
+        "dimensions": [
+          6.58326530456543,
+          6.467047691345215,
+          18.954601287841797
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_trunk_a",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_a_LOD2",
+        "polys": 48149,
+        "verts": 73227,
+        "dimensions": [
+          6.583094120025635,
+          6.467402458190918,
+          18.957046508789062
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_trunk_a",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_b_LOD0",
+        "polys": 1161596,
+        "verts": 2899226,
+        "dimensions": [
+          5.612586975097656,
+          6.056670665740967,
+          14.055205345153809
+        ],
+        "location": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_trunk_b",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_b_LOD1",
+        "polys": 64508,
+        "verts": 90714,
+        "dimensions": [
+          5.631947040557861,
+          6.084495544433594,
+          14.077526092529297
+        ],
+        "location": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_trunk_b",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_b_LOD2",
+        "polys": 41742,
+        "verts": 48164,
+        "dimensions": [
+          5.631947040557861,
+          6.084495544433594,
+          14.077526092529297
+        ],
+        "location": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_trunk_b",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_c_LOD0",
+        "polys": 255682,
+        "verts": 620039,
+        "dimensions": [
+          6.305939197540283,
+          5.9662370681762695,
+          14.520581245422363
+        ],
+        "location": [
+          12.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          null,
+          "fir_tree_01_bark",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches",
+          "fir_tree_01_trunk_c"
+        ]
+      },
+      {
+        "name": "fir_tree_01_c_LOD1",
+        "polys": 34656,
+        "verts": 43277,
+        "dimensions": [
+          6.3490400314331055,
+          6.005417823791504,
+          14.545815467834473
+        ],
+        "location": [
+          12.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches",
+          "fir_tree_01_trunk_c"
+        ]
+      },
+      {
+        "name": "fir_tree_01_c_LOD2",
+        "polys": 22079,
+        "verts": 22574,
+        "dimensions": [
+          6.3499040603637695,
+          6.005417823791504,
+          14.552308082580566
+        ],
+        "location": [
+          12.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_bark",
+          "fir_tree_01_twig",
+          "fir_tree_01_dead_branches",
+          "fir_tree_01_trunk_c"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_a",
+        "polys": 55,
+        "verts": 56,
+        "dimensions": [
+          0.04350806772708893,
+          0.1047419011592865,
+          0.8416321277618408
+        ],
+        "location": [
+          12.044425964355469,
+          -0.0006212163134478033,
+          -0.0005589627544395626
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_b",
+        "polys": 45,
+        "verts": 46,
+        "dimensions": [
+          0.040126197040081024,
+          0.04115891829133034,
+          0.5081018805503845
+        ],
+        "location": [
+          12.16246223449707,
+          -0.0011166910408064723,
+          0.002458675066009164
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_c",
+        "polys": 20,
+        "verts": 21,
+        "dimensions": [
+          0.024249820038676262,
+          0.02496662177145481,
+          0.3959311842918396
+        ],
+        "location": [
+          12.306560516357422,
+          -0.0012392839416861534,
+          -6.778520764783025e-05
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_d",
+        "polys": 30,
+        "verts": 31,
+        "dimensions": [
+          0.0253315307199955,
+          0.03250836953520775,
+          0.39375901222229004
+        ],
+        "location": [
+          12.420554161071777,
+          -0.001580720767378807,
+          0.00124931032769382
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_e",
+        "polys": 71,
+        "verts": 69,
+        "dimensions": [
+          0.12681876122951508,
+          0.029341552406549454,
+          0.6661511659622192
+        ],
+        "location": [
+          12.542791366577148,
+          -0.002083855913951993,
+          -0.0012030082289129496
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_f",
+        "polys": 35,
+        "verts": 36,
+        "dimensions": [
+          0.04264296591281891,
+          0.02673415094614029,
+          0.44976145029067993
+        ],
+        "location": [
+          12.701974868774414,
+          -0.004064565058797598,
+          0.0007587340078316629
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_g",
+        "polys": 45,
+        "verts": 46,
+        "dimensions": [
+          0.0721280500292778,
+          0.03955667465925217,
+          0.813187837600708
+        ],
+        "location": [
+          12.844046592712402,
+          -0.002780047943815589,
+          0.00524340383708477
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_h",
+        "polys": 111,
+        "verts": 110,
+        "dimensions": [
+          0.4475494623184204,
+          0.1380915343761444,
+          0.8118776082992554
+        ],
+        "location": [
+          13.027653694152832,
+          -0.002083898289129138,
+          -0.0012030082289129496
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_i",
+        "polys": 75,
+        "verts": 77,
+        "dimensions": [
+          0.2376514971256256,
+          0.07671960443258286,
+          0.8874806761741638
+        ],
+        "location": [
+          13.392741203308105,
+          -0.005527203902602196,
+          0.0032851409632712603
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_dead_branch_j",
+        "polys": 217,
+        "verts": 215,
+        "dimensions": [
+          0.6067721843719482,
+          0.2036450356245041,
+          1.1023281812667847
+        ],
+        "location": [
+          13.675185203552246,
+          -0.005527119617909193,
+          0.0032851460855454206
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_dead_branches"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_dead_branches"
+        ]
+      },
+      {
+        "name": "fir_tree_01_needle_a",
+        "polys": 2,
+        "verts": 6,
+        "dimensions": [
+          0.011976360343396664,
+          0.1466040462255478,
+          0.12771637737751007
+        ],
+        "location": [
+          23.360475540161133,
+          -0.0047050598077476025,
+          0.0012003681622445583
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_needles"
+        ],
+        "modifiers": [
+          [
+            "Solidify",
+            "SOLIDIFY",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_needle_b",
+        "polys": 2,
+        "verts": 6,
+        "dimensions": [
+          0.013077715411782265,
+          0.15110959112644196,
+          0.13068006932735443
+        ],
+        "location": [
+          23.405433654785156,
+          -0.0047050598077476025,
+          0.0012003681622445583
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_needles"
+        ],
+        "modifiers": [
+          [
+            "Solidify",
+            "SOLIDIFY",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_needle_c",
+        "polys": 2,
+        "verts": 6,
+        "dimensions": [
+          0.012960651889443398,
+          0.15741942822933197,
+          0.12043575942516327
+        ],
+        "location": [
+          23.44113540649414,
+          -0.0047050598077476025,
+          0.0012003681622445583
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_needles"
+        ],
+        "modifiers": [
+          [
+            "Solidify",
+            "SOLIDIFY",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_needle_d",
+        "polys": 2,
+        "verts": 6,
+        "dimensions": [
+          0.013184608891606331,
+          0.15841743350028992,
+          0.13774073123931885
+        ],
+        "location": [
+          23.48476791381836,
+          -0.0047050598077476025,
+          0.0012003681622445583
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_needles"
+        ],
+        "modifiers": [
+          [
+            "Solidify",
+            "SOLIDIFY",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_trunk_a",
+        "polys": 42222,
+        "verts": 42391,
+        "dimensions": [
+          1.126545786857605,
+          1.1712186336517334,
+          17.546592712402344
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_trunks"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_trunk_a"
+        ]
+      },
+      {
+        "name": "fir_tree_01_trunk_b",
+        "polys": 39442,
+        "verts": 39564,
+        "dimensions": [
+          1.2329157590866089,
+          1.2554314136505127,
+          12.525795936584473
+        ],
+        "location": [
+          5.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_trunks"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_trunk_b"
+        ]
+      },
+      {
+        "name": "fir_tree_01_trunk_c",
+        "polys": 23186,
+        "verts": 23290,
+        "dimensions": [
+          1.2225232124328613,
+          1.1875925064086914,
+          13.322330474853516
+        ],
+        "location": [
+          9.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_trunks"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_trunk_c"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_a",
+        "polys": 470,
+        "verts": 478,
+        "dimensions": [
+          1.9400694370269775,
+          2.14858341217041,
+          0.5080844163894653
+        ],
+        "location": [
+          15.753096580505371,
+          -0.0168001651763916,
+          0.001200360246002674
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD0"
+        ],
+        "modifiers": [
+          [
+            "GeometryNodes",
+            "NODES",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_a_LOD1",
+        "polys": 21,
+        "verts": 54,
+        "dimensions": [
+          1.951459288597107,
+          2.226330518722534,
+          0.5400862693786621
+        ],
+        "location": [
+          15.753097534179688,
+          -0.016800284385681152,
+          0.0012003601295873523
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_a_LOD2",
+        "polys": 15,
+        "verts": 37,
+        "dimensions": [
+          1.9608078002929688,
+          2.226330518722534,
+          0.5372464656829834
+        ],
+        "location": [
+          15.753097534179688,
+          -0.016800284385681152,
+          0.0012003601295873523
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_b",
+        "polys": 115,
+        "verts": 118,
+        "dimensions": [
+          1.3720076084136963,
+          1.5130581855773926,
+          0.46989792585372925
+        ],
+        "location": [
+          17.105791091918945,
+          -0.0006524724885821342,
+          0.001200360246002674
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD0"
+        ],
+        "modifiers": [
+          [
+            "GeometryNodes",
+            "NODES",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_b_LOD1",
+        "polys": 13,
+        "verts": 33,
+        "dimensions": [
+          1.4686939716339111,
+          1.5641744136810303,
+          0.5143488049507141
+        ],
+        "location": [
+          17.105789184570312,
+          -0.000652313232421875,
+          0.001200360246002674
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_b_LOD2",
+        "polys": 9,
+        "verts": 22,
+        "dimensions": [
+          1.4686939716339111,
+          1.5641744136810303,
+          0.5143738985061646
+        ],
+        "location": [
+          17.105789184570312,
+          -0.000652313232421875,
+          0.001200360246002674
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_c",
+        "polys": 290,
+        "verts": 299,
+        "dimensions": [
+          1.8497912883758545,
+          2.1593804359436035,
+          0.5271160006523132
+        ],
+        "location": [
+          18.47947883605957,
+          0.002939300611615181,
+          0.009735913947224617
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD0"
+        ],
+        "modifiers": [
+          [
+            "GeometryNodes",
+            "NODES",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_c_LOD1",
+        "polys": 25,
+        "verts": 54,
+        "dimensions": [
+          1.8751732110977173,
+          2.1855289936065674,
+          0.5518758893013
+        ],
+        "location": [
+          18.479480743408203,
+          0.0029393434524536133,
+          0.009735913947224617
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_main_c_LOD2",
+        "polys": 18,
+        "verts": 35,
+        "dimensions": [
+          1.8769845962524414,
+          2.1854946613311768,
+          0.5517637133598328
+        ],
+        "location": [
+          18.479480743408203,
+          0.0029393434524536133,
+          0.009735913947224617
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_main_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_a",
+        "polys": 40,
+        "verts": 42,
+        "dimensions": [
+          0.42021095752716064,
+          0.5373971462249756,
+          0.3462165892124176
+        ],
+        "location": [
+          20.451642990112305,
+          -0.003399965353310108,
+          0.0018799244426190853
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD0"
+        ],
+        "modifiers": [
+          [
+            "GeometryNodes",
+            "NODES",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_a_LOD1",
+        "polys": 7,
+        "verts": 20,
+        "dimensions": [
+          0.4505331218242645,
+          0.6290178298950195,
+          0.35395869612693787
+        ],
+        "location": [
+          20.451642990112305,
+          -0.0034000277519226074,
+          0.0018799244426190853
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_a_LOD2",
+        "polys": 5,
+        "verts": 13,
+        "dimensions": [
+          0.4644189774990082,
+          0.6290178298950195,
+          0.3539576530456543
+        ],
+        "location": [
+          20.451642990112305,
+          -0.0034000277519226074,
+          0.0018799244426190853
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_b",
+        "polys": 125,
+        "verts": 128,
+        "dimensions": [
+          0.7884615659713745,
+          0.7998607158660889,
+          0.4162808954715729
+        ],
+        "location": [
+          21.08637237548828,
+          -0.0057644168846309185,
+          0.001200360246002674
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD0"
+        ],
+        "modifiers": [
+          [
+            "GeometryNodes",
+            "NODES",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_b_LOD1",
+        "polys": 11,
+        "verts": 29,
+        "dimensions": [
+          0.883147120475769,
+          0.8697722554206848,
+          0.4364299178123474
+        ],
+        "location": [
+          21.08637237548828,
+          -0.005764424800872803,
+          0.001200360246002674
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_b_LOD2",
+        "polys": 8,
+        "verts": 18,
+        "dimensions": [
+          0.883147120475769,
+          0.826554000377655,
+          0.45826250314712524
+        ],
+        "location": [
+          21.08637237548828,
+          -0.005764424800872803,
+          0.001200360246002674
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_c",
+        "polys": 40,
+        "verts": 41,
+        "dimensions": [
+          0.2925313115119934,
+          0.740512490272522,
+          0.2837215065956116
+        ],
+        "location": [
+          21.74461555480957,
+          -0.0006053317338228226,
+          0.0012003681622445583
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD0"
+        ],
+        "modifiers": [
+          [
+            "GeometryNodes",
+            "NODES",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_c_LOD1",
+        "polys": 2,
+        "verts": 8,
+        "dimensions": [
+          0.3538737893104553,
+          0.7824212908744812,
+          0.35395872592926025
+        ],
+        "location": [
+          21.74461555480957,
+          -0.0006053447723388672,
+          0.0012003680458292365
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_c_LOD2",
+        "polys": 2,
+        "verts": 8,
+        "dimensions": [
+          0.3538737893104553,
+          0.7824212908744812,
+          0.35395872592926025
+        ],
+        "location": [
+          21.74461555480957,
+          -0.0006053447723388672,
+          0.0012003680458292365
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_d",
+        "polys": 190,
+        "verts": 193,
+        "dimensions": [
+          1.6337013244628906,
+          1.8785337209701538,
+          0.48488864302635193
+        ],
+        "location": [
+          22.555280685424805,
+          -0.0060241371393203735,
+          0.06481482833623886
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD0"
+        ],
+        "modifiers": [
+          [
+            "GeometryNodes",
+            "NODES",
+            true
+          ]
+        ],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_d_LOD1",
+        "polys": 19,
+        "verts": 46,
+        "dimensions": [
+          1.7436375617980957,
+          1.9213743209838867,
+          0.507404088973999
+        ],
+        "location": [
+          22.555282592773438,
+          -0.00602412223815918,
+          0.06481482833623886
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      },
+      {
+        "name": "fir_tree_01_twig_tip_d_LOD2",
+        "polys": 11,
+        "verts": 29,
+        "dimensions": [
+          1.7436375617980957,
+          1.9213743209838867,
+          0.507404088973999
+        ],
+        "location": [
+          22.555282592773438,
+          -0.00602412223815918,
+          0.06481482833623886
+        ],
+        "hidden": false,
+        "collections": [
+          "fir_tree_01_twigs_tip_LOD2"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fir_tree_01_twig"
+        ]
+      }
+    ],
+    "materials": {
+      "fir_tree_01_bark": [
+        {
+          "image": "fir_tree_01_bark_diff.png",
+          "path": "//textures\\fir_tree_01_bark_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_rough.png",
+          "path": "//textures\\fir_tree_01_bark_rough_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_nor_gl.png",
+          "path": "//textures\\fir_tree_01_bark_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_disp.png",
+          "path": "//textures\\fir_tree_01_bark_disp_1k.png"
+        }
+      ],
+      "fir_tree_01_dead_branches": [
+        {
+          "image": "fir_tree_01_bark_diff.png",
+          "path": "//textures\\fir_tree_01_bark_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_nor_gl.png",
+          "path": "//textures\\fir_tree_01_bark_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_rough.png",
+          "path": "//textures\\fir_tree_01_bark_rough_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_disp.png",
+          "path": "//textures\\fir_tree_01_bark_disp_1k.png"
+        }
+      ],
+      "fir_tree_01_trunk_a": [
+        {
+          "image": "fir_tree_01_bark_diff.png",
+          "path": "//textures\\fir_tree_01_bark_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_rough.png",
+          "path": "//textures\\fir_tree_01_bark_rough_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_nor_gl.png",
+          "path": "//textures\\fir_tree_01_bark_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_disp.png",
+          "path": "//textures\\fir_tree_01_bark_disp_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_a_diff.png",
+          "path": "//textures\\fir_tree_01_trunk_a_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_a_nor_gl.png",
+          "path": "//textures\\fir_tree_01_trunk_a_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_a_rough.png",
+          "path": "//textures\\fir_tree_01_trunk_a_rough_1k.png"
+        }
+      ],
+      "fir_tree_01_trunk_b": [
+        {
+          "image": "fir_tree_01_bark_rough.png",
+          "path": "//textures\\fir_tree_01_bark_rough_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_diff.png",
+          "path": "//textures\\fir_tree_01_bark_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_nor_gl.png",
+          "path": "//textures\\fir_tree_01_bark_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_disp.png",
+          "path": "//textures\\fir_tree_01_bark_disp_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_b_diff.png",
+          "path": "//textures\\fir_tree_01_trunk_b_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_b_nor_gl.png",
+          "path": "//textures\\fir_tree_01_trunk_b_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_b_rough.png",
+          "path": "//textures\\fir_tree_01_trunk_b_rough_1k.png"
+        }
+      ],
+      "fir_tree_01_trunk_c": [
+        {
+          "image": "fir_tree_01_trunk_c_diff.png",
+          "path": "//textures\\fir_tree_01_trunk_c_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_c_nor_gl.png",
+          "path": "//textures\\fir_tree_01_trunk_c_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_trunk_c_rough.png",
+          "path": "//textures\\fir_tree_01_trunk_c_rough_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_disp.png",
+          "path": "//textures\\fir_tree_01_bark_disp_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_nor_gl.png",
+          "path": "//textures\\fir_tree_01_bark_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_rough.png",
+          "path": "//textures\\fir_tree_01_bark_rough_1k.png"
+        },
+        {
+          "image": "fir_tree_01_bark_diff.png",
+          "path": "//textures\\fir_tree_01_bark_diff_1k.png"
+        }
+      ],
+      "fir_tree_01_twig": [
+        {
+          "image": "fir_tree_01_twig_alpha.png",
+          "path": "//textures\\fir_tree_01_twig_alpha_1k.png"
+        },
+        {
+          "image": "fir_tree_01_twig_nor_gl.png",
+          "path": "//textures\\fir_tree_01_twig_nor_gl_1k.png"
+        },
+        {
+          "image": "fir_tree_01_twig_rough.png",
+          "path": "//textures\\fir_tree_01_twig_rough_1k.png"
+        },
+        {
+          "image": "fir_tree_01_twig_diff.png",
+          "path": "//textures\\fir_tree_01_twig_diff_1k.png"
+        },
+        {
+          "image": "fir_tree_01_twig_mask.png",
+          "path": "//textures\\fir_tree_01_twig_mask_1k.png"
+        }
+      ]
+    },
+    "unit_scale": 1.0
+  },
+  "tree_small_02": {
+    "objects": [
+      {
+        "name": "tree_small_02_leaves_a_LOD0",
+        "polys": 401,
+        "verts": 627,
+        "dimensions": [
+          0.24783821403980255,
+          0.30291861295700073,
+          0.08389590680599213
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_leaves_a_LOD1",
+        "polys": 117,
+        "verts": 209,
+        "dimensions": [
+          0.2493802160024643,
+          0.3084900379180908,
+          0.08315342664718628
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_leaves_b_LOD0",
+        "polys": 591,
+        "verts": 922,
+        "dimensions": [
+          0.2716127336025238,
+          0.37237370014190674,
+          0.13825438916683197
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_leaves_b_LOD1",
+        "polys": 175,
+        "verts": 313,
+        "dimensions": [
+          0.27092599868774414,
+          0.3804470896720886,
+          0.13300760090351105
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_leaves_c_LOD0",
+        "polys": 567,
+        "verts": 885,
+        "dimensions": [
+          0.2583383321762085,
+          0.3402261435985565,
+          0.10288368165493011
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_leaves_c_LOD1",
+        "polys": 169,
+        "verts": 288,
+        "dimensions": [
+          0.2562980651855469,
+          0.3436056077480316,
+          0.10416287183761597
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_leaves_d_LOD0",
+        "polys": 189,
+        "verts": 297,
+        "dimensions": [
+          0.15771569311618805,
+          0.14508339762687683,
+          0.09152718633413315
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_leaves_d_LOD1",
+        "polys": 51,
+        "verts": 92,
+        "dimensions": [
+          0.15739890933036804,
+          0.12145842611789703,
+          0.09147994965314865
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_leaves_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_leaves"
+        ]
+      },
+      {
+        "name": "tree_small_02_LOD0",
+        "polys": 1150237,
+        "verts": 1755568,
+        "dimensions": [
+          2.9166998863220215,
+          4.292477130889893,
+          4.556740760803223
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_LOD0"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_branches",
+          "tree_small_02_leaves",
+          "tree_small_02_trunk"
+        ]
+      },
+      {
+        "name": "tree_small_02_LOD1",
+        "polys": 376155,
+        "verts": 626249,
+        "dimensions": [
+          2.9214348793029785,
+          4.29266881942749,
+          4.564037322998047
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_LOD1"
+        ],
+        "modifiers": [],
+        "materials": [
+          "tree_small_02_branches",
+          "tree_small_02_leaves",
+          "tree_small_02_trunk"
+        ]
+      },
+      {
+        "name": "tree_small_02_trunk",
+        "polys": 28293,
+        "verts": 14160,
+        "dimensions": [
+          1.695779800415039,
+          2.3164069652557373,
+          3.6886768341064453
+        ],
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "tree_small_02_geometry"
+        ],
+        "modifiers": [
+          [
+            "WeightedNormal",
+            "WEIGHTED_NORMAL",
+            true
+          ]
+        ],
+        "materials": [
+          "tree_small_02_trunk"
+        ]
+      }
+    ],
+    "materials": {
+      "tree_small_02_branches": [
+        {
+          "image": "tree_small_02_branch_diff.png",
+          "path": "//textures\\tree_small_02_branch_diff_1k.png"
+        },
+        {
+          "image": "tree_small_02_branch_rough.png",
+          "path": "//textures\\tree_small_02_branch_rough_1k.png"
+        },
+        {
+          "image": "tree_small_02_branch_nor_gl.png",
+          "path": "//textures\\tree_small_02_branch_nor_gl_1k.png"
+        }
+      ],
+      "tree_small_02_leaves": [
+        {
+          "image": "tree_small_02_leaves_diff.png",
+          "path": "//textures\\tree_small_02_leaves_diff_1k.png"
+        },
+        {
+          "image": "tree_small_02_leaves_rough.png",
+          "path": "//textures\\tree_small_02_leaves_rough_1k.png"
+        },
+        {
+          "image": "tree_small_02_leaves_nor_gl.png",
+          "path": "//textures\\tree_small_02_leaves_nor_gl_1k.png"
+        },
+        {
+          "image": "tree_small_02_leaves_alpha.png",
+          "path": "//textures\\tree_small_02_leaves_alpha_1k.png"
+        }
+      ],
+      "tree_small_02_trunk": [
+        {
+          "image": "tree_small_02_diff.png",
+          "path": "//textures\\tree_small_02_diff_1k.jpg"
+        },
+        {
+          "image": "tree_small_02_rough.png",
+          "path": "//textures\\tree_small_02_rough_1k.exr"
+        },
+        {
+          "image": "tree_small_02_nor_gl.png",
+          "path": "//textures\\tree_small_02_nor_gl_1k.exr"
+        }
+      ]
+    },
+    "unit_scale": 1.0
+  },
+  "fern_02": {
+    "objects": [
+      {
+        "name": "fern_02_a",
+        "polys": 392,
+        "verts": 525,
+        "dimensions": [
+          0.5519406199455261,
+          0.6134210824966431,
+          0.28680354356765747
+        ],
+        "location": [
+          -1.1920928955078125e-07,
+          -1.0000001192092896,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fern_02"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fern_02"
+        ]
+      },
+      {
+        "name": "fern_02_b",
+        "polys": 1192,
+        "verts": 1590,
+        "dimensions": [
+          0.9897474050521851,
+          0.893689751625061,
+          0.427694708108902
+        ],
+        "location": [
+          -4.76837158203125e-07,
+          5.960464477539062e-07,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fern_02"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fern_02"
+        ]
+      },
+      {
+        "name": "fern_02_c",
+        "polys": 1124,
+        "verts": 1500,
+        "dimensions": [
+          0.8743258118629456,
+          0.7652256488800049,
+          0.3490203619003296
+        ],
+        "location": [
+          1.0000009536743164,
+          1.1920928955078125e-07,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fern_02"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fern_02"
+        ]
+      },
+      {
+        "name": "fern_02_d",
+        "polys": 408,
+        "verts": 545,
+        "dimensions": [
+          0.5727821588516235,
+          0.5932782888412476,
+          0.2130875587463379
+        ],
+        "location": [
+          1.0,
+          -0.9999995827674866,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "fern_02"
+        ],
+        "modifiers": [],
+        "materials": [
+          "fern_02"
+        ]
+      }
+    ],
+    "materials": {
+      "fern_02": [
+        {
+          "image": "fern_02_nor_gl.png",
+          "path": "//textures\\fern_02_nor_gl_1k.exr"
+        },
+        {
+          "image": "fern_02_alpha.png",
+          "path": "//textures\\fern_02_alpha_1k.png"
+        },
+        {
+          "image": "fern_02_diff.png",
+          "path": "//textures\\fern_02_diff_1k.jpg"
+        },
+        {
+          "image": "fern_02_rough.png",
+          "path": "//textures\\fern_02_rough_1k.exr"
+        }
+      ]
+    },
+    "unit_scale": 1.0
+  },
+  "rock_moss_set_01": {
+    "objects": [
+      {
+        "name": "rock_moss_set_01_rock01",
+        "polys": 11000,
+        "verts": 5502,
+        "dimensions": [
+          2.2376322746276855,
+          3.368804454803467,
+          1.4726980924606323
+        ],
+        "location": [
+          -2.799999952316284,
+          2.122781276702881,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "rock_moss_set_01",
+          "rock_moss_set_01.001"
+        ],
+        "modifiers": [],
+        "materials": [
+          "rock_moss_set_01"
+        ]
+      },
+      {
+        "name": "rock_moss_set_01_rock02",
+        "polys": 10996,
+        "verts": 5470,
+        "dimensions": [
+          2.6553807258605957,
+          3.2637205123901367,
+          1.2619911432266235
+        ],
+        "location": [
+          0.0,
+          2.122781276702881,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "rock_moss_set_01",
+          "rock_moss_set_01.001"
+        ],
+        "modifiers": [],
+        "materials": [
+          "rock_moss_set_01"
+        ]
+      },
+      {
+        "name": "rock_moss_set_01_rock03",
+        "polys": 5000,
+        "verts": 2500,
+        "dimensions": [
+          2.1085824966430664,
+          2.079585552215576,
+          1.0996944904327393
+        ],
+        "location": [
+          3.0,
+          2.122781276702881,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "rock_moss_set_01",
+          "rock_moss_set_01.001"
+        ],
+        "modifiers": [],
+        "materials": [
+          "rock_moss_set_01"
+        ]
+      },
+      {
+        "name": "rock_moss_set_01_rock04",
+        "polys": 10589,
+        "verts": 5301,
+        "dimensions": [
+          2.127629280090332,
+          1.9647413492202759,
+          1.768319845199585
+        ],
+        "location": [
+          -2.700000047683716,
+          -1.5772186517715454,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "rock_moss_set_01",
+          "rock_moss_set_01.001"
+        ],
+        "modifiers": [],
+        "materials": [
+          "rock_moss_set_01"
+        ]
+      },
+      {
+        "name": "rock_moss_set_01_rock05",
+        "polys": 16548,
+        "verts": 8276,
+        "dimensions": [
+          1.8173227310180664,
+          2.998663902282715,
+          1.2054507732391357
+        ],
+        "location": [
+          0.15000000596046448,
+          -1.4772186279296875,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "rock_moss_set_01",
+          "rock_moss_set_01.001"
+        ],
+        "modifiers": [],
+        "materials": [
+          "rock_moss_set_01"
+        ]
+      },
+      {
+        "name": "rock_moss_set_01_rock06",
+        "polys": 8994,
+        "verts": 4499,
+        "dimensions": [
+          2.1259822845458984,
+          2.757303237915039,
+          1.261852741241455
+        ],
+        "location": [
+          2.799999952316284,
+          -1.5772186517715454,
+          0.0
+        ],
+        "hidden": false,
+        "collections": [
+          "rock_moss_set_01",
+          "rock_moss_set_01.001"
+        ],
+        "modifiers": [],
+        "materials": [
+          "rock_moss_set_01"
+        ]
+      }
+    ],
+    "materials": {
+      "rock_moss_set_01": [
+        {
+          "image": "rock_moss_set_01_diff.png",
+          "path": "//textures\\rock_moss_set_01_diff_1k.jpg"
+        },
+        {
+          "image": "rock_moss_set_01_rough.png",
+          "path": "//textures\\rock_moss_set_01_rough_1k.jpg"
+        },
+        {
+          "image": "rock_moss_set_01_nor_gl.png",
+          "path": "//textures\\rock_moss_set_01_nor_gl_1k.exr"
+        }
+      ]
+    },
+    "unit_scale": 1.0
+  }
+}

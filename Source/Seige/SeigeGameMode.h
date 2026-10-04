@@ -16,6 +16,13 @@ struct FSeigeNeighbor
     TSharedPtr<FSeigeScenarioAI> Brain;
 };
 
+struct FSeigeTerrainTile
+{
+    FVector2D Offset=FVector2D::ZeroVector;
+    int32 Resolution=0;
+    TArray<float> Heights;
+};
+
 UCLASS()
 class SEIGE_API ASeigeGameMode : public AGameModeBase
 {
@@ -30,7 +37,11 @@ public:
     bool Paused=false, Ready=false, WinAcknowledged=false;
     float Speed=1;
     FVector CameraCenter=FVector::ZeroVector;
-    float Zoom=6500;
+    float Zoom=3500;
+    float RenderScale=6,CameraYaw=135,CameraPitch=52,CameraFov=55;
+    float DefaultZoom=3500,MinimumZoom=900;
+    int32 ForestCandidates=85000,NearForestCandidates=8500;
+    TMap<FString,FString> NatureAssets;
     FVector2D CursorWorld=FVector2D::ZeroVector;
     bool CursorOnWorld=false;
     FString Screen=TEXT("main"),ReturnScreen=TEXT("main");
@@ -53,8 +64,13 @@ public:
     void LoadGame();
     void UpdateCamera();
     double GroundHeight(FVector2D Position) const;
+    FVector RenderPosition(FVector2D Position,float HeightOffset=0) const;
+    bool TraceGroundRay(const FVector& Origin,const FVector& Direction,FVector& Hit) const;
+    bool SelectBuildingRay(const FVector& Origin,const FVector& Direction);
+    void RebuildTerrainHeights();
+    FTransform CameraTransform() const;
+    FVector2D CameraPanDirection(float Forward,float Right) const;
 private:
-    FVector CameraOffset=FVector(6300,-6300,9000);
     UPROPERTY() TObjectPtr<class ACameraActor> Camera;
     UPROPERTY() TObjectPtr<AActor> Landscape;
     UPROPERTY() TObjectPtr<class UMaterialInterface> BaseMaterial;
@@ -63,6 +79,7 @@ private:
     double Accumulator=0;
     double RenderClock=0;
     bool ScreenshotRequested=false;
+    bool GraphicsSettingsValid=true;
     int32 PresentationSmokeStage=0,SmokeFailures=0;
     void RunPresentationSmoke();
     TSharedPtr<FSeigeScenarioAI> CenterBrain;
@@ -72,6 +89,9 @@ private:
     AActor* Visual(const FString& Key, const FString& Kind, FVector Location, FLinearColor Color, float Size);
     void Part(AActor* Actor,const FString& Shape,FVector Offset,FVector Scale,FLinearColor Color,FRotator Rotation=FRotator::ZeroRotator);
     void CreateLandscape();
+    double TerrainHeight(FVector2D Position) const;
+    bool LoadGraphicsSettings();
+    TArray<FSeigeTerrainTile> TerrainTiles;
     void ClearSceneryAt(FVector2D Position,float Radius);
     void SyncVisuals();
 };
@@ -85,6 +105,8 @@ public:
     virtual void BeginPlay() override;
     virtual void PlayerTick(float DeltaTime) override;
     void HandlePrimaryClick(float ScreenX,float ScreenY);
+    bool ScreenRay(const FVector2D& ScreenPosition,FVector& WorldOrigin,FVector& WorldDirection) const;
+    bool UpdateCursorFromScreen(float ScreenX,float ScreenY);
 private:
     TSet<FKey> ConsumedKeysUntilRelease;
 };

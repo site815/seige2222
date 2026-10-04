@@ -1,0 +1,5 @@
+{
+  "material": "/Game/Art/M_Terrain",
+  "texture_count": 4,
+  "source_manifest": "Textures/PolyHaven/ground_v03_sources.json"
+}

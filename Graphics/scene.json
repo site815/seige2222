@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "world_centimeters_per_unit": 6,
+  "camera_fov": 55,
+  "camera_pitch": 52,
+  "camera_yaw": 135,
+  "default_zoom": 3500,
+  "minimum_zoom": 900,
+  "forest_candidates": 85000,
+  "near_forest_candidates": 8500,
+  "nature_assets": {
+    "OakA": "/Game/Art/Nature/SM_BroadleafA.SM_BroadleafA",
+    "OakB": "/Game/Art/Nature/SM_FirC.SM_FirC",
+    "PineA": "/Game/Art/Nature/SM_FirA.SM_FirA",
+    "PineB": "/Game/Art/Nature/SM_FirB.SM_FirB",
+    "Shrub": "/Game/Art/Nature/SM_FernA.SM_FernA",
+    "Grass": "/Game/Art/SM_Grass.SM_Grass",
+    "RockA": "/Game/Art/Nature/SM_MossRockA.SM_MossRockA",
+    "RockB": "/Game/Art/Nature/SM_MossRockB.SM_MossRockB"
+  }
+}

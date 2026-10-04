@@ -1,0 +1,231 @@
+{
+  "units": "centimeters",
+  "provider": "Poly Haven",
+  "license": "CC0-1.0",
+  "meshes": {
+    "SM_FirA": {
+      "source_asset": "fir_tree_01",
+      "source_object": "fir_tree_01_a_LOD1",
+      "fbx": "SM_FirA.fbx",
+      "materials": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_a",
+        "PH_fir_tree_01_twig",
+        "PH_fir_tree_01_bark"
+      ],
+      "dimensions_cm": [
+        658.326530456543,
+        646.7047452926636,
+        1895.460070669651
+      ],
+      "triangles": 177444,
+      "vertices": 138058,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 2990,
+      "unreal_path": "/Game/Art/Nature/SM_FirA",
+      "nanite": true
+    },
+    "SM_FirB": {
+      "source_asset": "fir_tree_01",
+      "source_object": "fir_tree_01_b_LOD1",
+      "fbx": "SM_FirB.fbx",
+      "materials": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_b",
+        "PH_fir_tree_01_twig",
+        "PH_fir_tree_01_bark"
+      ],
+      "dimensions_cm": [
+        563.1947040557861,
+        608.4495782852173,
+        1407.7526301145554
+      ],
+      "triangles": 128464,
+      "vertices": 90714,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 357,
+      "unreal_path": "/Game/Art/Nature/SM_FirB",
+      "nanite": true
+    },
+    "SM_FirC": {
+      "source_asset": "fir_tree_01",
+      "source_object": "fir_tree_01_c_LOD0",
+      "fbx": "SM_FirC.fbx",
+      "materials": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_twig",
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_c"
+      ],
+      "dimensions_cm": [
+        630.5938720703125,
+        596.6237306594849,
+        1452.0581595599651
+      ],
+      "triangles": 505494,
+      "vertices": 620039,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 0,
+      "unreal_path": "/Game/Art/Nature/SM_FirC",
+      "nanite": true
+    },
+    "SM_BroadleafA": {
+      "source_asset": "tree_small_02",
+      "source_object": "tree_small_02_LOD1",
+      "fbx": "SM_BroadleafA.fbx",
+      "materials": [
+        "PH_tree_small_02_branch",
+        "PH_tree_small_02_leaves",
+        "PH_tree_small_02_surface"
+      ],
+      "dimensions_cm": [
+        292.1434998512268,
+        429.26687002182007,
+        456.4037313684821
+      ],
+      "triangles": 495533,
+      "vertices": 626249,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 0,
+      "unreal_path": "/Game/Art/Nature/SM_BroadleafA",
+      "nanite": true
+    },
+    "SM_FernA": {
+      "source_asset": "fern_02",
+      "source_object": "fern_02_a",
+      "fbx": "SM_FernA.fbx",
+      "materials": [
+        "PH_fern_02_surface"
+      ],
+      "dimensions_cm": [
+        55.19406199455261,
+        61.34210824966431,
+        28.680354543030262
+      ],
+      "triangles": 784,
+      "vertices": 525,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 0,
+      "unreal_path": "/Game/Art/Nature/SM_FernA",
+      "nanite": false
+    },
+    "SM_FernB": {
+      "source_asset": "fern_02",
+      "source_object": "fern_02_b",
+      "fbx": "SM_FernB.fbx",
+      "materials": [
+        "PH_fern_02_surface"
+      ],
+      "dimensions_cm": [
+        98.9747405052185,
+        89.36897218227386,
+        42.76947118341923
+      ],
+      "triangles": 2384,
+      "vertices": 1590,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 0,
+      "unreal_path": "/Game/Art/Nature/SM_FernB",
+      "nanite": false
+    },
+    "SM_MossRockA": {
+      "source_asset": "rock_moss_set_01",
+      "source_object": "rock_moss_set_01_rock01",
+      "fbx": "SM_MossRockA.fbx",
+      "materials": [
+        "PH_rock_moss_set_01_surface"
+      ],
+      "dimensions_cm": [
+        223.76322746276855,
+        336.8804335594177,
+        147.26980924606323
+      ],
+      "triangles": 11000,
+      "vertices": 5502,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 0,
+      "unreal_path": "/Game/Art/Nature/SM_MossRockA",
+      "nanite": true
+    },
+    "SM_MossRockB": {
+      "source_asset": "rock_moss_set_01",
+      "source_object": "rock_moss_set_01_rock03",
+      "fbx": "SM_MossRockB.fbx",
+      "materials": [
+        "PH_rock_moss_set_01_surface"
+      ],
+      "dimensions_cm": [
+        210.85824966430664,
+        207.95855522155762,
+        109.96944606304169
+      ],
+      "triangles": 5000,
+      "vertices": 2500,
+      "pivot": "horizontal bounds center, ground z=0",
+      "source_uv_mapping_baked": true,
+      "baked_upper_trunk_faces": 0,
+      "unreal_path": "/Game/Art/Nature/SM_MossRockB",
+      "nanite": true
+    }
+  },
+  "materials": {
+    "PH_fir_tree_01_bark": {
+      "source_asset": "fir_tree_01",
+      "texture_group": "bark",
+      "foliage": false
+    },
+    "PH_fir_tree_01_trunk_a": {
+      "source_asset": "fir_tree_01",
+      "texture_group": "trunk_a",
+      "foliage": false
+    },
+    "PH_fir_tree_01_twig": {
+      "source_asset": "fir_tree_01",
+      "texture_group": "twig",
+      "foliage": true
+    },
+    "PH_fir_tree_01_trunk_b": {
+      "source_asset": "fir_tree_01",
+      "texture_group": "trunk_b",
+      "foliage": false
+    },
+    "PH_fir_tree_01_trunk_c": {
+      "source_asset": "fir_tree_01",
+      "texture_group": "trunk_c",
+      "foliage": false
+    },
+    "PH_tree_small_02_branch": {
+      "source_asset": "tree_small_02",
+      "texture_group": "branch",
+      "foliage": false
+    },
+    "PH_tree_small_02_leaves": {
+      "source_asset": "tree_small_02",
+      "texture_group": "leaves",
+      "foliage": true
+    },
+    "PH_tree_small_02_surface": {
+      "source_asset": "tree_small_02",
+      "texture_group": "surface",
+      "foliage": false
+    },
+    "PH_fern_02_surface": {
+      "source_asset": "fern_02",
+      "texture_group": "surface",
+      "foliage": true
+    },
+    "PH_rock_moss_set_01_surface": {
+      "source_asset": "rock_moss_set_01",
+      "texture_group": "surface",
+      "foliage": false
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "source_checks": {
+    "SM_FernA": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_fern_02_surface"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/fern_02.blend"
+    },
+    "SM_FernB": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_fern_02_surface"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/fern_02.blend"
+    },
+    "SM_FirA": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_a",
+        "PH_fir_tree_01_twig"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/fir_tree_01.blend"
+    },
+    "SM_FirB": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_b",
+        "PH_fir_tree_01_twig"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/fir_tree_01.blend"
+    },
+    "SM_FirC": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_c",
+        "PH_fir_tree_01_twig"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/fir_tree_01.blend"
+    },
+    "SM_MossRockA": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_rock_moss_set_01_surface"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/rock_moss_set_01.blend"
+    },
+    "SM_MossRockB": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_rock_moss_set_01_surface"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/rock_moss_set_01.blend"
+    },
+    "SM_BroadleafA": {
+      "uv_channels": 1,
+      "materials": [
+        "PH_tree_small_02_branch",
+        "PH_tree_small_02_leaves",
+        "PH_tree_small_02_surface"
+      ],
+      "leaf_vertex_colors": false,
+      "source": "Art/Nature/Source/tree_small_02.blend"
+    }
+  },
+  "linked_review_meshes_verified": 8,
+  "sha256": {
+    "Art/Nature/Source/fern_02.blend": "8ea5fbf71fc183ecb928578afbea19a6fcb68feae277a890f22238ee1fe32c05",
+    "Art/Nature/Source/fir_tree_01.blend": "4f6ac6962a842317c4f7b86d6092b27c3dff0ca930a9aad4e1149a078d0b590a",
+    "Art/Nature/Source/Nature_Review.blend": "b73319b15f3ffdc440a5367dd5e58966434fc469df22d84a3a1b525096d44f71",
+    "Art/Nature/Source/rock_moss_set_01.blend": "7a82e563a9e4e4cfb73abbf66039189e5533d3d08b797534e95117fa1ffb6f15",
+    "Art/Nature/Source/tree_small_02.blend": "c7d4d24f07cbcc7ebf96ec7f6f9f5ede0d0a6c882cf01c4eb10dd62bd8b8b498",
+    "Art/Nature/Exports/nature_manifest.json": "c756268912ae0f384f5bc1eed8804c3c6223f566942809d553258b5b223d514d",
+    "Art/Nature/Exports/SM_BroadleafA.fbx": "0521078bd01a8df9a484ae57f1970fe3dc54f6ee4bc164d48398b4461d875b27",
+    "Art/Nature/Exports/SM_FernA.fbx": "94724f45bf06418d3aec291f8144f865ece1b5684546ea9bd4bcde65b765ce2b",
+    "Art/Nature/Exports/SM_FernB.fbx": "abde81949b69d4331df48a02f0aa8704f1051e521c8be358860b058ab69791b6",
+    "Art/Nature/Exports/SM_FirA.fbx": "8fc79f6e0ac9ba230c60e8b5a0166fe47de753f8ce5ee4fb6a8404876215773d",
+    "Art/Nature/Exports/SM_FirB.fbx": "305945cf6e096b60bc3740ea8c8851ead7810ef7378bc8d4139feba53de75391",
+    "Art/Nature/Exports/SM_FirC.fbx": "697a9a6eba9034c40d2584bb0e40e221e041497a760f013d86fd36a3250c8c9e",
+    "Art/Nature/Exports/SM_MossRockA.fbx": "351c41db6648495ad25c7da160178779676802bce37529c089b3f2df8623de2f",
+    "Art/Nature/Exports/SM_MossRockB.fbx": "7aca043825054264991b54fd591e30d2b949916d860920cfe96e637d08b8f8f3",
+    "Art/Nature/Previews/fern_detail.png": "2d02d00d1ec89aa4f2b81c966c5089f646c5336758710f4bdccc56b8181a95c3",
+    "Art/Nature/Previews/licensed_woodland.png": "630f1c79c9c5a1b6ae1a23d0858b8e47640f06c64642e66ef9a240bd6215202a",
+    "Art/Nature/Previews/woodland_detail.png": "1f950c432971ccc2beeeb83588ea4d8e795241962ce2f2566ae8a380c5e8a193"
+  }
+}

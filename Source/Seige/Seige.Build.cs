@@ -9,5 +9,6 @@ public class Seige : ModuleRules
         RuntimeDependencies.Add("$(TargetOutputDir)/Rules/...", System.IO.Path.Combine(ModuleDirectory, "../../Rules/..."), StagedFileType.NonUFS);
         RuntimeDependencies.Add("$(TargetOutputDir)/Interface/...", System.IO.Path.Combine(ModuleDirectory, "../../Interface/..."), StagedFileType.NonUFS);
         RuntimeDependencies.Add("$(TargetOutputDir)/AIFILES/...", System.IO.Path.Combine(ModuleDirectory, "../../AIFILES/..."), StagedFileType.NonUFS);
+        RuntimeDependencies.Add("$(TargetOutputDir)/Graphics/...", System.IO.Path.Combine(ModuleDirectory, "../../Graphics/..."), StagedFileType.NonUFS);
     }
 }

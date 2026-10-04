@@ -9,6 +9,10 @@
 #include "Misc/Paths.h"
 #include "Misc/ConfigCacheIni.h"
 #include "HAL/PlatformProcess.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Engine/LocalPlayer.h"
+#include "Engine/GameViewportClient.h"
+#include "SceneView.h"
 
 namespace {
 const FLinearColor Ink(.029f,.035f,.031f,.98f),Panel(.055f,.064f,.054f,.98f),Raised(.087f,.101f,.081f,1);
@@ -32,14 +36,48 @@ void ASeigeController::HandlePrimaryClick(float X,float Y)
     int32 Width=0,Height=0;GetViewportSize(Width,Height);
     if(!FMath::IsFinite(X)||!FMath::IsFinite(Y)||X<0||Y<0||(Width>0&&X>Width)||(Height>0&&Y>Height))return;
     auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;if(!G)return;
-    auto* UI=Cast<ASeigeHUD>(GetHUD());if(!UI||!UI->Click(X,Y))G->ClickWorld();
+    if(GetLocalPlayer())UpdateCursorFromScreen(X,Y);
+    auto* UI=Cast<ASeigeHUD>(GetHUD());if(UI&&UI->Click(X,Y))return;
+    FVector Origin,Direction;
+    if(GetLocalPlayer()&&ScreenRay(FVector2D(X,Y),Origin,Direction)&&G->SelectBuildingRay(Origin,Direction))return;
+    G->ClickWorld();
+}
+bool ASeigeController::ScreenRay(const FVector2D& ScreenPosition,FVector& WorldOrigin,FVector& WorldDirection) const
+{
+    const ULocalPlayer* Local=GetLocalPlayer();
+    if(ScreenPosition.ContainsNaN()||!Local||!Local->ViewportClient||!Local->ViewportClient->Viewport)return false;
+    FSceneViewProjectionData Projection;
+    if(!Local->GetProjectionData(Local->ViewportClient->Viewport,Projection))return false;
+    const FIntRect Rect=Projection.GetConstrainedViewRect();
+    if(Rect.Width()<=0||Rect.Height()<=0||ScreenPosition.X<Rect.Min.X||ScreenPosition.Y<Rect.Min.Y||ScreenPosition.X>Rect.Max.X||ScreenPosition.Y>Rect.Max.Y)return false;
+    // The engine's screen deprojection snaps to whole pixels. Keep subpixel input
+    // so a projected target remains the same terrain point even at region scale.
+    const double X=2*(ScreenPosition.X-Rect.Min.X)/Rect.Width()-1;
+    const double Y=1-2*(ScreenPosition.Y-Rect.Min.Y)/Rect.Height();
+    const FMatrix Inverse=Projection.ComputeViewProjectionMatrix().InverseFast();
+    const FVector4 Near=Inverse.TransformFVector4(FVector4(X,Y,1,1));
+    const FVector4 Far=Inverse.TransformFVector4(FVector4(X,Y,.01,1));
+    if(!FMath::IsFinite(Near.W)||!FMath::IsFinite(Far.W)||FMath::Abs(Near.W)<1.e-12||FMath::Abs(Far.W)<1.e-12)return false;
+    const FVector Origin=FVector(Near.X,Near.Y,Near.Z)/Near.W;
+    const FVector End=FVector(Far.X,Far.Y,Far.Z)/Far.W;
+    if(Origin.ContainsNaN()||End.ContainsNaN())return false;
+    const FVector Direction=(End-Origin).GetSafeNormal();
+    if(Direction.IsNearlyZero()||Direction.ContainsNaN())return false;
+    WorldOrigin=Origin;WorldDirection=Direction;return true;
+}
+bool ASeigeController::UpdateCursorFromScreen(float X,float Y)
+{
+    auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;
+    if(!G)return false;
+    FVector Origin,Direction,Hit;
+    G->CursorOnWorld=ScreenRay(FVector2D(X,Y),Origin,Direction)&&G->TraceGroundRay(Origin,Direction,Hit);
+    if(G->CursorOnWorld)G->CursorWorld=FVector2D(Hit)/G->RenderScale;
+    return G->CursorOnWorld;
 }
 void ASeigeController::PlayerTick(float Dt)
 {
     Super::PlayerTick(Dt);auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;if(!G)return;
-    auto* UI=Cast<ASeigeHUD>(GetHUD());FVector Origin,Direction;
-    G->CursorOnWorld=DeprojectMousePositionToWorld(Origin,Direction)&&FMath::Abs(Direction.Z)>.0001;
-    if(G->CursorOnWorld){FVector P=Origin+Direction*(-Origin.Z/Direction.Z);for(int32 I=0;I<6;++I)P=Origin+Direction*((G->GroundHeight(FVector2D(P))-Origin.Z)/Direction.Z);G->CursorWorld=FVector2D(P);}
+    auto* UI=Cast<ASeigeHUD>(GetHUD());
     bool Consumed=false;
     for(auto It=ConsumedKeysUntilRelease.CreateIterator();It;++It)if(!IsInputKeyDown(*It))It.RemoveCurrent();
     TArray<FKey> Keys={EKeys::Escape,EKeys::RightMouseButton,EKeys::SpaceBar,EKeys::F5,EKeys::F9};
@@ -54,21 +92,27 @@ void ASeigeController::PlayerTick(float Dt)
     if(!Blocked)
     {
         const float Step=G->Zoom*.65f*FMath::Min(Dt,.1f);
-        if(IsInputKeyDown(EKeys::W)||IsInputKeyDown(EKeys::Up))G->CameraCenter+=FVector(-1,1,0)*Step;
-        if(IsInputKeyDown(EKeys::S)||IsInputKeyDown(EKeys::Down))G->CameraCenter+=FVector(1,-1,0)*Step;
-        if(IsInputKeyDown(EKeys::A)||IsInputKeyDown(EKeys::Left))G->CameraCenter+=FVector(1,1,0)*Step;
-        if(IsInputKeyDown(EKeys::D)||IsInputKeyDown(EKeys::Right))G->CameraCenter+=FVector(-1,-1,0)*Step;
+        const float Forward=(IsInputKeyDown(EKeys::W)||IsInputKeyDown(EKeys::Up)?1.f:0.f)-(IsInputKeyDown(EKeys::S)||IsInputKeyDown(EKeys::Down)?1.f:0.f);
+        const float Right=(IsInputKeyDown(EKeys::D)||IsInputKeyDown(EKeys::Right)?1.f:0.f)-(IsInputKeyDown(EKeys::A)||IsInputKeyDown(EKeys::Left)?1.f:0.f);
+        G->CameraCenter+=FVector(G->CameraPanDirection(Forward,Right),0)*Step;
+        if(IsInputKeyDown(EKeys::Q))G->CameraYaw-=55*Dt;
+        if(IsInputKeyDown(EKeys::E))G->CameraYaw+=55*Dt;
+        if(IsInputKeyDown(EKeys::MiddleMouseButton)&&!(UI&&UI->IsPointerOverUI()))
+        {float MX=0,MY=0;GetInputMouseDelta(MX,MY);G->CameraYaw+=MX*.25f;G->CameraPitch=FMath::Clamp(G->CameraPitch+MY*.2f,25.f,75.f);}
+        G->CameraYaw=FRotator::ClampAxis(G->CameraYaw);
     }
     if(CameraScreen&&!(UI&&UI->IsPointerOverUI()))
     {
-        if(WasInputKeyJustPressed(EKeys::MouseScrollUp))G->Zoom=FMath::Max(2500.f,G->Zoom*.88f);
+        if(WasInputKeyJustPressed(EKeys::MouseScrollUp))G->Zoom=FMath::Max(G->MinimumZoom,G->Zoom*.88f);
         if(WasInputKeyJustPressed(EKeys::MouseScrollDown))G->Zoom=FMath::Min(static_cast<float>(G->Sim.WorldHalfSize*12),G->Zoom*1.12f);
     }
     const double Limit=G->Sim.WorldHalfSize*2.8;
     G->CameraCenter.X=FMath::Clamp(G->CameraCenter.X,-Limit,Limit);G->CameraCenter.Y=FMath::Clamp(G->CameraCenter.Y,-Limit,Limit);
-    if(!Blocked&&WasInputKeyJustPressed(EKeys::Home)){G->CameraCenter=FVector(G->HomePosition(),0);G->Zoom=6500;}
-    if(WasInputKeyJustPressed(EKeys::LeftMouseButton)){float X=0,Y=0;if(GetMousePosition(X,Y))HandlePrimaryClick(X,Y);}
+    if(!Blocked&&WasInputKeyJustPressed(EKeys::Home)){G->CameraCenter=FVector(G->HomePosition(),0);G->Zoom=G->DefaultZoom;G->CameraYaw=135;G->CameraPitch=52;}
     G->UpdateCamera();
+    if(PlayerCameraManager)PlayerCameraManager->UpdateCamera(Dt);
+    float X=0,Y=0;G->CursorOnWorld=false;
+    if(GetMousePosition(X,Y)){UpdateCursorFromScreen(X,Y);if(WasInputKeyJustPressed(EKeys::LeftMouseButton))HandlePrimaryClick(X,Y);}
 }
 bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
 {
@@ -340,7 +384,7 @@ void ASeigeHUD::DrawHUD()
     if(LastNotice!=G->Notice){LastNotice=G->Notice;NoticeVisibleSeconds=0;}
     if(DrawFrontend(*G,W,H))return;
     auto WorldLine=[&](FVector A,FVector B,FLinearColor C,float Thickness){FVector2D P,Q;if(!PC||!PC->ProjectWorldLocationToScreen(A,P)||!PC->ProjectWorldLocationToScreen(B,Q))return;if(P.Y/Scale>TopHeight&&Q.Y/Scale>TopHeight)DrawLine(P.X,P.Y,Q.X,Q.Y,C,Thickness*Scale);};
-    auto Ground=[&](FVector2D P,float Lift){return FVector(P,G->GroundHeight(P)+Lift);};
+    auto Ground=[&](FVector2D P,float Lift){return G->RenderPosition(P,Lift);};
     auto Circle=[&](FVector2D Center,double Radius,FLinearColor C){for(int32 I=0;I<64;++I){const double A=I*UE_TWO_PI/64,B=(I+1)*UE_TWO_PI/64;WorldLine(Ground(Center+FVector2D(FMath::Cos(A),FMath::Sin(A))*Radius,12),Ground(Center+FVector2D(FMath::Cos(B),FMath::Sin(B))*Radius,12),C,1.4f);}};
     const bool NeighborhoodOverview=G->Screen==TEXT("playing")&&G->Zoom>=G->Sim.WorldHalfSize*2.8;
     if(G->Zoom>=G->Sim.WorldHalfSize*2.8)
@@ -386,7 +430,7 @@ void ASeigeHUD::DrawHUD()
             FString Name=Overview?R->Name.Left(3).ToUpper():R->Name;if(M.Count>1)Name+=FString::Printf(TEXT(" x%d"),M.Count);
             float TW=0,TH=0,BW=0,BH=0;Canvas->StrLen(GEngine->GetLargeFont(),Name,TW,TH);Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),BW,BH);
             const float LW=FMath::Max(Overview?54.f:94.f,TW*15/FMath::Max(BH,1.f)+16),LH=29;
-            bool Placed=false;FVector2D At;
+            bool Placed=false;FVector2D At=FVector2D::ZeroVector;
             for(int32 Ring=0;Ring<5&&!Placed;++Ring)
             {
                 const float Gap=14+Ring*33;
@@ -479,7 +523,7 @@ void ASeigeHUD::DrawHUD()
         if(!G->Observer)Button(TEXT("Launch escape shuttle"),TEXT("escape"),X+12,Y+166,286,43);
         Button(TEXT("Settings"),TEXT("screen:settings"),X+12,Y+215,286,43);Button(TEXT("Credits"),TEXT("screen:credits"),X+12,Y+264,286,43);
         Button(TEXT("Return to main menu"),TEXT("main-menu"),X+12,Y+313,286,43);Button(TEXT("Exit game"),TEXT("exit"),X+12,Y+362,286,43);
-        float TY=Y+430;Wrapped(TEXT("B: build / WASD or arrows: pan / Wheel: zoom / Home: core / Space: pause"),X+18,TY,274,13,Muted);
+        float TY=Y+430;Wrapped(TEXT("B: build / WASD: pan / Wheel: zoom / Q,E: orbit / Middle drag: orbit + tilt / Home: core"),X+18,TY,274,13,Muted);
     }
     else if(!Ui.HoverPanel.IsEmpty())
     {

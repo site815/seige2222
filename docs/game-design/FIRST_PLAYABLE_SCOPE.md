@@ -2,9 +2,23 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-**Authorized development scope, implementation in progress.** The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current working name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier working labels. This file records the first implementation slice, its limitations, and the specific verification status below.
+**Implemented first-playable scope, v0.3 package verified.** The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current working name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier working labels. This file records the first implementation slice, its limitations, and the specific verification status below.
 
-## Verification status
+## Current graphics revision
+
+**v0.3 is packaged and verified:** The rotatable perspective camera, credible physical scale, detailed original industry, licensed CC0 nature, and revised ground surfaces are included. [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md) records implementation and remaining visual polish. Logical content/balance is unchanged; six rendered centimeters per logical unit gives 3.6 km sectors and a 10.8 km neighborhood.
+
+- Win64 Shipping packaging completed with exit 0 in `Builds/v0.3.0/Windows`.
+- Nineteen native tests passed with zero failures or warnings (`Saved/Automation/v03-final/index.json`). Source code did not change after that run.
+- The packaged rendered interaction route completed 28 stages with zero failures and exit 0, including frontend, human landing/construction, observation, and perspective selection in rotated/low-angle views.
+- Eighteen samples of the packaged process tree each showed zero TCP/UDP endpoints. This is a bounded endpoint observation, not packet capture or proof about all execution paths.
+- Ten loose files across Rules, AIFILES, Interface, and Graphics matched source hashes and loaded successfully. The controlled packaged balance-edit experiment remains v0.2 evidence and was not repeated for v0.3.
+- Native tests verify format-2 camera compatibility and neighborhood save continuation. No separate packaged save/load roundtrip was run for v0.3.
+- Remaining art work includes distant canopy thinning, terrain repetition, and regional presentation; the build does not claim Manor Lords parity. Existing robot/bug art is retained with no new character animation.
+
+See the [development report](../DEVELOPMENT_REPORT.md) for logs and actual game captures. These results establish the tested prototype paths, not exhaustive human playability, indefinite sustainability, or finished art.
+
+## Historical v0.2 baseline
 
 - The revised Unreal editor and Win64 Shipping targets compiled, and the standalone v0.2.0 package launched successfully outside the editor.
 - The external rule validator passed for nine items, six recipes, and thirteen building definitions, including fifteen invalid-data cases. Its dependency and startup-stock checks do not prove live economic or defensive solvability.
@@ -33,12 +47,13 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | [policies.json](../../Rules/policies.json) | Simulation timing, staffing, population adjustment, physical delivery, repair/upkeep, visibility, threat behavior, scenario objectives, and numerical tuning. |
 | [scenario.json](../../Rules/scenario.json) | First Landing title, initial core, starting population and inventory, separate initial shuttle cargo, world extent, seed, and irregularly distributed resource-source locations. |
 | [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a finite developed-colony preset. Runtime AI uses the normal simulation rules. |
+| [Graphics definitions](../../Graphics/scene.json) | v0.3 camera, logical-to-rendered scale, vegetation candidate counts, and nature asset roles. These change presentation without changing logical costs, rates, or travel times. |
 
 The proposed twelve-resource catalog is not all implemented. The current thirteen building definitions represent reusable prototype functions, not adoption of every proposed facility or upgrade. The JSON files own exact quantities and rates so this document does not become a second balance table.
 
-## Planned behavior for this slice
+## Implemented behavior for this slice
 
-These are the implementation targets being built and reviewed. A definition or planned system is not evidence that its execution has passed testing.
+These behaviors form the current prototype. The checks above and development report establish specific tested paths; the table does not imply every scenario and edge case has been exhaustively verified.
 
 | Area | Prototype behavior |
 | --- | --- |
@@ -55,7 +70,7 @@ These are the implementation targets being built and reviewed. A definition or p
 | Defenses | Core and turrets engage threats automatically; building health and damage remain meaningful. |
 | Emergency departure | Manual ejection or core destruction ends the local scenario while retaining only the separately preloaded shuttle cargo. The default scenario starts with an empty shuttle; no core-stock transfer occurs. |
 | Objective | Survive for the configured duration and actually manufacture the configured component output while maintaining the required industrial building. Starting stock alone must not satisfy a production objective. |
-| Local state | Save/load is a prototype target including inventory, cargo, timers, population, threats, random state, and rule-version/fingerprint handling. It does not implement offline multiplayer progression. |
+| Local state | Local save/load includes inventory, cargo, timers, population, threats, random state, all occupied sectors, camera/time controls, and rule/AI fingerprints; native continuation tests cover it. It does not implement offline multiplayer progression. |
 
 The precise local interface and input bindings belong with the delivered build's instructions. The full [interface direction](INTERFACE_AND_CONTROLS.md) remains the design guide; fleet controls are not implied to exist in this slice.
 
@@ -75,13 +90,15 @@ The precise local interface and input bindings belong with the delivered build's
 
 ## Deliberately later work
 
-The single-player target is configured for offline Shipping packaging. HTTP, network discovery, and telemetry plugins are disabled, and the Shipping configuration avoids Unreal's development profiling listener. The latest package still requires its own observed launch and offline check. Future multiplayer work must introduce networking deliberately; it is not a dependency of this playable.
+The single-player target is configured for offline Shipping packaging. HTTP, network discovery, and telemetry plugins are disabled, and the Shipping configuration avoids Unreal's development profiling listener. The v0.3 packaged interaction check completed, with zero TCP/UDP endpoints in eighteen observed process-tree samples. Future multiplayer work must introduce networking deliberately; it is not a dependency of this playable.
 
 Strategic AI faction choices beyond the simple colony controller; privateers and fleet missions; aggression settings and fleet-level orders; trade; inter-sector extraction; sensor theft; full loot and salvage; orbital relocation and adjacent destinations; leaderless areas and scavenging; revolt; building upgrades; the remaining proposed resource branches; specialized low-population balance; complete robot-needs design; and persistent multiplayer services.
 
 These omissions do not remove those ideas from their subject documents. The full single-player game should eventually represent the same gameplay rules intended for persistent multiplayer.
 
-## Acceptance checks — complete only when individually verified
+## Acceptance checklist and verification boundaries
+
+This checklist remains useful for subsequent revisions. Current verification is recorded above; it is not a declaration that every item was rerun end to end in the packaged v0.3 build. In particular, save/load is covered natively, while the controlled packaged balance edit is historical v0.2 evidence.
 
 1. Compile and launch the native Unreal editor/game targets; produce a standalone package that launches outside the editor.
 2. Load the external definition set with useful errors for broken references or invalid rules. In the packaged build, verify a controlled numerical rule edit takes effect after the documented restart/reload path.

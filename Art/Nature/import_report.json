@@ -1,0 +1,163 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0-1.0",
+  "meshes": {
+    "SM_FirA": {
+      "path": "/Game/Art/Nature/SM_FirA.SM_FirA",
+      "dimensions_cm": [
+        658.3265075683594,
+        646.7047729492188,
+        1895.4600830078125
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_a",
+        "PH_fir_tree_01_twig"
+      ],
+      "source_triangles": 177444,
+      "nanite": true,
+      "shape_preservation": "<NaniteShapePreservation.PRESERVE_AREA: 1>",
+      "uv_channels": 1,
+      "verified_from_fresh_process": true
+    },
+    "SM_FirB": {
+      "path": "/Game/Art/Nature/SM_FirB.SM_FirB",
+      "dimensions_cm": [
+        563.1947326660156,
+        608.4495849609375,
+        1407.752685546875
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_b",
+        "PH_fir_tree_01_twig"
+      ],
+      "source_triangles": 128464,
+      "nanite": true,
+      "shape_preservation": "<NaniteShapePreservation.PRESERVE_AREA: 1>",
+      "uv_channels": 1,
+      "verified_from_fresh_process": true
+    },
+    "SM_FirC": {
+      "path": "/Game/Art/Nature/SM_FirC.SM_FirC",
+      "dimensions_cm": [
+        630.5938720703125,
+        596.6237487792969,
+        1452.0582275390625
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_twig",
+        "PH_fir_tree_01_trunk_c"
+      ],
+      "source_triangles": 505494,
+      "nanite": true,
+      "shape_preservation": "<NaniteShapePreservation.PRESERVE_AREA: 1>",
+      "uv_channels": 1,
+      "source_object": "fir_tree_01_c_LOD0",
+      "verified_from_fresh_process": true
+    },
+    "SM_BroadleafA": {
+      "path": "/Game/Art/Nature/SM_BroadleafA.SM_BroadleafA",
+      "dimensions_cm": [
+        292.1434783935547,
+        429.2668762207031,
+        456.40374755859375
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_tree_small_02_branch",
+        "PH_tree_small_02_leaves",
+        "PH_tree_small_02_surface"
+      ],
+      "source_triangles": 495533,
+      "nanite": true,
+      "shape_preservation": "<NaniteShapePreservation.PRESERVE_AREA: 1>",
+      "uv_channels": 1,
+      "verified_from_fresh_process": true
+    },
+    "SM_FernA": {
+      "path": "/Game/Art/Nature/SM_FernA.SM_FernA",
+      "dimensions_cm": [
+        55.19405937194824,
+        61.342119216918945,
+        28.680355072021484
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_fern_02_surface"
+      ],
+      "source_triangles": 784,
+      "nanite": false,
+      "shape_preservation": "<NaniteShapePreservation.NONE: 0>",
+      "uv_channels": 1,
+      "verified_from_fresh_process": true
+    },
+    "SM_FernB": {
+      "path": "/Game/Art/Nature/SM_FernB.SM_FernB",
+      "dimensions_cm": [
+        98.97473526000977,
+        89.36897277832031,
+        42.769474029541016
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_fern_02_surface"
+      ],
+      "source_triangles": 2384,
+      "nanite": false,
+      "shape_preservation": "<NaniteShapePreservation.NONE: 0>",
+      "uv_channels": 1,
+      "verified_from_fresh_process": true
+    },
+    "SM_MossRockA": {
+      "path": "/Game/Art/Nature/SM_MossRockA.SM_MossRockA",
+      "dimensions_cm": [
+        223.76324462890625,
+        336.8804016113281,
+        147.26980590820312
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_rock_moss_set_01_surface"
+      ],
+      "source_triangles": 11000,
+      "nanite": true,
+      "shape_preservation": "<NaniteShapePreservation.NONE: 0>",
+      "uv_channels": 1,
+      "verified_from_fresh_process": true
+    },
+    "SM_MossRockB": {
+      "path": "/Game/Art/Nature/SM_MossRockB.SM_MossRockB",
+      "dimensions_cm": [
+        210.85824584960938,
+        207.95858001708984,
+        109.96944427490234
+      ],
+      "ground_z": 0.0,
+      "material_slots": [
+        "PH_rock_moss_set_01_surface"
+      ],
+      "source_triangles": 5000,
+      "nanite": true,
+      "shape_preservation": "<NaniteShapePreservation.NONE: 0>",
+      "uv_channels": 1,
+      "verified_from_fresh_process": true
+    }
+  },
+  "texture_count": 33,
+  "material_instances": 10,
+  "normal_conversion": "OpenGL green channel inverted on import",
+  "alpha_mips": "preserve red-channel coverage at 0.33",
+  "runtime_network_required": false,
+  "verified_from_fresh_process": true,
+  "foliage_texture_mip_bias": {
+    "BaseColor": -1,
+    "NormalMap": 0,
+    "RoughnessMap": 0,
+    "OpacityMap": -2
+  }
+}

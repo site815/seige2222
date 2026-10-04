@@ -1,51 +1,116 @@
 {
   "version": 1,
   "summary_resources": [
-    {"resource": "alloy", "label": "Alloy"},
-    {"resource": "circuits", "label": "Cir"},
-    {"resource": "components", "label": "Comp"}
+    {
+      "resource": "alloy",
+      "label": "Alloy"
+    },
+    {
+      "resource": "circuits",
+      "label": "Cir"
+    },
+    {
+      "resource": "components",
+      "label": "Comp"
+    }
   ],
   "credits": [
-    {"heading": "Design & development", "text": "seige2222 is an independently developed robot-colony simulation. Game concept and creative direction: site815. Project implementation and original procedural art developed with Codex."},
-    {"heading": "Engine & creation tools", "text": "Built with Unreal Engine by Epic Games. Original industrial structures, robots, aliens and environment meshes created with Blender. Unreal Engine and Blender are trademarks of their respective owners."},
-    {"heading": "Photographic surfaces / Poly Haven / CC0 1.0", "text": "Bark Brown 02 and Brown Mud Dry: Rob Tuytel. Grass Ground: Charlotte Baglioni. Rock Boulder Dry: Dimitrios Savva and Rico Cilliers. Textures provided by Poly Haven under CC0 1.0."},
-    {"heading": "Asset provenance", "text": "Original meshes and generation scripts are retained in the project. The source asset register and third-party attribution record the downloaded texture maps, source URLs and file hashes. No paid asset packs or copied reference characters are included."}
+    {
+      "heading": "Design & development",
+      "text": "seige2222 is an independently developed robot-colony simulation. Game concept and creative direction: site815. Project implementation and original procedural art developed with Codex."
+    },
+    {
+      "heading": "Engine & creation tools",
+      "text": "Built with Unreal Engine by Epic Games. Original industrial structures, robots and aliens created with Blender. Licensed nature models prepared in Blender. Unreal Engine and Blender are trademarks of their respective owners."
+    },
+    {
+      "heading": "Nature and surfaces / Poly Haven / CC0 1.0",
+      "text": "Fir Tree 01 and Fern 02: Rob Tuytel and Rico Cilliers. Tree Small 02: Rico Cilliers. Rock Moss Set 01: Kless Gyzen. Bark Brown 02 and Brown Mud Dry: Rob Tuytel. Grass Ground and Leafy Grass: Charlotte Baglioni. Rock Boulder Dry: Dimitrios Savva and Rico Cilliers."
+    },
+    {
+      "heading": "Asset provenance",
+      "text": "Downloaded models and photographic maps are CC0 and permit commercial use. Creator credits, source links, licenses and file hashes are retained with the project. Original Blender source and generation scripts are included. All game assets are local; no runtime downloads."
+    }
   ],
   "build_groups": [
     {
-      "id": "extraction", "name": "Resource extraction", "shortcut": "R",
+      "id": "extraction",
+      "name": "Resource extraction",
+      "shortcut": "R",
       "description": "Harvest the deposits in your sector. Each extractor needs its matching deposit.",
       "entries": [
-        {"definition": "extract_iron_ore", "shortcut": "I"},
-        {"definition": "extract_copper_ore", "shortcut": "C"},
-        {"definition": "extract_silica", "shortcut": "S"},
-        {"definition": "extract_carbon", "shortcut": "K"}
+        {
+          "definition": "extract_iron_ore",
+          "shortcut": "I"
+        },
+        {
+          "definition": "extract_copper_ore",
+          "shortcut": "C"
+        },
+        {
+          "definition": "extract_silica",
+          "shortcut": "S"
+        },
+        {
+          "definition": "extract_carbon",
+          "shortcut": "K"
+        }
       ]
     },
     {
-      "id": "production", "name": "Resource production", "shortcut": "I",
+      "id": "production",
+      "name": "Resource production",
+      "shortcut": "I",
       "description": "Turn raw materials into alloys, electronics and robot components. Inputs arrive by courier.",
       "entries": [
-        {"definition": "alloy_refinery", "shortcut": "A"},
-        {"definition": "conductor_works", "shortcut": "C"},
-        {"definition": "substrate_works", "shortcut": "S"},
-        {"definition": "circuit_works", "shortcut": "E"},
-        {"definition": "component_works", "shortcut": "R"}
+        {
+          "definition": "alloy_refinery",
+          "shortcut": "A"
+        },
+        {
+          "definition": "conductor_works",
+          "shortcut": "C"
+        },
+        {
+          "definition": "substrate_works",
+          "shortcut": "S"
+        },
+        {
+          "definition": "circuit_works",
+          "shortcut": "E"
+        },
+        {
+          "definition": "component_works",
+          "shortcut": "R"
+        }
       ]
     },
     {
-      "id": "logistics", "name": "Logistics", "shortcut": "L",
+      "id": "logistics",
+      "name": "Logistics",
+      "shortcut": "L",
       "description": "Extend live sensor coverage and move or store physical goods.",
       "entries": [
-        {"definition": "sensor", "shortcut": "S"},
-        {"definition": "depot", "shortcut": "D"}
+        {
+          "definition": "sensor",
+          "shortcut": "S"
+        },
+        {
+          "definition": "depot",
+          "shortcut": "D"
+        }
       ]
     },
     {
-      "id": "defense", "name": "Defense", "shortcut": "D",
+      "id": "defense",
+      "name": "Defense",
+      "shortcut": "D",
       "description": "Automatic defenses protect buildings and exposed transport routes.",
       "entries": [
-        {"definition": "turret", "shortcut": "T"}
+        {
+          "definition": "turret",
+          "shortcut": "T"
+        }
       ]
     }
   ]

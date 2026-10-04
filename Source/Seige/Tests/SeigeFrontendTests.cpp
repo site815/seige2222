@@ -128,19 +128,19 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     G.ScenarioSlots[0]=TEXT("starting");G.ScenarioSlots[8]=TEXT("developed");G.StartScenario();G.ConfirmLanding(FVector2D(700,0));
     if(!TestTrue(TEXT("Save scenario is ready and playing"),G.Ready&&G.Screen==TEXT("playing"))){AddError(G.Error);return false;}
     for(int32 I=0;I<64;++I)G.Tick(.2f);
-    G.CameraCenter=FVector(3000,-1200,0);G.Zoom=27000;G.Speed=3;G.Paused=true;G.WinAcknowledged=true;
+    G.CameraCenter=FVector(3000,-1200,0);G.Zoom=27000;G.CameraYaw=224;G.CameraPitch=67;G.Speed=3;G.Paused=true;G.WinAcknowledged=true;
     const FString CenterBefore=StateText(G.Sim,TEXT("center-before"),*this);
     TMap<int32,FString> NeighborBefore;for(const auto& N:G.Neighbors)NeighborBefore.Add(N.Index,StateText(N.Sim,TEXT("neighbor-before-")+FString::FromInt(N.Index),*this));
     G.SaveGame();FString MetadataText;
     if(!TestTrue(TEXT("Scenario save completes successfully"),G.Notice.Contains(TEXT("Entire scenario saved")))){AddError(G.Notice);return false;}
     if(!TestTrue(TEXT("Scenario save metadata is written"),FFileHelper::LoadFileToString(MetadataText,*SaveGuard.Filename)))return false;
-    G.Paused=false;G.Speed=1;for(int32 I=0;I<20;++I)G.Tick(.2f);G.CameraCenter=FVector::ZeroVector;G.Zoom=6500;G.ScenarioSlots[0]=TEXT("empty");
+    G.Paused=false;G.Speed=1;for(int32 I=0;I<20;++I)G.Tick(.2f);G.CameraCenter=FVector::ZeroVector;G.Zoom=6500;G.CameraYaw=10;G.CameraPitch=30;G.ScenarioSlots[0]=TEXT("empty");
     G.LoadGame();
     TestEqual(TEXT("Center complete state restores exactly"),StateText(G.Sim,TEXT("center-restored"),*this),CenterBefore);
     TestEqual(TEXT("Saved neighbor count restores"),G.Neighbors.Num(),NeighborBefore.Num());
     for(const auto& N:G.Neighbors)TestEqual(TEXT("Neighbor full simulation snapshot restores"),StateText(N.Sim,TEXT("neighbor-restored-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
     TestEqual(TEXT("Scenario slot configuration restores"),G.ScenarioSlots[0],FString(TEXT("starting")));
-    TestTrue(TEXT("Camera, speed, pause and objective acknowledgment restore"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Zoom==27000&&G.Speed==3&&G.Paused&&G.WinAcknowledged);
+    TestTrue(TEXT("Camera focus, orbit, zoom, speed, pause and objective acknowledgment restore"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Zoom==27000&&G.CameraYaw==224&&G.CameraPitch==67&&G.Speed==3&&G.Paused&&G.WinAcknowledged);
     TSharedPtr<FJsonObject> Metadata;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(MetadataText),Metadata)){AddError(TEXT("Could not read emitted metadata"));return false;}
     const auto Fingerprints=Metadata->GetArrayField(TEXT("neighbor_ai"));
     if(!TestTrue(TEXT("Metadata contains neighbor identities"),Fingerprints.Num()>0))return false;
@@ -151,7 +151,42 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Rejected metadata leaves center simulation unchanged"),StateText(G.Sim,TEXT("center-rejected"),*this),CenterBefore);
     TestEqual(TEXT("Rejected metadata leaves neighbors unchanged"),G.Neighbors.Num(),NeighborBefore.Num());
     for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected metadata preserves each neighbor"),StateText(N.Sim,TEXT("neighbor-rejected-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
-    TestTrue(TEXT("Rejected metadata leaves camera and gameplay flags unchanged"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Paused&&G.Speed==3&&G.Screen==TEXT("playing"));
+    TestTrue(TEXT("Rejected metadata leaves camera and gameplay flags unchanged"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.CameraYaw==224&&G.CameraPitch==67&&G.Paused&&G.Speed==3&&G.Screen==TEXT("playing"));
+    auto FreshMetadata=[&]()
+    {
+        TSharedPtr<FJsonObject> Result;
+        if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(MetadataText),Result))AddError(TEXT("Cannot recreate original save metadata"));
+        return Result;
+    };
+    auto WriteMetadata=[&](const TSharedPtr<FJsonObject>& Value)
+    {
+        FString Json;
+        return Value&&FJsonSerializer::Serialize(Value.ToSharedRef(),TJsonWriterFactory<>::Create(&Json))&&FFileHelper::SaveStringToFile(Json,*SaveGuard.Filename);
+    };
+    for(int32 Case=0;Case<4;++Case)
+    {
+        auto Invalid=FreshMetadata();if(!Invalid)return false;
+        if(Case==0)Invalid->SetNumberField(TEXT("camera_yaw"),361);
+        else if(Case==1)Invalid->SetStringField(TEXT("camera_yaw"),TEXT("invalid"));
+        else if(Case==2)Invalid->SetNumberField(TEXT("camera_pitch"),24);
+        else Invalid->SetNumberField(TEXT("camera_pitch"),76);
+        if(!TestTrue(TEXT("Invalid-camera fixture is written"),WriteMetadata(Invalid)))return false;
+        G.LoadGame();
+        TestTrue(TEXT("Malformed or out-of-range saved orientation is rejected"),G.Notice.Contains(TEXT("camera orientation is invalid")));
+        TestTrue(TEXT("Rejected camera metadata cannot alter the live view or timeline"),G.CameraYaw==224&&G.CameraPitch==67&&G.Zoom==27000&&G.Paused&&G.Speed==3);
+        TestEqual(TEXT("Rejected camera metadata leaves simulation state unchanged"),StateText(G.Sim,TEXT("camera-rejected"),*this),CenterBefore);
+    }
+    auto Legacy=FreshMetadata();if(!Legacy)return false;
+    Legacy->RemoveField(TEXT("camera_yaw"));Legacy->RemoveField(TEXT("camera_pitch"));Legacy->SetNumberField(TEXT("zoom"),1200);
+    if(!TestTrue(TEXT("Legacy format-2 camera fixture is written"),WriteMetadata(Legacy)))return false;
+    G.CameraYaw=10;G.CameraPitch=30;G.LoadGame();
+    TestTrue(TEXT("Format-2 saves without orbit fields still load"),G.Notice.Contains(TEXT("Scenario restored")));
+    TestTrue(TEXT("Legacy saves use stable default angles instead of the current view"),G.CameraYaw==GetDefault<ASeigeGameMode>()->CameraYaw&&G.CameraPitch==GetDefault<ASeigeGameMode>()->CameraPitch);
+    TestEqual(TEXT("New close perspective zoom survives loading below the old orthographic minimum"),G.Zoom,1200.f);
+    TestEqual(TEXT("Camera migration does not change the saved economy"),StateText(G.Sim,TEXT("camera-migrated"),*this),CenterBefore);
+    Legacy->SetNumberField(TEXT("zoom"),0);
+    if(!TestTrue(TEXT("Below-minimum zoom fixture is written"),WriteMetadata(Legacy)))return false;
+    G.LoadGame();TestEqual(TEXT("Loading enforces the current configured minimum zoom"),G.Zoom,G.MinimumZoom);
     return true;
 }
 #endif

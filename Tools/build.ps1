@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $project = Join-Path $root 'seige2222.uproject'
 & node (Join-Path $PSScriptRoot 'validate_configuration.mjs') $root
-if ($LASTEXITCODE -ne 0) { throw 'Rules, AI or interface configuration validation failed' }
+if ($LASTEXITCODE -ne 0) { throw 'Rules, AI, interface or graphics configuration validation failed' }
 & "$Engine\Engine\Build\BatchFiles\Build.bat" SeigeEditor Win64 Development "-Project=$project" -WaitMutex -NoHotReloadFromIDE
 if ($LASTEXITCODE -ne 0) { throw 'Editor build failed' }
 if (-not (Test-Path (Join-Path $root 'Content\Maps\Colony.umap'))) {

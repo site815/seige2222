@@ -61,6 +61,7 @@ bool ASeigeGameMode::InitializeScenario(FString& Reason)
 }
 void ASeigeGameMode::StartScenario()
 {
+    if(!GraphicsSettingsValid){Notice=Error.IsEmpty()?TEXT("Correct Graphics/scene.json and restart the game."):Error;return;}
     if(!InitializeScenario(Error)) { Notice=Error; return; }
     for(auto& Pair:Visuals) if(Pair.Value) Pair.Value->Destroy();
     Visuals.Empty(); Ready=true; SelectedId=0; SelectedBuild.Empty(); WinAcknowledged=false;
@@ -79,7 +80,7 @@ void ASeigeGameMode::ConfirmLanding(FVector2D Position)
 {
     if(Screen!=TEXT("landing")) return;
     if(!CanLand(Position,Error)||!Sim.SetInitialCorePosition(Position,Error)) { Notice=Error; return; }
-    Screen=TEXT("playing"); Paused=false; CameraCenter=FVector(Position,0); Zoom=6500;
+    Screen=TEXT("playing"); Paused=false; CameraCenter=FVector(Position,0); Zoom=DefaultZoom;
     Notice=TEXT("COMMAND CENTER DEPLOYED | Build [B] begins industry. Time is running.");
     CreateLandscape(); SyncVisuals(); UpdateCamera();
 }

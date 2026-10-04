@@ -6,6 +6,8 @@ This document set is the current source of truth for the game's design. Each sub
 
 **Development is authorized:** Build a native Unreal Engine 5.8.3 single-player prototype, package a playable game, and push the intended project to GitHub. [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) distinguishes the current slice from the full design. [Rules and Simulation Architecture](RULES_AND_SIMULATION_ARCHITECTURE.md) records the requirement for editable external gameplay rules. Build and test completion must be established separately from these documents.
 
+**Current implementation:** v0.3.0 is packaged locally and verified by nineteen clean native tests and a twenty-eight-stage packaged interaction run with zero failures. Source is maintained in [site815/seige2222](https://github.com/site815/seige2222); versioned local packages are excluded from Git. The [development report](../DEVELOPMENT_REPORT.md) records evidence and limits; remaining visual polish does not change the broader design status.
+
 The project is a science-fiction colony simulation: a local ruler sustains a robotic population and industry on newly settled planets while humanity is losing a war against insect-like aliens. Visible production, physical logistics, resource-driven capabilities, and planned, automatically executed combat form the central direction. All gameplay concepts use a fully persistent multiplayer world as their design baseline. Single-player is implemented first with AI opponents and the same gameplay rules; persistent multiplayer implementation follows later.
 
 ## Documents
@@ -14,6 +16,7 @@ The project is a science-fiction colony simulation: a local ruler sustains a rob
 | --- | --- |
 | [Vision and Setting](VISION_AND_SETTING.md) | The setting, player role, and intended scope of the game's references. |
 | [Art Direction](ART_DIRECTION.md) | Realistic Earth-like landscapes, detailed futuristic buildings, empathetic robots, menacing realistic bugs, and the superseded earlier visual direction. |
+| [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md) | Delivered v0.3 perspective interaction, physical scale versus logical units, asset provenance, package evidence, and remaining visual polish. |
 | [Interface and Controls](INTERFACE_AND_CONTROLS.md) | Top bar and hover information, top-left version/FPS, B construction icons and logical shortcuts, automatic colony operation, and future fleet-level commands. |
 | [Core Loop and First Playable](CORE_LOOP_AND_FIRST_PLAYABLE.md) | Robotic population, command-center start, competing civilian/defense/expansion priorities, starting pressures, and unresolved simulation pace. |
 | [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) | The authorized Unreal implementation slice, current external definitions, explicit simplifications, later systems, and acceptance checks. |

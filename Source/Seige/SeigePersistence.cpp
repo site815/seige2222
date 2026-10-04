@@ -24,6 +24,7 @@ void ASeigeGameMode::SaveGame()
     if(!Sim.Save(FPaths::Combine(Directory,TEXT("center.json")),Error)) { Notice=Error; return; }
     auto Metadata=MakeShared<FJsonObject>(); Metadata->SetNumberField(TEXT("format"),2); Metadata->SetStringField(TEXT("generation"),Generation);
     Metadata->SetNumberField(TEXT("camera_x"),CameraCenter.X); Metadata->SetNumberField(TEXT("camera_y"),CameraCenter.Y);
+    Metadata->SetNumberField(TEXT("camera_yaw"),CameraYaw); Metadata->SetNumberField(TEXT("camera_pitch"),CameraPitch);
     Metadata->SetNumberField(TEXT("zoom"),Zoom); Metadata->SetBoolField(TEXT("paused"),Paused); Metadata->SetNumberField(TEXT("speed"),Speed);
     Metadata->SetBoolField(TEXT("objective_acknowledged"),WinAcknowledged);
     Metadata->SetStringField(TEXT("center_ai"),CenterBrain?CenterBrain->GetConfigFingerprint():TEXT(""));
@@ -44,12 +45,16 @@ void ASeigeGameMode::SaveGame()
 }
 void ASeigeGameMode::LoadGame()
 {
+    if(!GraphicsSettingsValid){Notice=Error.IsEmpty()?TEXT("Correct Graphics/scene.json and restart the game."):Error;return;}
     FString Raw;
     TSharedPtr<FJsonObject> Metadata;
     const FString Filename=FPaths::Combine(SaveRoot(),TEXT("Scenario.json"));
     if(!FFileHelper::LoadFileToString(Raw,*Filename)) { Notice=TEXT("No saved scenario yet. Start Single player, then save from the Colony menu."); return; }
     if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Metadata)||!Metadata.IsValid()) { Notice=TEXT("The scenario save is unreadable."); return; }
     double Format=0,CameraX=0,CameraY=0,StoredZoom=0,StoredSpeed=1;
+    // Format-2 saves from the orthographic release have no orbit angles. Give them
+    // a stable perspective view rather than inheriting an unrelated current view.
+    double StoredYaw=GetDefault<ASeigeGameMode>()->CameraYaw,StoredPitch=GetDefault<ASeigeGameMode>()->CameraPitch;
     FString Generation,CenterFingerprint;
     bool StoredPaused=false,StoredAcknowledged=false;
     const TArray<TSharedPtr<FJsonValue>>* Slots=nullptr; const TArray<TSharedPtr<FJsonValue>>* Fingerprints=nullptr;
@@ -60,6 +65,9 @@ void ASeigeGameMode::LoadGame()
        !Metadata->TryGetNumberField(TEXT("camera_y"),CameraY)||!FMath::IsFinite(CameraY)||!Metadata->TryGetNumberField(TEXT("zoom"),StoredZoom)||!FMath::IsFinite(StoredZoom)||
        !Metadata->TryGetNumberField(TEXT("speed"),StoredSpeed)||(StoredSpeed!=1&&StoredSpeed!=3)||!Metadata->TryGetBoolField(TEXT("paused"),StoredPaused)||
        !Metadata->TryGetBoolField(TEXT("objective_acknowledged"),StoredAcknowledged)) { Notice=TEXT("Scenario save metadata is invalid."); return; }
+    if((Metadata->HasField(TEXT("camera_yaw"))&&(!Metadata->TryGetNumberField(TEXT("camera_yaw"),StoredYaw)||!FMath::IsFinite(StoredYaw)||StoredYaw < -360||StoredYaw > 360))||
+       (Metadata->HasField(TEXT("camera_pitch"))&&(!Metadata->TryGetNumberField(TEXT("camera_pitch"),StoredPitch)||!FMath::IsFinite(StoredPitch)||StoredPitch < 25||StoredPitch > 75)))
+    { Notice=TEXT("Saved camera orientation is invalid."); return; }
     TArray<FString> NewSlots;
     for(int32 I=0;I<9;I++)
     {
@@ -101,6 +109,6 @@ void ASeigeGameMode::LoadGame()
     Visuals.Empty(); Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewBrain); Neighbors=MoveTemp(NewNeighbors); ScenarioSlots=MoveTemp(NewSlots);
     Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=0; SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed; WinAcknowledged=StoredAcknowledged;
     CameraCenter=FVector(FMath::Clamp(CameraX,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),FMath::Clamp(CameraY,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),0);
-    Zoom=FMath::Clamp(StoredZoom,2500.,Sim.WorldHalfSize*12); Screen=TEXT("playing");
+    Zoom=FMath::Clamp(StoredZoom,double(MinimumZoom),Sim.WorldHalfSize*12); CameraYaw=StoredYaw; CameraPitch=StoredPitch; Screen=TEXT("playing");
     CreateLandscape(); SyncVisuals(); UpdateCamera(); Notice=TEXT("Scenario restored, including all AI neighbors.");
 }

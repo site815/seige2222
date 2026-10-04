@@ -1,0 +1,137 @@
+{
+  "source": "Original Blender-authored industrial architecture and procedural PBR surfaces",
+  "meshes": {
+    "SM_Core": {
+      "dimensions_cm": [
+        2560.000244140625,
+        2848.0001220703125,
+        1483.591064453125
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 71656,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Ceramic",
+        "IM_Glass",
+        "IM_Light",
+        "IM_Copper",
+        "IM_Yellow"
+      ]
+    },
+    "SM_Extractor": {
+      "dimensions_cm": [
+        1710.0001220703125,
+        1750.0001220703125,
+        1527.5
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 36236,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Ceramic",
+        "IM_Copper",
+        "IM_Glass",
+        "IM_Light",
+        "IM_Yellow"
+      ]
+    },
+    "SM_Factory": {
+      "dimensions_cm": [
+        2460.000244140625,
+        2109.000244140625,
+        1247.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 42384,
+      "lod_count": 3,
+      "material_slots": 10,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Glass",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Blue",
+        "IM_Copper"
+      ]
+    },
+    "SM_Depot": {
+      "dimensions_cm": [
+        2553.208251953125,
+        2060.000244140625,
+        875.0000610351562
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 28180,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Glass",
+        "IM_Light",
+        "IM_Blue",
+        "IM_Yellow"
+      ]
+    },
+    "SM_Sensor": {
+      "dimensions_cm": [
+        1060.0001220703125,
+        1038.0000610351562,
+        2720.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 28732,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Yellow",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Glass",
+        "IM_Light"
+      ]
+    },
+    "SM_Turret": {
+      "dimensions_cm": [
+        1300.0001220703125,
+        1537.0498657226562,
+        791.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 8512,
+      "lod_count": 3,
+      "material_slots": 6,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Glass"
+      ]
+    }
+  },
+  "material_master": "/Game/Art/Industry/M_IndustrySurface",
+  "textures": 9
+}

@@ -9,11 +9,23 @@ import { readRules, validateRules } from './validate_rules.mjs';
 const defaultRoot = fileURLToPath(new URL('../', import.meta.url));
 export function readConfiguration(root = defaultRoot) {
   const read = relative => JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8').replace(/^\uFEFF/, ''));
+  const availableAssetPackages = new Set();
+  const contentDirectory = path.join(root, 'Content');
+  const indexAssets = directory => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const filename = path.join(directory, entry.name);
+      if (entry.isDirectory()) indexAssets(filename);
+      else if (entry.isFile() && entry.name.endsWith('.uasset')) availableAssetPackages.add(`/Game/${path.relative(contentDirectory, filename).split(path.sep).join('/').slice(0, -7)}`);
+    }
+  };
+  indexAssets(contentDirectory);
   return {
     rules: readRules(path.join(root, 'Rules')),
     ai: read('AIFILES/colony_ai.json'),
     developed: read('AIFILES/developed_start.json'),
     ui: read('Interface/ui.json'),
+    graphics: read('Graphics/scene.json'),
+    availableAssetPackages,
   };
 }
 
@@ -49,10 +61,31 @@ export function validateConfiguration(data) {
     return buildings.get(id);
   };
 
-  const { ai, developed, ui } = data;
+  const { ai, developed, ui, graphics } = data;
   version(ai, 'AIFILES/colony_ai.json');
   version(developed, 'AIFILES/developed_start.json');
   version(ui, 'Interface/ui.json');
+  version(graphics, 'Graphics/scene.json');
+  number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);
+  number(graphics.camera_fov, 'Graphics camera_fov', 35, 80);
+  number(graphics.camera_pitch, 'Graphics camera_pitch', 25, 75);
+  number(graphics.camera_yaw, 'Graphics camera_yaw', -360, 360);
+  number(graphics.default_zoom, 'Graphics default_zoom', 900, 20000);
+  number(graphics.minimum_zoom, 'Graphics minimum_zoom', 300, 2000);
+  if (graphics.minimum_zoom > graphics.default_zoom) fail('Graphics minimum_zoom exceeds default_zoom');
+  number(graphics.forest_candidates, 'Graphics forest_candidates', 1000, 200000, true);
+  number(graphics.near_forest_candidates, 'Graphics near_forest_candidates', 100, 30000, true);
+  const natureAssets = object(graphics.nature_assets, 'Graphics nature_assets');
+  const natureRoles = ['OakA', 'OakB', 'PineA', 'PineB', 'Shrub', 'Grass', 'RockA', 'RockB'];
+  for (const role of natureRoles) text(natureAssets[role], `Graphics nature_assets.${role}`);
+  if (!(data.availableAssetPackages instanceof Set)) fail('Configuration is missing its project asset index; load it with readConfiguration');
+  for (const [role, asset] of Object.entries(natureAssets)) {
+    text(asset, `Graphics nature_assets.${role}`);
+    if (!/^\/Game\/(?:[A-Za-z0-9_]+\/)*[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?$/.test(asset)) fail(`Graphics nature_assets.${role} must be a /Game asset path`);
+    const [packageName, objectName] = asset.split('.');
+    if (objectName && objectName !== packageName.split('/').at(-1)) fail(`Graphics nature_assets.${role} has a mismatched object name`);
+    if (!data.availableAssetPackages.has(packageName)) fail(`Graphics nature_assets.${role} references a missing Content asset: ${packageName}`);
+  }
   number(ai.decision_interval_seconds, 'AI decision_interval_seconds', policies.fixed_step_seconds, 3600);
   number(ai.max_actions_per_decision, 'AI max_actions_per_decision', 1, 16, true);
   number(ai.max_sensors, 'AI max_sensors', 1, 128, true);
@@ -132,7 +165,7 @@ export function validateConfiguration(data) {
     unique(creditHeadings, text(row.heading, `UI credits[${index}].heading`), 'UI credit heading');
     text(row.text, `UI credits[${index}].text`);
   }
-  return { ...rules, aiTargets: targets.length, developedStock: stock, uiGroups: groups.length, uiBuildings: assigned.size, summaryResources: summaryIds.size, credits: creditHeadings.size };
+  return { ...rules, aiTargets: targets.length, developedStock: stock, uiGroups: groups.length, uiBuildings: assigned.size, summaryResources: summaryIds.size, credits: creditHeadings.size, natureRoles: natureRoles.length, renderScale: graphics.world_centimeters_per_unit };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -140,6 +173,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const result = validateConfiguration(readConfiguration(path.resolve(process.argv[2] ?? defaultRoot)));
     console.log(`Configuration valid: ${result.version}; ${result.resources} items, ${result.recipes} recipes, ${result.buildings} buildings.`);
     console.log(`AI: ${result.aiTargets} priorities, ${result.developedStock} developed starting items. Interface: ${result.uiGroups} groups, ${result.uiBuildings} buildings, ${result.summaryResources} summary resources, ${result.credits} credits.`);
+    console.log(`Graphics: ${result.natureRoles} nature roles resolve to Content assets; ${result.renderScale} rendered centimeters per simulation unit.`);
   } catch (error) {
     console.error(`CONFIGURATION VALIDATION FAILED: ${error.message}`);
     process.exitCode = 1;

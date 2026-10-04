@@ -43,20 +43,17 @@ ASeigeGameMode::ASeigeGameMode()
 void ASeigeGameMode::BeginPlay()
 {
     Super::BeginPlay();
+    if(!LoadGraphicsSettings()){GraphicsSettingsValid=false;Notice=Error;Screen=TEXT("main");return;}
     BaseMaterial=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Art/M_Colony.M_Colony"));
     if(!BaseMaterial) BaseMaterial=LoadObject<UMaterialInterface>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
     Camera=GetWorld()->SpawnActor<ACameraActor>();
-    Camera->GetCameraComponent()->ProjectionMode=ECameraProjectionMode::Orthographic;
+    Camera->GetCameraComponent()->ProjectionMode=ECameraProjectionMode::Perspective;
     Camera->GetCameraComponent()->bConstrainAspectRatio=false;
-    Camera->GetCameraComponent()->bAutoCalculateOrthoPlanes=false;
-    Camera->GetCameraComponent()->bUpdateOrthoPlanes=false;
-    Camera->GetCameraComponent()->SetOrthoNearClipPlane(-500000);
-    Camera->GetCameraComponent()->SetOrthoFarClipPlane(500000);
-    Camera->GetCameraComponent()->SetOrthoWidth(Zoom);
+    Camera->GetCameraComponent()->SetFieldOfView(CameraFov);
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureMethod=true;
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureMethod=EAutoExposureMethod::AEM_Manual;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureBias=true;
-    Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=-.65f;
+    Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=-.25f;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionIntensity=true;
     Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionIntensity=.8f;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionRadius=true;
@@ -66,30 +63,30 @@ void ASeigeGameMode::BeginPlay()
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureApplyPhysicalCameraExposure=true;
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureApplyPhysicalCameraExposure=false;
     if(auto* PC=UGameplayStatics::GetPlayerController(this,0)) PC->SetViewTarget(Camera);
-    auto* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,3000),FRotator(-37,-32,0));
-    Sun->GetLightComponent()->SetIntensity(5.5f);
+    auto* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,3000),FRotator(-38,-28,0));
+    Sun->GetLightComponent()->SetIntensity(6.f);
     auto* SunComponent=Cast<UDirectionalLightComponent>(Sun->GetLightComponent());
     SunComponent->SetMobility(EComponentMobility::Movable);
     SunComponent->ForwardShadingPriority=1;
     SunComponent->SetAtmosphereSunLight(true);
     SunComponent->LightSourceAngle=.9f;
-    SunComponent->DynamicShadowDistanceMovableLight=24000;
+    SunComponent->DynamicShadowDistanceMovableLight=120000;
     Sun->GetLightComponent()->MarkRenderStateDirty();
-    Sun->GetLightComponent()->SetLightColor(FLinearColor(1,.91f,.76f));
+    Sun->GetLightComponent()->SetLightColor(FLinearColor(1,.96f,.87f));
     auto* Atmosphere=GetWorld()->SpawnActor<AActor>();
     auto* AtmosphereComponent=NewObject<USkyAtmosphereComponent>(Atmosphere);
     Atmosphere->SetRootComponent(AtmosphereComponent); AtmosphereComponent->RegisterComponent();
     auto* Sky=GetWorld()->SpawnActor<ASkyLight>();
     Sky->GetLightComponent()->SetMobility(EComponentMobility::Movable);
-    Sky->GetLightComponent()->SetIntensity(.65f);
+    Sky->GetLightComponent()->SetIntensity(1.1f);
     Sky->GetLightComponent()->SetRealTimeCaptureEnabled(true);
     auto* Fog=GetWorld()->SpawnActor<AExponentialHeightFog>();
-    Fog->GetComponent()->SetFogDensity(.008f);
-    Fog->GetComponent()->SetFogHeightFalloff(.08f);
+    Fog->GetComponent()->SetFogDensity(.0025f);
+    Fog->GetComponent()->SetFogHeightFalloff(.15f);
     Fog->GetComponent()->SetFogInscatteringColor(FLinearColor(.45f,.52f,.58f));
-    Fog->GetComponent()->SetStartDistance(6000);
+    Fog->GetComponent()->SetStartDistance(45000);
     ResetColony();
-    ReturnToMainMenu(); Zoom=6500;
+    ReturnToMainMenu(); Zoom=DefaultZoom;
     if(auto* Settings=UGameUserSettings::GetGameUserSettings())
     {
         GraphicsQuality=FMath::Clamp(Settings->GetOverallScalabilityLevel(),0,3);
@@ -137,13 +134,6 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
         FPlatformMisc::RequestExit(false);
     }
 }
-void ASeigeGameMode::UpdateCamera()
-{
-    if(!Camera) return;
-    Camera->SetActorLocation(CameraCenter+CameraOffset+FVector(0,0,GroundHeight(FVector2D(CameraCenter))));
-    Camera->SetActorRotation(FRotator(-45,135,0));
-    Camera->GetCameraComponent()->SetOrthoWidth(Zoom);
-}
 UMaterialInterface* ASeigeGameMode::Material(FLinearColor Color)
 {
     FString Key=Color.ToString();
@@ -174,7 +164,11 @@ AActor* ASeigeGameMode::Visual(const FString& Key,const FString& Kind,FVector Lo
     if(Imported)
     {
         auto* Mesh=NewObject<UStaticMeshComponent>(Actor); Mesh->SetStaticMesh(Imported); Mesh->SetupAttachment(Root);
-        Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); Mesh->RegisterComponent(); Actor->AddInstanceComponent(Mesh);
+        const bool Building=Kind!=TEXT("Robot")&&Kind!=TEXT("Bug");
+        Mesh->SetCollisionEnabled(Building?ECollisionEnabled::QueryOnly:ECollisionEnabled::NoCollision);
+        Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+        if(Building)Mesh->SetCollisionResponseToChannel(ECC_Visibility,ECR_Block);
+        Mesh->RegisterComponent(); Actor->AddInstanceComponent(Mesh);
         const FVector Bounds=Imported->GetBounds().BoxExtent;
         const double Extent=(Kind==TEXT("Robot")||Kind==TEXT("Bug"))?Bounds.GetMax():FMath::Max(Bounds.X,Bounds.Y);
         Mesh->SetRelativeScale3D(FVector(Size/FMath::Max(Extent*2,1.0)));
@@ -216,14 +210,14 @@ void ASeigeGameMode::SyncVisuals()
             Live.Add(Key);
             FString Kind=D->Visual; if(Kind.IsEmpty()) Kind=TEXT("Factory"); Kind[0]=FChar::ToUpper(Kind[0]);
             if(!Visuals.Contains(Key)) ClearSceneryAt(P,D->Footprint);
-            Visual(Key,Kind,FVector(P,GroundHeight(P)),D->Color,D->Footprint*1.5f);
+            Visual(Key,Kind,RenderPosition(P),D->Color,D->Footprint*2.f*RenderScale);
         }
         for(const auto& C:Colony.Couriers)
         {
             const FVector2D P=C.Position+Offset;
             if(!Observer&&!Offset.IsNearlyZero()&&!Sim.IsVisible(P)) continue;
             const FString Key=Prefix+FString::Printf(TEXT("courier_%d"),C.Id); Live.Add(Key);
-            auto* A=Visual(Key,TEXT("Robot"),FVector(P,GroundHeight(P)+12+FMath::Sin(RenderClock*4+C.Id)*5),Mint,85);
+            auto* A=Visual(Key,TEXT("Robot"),RenderPosition(P,18+FMath::Sin(RenderClock*4+C.Id)*5),Mint,110);
             if(const auto* B=Colony.FindBuilding(C.TargetId)) A->SetActorRotation(FVector(B->Position-C.Position,0).Rotation());
         }
         for(const auto& E:Colony.Enemies)
@@ -231,7 +225,7 @@ void ASeigeGameMode::SyncVisuals()
             const FVector2D P=E.Position+Offset;
             if(!Observer&&!Sim.IsVisible(P)) continue;
             const FString Key=Prefix+FString::Printf(TEXT("enemy_%d"),E.Id); Live.Add(Key);
-            auto* A=Visual(Key,TEXT("Bug"),FVector(P,GroundHeight(P)),FLinearColor(.4f,.08f,.17f),150);
+            auto* A=Visual(Key,TEXT("Bug"),RenderPosition(P),FLinearColor(.4f,.08f,.17f),210);
             FVector2D Target=Colony.Buildings.IsEmpty()?FVector2D::ZeroVector:Colony.Buildings[0].Position;
             A->SetActorRotation(FVector(Target-E.Position,0).Rotation());
         }
@@ -252,4 +246,15 @@ void ASeigeGameMode::ClickWorld()
     }
     SelectedId=0; double Distance=350;
     for(const auto& B:Sim.Buildings) if(B.Health>0 && FVector2D::Distance(B.Position,CursorWorld)<Distance){ Distance=FVector2D::Distance(B.Position,CursorWorld); SelectedId=B.Id; }
+}
+bool ASeigeGameMode::SelectBuildingRay(const FVector& Origin,const FVector& Direction)
+{
+    if(!Ready||Observer||Screen!=TEXT("playing")||!SelectedBuild.IsEmpty())return false;
+    FHitResult Hit;FCollisionQueryParams Params(SCENE_QUERY_STAT(SeigeBuildingPick),true);
+    if(!GetWorld()->LineTraceSingleByChannel(Hit,Origin,Origin+Direction.GetSafeNormal()*Sim.WorldHalfSize*RenderScale*24,ECC_Visibility,Params))return false;
+    FVector TerrainHit;
+    if(TraceGroundRay(Origin,Direction,TerrainHit)&&FVector::DistSquared(Origin,TerrainHit)+25<FVector::DistSquared(Origin,Hit.ImpactPoint))return false;
+    for(const auto& B:Sim.Buildings)
+        if(B.Health>0&&Visuals.FindRef(FString::Printf(TEXT("home_building_%d"),B.Id))==Hit.GetActor()){SelectedId=B.Id;return true;}
+    return false;
 }

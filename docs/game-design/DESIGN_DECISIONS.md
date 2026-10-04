@@ -12,7 +12,7 @@ The following order is an organizational recommendation for future discussion, n
 
 | Priority | Decision area | What remains unresolved |
 | --- | --- | --- |
-| 1 | World and simulation scale | Final sector dimensions, remote-outpost distances, measurement of developed land, movement media beyond ground vehicles/mechs, and game time versus real time; the current 600 m sectors and 1.8 km neighborhood are prototype values, while city share of roughly 5–10% and overall development of no more than roughly 10–20% remain provisional targets |
+| 1 | World and simulation scale | Final sector dimensions, remote-outpost distances, measurement of developed land, movement media beyond ground vehicles/mechs, and game time versus real time; v0.3 maps the unchanged logical world to 3.6 km sectors and a 10.8 km neighborhood, while city share of roughly 5–10% and overall development of no more than roughly 10–20% remain provisional targets |
 | 1 | Persistence and authority | Who simulates offline sectors, owns persistent saves, and resolves shared outcomes; local single-player pause, paused landing/setup, and neighborhood save/load are now implemented but do not settle persistent multiplayer behavior |
 | 1 | Viability, loss, and escape | Starting access, colony survival requirements, shuttle availability and loading, final defeat conditions, and relocation destinations; automatic launch on core destruction and carrying existing onboard contents are established |
 | 2 | Industrial structure | Final raw resources, distribution fairness, buildings, recipe graph, upgrades, and trade access |
@@ -36,6 +36,7 @@ Detailed costs, numerical formulas, exact recipes, and tuning should remain visi
 
 ## Evolution and superseded ideas
 
+- **Prototype orthographic presentation → graphics-first realistic perspective rebuild.** The user selected full 3D realism, a rotatable/tiltable view, and a Manor Lords landscape quality target. v0.3's six-centimeter mapping enlarges rendered space without changing logical simulation balance. Matching that visual quality remains a goal to verify in the running game.
 - **Immediate colony start → main menu, setup, and paused landing.** Single-player setup exposes the larger nine-sector view. A human player surveys resource locations and selects a valid core site before the clock starts. Settings and credits are included in the frontend.
 - **AI neighbors only → selectable AI center for observation.** Each neighbor can be empty, newly founded, or developed at setup; choosing an AI center creates an observer scenario. The current controller operates independent local economies through normal simulation commands. Cross-sector travel, trade, and combat remain unimplemented.
 - **AI tuning mixed into game logic → a separate AIFILES folder.** AI priorities, decision cadence, placement search, and finite developed starting stock must be externally editable. Shared costs and economic behavior remain in Rules; menus, summaries, and credits are defined in Interface. New mechanisms can still require code.
