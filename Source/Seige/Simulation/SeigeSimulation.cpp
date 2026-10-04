@@ -238,6 +238,29 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
 }
 
 double FSeigeSimulation::Number(const FString& Key) const { return Policy->GetNumberField(Key); }
+bool FSeigeSimulation::CanSetInitialCorePosition(FVector2D Position, FString& Error) const
+{
+    const FSeigeBuilding* Command = Core();
+    if (!Policy || !Command || Time != 0 || Buildings.Num() != 1)
+    { Error = TEXT("Core placement is only available before a new colony begins"); return false; }
+    const double Radius = BuildingDefs[CoreDefinition].Footprint;
+    if (!FMath::IsFinite(Position.X) || !FMath::IsFinite(Position.Y) || FMath::Abs(Position.X) + Radius > WorldHalfSize || FMath::Abs(Position.Y) + Radius > WorldHalfSize)
+    { Error = TEXT("Command core footprint must fit inside the sector"); return false; }
+    for (const FSeigeNode& Node : Nodes)
+    {
+        double ExtractorRadius = 0;
+        for (const FString& Id : BuildMenu)
+            if (BuildingDefs[Id].ExtractResource == Node.Resource) ExtractorRadius = FMath::Max(ExtractorRadius, BuildingDefs[Id].Footprint);
+        if (FVector2D::Distance(Position, Node.Position) < Radius + ExtractorRadius + Number(TEXT("minimum_build_spacing")))
+        { Error = TEXT("The command core would obstruct a resource deposit"); return false; }
+    }
+    Error.Empty(); return true;
+}
+bool FSeigeSimulation::SetInitialCorePosition(FVector2D Position, FString& Error)
+{
+    if (!CanSetInitialCorePosition(Position, Error)) return false;
+    Core()->Position = Position; return true;
+}
 FString FSeigeSimulation::TextRule(const FString& Key) const { return Policy->GetStringField(Key); }
 const FSeigeBuildingDef* FSeigeSimulation::Definition(const FSeigeBuilding& B) const { return BuildingDefs.Find(B.DefId); }
 FSeigeBuilding* FSeigeSimulation::FindBuilding(int32 Id) { return Buildings.FindByPredicate([Id](const FSeigeBuilding& B){return B.Id == Id;}); }
@@ -487,10 +510,15 @@ void FSeigeSimulation::StepLogistics(double Seconds)
 }
 void FSeigeSimulation::SpawnEnemies(int32 Count)
 {
+    const FSeigeBuilding* Command = Core();
+    const FVector2D Center = Command ? Command->Position : FVector2D::ZeroVector;
     for (int32 I = 0; I < Count; ++I)
     {
         const double Angle = Random.FRand() * UE_TWO_PI; FSeigeEnemy E; E.Id = NextId++;
-        E.Position = FVector2D(FMath::Cos(Angle), FMath::Sin(Angle)) * Number(TEXT("spawn_radius")); E.Health = Number(TEXT("enemy_health")); Enemies.Add(E);
+        E.Position = Center + FVector2D(FMath::Cos(Angle), FMath::Sin(Angle)) * Number(TEXT("spawn_radius"));
+        E.Position.X = FMath::Clamp(E.Position.X, -WorldHalfSize, WorldHalfSize);
+        E.Position.Y = FMath::Clamp(E.Position.Y, -WorldHalfSize, WorldHalfSize);
+        E.Health = Number(TEXT("enemy_health")); Enemies.Add(E);
     }
 }
 void FSeigeSimulation::TriggerWave()

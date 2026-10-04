@@ -6,6 +6,16 @@
 #include "Simulation/SeigeSimulation.h"
 #include "SeigeGameMode.generated.h"
 
+class FSeigeScenarioAI;
+struct FSeigeNeighbor
+{
+    int32 Index=0;
+    FVector2D Offset=FVector2D::ZeroVector;
+    FString Type;
+    FSeigeSimulation Sim;
+    TSharedPtr<FSeigeScenarioAI> Brain;
+};
+
 UCLASS()
 class SEIGE_API ASeigeGameMode : public AGameModeBase
 {
@@ -23,12 +33,28 @@ public:
     float Zoom=6500;
     FVector2D CursorWorld=FVector2D::ZeroVector;
     bool CursorOnWorld=false;
+    FString Screen=TEXT("main"),ReturnScreen=TEXT("main");
+    TArray<FString> ScenarioSlots;
+    TArray<FSeigeNeighbor> Neighbors;
+    bool Observer=false,Fullscreen=false;
+    int32 GraphicsQuality=2;
+    void ShowScreen(const FString& NewScreen);
+    void StartScenario();
+    void ConfirmLanding(FVector2D Position);
+    void CycleScenarioSlot(int32 Index);
+    void ReturnToMainMenu();
+    void SetGraphicsQuality(int32 Quality);
+    void SetFullscreen(bool Enabled);
+    bool CanLand(FVector2D Position,FString& Reason) const;
+    FVector2D HomePosition() const;
     void ClickWorld();
     void ResetColony();
     void SaveGame();
     void LoadGame();
     void UpdateCamera();
+    double GroundHeight(FVector2D Position) const;
 private:
+    FVector CameraOffset=FVector(6300,-6300,9000);
     UPROPERTY() TObjectPtr<class ACameraActor> Camera;
     UPROPERTY() TObjectPtr<AActor> Landscape;
     UPROPERTY() TObjectPtr<class UMaterialInterface> BaseMaterial;
@@ -37,10 +63,16 @@ private:
     double Accumulator=0;
     double RenderClock=0;
     bool ScreenshotRequested=false;
+    int32 PresentationSmokeStage=0,SmokeFailures=0;
+    void RunPresentationSmoke();
+    TSharedPtr<FSeigeScenarioAI> CenterBrain;
+    FString DataDirectory(const TCHAR* Folder) const;
+    bool InitializeScenario(FString& Reason);
     UMaterialInterface* Material(FLinearColor Color);
     AActor* Visual(const FString& Key, const FString& Kind, FVector Location, FLinearColor Color, float Size);
     void Part(AActor* Actor,const FString& Shape,FVector Offset,FVector Scale,FLinearColor Color,FRotator Rotation=FRotator::ZeroRotator);
     void CreateLandscape();
+    void ClearSceneryAt(FVector2D Position,float Radius);
     void SyncVisuals();
 };
 
@@ -52,9 +84,28 @@ public:
     ASeigeController();
     virtual void BeginPlay() override;
     virtual void PlayerTick(float DeltaTime) override;
+    void HandlePrimaryClick(float ScreenX,float ScreenY);
+private:
+    TSet<FKey> ConsumedKeysUntilRelease;
 };
 
-struct FSeigeButton { FVector2D Position,Size; FString Action; };
+struct FSeigeButton { FVector2D Position,Size; FString Action,Tooltip; };
+struct FSeigeMenuEntry { FString Definition,Shortcut; };
+struct FSeigeMenuGroup { FString Id,Name,Shortcut,Description; TArray<FSeigeMenuEntry> Entries; };
+struct FSeigeCredit { FString Heading,Text; };
+struct FSeigeSummaryResource { FString Resource,Label; };
+struct FSeigeUiState
+{
+    float ViewportWidth=1600,ViewportHeight=900,Scale=1;
+    bool BuildOpen=false,ColonyOpen=false,GroupFocused=false;
+    FString Category,HoverPanel;
+    TArray<FSeigeMenuGroup> Categories;
+    TArray<FSeigeCredit> Credits;
+    TArray<FSeigeSummaryResource> SummaryResources;
+    TArray<FSeigeButton> HitRegions;
+    FString HitTest(float ScreenX,float ScreenY) const;
+    void CloseMenus();
+};
 UCLASS()
 class SEIGE_API ASeigeHUD : public AHUD
 {
@@ -62,10 +113,29 @@ class SEIGE_API ASeigeHUD : public AHUD
 public:
     virtual void DrawHUD() override;
     bool Click(float X,float Y);
+    bool ProcessClick(float X,float Y,ASeigeGameMode& GameMode);
+    bool HandleShortcut(const FKey& Key);
+    bool ProcessShortcut(const FKey& Key,ASeigeGameMode& GameMode);
+    bool BlocksCameraKeys() const;
+    bool IsPointerOverUI() const;
+    bool LoadInterface(const FString& Directory,FString& Error);
+    FSeigeUiState Ui;
 private:
-    TArray<FSeigeButton> Buttons;
     float Scale=1;
+    float SmoothedFps=0;
+    float NoticeVisibleSeconds=0;
+    bool InterfaceLoaded=false,InterfaceAttempted=false;
+    FString InterfaceError,Version,LastNotice;
     void Box(float X,float Y,float W,float H,FLinearColor Color);
     void Label(const FString& Text,float X,float Y,float Size,FLinearColor Color=FLinearColor::White);
-    void Button(const FString& Text,const FString& Action,float X,float Y,float W,float H,bool Active=false);
+    void Button(const FString& Text,const FString& Action,float X,float Y,float W,float H,bool Active=false,const FString& Tooltip=TEXT(""));
+    void Region(const FString& Action,float X,float Y,float W,float H,const FString& Tooltip=TEXT(""));
+    void Wrapped(const FString& Text,float X,float& Y,float Width,float Size,FLinearColor Color);
+    TArray<FString> WrapLines(const FString& Text,float Width,float Size) const;
+    float DrawNotice(ASeigeGameMode& GameMode,float Width,float Height);
+    void Icon(const FString& Visual,float X,float Y,float Size,FLinearColor Color);
+    void Frame(float X,float Y,float W,float H);
+    void Description(const FSeigeBuildingDef& Def,ASeigeGameMode& GameMode,float X,float Y,float Width);
+    bool ExecuteAction(const FString& Action,ASeigeGameMode& GameMode);
+    bool DrawFrontend(ASeigeGameMode& GameMode,float Width,float Height);
 };

@@ -1,4 +1,4 @@
-name: Validate game rules
+name: Validate game configuration
 on: [push, pull_request]
 jobs:
   rules:
@@ -9,3 +9,4 @@ jobs:
         with:
           node-version: '22'
       - run: node Tools/validate_rules.mjs --self-test
+      - run: node Tools/validate_configuration.mjs

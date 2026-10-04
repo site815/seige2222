@@ -1,0 +1,173 @@
+[
+  {
+    "asset": "grass_ground",
+    "name": "Grass Ground",
+    "authors": {
+      "Charlotte Baglioni": "All"
+    },
+    "map": "Diffuse",
+    "file": "grass_ground_diff_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/grass_ground/grass_ground_diff_2k.jpg",
+    "source": "https://polyhaven.com/a/grass_ground",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "4272BDDC71A7FA659D1DEEB13A9DF8C42E68A5AC8CDE7523187E4A081E028258"
+  },
+  {
+    "asset": "grass_ground",
+    "name": "Grass Ground",
+    "authors": {
+      "Charlotte Baglioni": "All"
+    },
+    "map": "nor_dx",
+    "file": "grass_ground_nor_dx_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/grass_ground/grass_ground_nor_dx_2k.jpg",
+    "source": "https://polyhaven.com/a/grass_ground",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "53F05A571694D521031F36EDDBB405771252A0EEFFC772AD7B6F4086B9F9CF43"
+  },
+  {
+    "asset": "grass_ground",
+    "name": "Grass Ground",
+    "authors": {
+      "Charlotte Baglioni": "All"
+    },
+    "map": "Rough",
+    "file": "grass_ground_rough_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/grass_ground/grass_ground_rough_2k.jpg",
+    "source": "https://polyhaven.com/a/grass_ground",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "AFAED95537E894B8054DB38C81712A6D9504B05B560274526621D91D5A95FBE7"
+  },
+  {
+    "asset": "brown_mud_dry",
+    "name": "Brown Mud Dry",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "map": "Diffuse",
+    "file": "brown_mud_dry_diff_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/brown_mud_dry/brown_mud_dry_diff_2k.jpg",
+    "source": "https://polyhaven.com/a/brown_mud_dry",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "5F567F61A7E139101441A1209E9C174A4F92DCE489B28BB168F6BFD0CA07E411"
+  },
+  {
+    "asset": "brown_mud_dry",
+    "name": "Brown Mud Dry",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "map": "nor_dx",
+    "file": "brown_mud_dry_nor_dx_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/brown_mud_dry/brown_mud_dry_nor_dx_2k.jpg",
+    "source": "https://polyhaven.com/a/brown_mud_dry",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "E491B8146D0C24D12E048FFF564907BC4615242CD7491486AB3AAD8ACE9F17AF"
+  },
+  {
+    "asset": "brown_mud_dry",
+    "name": "Brown Mud Dry",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "map": "Rough",
+    "file": "brown_mud_dry_rough_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/brown_mud_dry/brown_mud_dry_rough_2k.jpg",
+    "source": "https://polyhaven.com/a/brown_mud_dry",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "F4038E84A4B3B9B7EFA95D63D66BBDCA27EDDDB2DE9B496084CF140B18D75923"
+  },
+  {
+    "asset": "rock_boulder_dry",
+    "name": "Rock Boulder Dry",
+    "authors": {
+      "Dimitrios Savva": "Photography",
+      "Rico Cilliers": "Processing"
+    },
+    "map": "Diffuse",
+    "file": "rock_boulder_dry_diff_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rock_boulder_dry/rock_boulder_dry_diff_2k.jpg",
+    "source": "https://polyhaven.com/a/rock_boulder_dry",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "C66DE7F7B48EF1BA542C17AF780787CA6D43DA2160A46FF3544DD9FCDF65CA30"
+  },
+  {
+    "asset": "rock_boulder_dry",
+    "name": "Rock Boulder Dry",
+    "authors": {
+      "Dimitrios Savva": "Photography",
+      "Rico Cilliers": "Processing"
+    },
+    "map": "nor_dx",
+    "file": "rock_boulder_dry_nor_dx_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rock_boulder_dry/rock_boulder_dry_nor_dx_2k.jpg",
+    "source": "https://polyhaven.com/a/rock_boulder_dry",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "D95F1B4972E7D83AB4B02688B28661B60B60F8991B50D4EA6E989E3221D01F47"
+  },
+  {
+    "asset": "rock_boulder_dry",
+    "name": "Rock Boulder Dry",
+    "authors": {
+      "Dimitrios Savva": "Photography",
+      "Rico Cilliers": "Processing"
+    },
+    "map": "Rough",
+    "file": "rock_boulder_dry_rough_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rock_boulder_dry/rock_boulder_dry_rough_2k.jpg",
+    "source": "https://polyhaven.com/a/rock_boulder_dry",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "63BB4105E6F60B5968DA785AFC292B94026A5AFA6F18388E98B00232E9E2C433"
+  },
+  {
+    "asset": "bark_brown_02",
+    "name": "Bark Brown 02",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "map": "Diffuse",
+    "file": "bark_brown_02_diff_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/bark_brown_02/bark_brown_02_diff_2k.jpg",
+    "source": "https://polyhaven.com/a/bark_brown_02",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "285051E34826ACE29F4AB438AD35CC1201B2AAE0A6157A5F3C0BF6667BBC539E"
+  },
+  {
+    "asset": "bark_brown_02",
+    "name": "Bark Brown 02",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "map": "nor_dx",
+    "file": "bark_brown_02_nor_dx_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/bark_brown_02/bark_brown_02_nor_dx_2k.jpg",
+    "source": "https://polyhaven.com/a/bark_brown_02",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "A1E756405DB98475735DA2B6DEFDC502B6F2E1D499FA0A4A9D503437CE65CE7C"
+  },
+  {
+    "asset": "bark_brown_02",
+    "name": "Bark Brown 02",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "map": "Rough",
+    "file": "bark_brown_02_rough_2k.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/bark_brown_02/bark_brown_02_rough_2k.jpg",
+    "source": "https://polyhaven.com/a/bark_brown_02",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "ADAFCAB150C1CA99150C77198329E251437DC00FA1F66019F75624366926996E"
+  }
+]

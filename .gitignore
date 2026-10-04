@@ -12,4 +12,5 @@ Builds/
 *.log
 Art/Exports/*
 !Art/Exports/asset_manifest.json
+Art/RealisticExports/*.fbx
 Art/*.blend1

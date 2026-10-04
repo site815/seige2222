@@ -9,17 +9,27 @@ Sector layout, information coverage, adjacent colonies, escape, and permanent lo
 **Confirmed**
 
 - A planet is divided into sectors. The player owns a center sector and sees eight neighboring sectors in a 3×3 grid.
-- Neighboring AI factions can be enabled or disabled. Disabled means the neighboring sectors are empty, not that their inhabitants are frozen.
+- The camera should provide a broad overview of all nine sectors as well as a closer colony view.
+- Before a single-player scenario, each neighbor can be empty, a starting AI colony, or a developed AI colony. Disabled means empty, not frozen inhabitants.
+- The center can instead be AI-controlled for an observer scenario. Human play begins with a paused survey and selection of the one command-core site.
 - Seeing a sector on the map does not reveal its current activity.
 - Units and buildings have different sensor ranges. The core has broad but finite coverage. There is no live knowledge outside the player's own coverage.
 
 **Open**
 
-- Sector size, distances, and the relationship between the grid and traversable space.
-- When AI neighbors can be toggled; the user explicitly deferred this question.
+- Final sector size, travel distances, and the relationship between the grid and traversable space. The current prototype dimensions below are implementation values.
+- Whether occupied neighbors can be changed during an active scenario; pre-game selection is established.
 - Explored-terrain memory and last-known enemy positions.
 
-**Proposal:** AI factions should obey equivalent sensor limitations. This was not separately confirmed.
+**Proposal:** AI factions should obey equivalent sensor limitations across the full game. The current local construction controller already uses normal placement and live-coverage checks; this does not settle all future AI information or scouting rules.
+
+### Current local scenario implementation
+
+Each sector is **600 m × 600 m**, giving the 3×3 overview a **1.8 km side**. The source template contains **25 irregularly clustered resource nodes**, repeated in each instantiated colony's local sector. This is a finite prototype map, not procedural planetary geography or a final scale decision.
+
+Human core selection pauses the scenario and displays a resource survey. Placement rejects sector-edge and deposit conflicts through normal simulation validation. After placement, ordinary finite live coverage applies. Neighbor building and threat rendering respects the human colony's coverage; observer mode deliberately shows the simulated colonies for observation.
+
+Each occupied sector runs an independent local economy and alien threat simulation. The shared view does **not** yet permit cross-sector travel, goods transfer, trade, raiding, or a player's extraction in a neighboring sector. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md) for startup, controller, and save details.
 
 ## Sector scale, wilderness, and remote outposts
 
@@ -47,9 +57,9 @@ Sector layout, information coverage, adjacent colonies, escape, and permanent lo
 - A developed colony, representing a well-established player already situated in the persistent world.
 - A newly founded colony, representing a player starting out alongside the player's new colony.
 
-The distinction concerns starting development. Exact buildings, population, stockpiles, forces, and any additional development profiles are open. AI behavior and diplomatic relationships are not decided by this choice alone.
+The distinction concerns starting development. The prototype has externally editable starting priorities and a finite developed preset in [AIFILES](../../AIFILES/README.md). The latter pays ordinary construction costs from its setup stock. Final buildings, population, stockpiles, forces, and additional development profiles remain open; the current preset does not settle full-game balance or diplomatic relationships.
 
-The existing disabled-neighbor rule still means an empty sector. Choosing an AI's starting development does not resolve the deferred question of when AI neighbors can be enabled or disabled.
+The disabled-neighbor rule means an empty sector. Startup selections are now implemented; changing occupied cells during play is not supported.
 
 **User proposal:** Starting setup could also offer abandoned, leaderless areas. A random mix might include one or two developed neighbors, one or two new neighbors, one or two abandoned areas, and one or two empty sectors. These are illustrative possibilities, not a fixed distribution or selected default for all eight slots.
 
@@ -99,3 +109,4 @@ Such areas can be scavenged gradually by forces capable of taking resources from
 - [Fleets, Physical Logistics, and Loot](FLEETS_AND_LOGISTICS.md)
 - [Aliens, Combat, and Raiding](COMBAT_AND_RAIDING.md)
 - [Multiplayer, Persistence, and Development](MULTIPLAYER_AND_DEVELOPMENT.md)
+- [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md)

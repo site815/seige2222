@@ -20,14 +20,14 @@ The central design combines meaningful, visible production with physical logisti
 
 **Confirmed conflict scope:** Colony-to-colony conflict currently centers on privateering, raids, and theft. Formal war against other regions is removed for now.
 
-**Confirmed visual direction:** Cute futuristic robots and colony buildings follow a WALL-E / EVE reference, in a bright, colorful Pandora-like world intended to be even brighter and more colorful. Bugs should be menacing and realistic. See [Art Direction](ART_DIRECTION.md).
+**Confirmed current visual direction:** A realistic, Earth-like landscape follows a Manor Lords environmental reference, with detailed, realistic futuristic buildings. Robots remain appealing and invite empathy; bugs should be menacing and realistic. This supersedes the earlier bright Pandora landscape and cute-building direction. See [Art Direction](ART_DIRECTION.md).
 
 ### References and their intended scope
 
-- **Manor Lords:** Detailed visible workers and resources together with meaningful simulation and production. Also the primary interface reference because of the settlement-building focus.
+- **Manor Lords:** Detailed visible workers and resources together with meaningful simulation and production. Also the primary interface reference and the current reference for a realistic, Earth-like landscape.
 - **StarCraft / StarCraft II:** The minimal starting setup of a command center and workers, now also a secondary interface reference for polish. Individual-unit combat control is not adopted.
-- **WALL-E / EVE:** Cute futuristic robots and colony buildings that encourage player empathy.
-- **Pandora:** Bright, colorful landscape inspiration, with an even brighter and more colorful presentation desired.
+- **WALL-E / EVE:** Appealing futuristic robots that encourage player empathy. The earlier extension of this reference to cute colony buildings is superseded.
+- **Pandora:** Earlier landscape exploration, superseded by the realistic Earth-like environmental direction.
 - **Starship Troopers:** The insect-like alien enemy touchstone.
 - **Mad Max:** Emerging fragmented power and warlords controlling land and supplies, not a collapsed industrial civilization.
 - A medieval alternative was considered and deferred in favor of science fiction.

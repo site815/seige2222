@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "decision_interval_seconds": 1,
+  "max_actions_per_decision": 1,
+  "sensor_definition": "sensor",
+  "max_sensors": 24,
+  "developed_setup_action_limit": 80,
+  "placement": {
+    "ring_start": 500,
+    "ring_step": 350,
+    "ring_limit": 2250,
+    "angles": 16,
+    "node_clearance": 210,
+    "sensor_overlap": 0.75,
+    "defense_distance": 1100
+  },
+  "build_targets": [
+    {"definition": "turret", "count": 1},
+    {"definition": "extract_iron_ore", "count": 1},
+    {"definition": "extract_carbon", "count": 1},
+    {"definition": "alloy_refinery", "count": 1},
+    {"definition": "extract_copper_ore", "count": 1},
+    {"definition": "conductor_works", "count": 1},
+    {"definition": "extract_silica", "count": 1},
+    {"definition": "substrate_works", "count": 1},
+    {"definition": "circuit_works", "count": 1},
+    {"definition": "component_works", "count": 1},
+    {"definition": "turret", "count": 4},
+    {"definition": "depot", "count": 1}
+  ]
+}

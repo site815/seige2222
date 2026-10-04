@@ -1,0 +1,170 @@
+{
+  "SM_OakA": {
+    "lod_vertices": [
+      61200,
+      13932,
+      8690,
+      4228
+    ],
+    "lod_screen_sizes": [
+      1.0,
+      0.44999998807907104,
+      0.18000000715255737,
+      0.05999999865889549
+    ],
+    "custom_lods": [
+      {
+        "lod": 1,
+        "fbx": "SM_OakA_LOD1.fbx",
+        "triangles": 4846,
+        "leaves": 1500,
+        "leaf_scale": 1.7,
+        "wood_fraction": 0.45
+      },
+      {
+        "lod": 2,
+        "fbx": "SM_OakA_LOD2.fbx",
+        "triangles": 2902,
+        "leaves": 1000,
+        "leaf_scale": 2.1,
+        "wood_fraction": 0.22
+      },
+      {
+        "lod": 3,
+        "fbx": "SM_OakA_LOD3.fbx",
+        "triangles": 1410,
+        "leaves": 500,
+        "leaf_scale": 2.85,
+        "wood_fraction": 0.1
+      }
+    ],
+    "material_slots": 2,
+    "verified_from_fresh_load": true
+  },
+  "SM_OakB": {
+    "lod_vertices": [
+      61200,
+      13904,
+      8690,
+      4230
+    ],
+    "lod_screen_sizes": [
+      1.0,
+      0.44999998807907104,
+      0.18000000715255737,
+      0.05999999865889549
+    ],
+    "custom_lods": [
+      {
+        "lod": 1,
+        "fbx": "SM_OakB_LOD1.fbx",
+        "triangles": 4846,
+        "leaves": 1500,
+        "leaf_scale": 1.7,
+        "wood_fraction": 0.45
+      },
+      {
+        "lod": 2,
+        "fbx": "SM_OakB_LOD2.fbx",
+        "triangles": 2902,
+        "leaves": 1000,
+        "leaf_scale": 2.1,
+        "wood_fraction": 0.22
+      },
+      {
+        "lod": 3,
+        "fbx": "SM_OakB_LOD3.fbx",
+        "triangles": 1410,
+        "leaves": 500,
+        "leaf_scale": 2.85,
+        "wood_fraction": 0.1
+      }
+    ],
+    "material_slots": 2,
+    "verified_from_fresh_load": true
+  },
+  "SM_PineA": {
+    "lod_vertices": [
+      81846,
+      28057,
+      15154,
+      8172
+    ],
+    "lod_screen_sizes": [
+      1.0,
+      0.44999998807907104,
+      0.18000000715255737,
+      0.05999999865889549
+    ],
+    "custom_lods": [
+      {
+        "lod": 1,
+        "fbx": "SM_PineA_LOD1.fbx",
+        "triangles": 9474,
+        "leaves": 1540,
+        "leaf_scale": 1.7,
+        "wood_fraction": 0.45
+      },
+      {
+        "lod": 2,
+        "fbx": "SM_PineA_LOD2.fbx",
+        "triangles": 5180,
+        "leaves": 1027,
+        "leaf_scale": 2.1,
+        "wood_fraction": 0.22
+      },
+      {
+        "lod": 3,
+        "fbx": "SM_PineA_LOD3.fbx",
+        "triangles": 2724,
+        "leaves": 514,
+        "leaf_scale": 2.85,
+        "wood_fraction": 0.1
+      }
+    ],
+    "material_slots": 2,
+    "verified_from_fresh_load": true
+  },
+  "SM_PineB": {
+    "lod_vertices": [
+      81846,
+      27739,
+      15209,
+      8172
+    ],
+    "lod_screen_sizes": [
+      1.0,
+      0.44999998807907104,
+      0.18000000715255737,
+      0.05999999865889549
+    ],
+    "custom_lods": [
+      {
+        "lod": 1,
+        "fbx": "SM_PineB_LOD1.fbx",
+        "triangles": 9474,
+        "leaves": 1540,
+        "leaf_scale": 1.7,
+        "wood_fraction": 0.45
+      },
+      {
+        "lod": 2,
+        "fbx": "SM_PineB_LOD2.fbx",
+        "triangles": 5180,
+        "leaves": 1027,
+        "leaf_scale": 2.1,
+        "wood_fraction": 0.22
+      },
+      {
+        "lod": 3,
+        "fbx": "SM_PineB_LOD3.fbx",
+        "triangles": 2724,
+        "leaves": 514,
+        "leaf_scale": 2.85,
+        "wood_fraction": 0.1
+      }
+    ],
+    "material_slots": 2,
+    "verified_from_fresh_load": true
+  }
+}

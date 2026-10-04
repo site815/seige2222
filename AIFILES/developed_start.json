@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "population": 35,
+  "inventory": {
+    "alloy": 500,
+    "circuits": 300,
+    "components": 150,
+    "iron_ore": 40,
+    "copper_ore": 40,
+    "silica": 40,
+    "carbon": 40
+  }
+}

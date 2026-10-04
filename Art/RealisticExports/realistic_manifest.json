@@ -1,0 +1,412 @@
+{
+  "units": "centimeters",
+  "forward": "+X",
+  "palette": {
+    "RM_Concrete": {
+      "color": [
+        0.28,
+        0.29,
+        0.27,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.88,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Paint": {
+      "color": [
+        0.53,
+        0.56,
+        0.54,
+        1
+      ],
+      "metallic": 0.5,
+      "roughness": 0.5,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_DarkPaint": {
+      "color": [
+        0.1,
+        0.135,
+        0.13,
+        1
+      ],
+      "metallic": 0.55,
+      "roughness": 0.52,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Steel": {
+      "color": [
+        0.26,
+        0.29,
+        0.3,
+        1
+      ],
+      "metallic": 0.85,
+      "roughness": 0.32,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Black": {
+      "color": [
+        0.018,
+        0.024,
+        0.025,
+        1
+      ],
+      "metallic": 0.3,
+      "roughness": 0.63,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Window": {
+      "color": [
+        0.022,
+        0.055,
+        0.073,
+        1
+      ],
+      "metallic": 0.55,
+      "roughness": 0.16,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Rust": {
+      "color": [
+        0.24,
+        0.105,
+        0.045,
+        1
+      ],
+      "metallic": 0.45,
+      "roughness": 0.8,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Ochre": {
+      "color": [
+        0.42,
+        0.27,
+        0.075,
+        1
+      ],
+      "metallic": 0.4,
+      "roughness": 0.55,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Light": {
+      "color": [
+        0.6,
+        0.81,
+        0.9,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.3,
+      "emission": 0.6,
+      "foliage": false
+    },
+    "RM_Amber": {
+      "color": [
+        0.9,
+        0.28,
+        0.035,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.35,
+      "emission": 0.7,
+      "foliage": false
+    },
+    "RM_Bark": {
+      "color": [
+        0.15,
+        0.105,
+        0.065,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.95,
+      "emission": 0,
+      "foliage": false
+    },
+    "RM_Leaf": {
+      "color": [
+        0.12,
+        0.23,
+        0.055,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.82,
+      "emission": 0,
+      "foliage": true
+    },
+    "RM_Pine": {
+      "color": [
+        0.055,
+        0.13,
+        0.055,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.87,
+      "emission": 0,
+      "foliage": true
+    },
+    "RM_Grass": {
+      "color": [
+        0.14,
+        0.22,
+        0.055,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.9,
+      "emission": 0,
+      "foliage": true
+    },
+    "RM_Rock": {
+      "color": [
+        0.27,
+        0.285,
+        0.26,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.93,
+      "emission": 0,
+      "foliage": false
+    }
+  },
+  "meshes": {
+    "SM_Core": {
+      "fbx": "SM_Core.fbx",
+      "dimensions": [
+        232.49922943115234,
+        200.0,
+        204.0
+      ],
+      "triangles": 10888,
+      "materials": [
+        "RM_Concrete",
+        "RM_DarkPaint",
+        "RM_Steel",
+        "RM_Black",
+        "RM_Paint",
+        "RM_Window",
+        "RM_Light",
+        "RM_Ochre",
+        "RM_Rust",
+        "RM_Amber"
+      ],
+      "unreal_path": "/Game/Art/SM_Core"
+    },
+    "SM_Extractor": {
+      "fbx": "SM_Extractor.fbx",
+      "dimensions": [
+        180.0,
+        160.8499984741211,
+        179.5
+      ],
+      "triangles": 11620,
+      "materials": [
+        "RM_Concrete",
+        "RM_DarkPaint",
+        "RM_Steel",
+        "RM_Black",
+        "RM_Paint",
+        "RM_Rust",
+        "RM_Ochre"
+      ],
+      "unreal_path": "/Game/Art/SM_Extractor"
+    },
+    "SM_Factory": {
+      "fbx": "SM_Factory.fbx",
+      "dimensions": [
+        228.49922943115234,
+        184.0,
+        184.0
+      ],
+      "triangles": 11048,
+      "materials": [
+        "RM_Concrete",
+        "RM_DarkPaint",
+        "RM_Steel",
+        "RM_Black",
+        "RM_Paint",
+        "RM_Light",
+        "RM_Rust",
+        "RM_Ochre"
+      ],
+      "unreal_path": "/Game/Art/SM_Factory"
+    },
+    "SM_Depot": {
+      "fbx": "SM_Depot.fbx",
+      "dimensions": [
+        212.0,
+        180.0,
+        132.0
+      ],
+      "triangles": 8744,
+      "materials": [
+        "RM_Concrete",
+        "RM_DarkPaint",
+        "RM_Steel",
+        "RM_Black",
+        "RM_Paint",
+        "RM_Ochre"
+      ],
+      "unreal_path": "/Game/Art/SM_Depot"
+    },
+    "SM_Sensor": {
+      "fbx": "SM_Sensor.fbx",
+      "dimensions": [
+        111.0,
+        105.0,
+        251.0
+      ],
+      "triangles": 9168,
+      "materials": [
+        "RM_Concrete",
+        "RM_DarkPaint",
+        "RM_Steel",
+        "RM_Black",
+        "RM_Paint",
+        "RM_Amber"
+      ],
+      "unreal_path": "/Game/Art/SM_Sensor"
+    },
+    "SM_Turret": {
+      "fbx": "SM_Turret.fbx",
+      "dimensions": [
+        169.0,
+        134.0,
+        118.5
+      ],
+      "triangles": 4160,
+      "materials": [
+        "RM_Concrete",
+        "RM_DarkPaint",
+        "RM_Steel",
+        "RM_Black",
+        "RM_Paint",
+        "RM_Window"
+      ],
+      "unreal_path": "/Game/Art/SM_Turret"
+    },
+    "SM_OakA": {
+      "fbx": "SM_OakA.fbx",
+      "dimensions": [
+        756.5820922851562,
+        825.4219665527344,
+        857.6939985752106
+      ],
+      "triangles": 22104,
+      "materials": [
+        "RM_Bark",
+        "RM_Leaf"
+      ],
+      "unreal_path": "/Game/Art/SM_OakA"
+    },
+    "SM_OakB": {
+      "fbx": "SM_OakB.fbx",
+      "dimensions": [
+        646.9563598632812,
+        639.6971130371094,
+        759.9204614162445
+      ],
+      "triangles": 22104,
+      "materials": [
+        "RM_Bark",
+        "RM_Leaf"
+      ],
+      "unreal_path": "/Game/Art/SM_OakB"
+    },
+    "SM_PineA": {
+      "fbx": "SM_PineA.fbx",
+      "dimensions": [
+        519.2952728271484,
+        525.2603454589844,
+        990.0
+      ],
+      "triangles": 32692,
+      "materials": [
+        "RM_Bark",
+        "RM_Pine"
+      ],
+      "unreal_path": "/Game/Art/SM_PineA"
+    },
+    "SM_PineB": {
+      "fbx": "SM_PineB.fbx",
+      "dimensions": [
+        407.0445098876953,
+        416.00990295410156,
+        780.0
+      ],
+      "triangles": 32692,
+      "materials": [
+        "RM_Bark",
+        "RM_Pine"
+      ],
+      "unreal_path": "/Game/Art/SM_PineB"
+    },
+    "SM_Shrub": {
+      "fbx": "SM_Shrub.fbx",
+      "dimensions": [
+        134.75211334228516,
+        152.3492431640625,
+        115.42276430130005
+      ],
+      "triangles": 3000,
+      "materials": [
+        "RM_Bark",
+        "RM_Leaf"
+      ],
+      "unreal_path": "/Game/Art/SM_Shrub"
+    },
+    "SM_Grass": {
+      "fbx": "SM_Grass.fbx",
+      "dimensions": [
+        72.38330841064453,
+        63.58456802368164,
+        41.96598434448242
+      ],
+      "triangles": 144,
+      "materials": [
+        "RM_Grass"
+      ],
+      "unreal_path": "/Game/Art/SM_Grass"
+    },
+    "SM_RockA": {
+      "fbx": "SM_RockA.fbx",
+      "dimensions": [
+        146.80833435058594,
+        114.09498977661133,
+        72.8965072631836
+      ],
+      "triangles": 320,
+      "materials": [
+        "RM_Rock"
+      ],
+      "unreal_path": "/Game/Art/SM_RockA"
+    },
+    "SM_RockB": {
+      "fbx": "SM_RockB.fbx",
+      "dimensions": [
+        190.92178344726562,
+        132.26849365234375,
+        98.03467178344727
+      ],
+      "triangles": 320,
+      "materials": [
+        "RM_Rock"
+      ],
+      "unreal_path": "/Game/Art/SM_RockB"
+    }
+  }
+}

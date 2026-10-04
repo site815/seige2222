@@ -27,33 +27,47 @@ The table expresses the intended separation. Only systems included in [First Pla
 
 ## Definitions and supported behavior
 
-**Current prototype files:** [resources.json](../../Rules/resources.json), [recipes.json](../../Rules/recipes.json), [buildings.json](../../Rules/buildings.json), [policies.json](../../Rules/policies.json), and [scenario.json](../../Rules/scenario.json). They currently use JSON with an explicit version string. Catalog records have stable IDs; policies contain both numerical tuning and selectors for supported behaviors. Their presence is verified, but runtime validation and packaging must be tested separately. See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for the represented content.
+**Current prototype files:**
 
-**Proposed definition contract:**
+| Folder | Definitions and responsibility |
+| --- | --- |
+| `Rules` | [Resources](../../Rules/resources.json), [recipes](../../Rules/recipes.json), [buildings](../../Rules/buildings.json), [policies](../../Rules/policies.json), and [scenario](../../Rules/scenario.json) define the shared economy, simulation tuning, threats, initial stock, and deposit template. |
+| `AIFILES` | [Colony controller](../../AIFILES/colony_ai.json) priorities, timing, and placement search; a finite [developed-colony preset](../../AIFILES/developed_start.json). The separate folder is a confirmed user requirement. AI orders still pay ordinary costs and use the same simulation. |
+| `Interface` | [ui.json](../../Interface/ui.json) defines construction groups and shortcuts, top-bar resource references, descriptions, and credits. These are presentation definitions, not a second economy. |
+
+All three use explicit versions. Catalog records have stable IDs; policies contain numerical tuning and selectors for supported behaviors. New types of behavior can require code; changing supported content and balance must not require rewriting engine execution. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md) and [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for represented behavior and verification boundaries.
+
+**Definition contract:**
 
 - Use stable IDs for resources, products, buildings, recipes, and scenarios. Display names can change without becoming save-file keys.
 - A building declares capabilities and refers to recipes. A recipe declares its input/output quantities and duration. The simulation applies the same transaction rules to all definitions using that mechanism.
 - Store rate ceilings, worker demand, health, repair inputs, ranges, movement speeds, and threat tuning in external data where those systems are implemented.
 - Keep starting stocks and placed assets in scenario data, separate from universal item definitions.
 - State units explicitly: quantity, transport capacity, distance, simulation time, and any real-time conversion. A number alone does not establish which clock a timer uses.
-- Preserve actual locations for inventory and cargo as physical logistics becomes implemented. A definition ID is not a colony-wide teleporting inventory.
+- Preserve actual locations for inventory and cargo. The prototype already keeps building inventories and courier cargo separately; a definition ID is not a colony-wide teleporting inventory.
 - Define the permitted behavior vocabulary in code or a validated schema. Editing numbers or composing existing behaviors should not require engine changes; inventing a new simulation mechanism can require a code extension.
 
 Do not place executable arbitrary scripts in balance files merely to satisfy the external-data requirement. A declarative format is sufficient for the initial resource, production, workforce, and threat systems.
 
 ## Validation and reload policy
 
-**Recommended validation:** Reject duplicate IDs, unknown references, invalid quantities, nonpositive durations/rate intervals, malformed costs, and incompatible capability references. Report the definition and field responsible. Validate the chosen starting scenario for unavailable dependencies separately from parsing the catalog.
+**Implemented pre-build validation:** Run `node Tools/validate_configuration.mjs` from the project root. [The validator](../../Tools/validate_configuration.mjs) includes the existing Rules checks and validates AI building/resource references, timing and search bounds, developed stock capacity and necessary setup costs, UI building coverage, shortcut conflicts, summary resource IDs, and credits. It runs before Unreal in [build.ps1](../../Tools/build.ps1) and in the [GitHub workflow](../../.github/workflows/rules.yml). Invalid definitions fail with a field-specific error rather than silently substituting balance values. Runtime loaders also reject invalid supported definitions.
+
+**Verified configuration check:** The current complete definition set passes; focused mutations with unknown AI/UI/resource references, a duplicate shortcut, and invalid AI timing are rejected. These static checks do not prove every AI layout is placeable or an economy survives. Native tests exercise actual placement, production, save continuation, and a first-objective strategy; their results are recorded in the scope.
 
 Not every production cycle is invalid: recycling could intentionally form a loop. The relevant starter check is whether useful production is reachable from actual starting assets and inputs. Do not claim viability from a graph alone without considering labor, throughput, consumption, and physical delivery.
 
-**Initial policy recommendation:** Load a coherent definition set at scenario startup or restart. Live hot reload is not required. Changing rules underneath existing cargo, queued production, and saved state needs a deliberate migration policy, especially before multiplayer.
+**Current reload policy:** Load a coherent definition set at scenario startup or restart; restart the application after interface edits. Live hot reload is not implemented. Saves require matching Rules and AI fingerprints. Changing rules underneath existing cargo, queued production, and saved state needs a deliberate migration policy, especially before multiplayer.
 
-**Packaging requirement:** Preserve editable runtime rule files in the packaged build and document the load location. Files that are only present in the development checkout do not satisfy this requirement. Validate the packaged game with one controlled balance edit before claiming that this works.
+**Packaging contract:** [The module build file](../../Source/Seige/Seige.Build.cs) stages `Rules`, `AIFILES`, and `Interface` as loose files beside the target binary. The runtime first checks the project directory, then the executable directory. Keep these folders with the packaged executable. A controlled packaged balance edit remains a separate acceptance check; staging declarations alone do not prove it works in a delivered build.
 
 ## State, saving, and future multiplayer
 
-**Prototype approach:** One local simulation owns the colony's state. Input requests changes and the visual world reflects outcomes. Local save/load, if included in the slice, is a development feature rather than a final decision about pause or persistence in the complete game.
+**Current local ownership:** Each occupied scenario cell owns one independent simulation instance. The center is human-controlled or AI-controlled for observation; up to eight neighbors run the same economy and local threat rules. Their inventories and combat are independent. Rendering them in a common 3×3 view does not implement cross-sector travel, trade, or shared authority.
+
+The scenario clock advances only during active play while unpaused. Setup, human core placement, main menu, settings, and credits do not advance colony simulations. Core placement uses the simulation's placement validation before play starts. These confirmed single-player controls do not determine how a future persistent server behaves.
+
+Local save/load writes the center and occupied neighbor snapshots with scenario slots, camera, speed, pause state, and AI fingerprints. A generation directory and atomic metadata replacement protect the active save from partial writes. Loading validates all candidate snapshots before replacing live state. Native continuation and neighborhood save/load tests have passed; long-term migration and recovery guarantees remain later work.
 
 **Recommended future boundary:** Reuse the definition model and command/state concepts when choosing authoritative multiplayer execution. Clients would submit intentions; the authoritative owner would resolve shared inventories, production, combat, and travel. A trusted service remains an architectural proposal, not a user-selected deployment or networking design.
 
@@ -61,7 +75,7 @@ Before persistent multiplayer, resolve ruleset versions, save migration, command
 
 ## Prototype deviations must remain explicit
 
-The initial construction command may pay directly from the core inventory as a simplification. Record that in the scope rather than portraying it as complete physical construction delivery. The same applies to aggregate staffing, simplified movement, threat formulas, population reduction, and any missing power or robot-needs systems.
+The initial construction command pays directly from the core inventory as a simplification. Record that in the scope rather than portraying it as complete physical construction delivery. The same applies to aggregate staffing, simplified movement, threat formulas, population reduction, and any missing power or robot-needs systems.
 
 Externalizing these choices makes them easier to tune; it does not make them approved final game rules. Keep observed implementation behavior, candidate design, and verified test results distinct.
 

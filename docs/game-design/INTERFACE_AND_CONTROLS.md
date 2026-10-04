@@ -2,13 +2,29 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-Interface direction and the boundary between player decisions and automatic simulation. Detailed screens, layouts, and input bindings are not yet selected.
+Interface direction and the boundary between player decisions and automatic simulation. The current top bar and construction-menu requirements below are selected user direction; remaining screens and detailed behavior still need development and playtesting.
 
 ## Interface references
 
 **Confirmed direction:** Manor Lords is the closer primary interface reference because the game is mainly a settlement-building simulation. StarCraft II is a secondary reference for polish and clarity.
 
-The user wants to improve on aspects of Manor Lords using the perceived polish of StarCraft II. No particular interface flaw, borrowed panel, or exact control scheme has been specified yet. This expands the earlier StarCraft reference beyond the starting command-center-and-workers setup; it does not adopt individual-unit combat micromanagement.
+The user wants to improve on aspects of Manor Lords using the perceived polish of StarCraft II. The specific requirements below now refine that direction. These references do not adopt individual-unit combat micromanagement.
+
+## Current layout and construction requirements
+
+**Confirmed user requirements:**
+
+- Show the current game version and FPS at the top left.
+- Put colony summary information in a top bar, with useful explanations available on hover.
+- Open construction through the **B** key. Do not use the earlier persistent bottom construction menu.
+- Represent construction choices with icons and reveal their building names on hover.
+- Organize construction logically and provide understandable keyboard shortcuts. Exact category and item keys are implementation choices until verified in play.
+
+**Implementation guidance:** Keep the resource-related, logistics, and defense building categories recognizable; a more detailed industrial group can help organize production without changing building capabilities. Explain a selected building's cost, workers, purpose, and unavailable prerequisites where useful. The interface should let the player understand a blocked action without reading source files.
+
+Hover and keyboard behavior must preserve ordinary world controls. Interface clicks must not place a building behind a menu or dialog, and menu shortcuts must not simultaneously move the camera. Input handling must work between rendering passes; drawing state cannot be required to process a click.
+
+The displayed version must match the delivered build's version. These are acceptance requirements, not a claim that the latest package has passed interaction or visual testing.
 
 ## Colony controls
 

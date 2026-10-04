@@ -6,17 +6,20 @@
 
 ## Verification status
 
-- An Unreal editor-target build has succeeded during development. A completed editor build alone does not verify the latest packaged game or gameplay outcomes.
+- The revised Unreal editor and Win64 Shipping targets compiled, and the standalone v0.2.0 package launched successfully outside the editor.
 - The external rule validator passed for nine items, six recipes, and thirteen building definitions, including fifteen invalid-data cases. Its dependency and startup-stock checks do not prove live economic or defensive solvability.
-- Six native Unreal simulation tests passed: runtime rule validation, physical delivery and resource accounting, automatic staffing/repairs, deterministic save continuation, core loss with preloaded-only shuttle cargo, and first-objective solvability. The ordinary-action scenario completed at about 370 simulation seconds with twelve manufactured components; it lost the silica extractor and depot. This verifies one winning strategy, not indefinite self-sufficiency or the rendered interface.
-- The private GitHub repository has been created. The project push has not yet been reported as completed.
-- Final revision build checks after further changes, visual playtesting, packaged launch, and packaged rule editing remain pending until their results are recorded. Detailed local test output is generated under Saved and is not a design specification.
+- All sixteen native tests passed with zero failures or warnings: six simulation tests, four AI tests, three controller/HUD interaction tests, and three frontend tests. The interaction tests call the real controller/HUD route without a drawing canvas and check menu isolation; they do not simulate a human's complete rendered play session.
+- On the revised resource map, a normal-action strategy with sensors and turrets covering the three resource approaches completed the objective at 360 simulation seconds with twenty-two manufactured components, thirty-three robots filling thirty-three jobs, and no buildings lost. This verifies one winning strategy, not indefinite self-sufficiency.
+- AI tests covered invalid definitions, starting/developed production, deterministic save continuation, and relocated-core threat spawning. The starting AI manufactured five components by 300 simulation seconds; this does not establish that the simple AI wins every scenario.
+- The final native report is `Saved/Automation/v02-final/index.json`: sixteen successes, zero failures, warnings, or unrun tests. Generated reports are not design specifications or tracked source artifacts.
+- The rendered `-UiSmoke -ForceRes -ResX=1600 -ResY=900` route completed twenty-three stages with zero failures, covering frontend navigation, landing, controller construction clicks, shortcuts, the neighborhood view, credits, and AI observation. `Saved/PresentationSmoke.json` records the result. This is programmatic rendered coverage, not a complete human play-through or a benchmark across hardware.
+- The packaged game passed its twenty-three-stage rendered interaction route with zero failures and zero observed TCP/UDP endpoints. A temporary packaged starting-population edit took effect without rebuilding, and the exact original bytes were restored. The [development report](../DEVELOPMENT_REPORT.md) records these release checks and the remaining scope. Further code or content changes need appropriate revalidation.
 
 ## Purpose
 
-Test whether a visible robotic colony is engaging when the player establishes an interconnected industrial chain, keeps materials moving, and prepares automatic defenses against alien pressure. Build a playable local scenario before expanding to neighboring factions or persistent multiplayer.
+Test whether a visible robotic colony is engaging when the player establishes an interconnected industrial chain, keeps materials moving, and prepares automatic defenses against alien pressure. The authorized expansion adds a local scenario setup, simple AI colonies, and observation of an AI-controlled center before persistent multiplayer.
 
-The complete design remains broader than this prototype. AI opponents are part of the intended single-player game, but neighboring colonies are not included in this first slice. The persistent-world design baseline remains unchanged.
+The complete design remains broader than this prototype. Scenario cells can be empty, starting AI, or developed AI; empty neighbors are the default. Assigning AI to the center selects observer play. The first AI implementation uses independent instances of the same colony simulation. Cross-colony combat, trade, and fleet missions are not included. The persistent-world design baseline remains unchanged.
 
 ## Current external definition set
 
@@ -28,7 +31,8 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | [recipes.json](../../Rules/recipes.json) | Alloy, conductor, substrate, circuit, and component recipes; a separate robot-assembly recipe consumed by population production. |
 | [buildings.json](../../Rules/buildings.json) | One command-core definition; four extractor types; alloy refinery, conductor works, substrate works, circuit works, component works; sensor mast, sentinel turret, cargo depot. The core is supplied by the scenario and is not another build-menu option. |
 | [policies.json](../../Rules/policies.json) | Simulation timing, staffing, population adjustment, physical delivery, repair/upkeep, visibility, threat behavior, scenario objectives, and numerical tuning. |
-| [scenario.json](../../Rules/scenario.json) | First Landing title, initial core, starting population and inventory, separate initial shuttle cargo, world extent, seed, and four resource-source locations. |
+| [scenario.json](../../Rules/scenario.json) | First Landing title, initial core, starting population and inventory, separate initial shuttle cargo, world extent, seed, and irregularly distributed resource-source locations. |
+| [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a finite developed-colony preset. Runtime AI uses the normal simulation rules. |
 
 The proposed twelve-resource catalog is not all implemented. The current thirteen building definitions represent reusable prototype functions, not adoption of every proposed facility or upgrade. The JSON files own exact quantities and rates so this document does not become a second balance table.
 
@@ -39,6 +43,7 @@ These are the implementation targets being built and reviewed. A definition or p
 | Area | Prototype behavior |
 | --- | --- |
 | Colony start | One command core, a small robotic workforce, and finite inventory supplied by the scenario. |
+| Scenario and observer | Local setup supports empty, starting-AI, and developed-AI cells. A human center chooses an initial core landing position; an AI center runs under observer controls. The controller does not receive free materials while ticking. |
 | Construction | Place supported buildings, with costs paid directly from available core inventory. Invalid placement or insufficient stock should be rejected. |
 | Production | Matching extractors produce at their defined rates. Processors consume delivered local inputs and generate local output through external recipes. |
 | Workforce | Automatic staffing and job-driven population production. A fully staffed operating requirement, a minimum population, and delayed retirement without material refunds are prototype policies. The assembly-input buffer reserves components for future robots; it does not increase the population target above job demand. |
@@ -62,16 +67,17 @@ The precise local interface and input bindings belong with the delivered build's
 - **Civilian needs:** Core-collected component upkeep and a shortage efficiency effect are provisional. Happiness, the tentative morale share, dissatisfaction, and revolt remain undesigned or unimplemented here.
 - **Energy:** The resource proposal's carbon-powered starter generator is not part of the current definition set. No full power network, battery charge, or charging-facility simulation is promised by this slice.
 - **Transport:** Simple couriers demonstrate inventory movement. The full vehicle/mech fleet production, route planning, cargo loss/salvage, and privateering model is later work.
-- **World:** One local scenario does not implement the nine-sector neighborhood, remote extraction across sector boundaries, or final map scale and wilderness proportions.
+- **World:** The local neighborhood presents independent colony sectors. This does not implement cross-sector extraction, travel, shared combat, or persistent-world ownership. Configured sector dimensions and resource placement are prototype values, not final map-scale balance.
+- **AI:** A deterministic target-building controller chooses nearby deposits, extends sensors, and replaces missing facilities when it can afford them. Developed colonies begin with an explicit finite stock/population preset and paid setup construction. This does not model strategic diplomacy, trade, or hostile fleet decisions.
 - **Emergency escape:** A separate preloaded-cargo state and scenario-ending departure are implemented in the simulation. Interactive shuttle loading, boarding, destination selection, and world relocation are outside this slice. The default shuttle is empty; launch never copies core inventory. This is not a complete physical loading or relocation system.
 - **Balance:** The external files supply playable test assumptions. The final invasion clock, production rates, starter inventory, core defense strength, and victory/loss rules remain subject to review.
 - **Persistence:** Local save/load and any local time controls are prototype facilities. They do not settle the persistent game's authority, server timeline, or offline behavior.
 
 ## Deliberately later work
 
-The current single-player executable is packaged for offline use. HTTP, network discovery, and telemetry plugins are disabled, and the Shipping build avoids Unreal's development profiling listener. Future multiplayer work must introduce networking deliberately; it is not a dependency of this playable.
+The single-player target is configured for offline Shipping packaging. HTTP, network discovery, and telemetry plugins are disabled, and the Shipping configuration avoids Unreal's development profiling listener. The latest package still requires its own observed launch and offline check. Future multiplayer work must introduce networking deliberately; it is not a dependency of this playable.
 
-AI neighboring colonies and their development choices; privateers and fleet missions; aggression settings and fleet-level orders; trade; inter-sector extraction; sensor theft; full loot and salvage; orbital relocation and adjacent destinations; leaderless areas and scavenging; revolt; building upgrades; the remaining proposed resource branches; specialized low-population balance; complete robot-needs design; and persistent multiplayer services.
+Strategic AI faction choices beyond the simple colony controller; privateers and fleet missions; aggression settings and fleet-level orders; trade; inter-sector extraction; sensor theft; full loot and salvage; orbital relocation and adjacent destinations; leaderless areas and scavenging; revolt; building upgrades; the remaining proposed resource branches; specialized low-population balance; complete robot-needs design; and persistent multiplayer services.
 
 These omissions do not remove those ideas from their subject documents. The full single-player game should eventually represent the same gameplay rules intended for persistent multiplayer.
 
@@ -86,6 +92,7 @@ These omissions do not remove those ideas from their subject documents. The full
 7. Show finite live visibility and explain blocked activity clearly enough to play without inspecting source files.
 8. Check save/load across active production, threats, and cargo if the save feature is delivered. Record remaining unsupported behavior rather than declaring the full state model verified.
 9. Record actual build, package, and gameplay results in the development report. Push only the intended project contents, with generated build/cache output excluded from source control.
+10. Exercise actual controller clicks outside HUD draw passes, menu/observer input isolation, legal and rejected landings, starting/developed AI operation, and deterministic AI continuation after save/load. Verify scenario metadata protects the AI configuration fingerprint as well as each colony's rule fingerprint.
 
 ## Related documents
 

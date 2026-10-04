@@ -2,7 +2,15 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-How a constructed colony operates with minimal routine adjustment. Automatic behavior is established; allocation algorithms, exact requirements, and interface layouts remain open.
+How a constructed colony operates with minimal routine adjustment. Automatic behavior and the single-player setup flow are established; prototype algorithms and numerical values remain distinct from final design decisions.
+
+## Scenario setup and player control
+
+**Confirmed direction:** A main menu leads to single-player scenario setup, settings, credits, and local loading. Setup presents the full 3×3 neighborhood with empty, starting-AI, or developed-AI neighbors. The center can be a player colony or an AI colony for observation. For human play, time stays paused while the player surveys the larger map and chooses the command-core location. Play begins after a valid landing selection.
+
+**Current implementation:** Only active, unpaused play advances the center and neighbor simulations. Main menu, scenario setup, landing, settings, and credits stop their clocks. Settings provide four graphics-quality levels and windowed/fullscreen selection. The credits and construction categories are externally editable in [Interface/ui.json](../../Interface/ui.json); AI priorities and developed starting stock are separately editable in [AIFILES](../../AIFILES/README.md).
+
+Observer mode allows watching AI-controlled colonies, camera movement, pause, and saving; it disables player construction and colony commands. A human scenario retains one central core. These local controls do not establish pause, offline progression, or save ownership for future persistent multiplayer. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
 
 ## Buildings and automatic work
 
@@ -21,7 +29,7 @@ Automatic operation does not remove physical goods or transport. Inputs and outp
 
 **Confirmed direction:** The player should be able to see worker demand and unfilled jobs, through an open-jobs or required-workers metric. Staffing should remain understandable even though assignment is automatic.
 
-**Open:** Exact presentation, whether metrics are colony-wide, per building, or both, and how shortages or blocked work are explained.
+**Current prototype:** The interface reports colony population/jobs and building staffing and operating status. Final presentation and explanations of allocation under scarcity remain open; check readability in the running game rather than treating the presence of a metric as sufficient.
 
 ## Population, throughput, and consumption
 
@@ -31,7 +39,13 @@ Automatic operation does not remove physical goods or transport. Inputs and outp
 
 A populous colony and a small specialized colony should both be viable strategies. A low-population settlement may be an outpost or the main colony. This is a design goal, not a selected class system or a claim that balance is already established; see [Resources, Industry, and Progression](RESOURCES_AND_INDUSTRY.md).
 
-## Decisions still needed
+## Current prototype policies
+
+Enabled buildings require full staffing to operate, couriers physically deliver inputs between local inventories, and damage is repaired automatically using the implemented repair inputs. Job demand drives core robot assembly and later surplus retirement, with a configurable population minimum. The assembly-input buffer reserves materials for future robots; it does not add extra robots above job demand. Retirement currently gives no resource refund. Centralized upkeep, the staffing algorithm, and these population choices are editable prototype policies, not settled robot-needs or satisfaction systems.
+
+Construction immediately spends core inventory. Construction hauling is still missing even though production inputs and outputs use physical delivery. Local AI issues the same normal construction commands and then relies on the same workers, recipes, logistics, repairs, and threats. It does not receive recurring free inventory. Independent neighbor colonies cannot yet exchange cargo or attack each other.
+
+## Decisions still needed for the full game
 
 - How robots choose and switch jobs, and how scarce workers or inputs are allocated among enabled buildings.
 - Whether an understaffed building produces partially or waits until its requirements are met.
@@ -51,3 +65,4 @@ None of these open details establishes manual worker assignment, required produc
 - [Population, Necessities, and Morale](POPULATION_AND_MORALE.md)
 - [Resources, Industry, and Progression](RESOURCES_AND_INDUSTRY.md)
 - [Fleets, Physical Logistics, and Loot](FLEETS_AND_LOGISTICS.md)
+- [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md)

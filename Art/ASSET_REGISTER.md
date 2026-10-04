@@ -1,5 +1,7 @@
 # SEIGE — Original Prototype Asset Register
 
+**Current environment update:** The six building meshes below are superseded in the game by the detailed industrial set recorded in [REALISTIC_ASSET_REGISTER.md](REALISTIC_ASSET_REGISTER.md). That set also adds eight temperate vegetation/rock meshes and locally packaged CC0 photographic surfaces. The original prototype source remains for provenance; robot and bug meshes are retained. See [third-party texture attribution](THIRD_PARTY_ASSETS.md) for the new maps.
+
 These eight meshes and their flat-color materials were created for this project with the reproducible Blender script in [create_assets.py](../Tools/create_assets.py). They are original procedural designs, assembled from modeled primitives and authored proportions. No downloaded character, building, texture, or commercial game asset is included. The robot uses its own box-pebble body, binocular dot face, mitten arms, and coral backpack; it does not reproduce a referenced character.
 
 ## Provenance and licensing

@@ -18,9 +18,9 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
     FString Error; FSeigeSimulation S;
     if (!TestTrue(TEXT("Current rules initialize"),S.Initialize(TestRules(),Error))) { AddError(Error); return false; }
     TestFalse(TEXT("Cannot build a second core"),S.CanPlaceBuilding(S.CoreDefinition,FVector2D(700,0),Error));
-    TestFalse(TEXT("Mismatched extractor cannot mine another material"),S.CanPlaceBuilding(TEXT("extract_iron_ore"),FVector2D(1450,800),Error));
-    TestTrue(TEXT("Matching extractor placement accepted"),S.PlaceBuilding(TEXT("extract_iron_ore"),FVector2D(-1500,600),Error));
-    TestFalse(TEXT("Same deposit cannot host another extractor"),S.CanPlaceBuilding(TEXT("extract_iron_ore"),FVector2D(-1450,640),Error));
+    TestFalse(TEXT("Mismatched extractor cannot mine another material"),S.CanPlaceBuilding(TEXT("extract_iron_ore"),S.Nodes[1].Position,Error));
+    TestTrue(TEXT("Matching extractor placement accepted"),S.PlaceBuilding(TEXT("extract_iron_ore"),S.Nodes[0].Position,Error));
+    TestFalse(TEXT("Same deposit cannot host another extractor"),S.CanPlaceBuilding(TEXT("extract_iron_ore"),S.Nodes[0].Position+FVector2D(40,40),Error));
     TestFalse(TEXT("Missing directory fails visibly"),S.Initialize(FPaths::Combine(TestRules(),TEXT("missing-rules")),Error));
     TestFalse(TEXT("Missing rules produce a diagnostic"),Error.IsEmpty());
     const FString BadRules = FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Automation"),TEXT("BadRules"));
@@ -123,12 +123,14 @@ bool FSeigePlayableTest::RunTest(const FString& Parameters)
     FString Error; FSeigeSimulation S;
     if (!S.Initialize(TestRules(),Error)) { AddError(Error); return false; }
     auto Build=[&](const TCHAR* Id,double X,double Y)->bool { if(!S.PlaceBuilding(Id,FVector2D(X,Y),Error)) { AddError(FString(Id)+TEXT(": ")+Error); return false; } return true; };
-    // All costs, staffing, delivery times and threats use shipped rules; no inventory or health edits.
-    if(!Build(TEXT("sensor"),-100,-1500)) return false;
-    S.Tick(5.1);
-    if(!Build(TEXT("turret"),-1100,-1050) || !Build(TEXT("turret"),-950,500) || !Build(TEXT("turret"),1150,450) || !Build(TEXT("turret"),1000,-1350)) return false;
-    if(!Build(TEXT("extract_iron_ore"),-1500,600) || !Build(TEXT("extract_copper_ore"),1450,800) || !Build(TEXT("extract_silica"),1500,-1550) || !Build(TEXT("extract_carbon"),-1700,-1300)) return false;
-    if(!Build(TEXT("alloy_refinery"),-600,150) || !Build(TEXT("conductor_works"),-600,-350) || !Build(TEXT("substrate_works"),650,0) || !Build(TEXT("circuit_works"),650,-500) || !Build(TEXT("component_works"),0,700) || !Build(TEXT("depot"),0,1150)) return false;
+    // Protect each resource approach with both visibility and firepower. The northwest
+    // defense covers the nearby iron/copper pair; southwest and southeast cover the
+    // other two deposits. All costs and robot-production delays use the shipped rules.
+    if(!Build(TEXT("sensor"),-900,950) || !Build(TEXT("sensor"),-1100,-750) || !Build(TEXT("sensor"),800,-1000)) return false;
+    S.Tick(15.1);
+    if(!Build(TEXT("turret"),-1450,1225) || !Build(TEXT("turret"),-1400,-1150) || !Build(TEXT("turret"),1250,-1250)) return false;
+    if(!Build(TEXT("extract_iron_ore"),-1800,800) || !Build(TEXT("extract_copper_ore"),-1100,1650) || !Build(TEXT("extract_silica"),1500,-1550) || !Build(TEXT("extract_carbon"),-1700,-1300)) return false;
+    if(!Build(TEXT("alloy_refinery"),-600,150) || !Build(TEXT("conductor_works"),-600,-350) || !Build(TEXT("substrate_works"),650,0) || !Build(TEXT("circuit_works"),650,-500) || !Build(TEXT("component_works"),0,700)) return false;
     for(int32 I=0;I<90 && !S.Won && !S.Escaped;++I) S.Tick(5);
     AddInfo(S.ObjectiveText()); AddInfo(S.WorkforceStatus());
     TestTrue(TEXT("Shipped first-playable scenario is winnable with only normal build actions"),S.Won);

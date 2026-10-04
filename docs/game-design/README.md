@@ -13,10 +13,11 @@ The project is a science-fiction colony simulation: a local ruler sustains a rob
 | Document | Scope |
 | --- | --- |
 | [Vision and Setting](VISION_AND_SETTING.md) | The setting, player role, and intended scope of the game's references. |
-| [Art Direction](ART_DIRECTION.md) | Bright, colorful landscapes, cute futuristic WALL-E / EVE-inspired robots and buildings, menacing realistic bugs, and a provisional working name. |
-| [Interface and Controls](INTERFACE_AND_CONTROLS.md) | Manor Lords and StarCraft II interface references, automatic colony operation, fleet-level commands, and autonomous aggression settings. |
+| [Art Direction](ART_DIRECTION.md) | Realistic Earth-like landscapes, detailed futuristic buildings, empathetic robots, menacing realistic bugs, and the superseded earlier visual direction. |
+| [Interface and Controls](INTERFACE_AND_CONTROLS.md) | Top bar and hover information, top-left version/FPS, B construction icons and logical shortcuts, automatic colony operation, and future fleet-level commands. |
 | [Core Loop and First Playable](CORE_LOOP_AND_FIRST_PLAYABLE.md) | Robotic population, command-center start, competing civilian/defense/expansion priorities, starting pressures, and unresolved simulation pace. |
 | [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) | The authorized Unreal implementation slice, current external definitions, explicit simplifications, later systems, and acceptance checks. |
+| [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md) | Nine-sector selection, paused human landing, AI observation, separate editable AI definitions, local time/saves, and current cross-sector limits. |
 | [Colony Operations and Player Control](COLONY_OPERATIONS_AND_PLAYER_CONTROL.md) | Automatic staffing, production, goods movement, repairs, building off switches, workforce metrics, and population tradeoffs. |
 | [World, Visibility, and Relocation](WORLD_AND_RELOCATION.md) | Sector layout, information coverage, adjacent colonies, escape, and permanent loss. |
 | [Leaderless Areas and Scavenging](LEADERLESS_AREAS_AND_SCAVENGING.md) | Chaotic robot-controlled territory left after departure, surviving outposts and stockpiles, and uncertain returns from scavenging. |

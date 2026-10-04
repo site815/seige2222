@@ -14,6 +14,8 @@ The persistent multiplayer design baseline, single-player-first implementation s
 
 AI neighboring factions serve as stand-ins for human neighbors and should share their rules. Aliens are a separate primary hostile faction.
 
+**Authorized local prototype expansion:** Scenario setup offers empty neighbors by default and starting/developed AI colony options, including an AI-controlled center for observer play. The first controller runs each colony through the same local simulation rules and keeps AI choices and finite developed-start setup in [AIFILES](../../AIFILES/README.md). Independent local colonies do not establish cross-sector combat, trade, multiplayer authority, or persistent services. See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for implementation limits and verification status.
+
 **Confirmed direction:** Single-player can represent a persistent world containing players at different stages of development. During AI selection, the player can choose developed neighbors representing established players or newly founded neighbors starting out like the player. Exact starting development profiles remain open; see [AI-neighbor setup](WORLD_AND_RELOCATION.md).
 
 **User proposal:** Also offer abandoned areas and a random mix of developed, new, abandoned, and empty neighbors. Suggested counts of one or two of each are examples, not selected distribution rules.

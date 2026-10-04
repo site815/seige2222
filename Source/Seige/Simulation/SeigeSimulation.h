@@ -62,6 +62,8 @@ class SEIGE_API FSeigeSimulation
 {
 public:
     bool Initialize(const FString& RulesDirectory, FString& Error);
+    bool SetInitialCorePosition(FVector2D Position, FString& Error);
+    bool CanSetInitialCorePosition(FVector2D Position, FString& Error) const;
     void Tick(double Seconds);
     bool PlaceBuilding(const FString& DefinitionId, FVector2D Position, FString& Error);
     bool CanPlaceBuilding(const FString& DefinitionId, FVector2D Position, FString& Error) const;

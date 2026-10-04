@@ -1,0 +1,435 @@
+{
+  "materials": [
+    "M_Terrain",
+    "M_Industrial",
+    "M_Foliage",
+    "M_BarkPBR",
+    "M_RockPBR"
+  ],
+  "textures": [
+    "GrassColor",
+    "GrassNormal",
+    "GrassRoughness",
+    "DirtColor",
+    "DirtNormal",
+    "DirtRoughness",
+    "RockColor",
+    "RockNormal",
+    "RockRoughness",
+    "BarkColor",
+    "BarkNormal",
+    "BarkRoughness"
+  ],
+  "meshes": {
+    "SM_Core": {
+      "dimensions_cm": [
+        232.4992446899414,
+        200.00001525878906,
+        204.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": 10,
+      "triangles_source": 10888,
+      "lod_count": 3,
+      "lod_vertices": [
+        17787,
+        9876,
+        4417
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    },
+    "SM_Extractor": {
+      "dimensions_cm": [
+        180.00001525878906,
+        160.85000610351562,
+        179.5
+      ],
+      "ground_z": 0.0,
+      "material_slots": 7,
+      "triangles_source": 11620,
+      "lod_count": 3,
+      "lod_vertices": [
+        22562,
+        11710,
+        4791
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    },
+    "SM_Factory": {
+      "dimensions_cm": [
+        228.4992446899414,
+        184.00001525878906,
+        184.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": 8,
+      "triangles_source": 11048,
+      "lod_count": 3,
+      "lod_vertices": [
+        17990,
+        9825,
+        4053
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    },
+    "SM_Depot": {
+      "dimensions_cm": [
+        212.00001525878906,
+        180.00001525878906,
+        132.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": 6,
+      "triangles_source": 8744,
+      "lod_count": 3,
+      "lod_vertices": [
+        16985,
+        8680,
+        3507
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    },
+    "SM_Sensor": {
+      "dimensions_cm": [
+        111.00000762939453,
+        105.00000762939453,
+        251.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": 6,
+      "triangles_source": 9168,
+      "lod_count": 3,
+      "lod_vertices": [
+        17449,
+        8871,
+        3664
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    },
+    "SM_Turret": {
+      "dimensions_cm": [
+        169.00000762939453,
+        134.00001525878906,
+        118.5
+      ],
+      "ground_z": 0.0,
+      "material_slots": 6,
+      "triangles_source": 4160,
+      "lod_count": 3,
+      "lod_vertices": [
+        7414,
+        3741,
+        1579
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    },
+    "SM_OakA": {
+      "dimensions_cm": [
+        756.5820922851562,
+        825.4219970703125,
+        857.693977355957
+      ],
+      "ground_z": -7.62939453125e-06,
+      "material_slots": 2,
+      "triangles_source": 22104,
+      "lod_count": 4,
+      "lod_vertices": [
+        61200,
+        13932,
+        8690,
+        4228
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.44999998807907104,
+        0.18000000715255737,
+        0.05999999865889549
+      ],
+      "custom_lods": [
+        {
+          "lod": 1,
+          "fbx": "SM_OakA_LOD1.fbx",
+          "triangles": 4846,
+          "leaves": 1500,
+          "leaf_scale": 1.7,
+          "wood_fraction": 0.45
+        },
+        {
+          "lod": 2,
+          "fbx": "SM_OakA_LOD2.fbx",
+          "triangles": 2902,
+          "leaves": 1000,
+          "leaf_scale": 2.1,
+          "wood_fraction": 0.22
+        },
+        {
+          "lod": 3,
+          "fbx": "SM_OakA_LOD3.fbx",
+          "triangles": 1410,
+          "leaves": 500,
+          "leaf_scale": 2.85,
+          "wood_fraction": 0.1
+        }
+      ],
+      "verified_from_fresh_load": true
+    },
+    "SM_OakB": {
+      "dimensions_cm": [
+        646.9563598632812,
+        639.6971435546875,
+        759.9204750061035
+      ],
+      "ground_z": -3.814697265625e-06,
+      "material_slots": 2,
+      "triangles_source": 22104,
+      "lod_count": 4,
+      "lod_vertices": [
+        61200,
+        13904,
+        8690,
+        4230
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.44999998807907104,
+        0.18000000715255737,
+        0.05999999865889549
+      ],
+      "custom_lods": [
+        {
+          "lod": 1,
+          "fbx": "SM_OakB_LOD1.fbx",
+          "triangles": 4846,
+          "leaves": 1500,
+          "leaf_scale": 1.7,
+          "wood_fraction": 0.45
+        },
+        {
+          "lod": 2,
+          "fbx": "SM_OakB_LOD2.fbx",
+          "triangles": 2902,
+          "leaves": 1000,
+          "leaf_scale": 2.1,
+          "wood_fraction": 0.22
+        },
+        {
+          "lod": 3,
+          "fbx": "SM_OakB_LOD3.fbx",
+          "triangles": 1410,
+          "leaves": 500,
+          "leaf_scale": 2.85,
+          "wood_fraction": 0.1
+        }
+      ],
+      "verified_from_fresh_load": true
+    },
+    "SM_PineA": {
+      "dimensions_cm": [
+        519.2952880859375,
+        525.2603759765625,
+        990.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": 2,
+      "triangles_source": 32692,
+      "lod_count": 4,
+      "lod_vertices": [
+        81846,
+        28057,
+        15154,
+        8172
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.44999998807907104,
+        0.18000000715255737,
+        0.05999999865889549
+      ],
+      "custom_lods": [
+        {
+          "lod": 1,
+          "fbx": "SM_PineA_LOD1.fbx",
+          "triangles": 9474,
+          "leaves": 1540,
+          "leaf_scale": 1.7,
+          "wood_fraction": 0.45
+        },
+        {
+          "lod": 2,
+          "fbx": "SM_PineA_LOD2.fbx",
+          "triangles": 5180,
+          "leaves": 1027,
+          "leaf_scale": 2.1,
+          "wood_fraction": 0.22
+        },
+        {
+          "lod": 3,
+          "fbx": "SM_PineA_LOD3.fbx",
+          "triangles": 2724,
+          "leaves": 514,
+          "leaf_scale": 2.85,
+          "wood_fraction": 0.1
+        }
+      ],
+      "verified_from_fresh_load": true
+    },
+    "SM_PineB": {
+      "dimensions_cm": [
+        407.04449462890625,
+        416.0098876953125,
+        780.0
+      ],
+      "ground_z": 0.0,
+      "material_slots": 2,
+      "triangles_source": 32692,
+      "lod_count": 4,
+      "lod_vertices": [
+        81846,
+        27739,
+        15209,
+        8172
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.44999998807907104,
+        0.18000000715255737,
+        0.05999999865889549
+      ],
+      "custom_lods": [
+        {
+          "lod": 1,
+          "fbx": "SM_PineB_LOD1.fbx",
+          "triangles": 9474,
+          "leaves": 1540,
+          "leaf_scale": 1.7,
+          "wood_fraction": 0.45
+        },
+        {
+          "lod": 2,
+          "fbx": "SM_PineB_LOD2.fbx",
+          "triangles": 5180,
+          "leaves": 1027,
+          "leaf_scale": 2.1,
+          "wood_fraction": 0.22
+        },
+        {
+          "lod": 3,
+          "fbx": "SM_PineB_LOD3.fbx",
+          "triangles": 2724,
+          "leaves": 514,
+          "leaf_scale": 2.85,
+          "wood_fraction": 0.1
+        }
+      ],
+      "verified_from_fresh_load": true
+    },
+    "SM_Shrub": {
+      "dimensions_cm": [
+        134.75210571289062,
+        152.3492431640625,
+        115.42276954650879
+      ],
+      "ground_z": -1.9073486328125e-06,
+      "material_slots": 2,
+      "triangles_source": 3000,
+      "lod_count": 3,
+      "lod_vertices": [
+        8640,
+        3902,
+        1219
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.25,
+        0.07000000029802322
+      ]
+    },
+    "SM_Grass": {
+      "dimensions_cm": [
+        72.38330841064453,
+        63.58456611633301,
+        41.96598434448242
+      ],
+      "ground_z": 0.0,
+      "material_slots": 1,
+      "triangles_source": 144,
+      "lod_count": 3,
+      "lod_vertices": [
+        240,
+        161,
+        160
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.25,
+        0.07000000029802322
+      ]
+    },
+    "SM_RockA": {
+      "dimensions_cm": [
+        146.80833435058594,
+        114.09498977661133,
+        72.8965072631836
+      ],
+      "ground_z": 0.0,
+      "material_slots": 1,
+      "triangles_source": 320,
+      "lod_count": 3,
+      "lod_vertices": [
+        289,
+        201,
+        99
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    },
+    "SM_RockB": {
+      "dimensions_cm": [
+        190.92178344726562,
+        132.26849365234375,
+        98.03466796875
+      ],
+      "ground_z": 0.0,
+      "material_slots": 1,
+      "triangles_source": 320,
+      "lod_count": 3,
+      "lod_vertices": [
+        286,
+        193,
+        87
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.30000001192092896,
+        0.10000000149011612
+      ]
+    }
+  }
+}
