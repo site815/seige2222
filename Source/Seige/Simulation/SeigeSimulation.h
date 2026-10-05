@@ -22,6 +22,8 @@ struct FSeigeBuildingDef
     double Health = 1, Footprint = 100, SensorRange = 0, AttackRange = 0, DamagePerSecond = 0, ExtractRate = 0;
     double StorageCapacity = 0;
     double DamagePerShot = 0, ReloadSeconds = 0, PowerUsageKW = 0, PowerGenerationKW = 0;
+    double ConstructionSeconds = 1;
+    int32 ConstructionWorkers = 1, RobotSupportCapacity = 0, StaffingPriority = 0;
 };
 struct FSeigeBuilding
 {
@@ -33,6 +35,10 @@ struct FSeigeBuilding
     bool Enabled = true;
     int32 Workers = 0;
     TMap<FString, double> Inventory;
+    bool IsConstructing = false, MaintenanceSupplied = true;
+    double ConstructionProgress = 1;
+    int32 Builders = 0, SupportedRobots = 0;
+    TMap<FString, double> ConstructionMaterials;
 };
 struct FSeigeNode
 {
@@ -46,6 +52,7 @@ struct FSeigeCourier
     FString Resource;
     double Amount = 0;
     FVector2D Position = FVector2D::ZeroVector;
+    bool ForConstruction = false;
 };
 struct FSeigeEnemy
 {
@@ -87,6 +94,8 @@ public:
     FString ObjectiveText() const;
     FString WorkforceStatus() const;
     double FixedStepSeconds() const;
+    double ConstructionAvailable(const FString& Resource) const;
+    double OperatingEfficiency() const { return WorkforceEfficiency; }
     TArray<FSeigeBuildingInfoRow> BuildingInfo(const FString& DefinitionId, int32 BuildingId = 0, double CentimetersPerUnit = 1) const;
 
     TMap<FString, FSeigeResourceDef> Resources;
@@ -101,6 +110,7 @@ public:
     FString Title, RulesVersion, CoreDefinition, RulesPath;
     double Time = 0, NextWaveTime = 0, WorldHalfSize = 5000;
     int32 Population = 0, TotalJobs = 0, Employed = 0, Wave = 0, LostCouriers = 0;
+    int32 RobotSupportCapacity = 0, SupportedPopulation = 0;
     double DeliveredUnits = 0;
     bool Escaped = false, Won = false, Failed = false;
     TMap<FString, double> ShuttleCargo;
@@ -122,6 +132,11 @@ private:
     void StepLogistics(double Seconds);
     void StepCombat(double Seconds);
     void StepPopulation(double Seconds);
+    void StepConstruction(double Seconds);
+    void UpdateSupport();
+    double ConstructionReserved(const FString& Resource) const;
+    double Spendable(const FSeigeBuilding& Building,const FString& Resource) const;
+    bool HasSpendable(const FSeigeBuilding& Building,const TMap<FString,double>& Amounts) const;
     void CheckObjectives();
     FSeigeBuilding* Core();
     const FSeigeBuilding* Core() const;

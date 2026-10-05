@@ -4,6 +4,14 @@
 
 The current robotic population scope, population-serving commodities, growth, and the earlier needs and morale ideas that require adaptation.
 
+## v0.5 robot services — current implementation
+
+The user now requires a robot charging/maintenance building analogous to housing. The source implements a service bay with a real population-support capacity and a staffed operating requirement. The core supports the initial crew, so the player can establish the first bay before expansion. Exact capacities, worker counts, construction duration and upkeep remain external prototype values in `Rules/buildings.json` and `Rules/policies.json`.
+
+Manufacturing requires open job demand, local assembly inputs and usable service capacity. Each completed, enabled and staffed core/service bay supports part of the population and consumes components from its own delivered stock at upkeep intervals. Uncovered or unsupplied robots lower workforce efficiency; capacity loss does not directly delete them. Retirement still follows reduced job demand without refunds. Charging is represented by automated support, not individual battery meters or a separate electricity grid.
+
+This settles the first playable's service mechanism, not happiness, revolt, permanent population loss or all full-game needs. The verified local v0.5 package uses Rules `prototype-5.0`. Native service-capacity/local-maintenance tests are part of the 29-test passing suite, and the packaged route passed 63 stages. The service-bay capture had no supported robots assigned, so occupied-bay presentation remains unverified. Evidence and limits are tracked in [First Playable Scope](FIRST_PLAYABLE_SCOPE.md).
+
 ## Current population scope
 
 **Confirmed current scope:** Robots are the only colony population type for now. Human and mixed populations, immigration, and a player choice between population types are deferred for possible future reconsideration.

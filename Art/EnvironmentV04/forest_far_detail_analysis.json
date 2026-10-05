@@ -1,0 +1,23 @@
+{
+  "status": "Source measurements and proposed material defaults; asset import is recorded separately in terrain_import_report.json",
+  "method": "Full-image pixel means. Color RGB is decoded from sRGB using the standard piecewise transfer function before averaging. Roughness and AO use linear normalized red-channel values.",
+  "source_files": {
+    "color": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_diffuse_2k.jpg",
+    "roughness": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_rough_1k.jpg",
+    "ao": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_ao_1k.jpg"
+  },
+  "sample_pixels": {
+    "color": 4194304,
+    "roughness": 1048576,
+    "ao": 1048576
+  },
+  "linear_means": {
+    "color": [0.2986148506332322, 0.18126343655181562, 0.05940324911472282],
+    "roughness": 0.9334975934598578,
+    "ao": 0.6019214443134477
+  },
+  "fade_start_meters": 200,
+  "fade_end_meters": 600,
+  "far_tangent_normal": [0, 0, 1],
+  "preserved": "Existing forest albedo multiplier, broad terrain variation, woodland mask, near texture samples, meadow/soil/rock layers, geometry and tree coverage"
+}

@@ -219,8 +219,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCompactBuildingPadTest,"Seige.Camera.Comp
 bool FSeigeCompactBuildingPadTest::RunTest(const FString& Parameters)
 {
     FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
-    if(!G.Sim.SetInitialCorePosition(FVector2D(613,487),G.Error)||
-        !G.Sim.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-713,319),G.Error))
+    if(!G.Sim.SetInitialCorePosition(FVector2D(613,487),G.Error)){AddError(G.Error);return false;}
+    G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
+    if(!G.Sim.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-713,319),G.Error))
     {AddError(G.Error);return false;}
     const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
     TArray<FVector2D> Outside,DepositSamples;
@@ -288,6 +289,7 @@ bool FSeigeIncrementalSectorSeamTest::RunTest(const FString& Parameters)
         for(double Side:{-Epsilon,0.,Epsilon})Samples.Add(FVector2D(Half+Side,EdgeY+Sign*Fraction*CoarseStep));
     TArray<double> Natural;
     for(const auto& P:Samples)Natural.Add(G.GroundHeight(P));
+    G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
     if(!G.Sim.PlaceBuilding(TEXT("sensor"),FVector2D(Half-100,EdgeY),G.Error))
     {AddError(G.Error);return false;}
     const int32 SensorId=G.Sim.Buildings.Last().Id;
@@ -325,8 +327,8 @@ bool FSeigeRegionAndOrbitTest::RunTest(const FString& Parameters)
     G.Zoom=G.DefaultZoom;G.CameraYaw=350;G.CameraPitch=52;
     const FVector Before=G.CameraCenter;
     G.ApplyOrbitDrag(FVector2D(100,20));
-    TestTrue(TEXT("100 raw pixels rotate 45 degrees through the yaw wrap"),FMath::IsNearlyEqual(G.CameraYaw,35.f,.001f));
-    TestTrue(TEXT("Pitch follows raw mouse displacement without frame time scaling"),FMath::IsNearlyEqual(G.CameraPitch,59.f,.001f));
+    TestTrue(TEXT("100 raw pixels rotate 22 degrees through the yaw wrap"),FMath::IsNearlyEqual(G.CameraYaw,12.f,.001f));
+    TestTrue(TEXT("Pitch follows raw mouse displacement without frame time scaling"),FMath::IsNearlyEqual(G.CameraPitch,55.6f,.001f));
     TestTrue(TEXT("Orbit holds its world focus"),Before.Equals(G.CameraCenter));
     G.ApplyOrbitDrag(FVector2D(0,10000));TestEqual(TEXT("Pitch stops at the configured upper orbit limit"),G.CameraPitch,G.MaximumCameraPitch);
     G.ApplyOrbitDrag(FVector2D(0,-10000));TestEqual(TEXT("Low orbit stops at the configured lower orbit limit"),G.CameraPitch,G.MinimumCameraPitch);

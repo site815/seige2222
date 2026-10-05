@@ -89,7 +89,7 @@ void ASeigeGameMode::LoadGame()
     if(NewObserver)
     {
         NewBrain=MakeShared<FSeigeScenarioAI>();
-        if(!NewBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),NewSlots[4]==TEXT("developed"),Error)) { Notice=Error; return; }
+        if(!NewBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error)) { Notice=Error; return; }
         if(NewBrain->GetConfigFingerprint()!=CenterFingerprint) { Notice=TEXT("AI files have changed since this save. Restore those files or start a new scenario."); return; }
     }
     else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Error)) { Notice=Error; return; }
@@ -99,14 +99,16 @@ void ASeigeGameMode::LoadGame()
         if(Index==4||NewSlots[Index]==TEXT("empty")) continue;
         FSeigeNeighbor N; N.Index=Index; N.Type=NewSlots[Index]; N.Offset=FVector2D(Index%3-1,Index/3-1)*NewCenter.WorldHalfSize*2;
         N.Brain=MakeShared<FSeigeScenarioAI>();
-        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),N.Type==TEXT("developed"),Error)) { Notice=Error; return; }
+        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error)) { Notice=Error; return; }
         if(SavedFingerprints.FindRef(Index)!=N.Brain->GetConfigFingerprint()) { Notice=TEXT("AI files have changed since this save. Restore those files or start a new scenario."); return; }
         if(!N.Sim.Load(FPaths::Combine(Directory,FString::Printf(TEXT("sector_%d.json"),Index)),Error)) { Notice=Error; return; }
         NewNeighbors.Add(MoveTemp(N));
     }
     if(SavedFingerprints.Num()!=NewNeighbors.Num()) { Notice=TEXT("Scenario save has inconsistent neighbor records."); return; }
     for(auto& Pair:Visuals) if(Pair.Value) Pair.Value->Destroy();
-    Visuals.Empty(); Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewBrain); Neighbors=MoveTemp(NewNeighbors); ScenarioSlots=MoveTemp(NewSlots);
+    Visuals.Empty();
+    for(auto It=Materials.CreateIterator();It;++It)if(It.Key().StartsWith(TEXT("construction_original_")))It.RemoveCurrent();
+    Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewBrain); Neighbors=MoveTemp(NewNeighbors); ScenarioSlots=MoveTemp(NewSlots);
     Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=0; SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed; WinAcknowledged=StoredAcknowledged;
     CameraCenter=FVector(FMath::Clamp(CameraX,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),FMath::Clamp(CameraY,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),0);
     Zoom=FMath::Clamp(StoredZoom,double(MinimumZoom),Sim.WorldHalfSize*12); CameraYaw=StoredYaw; CameraPitch=StoredPitch; Screen=TEXT("playing");

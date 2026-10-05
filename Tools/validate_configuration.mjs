@@ -67,6 +67,7 @@ export function validateConfiguration(data) {
   version(ui, 'Interface/ui.json');
   version(graphics, 'Graphics/scene.json');
   number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);
+  number(graphics.nanite_max_pixels_per_edge, 'Graphics nanite_max_pixels_per_edge', .5, 4);
   number(graphics.camera_fov, 'Graphics camera_fov', 35, 80);
   number(graphics.camera_pitch, 'Graphics camera_pitch', 5, 85);
   number(graphics.minimum_camera_pitch, 'Graphics minimum_camera_pitch', 5, 25);
@@ -98,6 +99,11 @@ export function validateConfiguration(data) {
   if (graphics.minimum_zoom >= graphics.default_zoom * .45) fail('Graphics minimum_zoom must lie below the close-view transition');
   number(graphics.forest_candidates, 'Graphics forest_candidates', 1000, 200000, true);
   number(graphics.near_forest_candidates, 'Graphics near_forest_candidates', 100, 30000, true);
+  number(graphics.grass_shadow_distance_m, 'Graphics grass_shadow_distance_m', 0, 500);
+  number(graphics.grass_programmable_distance_m, 'Graphics grass_programmable_distance_m', 0, 900);
+  if(typeof graphics.grass_distance_field_lighting !== 'boolean') fail('Graphics grass_distance_field_lighting must be boolean');
+  number(graphics.neighboring_forest_candidates_per_sector, 'Graphics neighboring_forest_candidates_per_sector', 0, 12000, true);
+  if(typeof graphics.neighboring_forest_shadow !== 'boolean') fail('Graphics neighboring_forest_shadow must be boolean');
   number(graphics.region_map_zoom, 'Graphics region_map_zoom', 20000, 90000);
   number(graphics.orbit_yaw_degrees_per_pixel, 'Graphics orbit_yaw_degrees_per_pixel', .05, 2);
   number(graphics.orbit_pitch_degrees_per_pixel, 'Graphics orbit_pitch_degrees_per_pixel', .05, 2);
@@ -123,6 +129,8 @@ export function validateConfiguration(data) {
   number(ai.max_actions_per_decision, 'AI max_actions_per_decision', 1, 16, true);
   number(ai.max_sensors, 'AI max_sensors', 1, 128, true);
   number(ai.developed_setup_action_limit, 'AI developed_setup_action_limit', 1, 512, true);
+  if (ai.target_policy !== 'complete_and_staff_in_order') fail('Unsupported AI target_policy');
+  number(ai.developed_setup_seconds, 'AI developed_setup_seconds', ai.decision_interval_seconds, 3600);
   if (buildable(ai.sensor_definition, 'AI sensor_definition').sensor_range <= 0) fail('AI sensor_definition must provide sensor coverage');
   const placement = object(ai.placement, 'AI placement');
   const extent = scenario.world_half_size;
@@ -150,7 +158,8 @@ export function validateConfiguration(data) {
     if (!resources.has(id)) fail(`Developed inventory references unknown resource: ${id}`);
     stock += number(amount, `Developed inventory.${id}`, 0, Number.MAX_VALUE);
   }
-  if (stock > buildings.get(scenario.core_definition).storage_capacity) fail('Developed inventory exceeds core capacity');
+  const deploymentKit = Object.values(scenario.starting_deployment_materials).reduce((sum, amount) => sum + amount, 0);
+  if (stock + deploymentKit > buildings.get(scenario.core_definition).storage_capacity) fail('Developed inventory and deployment kit exceed core capacity');
   // Necessary setup bounds only; geometry, staffing and actual AI behavior require native tests.
   const cost = new Map();
   let setupActions = 0;

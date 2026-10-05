@@ -64,7 +64,9 @@ void ASeigeGameMode::StartScenario()
     if(!GraphicsSettingsValid){Notice=Error.IsEmpty()?TEXT("Correct Graphics/scene.json and restart the game."):Error;return;}
     if(!InitializeScenario(Error)) { Notice=Error; return; }
     for(auto& Pair:Visuals) if(Pair.Value) Pair.Value->Destroy();
-    Visuals.Empty(); Ready=true; SelectedId=0; SelectedBuild.Empty(); WinAcknowledged=false;
+    Visuals.Empty();
+    for(auto It=Materials.CreateIterator();It;++It)if(It.Key().StartsWith(TEXT("construction_original_")))It.RemoveCurrent();
+    Ready=true; SelectedId=0; SelectedBuild.Empty(); WinAcknowledged=false;
     Accumulator=0; Speed=1; Paused=false;
     Screen=Observer?TEXT("playing"):TEXT("landing");
     CameraCenter=FVector(HomePosition(),0); Zoom=DefaultZoom*2;
@@ -81,7 +83,7 @@ void ASeigeGameMode::ConfirmLanding(FVector2D Position)
     if(Screen!=TEXT("landing")) return;
     if(!CanLand(Position,Error)||!Sim.SetInitialCorePosition(Position,Error)) { Notice=Error; return; }
     Screen=TEXT("playing"); Paused=false; CameraCenter=FVector(Position,0); Zoom=DefaultZoom;
-    Notice=TEXT("COMMAND CENTER DEPLOYED | Build [B] begins industry. Time is running.");
+    Notice=TEXT("SHUTTLE LANDING | Robots are deploying the command center. Time is running.");
     CreateLandscape(); SyncVisuals(); UpdateCamera();
 }
 void ASeigeGameMode::SetGraphicsQuality(int32 Quality)

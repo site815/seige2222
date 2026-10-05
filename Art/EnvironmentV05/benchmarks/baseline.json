@@ -1,0 +1,80 @@
+{
+	"name": "v05-epic-baseline",
+	"views": [
+		{
+			"view": "colony",
+			"samples": 310,
+			"sample_seconds": 5.0124497003853321,
+			"mean_fps": 61.84600714819517,
+			"mean_frame_ms": 16.169192581888169,
+			"p95_frame_ms": 17.924997955560684
+		},
+		{
+			"view": "meadow",
+			"samples": 171,
+			"sample_seconds": 5.0023768991231918,
+			"mean_fps": 34.183749735045474,
+			"mean_frame_ms": 29.253666076743812,
+			"p95_frame_ms": 31.290300190448761
+		},
+		{
+			"view": "ground",
+			"samples": 173,
+			"sample_seconds": 5.0215166993439198,
+			"mean_fps": 34.451742443195123,
+			"mean_frame_ms": 29.026108088693178,
+			"p95_frame_ms": 31.287699937820435
+		},
+		{
+			"view": "hills",
+			"samples": 241,
+			"sample_seconds": 5.0112621001899242,
+			"mean_fps": 48.091677342293913,
+			"mean_frame_ms": 20.793618672987236,
+			"p95_frame_ms": 22.098198533058167
+		},
+		{
+			"view": "boundary",
+			"samples": 335,
+			"sample_seconds": 5.0087558999657631,
+			"mean_fps": 66.882876045584467,
+			"mean_frame_ms": 14.951510149151531,
+			"p95_frame_ms": 16.58090204000473
+		}
+	],
+	"grass_shadow_distance_m": 100,
+	"grass_programmable_distance_m": 0,
+	"configured_nanite_max_pixels_per_edge": 1.5,
+	"diagnostic_nanite_baseline": true,
+	"grass_distance_field_lighting": false,
+	"ground_cover_candidates": 350000,
+	"diagnostic_sward_hidden": false,
+	"width": 1600,
+	"height": 900,
+	"engine": "5.8.3-58210709+++UE5+Release-5.8",
+	"quality":
+	{
+		"sg.ResolutionQuality": 100,
+		"sg.ViewDistanceQuality": 3,
+		"sg.AntiAliasingQuality": 3,
+		"sg.ShadowQuality": 3,
+		"sg.GlobalIlluminationQuality": 3,
+		"sg.ReflectionQuality": 3,
+		"sg.PostProcessQuality": 3,
+		"sg.TextureQuality": 3,
+		"sg.EffectsQuality": 3,
+		"sg.FoliageQuality": 3,
+		"sg.ShadingQuality": 3,
+		"sg.LandscapeQuality": 3,
+		"r.ScreenPercentage": 100,
+		"r.ScreenPercentage.Default.Desktop.Mode": 1,
+		"r.SecondaryScreenPercentage.GameViewport": 0,
+		"r.Nanite.MaxPixelsPerEdge": 1,
+		"r.Nanite.PrimaryRaster.TimeBudgetMs": 0,
+		"r.VSync": 0,
+		"t.MaxFPS": 0,
+		"r.DynamicRes.OperationMode": 0,
+		"runtime_resolution_quality": 100
+	},
+	"method": "Wall frame timings; benchmark-only Epic quality level 3 and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then paused with eight empty neighbors; at least 4s warmup after synchronous view setup, then at least 5s of complete frame intervals; screenshot requested on a later frame after sampling and completed before advancing camera."
+}

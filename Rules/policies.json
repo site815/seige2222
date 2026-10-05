@@ -1,5 +1,5 @@
 {
-  "version": "prototype-4.0",
+  "version": "prototype-5.0",
   "policies": {
     "fixed_step_seconds": 0.05,
     "dispatch_interval": 0.35,
@@ -68,6 +68,8 @@
     "objective_policy": "survive_and_manufacture",
     "shuttle_policy": "preloaded_cargo_only",
     "storage_policy": "overflow_only",
-    "rule_time_basis": "simulation_seconds"
+    "rule_time_basis": "simulation_seconds",
+    "construction_policy": "reserved_core_physical_delivery",
+    "robot_support_policy": "local_capacity_and_maintenance"
   }
 }

@@ -53,7 +53,8 @@ bool DevelopedSeed(const FObject& Object, const FSeigeSimulation& Colony, int32&
         { Error = TEXT("Invalid developed AI inventory item: ") + Resource; return false; }
         Inventory.Add(Resource, Amount); Total += Amount;
     }
-    if (Total > Core->StorageCapacity) { Error = TEXT("Developed AI inventory exceeds command-core storage"); return false; }
+    double Kit=0;for(const auto& Pair:Core->Cost)Kit+=Pair.Value;
+    if (Total+Kit > Core->StorageCapacity) { Error = TEXT("Developed AI inventory and deployment kit exceed command-core storage"); return false; }
     return true;
 }
 bool NodeOccupied(const FSeigeSimulation& Colony, const FSeigeNode& Node)
@@ -87,6 +88,7 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
         !Integer(Config, TEXT("max_actions_per_decision"), MaxActions, 1, 16, Error) ||
         !Integer(Config, TEXT("max_sensors"), MaxSensors, 1, 128, Error) ||
         !Integer(Config, TEXT("developed_setup_action_limit"), DevelopedSetupLimit, 1, 512, Error) ||
+        !Number(Config,TEXT("developed_setup_seconds"),DevelopedSetupSeconds,DecisionInterval,3600,Error) ||
         !Number(*Placement, TEXT("ring_start"), RingStart, UE_DOUBLE_SMALL_NUMBER, Colony.WorldHalfSize * 2, Error) ||
         !Number(*Placement, TEXT("ring_step"), RingStep, UE_DOUBLE_SMALL_NUMBER, Colony.WorldHalfSize * 2, Error) ||
         !Number(*Placement, TEXT("ring_limit"), RingLimit, RingStart, Colony.WorldHalfSize * 2, Error) ||
@@ -98,6 +100,9 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
     { Error = TEXT("AI cadence is below the simulation step or placement search is too large"); return false; }
     if (!Config->TryGetStringField(TEXT("sensor_definition"), SensorDefinition) || !Colony.BuildMenu.Contains(SensorDefinition) || Colony.BuildingDefs[SensorDefinition].SensorRange <= 0)
     { Error = TEXT("AI sensor_definition must name a buildable sensor"); return false; }
+    FString TargetPolicy;
+    if(!Config->TryGetStringField(TEXT("target_policy"),TargetPolicy)||TargetPolicy!=TEXT("complete_and_staff_in_order"))
+    {Error=TEXT("Unsupported AI target_policy");return false;}
     const TArray<TSharedPtr<FJsonValue>>* Plan = nullptr;
     if (!Config->TryGetArrayField(TEXT("build_targets"), Plan) || !Plan || Plan->IsEmpty() || Plan->Num() > 128)
     { Error = TEXT("AI needs a bounded, nonempty build_targets list"); return false; }
@@ -130,11 +135,27 @@ bool FSeigeScenarioAI::Initialize(FSeigeSimulation& Colony, const FString& Rules
         // An explicit scenario seed, applied exactly once before simulation starts.
         Candidate.Population = Population;
         Candidate.Buildings[0].Inventory = MoveTemp(Inventory);
-        for (int32 Action = 0; Action < DevelopedSetupLimit; ++Action) if (!MakeDecision(Candidate)) break;
+        // Build the established scenario by running the actual simulation: delivered costs,
+        // builders, support, upkeep, production and threats all apply during preparation.
+        Ready=true;
+        while(Candidate.Time+UE_DOUBLE_SMALL_NUMBER<DevelopedSetupSeconds && !Candidate.Failed && !Candidate.Escaped)
+        {
+            const double Before=Candidate.Time;
+            Tick(Candidate,FMath::Min(DecisionInterval,DevelopedSetupSeconds-Candidate.Time));
+            if(Candidate.Time<=Before){Ready=false;Error=TEXT("Developed AI preparation made no simulation progress");return false;}
+            if(Candidate.Buildings.Num()>DevelopedSetupLimit+1){Error=TEXT("Developed AI exceeded its construction action budget");return false;}
+            bool Complete=true;
+            for(const auto& Target:Targets)
+            {int32 Count=0;for(const auto& B:Candidate.Buildings)if(B.Health>0&&!B.IsConstructing&&B.DefId==Target.Definition)++Count;if(Count<Target.Count)Complete=false;}
+            if(Complete)break;
+        }
         for (const FSeigeAIBuildTarget& Target : Targets)
-            if (CountLive(Candidate, Target.Definition) < Target.Count)
-            { Error = TEXT("Developed AI preset cannot establish target: ") + Target.Definition + TEXT(". ") + Status; return false; }
-        Candidate.AddEvent(TEXT("Developed AI colony loaded from a finite external scenario preset."));
+        {
+            int32 Count=0;for(const auto& B:Candidate.Buildings)if(B.Health>0&&!B.IsConstructing&&B.DefId==Target.Definition)++Count;
+            if(Candidate.Failed||Candidate.Escaped||Count<Target.Count)
+            { Ready=false;Error = FString::Printf(TEXT("Developed AI preset cannot finish %s (%d/%d) by %.2f seconds. %s. %s; buildings %d; failed %d"),*Target.Definition,Count,Target.Count,Candidate.Time,*Status,*Candidate.WorkforceStatus(),Candidate.Buildings.Num(),Candidate.Failed?1:0); return false; }
+        }
+        Candidate.AddEvent(TEXT("Developed AI colony constructed through normal delivery and worker rules from a finite scenario seed."));
     }
     Colony = MoveTemp(Candidate); Ready = true;
     Status = bDeveloped ? TEXT("Developed colony ready") : TEXT("Starting colony ready");
@@ -173,13 +194,13 @@ bool FSeigeScenarioAI::ExtendSensors(FSeigeSimulation& Colony, FVector2D Destina
 {
     if (CountLive(Colony, SensorDefinition) >= MaxSensors) { Status = TEXT("Sensor extension limit reached"); return false; }
     for (const FSeigeBuilding& B : Colony.Buildings)
-        if (B.DefId == SensorDefinition && B.Health > 0 && B.Enabled && B.Workers < Colony.Definition(B)->Jobs)
+        if (B.DefId == SensorDefinition && B.Health > 0 && B.Enabled && (B.IsConstructing||B.Workers < Colony.Definition(B)->Jobs))
         { Status = TEXT("Waiting for existing sensor staffing"); return false; }
     const FSeigeBuilding* Source = nullptr; double BestRemaining = TNumericLimits<double>::Max();
     for (const FSeigeBuilding& B : Colony.Buildings)
     {
         const FSeigeBuildingDef* Def = Colony.Definition(B);
-        if (B.Health <= 0 || !B.Enabled || !Def || Def->SensorRange <= 0 || B.Workers < Def->Jobs) continue;
+        if (B.Health <= 0 || B.IsConstructing || !B.Enabled || !Def || Def->SensorRange <= 0 || B.Workers < Def->Jobs) continue;
         const double Remaining = FVector2D::Distance(B.Position, Destination) - Def->SensorRange;
         if (Remaining < BestRemaining) { Source = &B; BestRemaining = Remaining; }
     }
@@ -193,6 +214,7 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
 {
     const FSeigeBuilding* Core = Command(Colony);
     if (!Core || Colony.Failed || Colony.Escaped) { Status = TEXT("Colony command ended"); return false; }
+    if(Core->IsConstructing){Status=TEXT("Waiting for shuttle deployment");return false;}
     const FVector2D Origin = Core->Position;
     for (int32 Index = 0; Index < Targets.Num(); ++Index)
     {
@@ -201,12 +223,17 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
             if (B.DefId == Target.Definition && B.Health > 0 && !B.Enabled)
             { Colony.ToggleBuilding(B.Id); Status = TEXT("Re-enabled ") + Target.Definition; return true; }
         const int32 Existing = CountLive(Colony, Target.Definition);
-        if (Existing >= Target.Count) continue;
+        if (Existing >= Target.Count)
+        {
+            int32 Operational=0;for(const auto& B:Colony.Buildings)if(B.DefId==Target.Definition&&B.Health>0&&!B.IsConstructing&&B.Enabled&&B.Workers>=Colony.Definition(B)->Jobs)++Operational;
+            if(Operational<Target.Count){Status=TEXT("Waiting for completion and staffing: ")+Target.Definition;return false;}
+            continue;
+        }
         const FSeigeBuildingDef& Def = Colony.BuildingDefs[Target.Definition];
         bool Affordable = true;
         Core = Command(Colony);
-        for (const auto& Pair : Def.Cost) if (Core->Inventory.FindRef(Pair.Key) + UE_DOUBLE_SMALL_NUMBER < Pair.Value) Affordable = false;
-        if (!Affordable) { Status = TEXT("Waiting for construction materials"); continue; }
+        for (const auto& Pair : Def.Cost) if (Colony.ConstructionAvailable(Pair.Key) + UE_DOUBLE_SMALL_NUMBER < Pair.Value) Affordable = false;
+        if (!Affordable) { Status = TEXT("Waiting for construction materials: ")+Target.Definition; return false; }
         if (!Def.ExtractResource.IsEmpty())
         {
             TArray<const FSeigeNode*> Nodes;
@@ -232,7 +259,7 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
         {
             FVector2D Anchor = Origin;
             double Angle = Index * UE_TWO_PI / Angles;
-            if (Def.DamagePerSecond > 0)
+            if (Def.DamagePerSecond > 0 || Def.SensorRange > 0)
             {
                 TArray<const FSeigeNode*> Nodes;
                 for (const auto& N : Colony.Nodes) Nodes.Add(&N);
@@ -249,6 +276,9 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
             }
             if (BuildNear(Colony, Target.Definition, Anchor, Angle)) return true;
         }
+        // Do not consume the bootstrap stock on downstream factories while a prerequisite
+        // extractor, perimeter sensor or service expansion is still unavailable.
+        return false;
     }
     return false;
 }

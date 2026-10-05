@@ -4,11 +4,22 @@ The new meshes retain curved source leaves and photographed alpha/UV maps.
 No existing tree or grass mesh is changed. Units are centimetres for Unreal.
 """
 from pathlib import Path
-import bpy,json,math,random,hashlib
+import bpy,json,math,random,hashlib,sys
 import numpy as np
 from mathutils import Matrix,Vector
 ROOT=Path(__file__).resolve().parents[1];ART=ROOT/'Art/EnvironmentV04'
 DATA=json.loads((ART/'sources.json').read_text());MANIFEST=json.loads((ART/'Exports/environment_manifest.json').read_text())
+CANDIDATE='--alpha-trim-candidate' in sys.argv
+OUTPUT=ROOT/'Art/EnvironmentV05' if CANDIDATE else ART
+for folder in ('Source','Exports'):(OUTPUT/folder).mkdir(parents=True,exist_ok=True)
+BASELINE={key:value.copy() for key,value in MANIFEST['meshes'].items()}
+TRIM_REPORT={'candidate_only':True,'source_unchanged':True,'tuft_count_unchanged':True,'templates':[],'meshes':{},
+    'method':'Conservative convex clipping around all nonzero alpha, eight-texel filter margin; source normals/UV interpolated, horizontal hull and ground extrema preserved.',
+    'validation_limit':'No runtime substitution. Source coverage retained; alpha coverage at distant cooked mips and GPU performance require a fixed-view rendered comparison.'}
+if CANDIDATE:
+    MANIFEST['meshes']={}
+    sys.path.insert(0,str(ROOT/'Tools'))
+    from grass_alpha_trim import AlphaTrimmer
 source=DATA['assets']['grass_medium_02'];bpy.ops.wm.open_mainfile(filepath=str(ROOT/source['original_source']['local_path']))
 originals=[bpy.data.objects['grass_medium_02_'+letter] for letter in 'bcde']
 # Prepared low grass contains 230 complete photographed Bermuda tufts. Four
@@ -17,6 +28,13 @@ originals=[bpy.data.objects['grass_medium_02_'+letter] for letter in 'bcde']
 with bpy.data.libraries.load(str(ART/'Source/SM_MeadowGrassA.blend'),link=False) as (available,loaded):loaded.objects=['SM_MeadowGrassA']
 low_template=loaded.objects[0]
 if not low_template:raise RuntimeError('Prepare the source Bermuda grass first')
+if CANDIDATE:
+    for source_id,objects in (('grass_medium_02',originals),('grass_bermuda_01',[low_template])):
+        trimmer=AlphaTrimmer(ROOT/DATA['assets'][source_id]['maps']['surface']['alpha']['local_path'],margin=8)
+        for template in objects:
+            result=trimmer.trim(template);result['source_asset']=source_id;TRIM_REPORT['templates'].append(result)
+            print('ALPHA_TRIM_TEMPLATE '+json.dumps(result),flush=True)
+    (OUTPUT/'alpha_trim_report.json').write_text(json.dumps(TRIM_REPORT,indent=2))
 m=bpy.data.materials.new('PH_grass_medium_02_surface');m.use_nodes=True
 n=m.node_tree.nodes;l=m.node_tree.links;p=n.get('Principled BSDF');p.inputs['Roughness'].default_value=.85;p.inputs['Specular IOR Level'].default_value=.15
 for role,record in source['maps']['surface'].items():
@@ -66,12 +84,19 @@ for variant,seed in (('A',4407),('B',4419)):
     mesh.transform(Matrix.Scale(100,4)@Matrix.Translation(Vector((float(-(lo[0]+hi[0])/2),float(-(lo[1]+hi[1])/2),float(-lo[2])))))
     name='SM_MeadowSward'+variant;ob.name=name;mesh.name=name+'_Mesh';mesh.calc_loop_triangles();mesh.update()
     bpy.context.scene.unit_settings.system='METRIC';bpy.context.scene.unit_settings.scale_length=.01
-    path=ART/'Exports'/(name+'.fbx')
+    path=OUTPUT/'Exports'/(name+'.fbx')
     bpy.ops.export_scene.fbx(filepath=str(path),use_selection=True,object_types={'MESH'},apply_unit_scale=True,apply_scale_options='FBX_SCALE_NONE',axis_forward='-Y',axis_up='Z',mesh_smooth_type='FACE',bake_anim=False,add_leaf_bones=False,path_mode='STRIP')
     record={'source_asset':'grass_medium_02','source_assets':['grass_medium_02','grass_bermuda_01'],'source_object':'16 tall authored tufts plus 920 low Bermuda tufts; deterministic full 3D underlayer, original tall-patch bounds retained','fbx':path.name,
         'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'materials':[mat.name for mat in mesh.materials],'dimensions_cm':((hi-lo)*100).tolist(),'triangles':len(mesh.loop_triangles),'vertices':len(mesh.vertices),
         'pivot':'horizontal bounds center, ground z=0','nanite':True,'shape_preservation':'PRESERVE_AREA','unreal_path':'/Game/Art/NatureV04/'+name}
     MANIFEST['meshes'][name]=record;retained.append(ob);print('PREPARED_MEADOW_SWARD '+json.dumps(record),flush=True)
+    if CANDIDATE:
+        baseline=BASELINE[name]
+        if not np.allclose(record['dimensions_cm'],baseline['dimensions_cm'],atol=.002,rtol=0):raise RuntimeError('Candidate assembly bounds changed: '+name)
+        TRIM_REPORT['meshes'][name]={'triangles_before':baseline['triangles'],'triangles_after':record['triangles'],
+            'triangle_reduction_percent':100*(1-record['triangles']/baseline['triangles']),
+            'dimensions_cm':record['dimensions_cm'],'baseline_dimensions_cm':baseline['dimensions_cm'],'bounds_match_cm_tolerance':.002,
+            'tall_tufts':16,'low_tufts':920,'fbx_bytes':path.stat().st_size}
 for ob in list(bpy.data.objects):
     if ob not in retained:bpy.data.objects.remove(ob,do_unlink=True)
 for collection in list(bpy.data.collections):bpy.data.collections.remove(collection)
@@ -79,7 +104,8 @@ bpy.ops.outliner.orphans_purge(do_recursive=True)
 for img in bpy.data.images:
     if img.packed_file:img.unpack(method='REMOVE')
 bpy.context.preferences.filepaths.save_version=0
-path=ART/'Source/Meadow_Swards.blend';bpy.ops.wm.save_as_mainfile(filepath=str(path),compress=True)
+path=OUTPUT/'Source/Meadow_Swards.blend';bpy.ops.wm.save_as_mainfile(filepath=str(path),compress=True)
 bpy.ops.file.make_paths_relative();bpy.ops.wm.save_as_mainfile(filepath=str(path),compress=True)
-(ART/'Exports/environment_manifest.json').write_text(json.dumps(MANIFEST,indent=2))
+(OUTPUT/'Exports/environment_manifest.json').write_text(json.dumps(MANIFEST,indent=2))
+if CANDIDATE:(OUTPUT/'alpha_trim_report.json').write_text(json.dumps(TRIM_REPORT,indent=2))
 print('MEADOW_SWARDS_PREPARED',flush=True)

@@ -1,0 +1,50 @@
+{
+  "units": "centimeters",
+  "license": "Original project work",
+  "generator": "Tools/create_construction_assets.py",
+  "materials": "Existing original Industry palette and PBR surfaces",
+  "meshes": {
+    "SM_Shuttle": {
+      "fbx": "SM_Shuttle.fbx",
+      "sha256": "ca6378631158b875543843b940c11091e818b6811113f35ae0d9a8cd2cd51169",
+      "dimensions_cm": [
+        614.0,
+        759.0,
+        448.0
+      ],
+      "triangles": 10940,
+      "materials": [
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Carbon",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Light"
+      ],
+      "description": "Original compact cargo/emergency shuttle with ducted VTOL rotors, pressure cabin, paneled hull, maneuvering nozzles, landing shoes and rear boarding ramp. Parked at the core docking collar.",
+      "unreal_path": "/Game/Art/SM_Shuttle"
+    },
+    "SM_RobotService": {
+      "fbx": "SM_RobotService.fbx",
+      "sha256": "694c2dcc36918534cd960b4c446eec27cf3e4857755f7d5c118727b25633c27a",
+      "dimensions_cm": [
+        1600.0,
+        1250.0,
+        604.0
+      ],
+      "triangles": 18392,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Copper"
+      ],
+      "description": "Original open three-berth robot charging and maintenance facility with charging contacts, flexible leads, articulated diagnostic arms, cooling plant and industrial canopy.",
+      "unreal_path": "/Game/Art/SM_RobotService"
+    }
+  }
+}

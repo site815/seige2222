@@ -1,0 +1,70 @@
+{
+  "version": "0.5.0",
+  "engine": "5.8.3",
+  "platform": "Windows x64 Shipping",
+  "native": {
+    "passed": 28,
+    "succeeded_with_warnings": 1,
+    "failed": 0,
+    "not_run": 0,
+    "warning": "Editor HTTP connectivity-probe retries during a successful AI test; separate from Shipping behavior."
+  },
+  "shipping": {
+    "exit_code": 0,
+    "stages": 63,
+    "failures": 0,
+    "socket_samples": 73,
+    "tcp_max": 0.0,
+    "udp_max": 0.0
+  },
+  "graphics": {
+    "gpu": "NVIDIA GeForce RTX 4070 Ti SUPER",
+    "cpu": "AMD Ryzen 7 9800X3D",
+    "width": 1600,
+    "height": 900,
+    "preset": "Epic",
+    "resolution_percent": 100,
+    "baseline": "Art/EnvironmentV05/benchmarks/baseline.json",
+    "optimized": "Art/EnvironmentV05/benchmarks/optimized.json",
+    "scope": "Single paired five-view benchmark, at least five seconds per view after warmup; not a whole-game or reference-game comparison."
+  },
+  "packaged_executable_sha256": "38B58BEAC2191ADE3AD3CE8E13765D9A35C4DEBBFE8F727419779C11D7CC6D75",
+  "matching_external_definitions": [
+    {
+      "file": "Rules/buildings.json",
+      "sha256": "89B1355815EC10616FEE1F60013BC81AFEE2C7C932D4F6A3A46F3001C6896C71"
+    },
+    {
+      "file": "Rules/policies.json",
+      "sha256": "10CFB46F38F0134538BDC9DC5AE0653F8056854BF3B3AE58EFB6DE141D8805A4"
+    },
+    {
+      "file": "Rules/recipes.json",
+      "sha256": "9AABE5C86DA64B5CDB21FBF2CA2F80BDC0CEB2D2B1AFB0F8DBBF5F2447FABD10"
+    },
+    {
+      "file": "Rules/resources.json",
+      "sha256": "127217AEBF2AB419B6228CAEA7F5719EFE738B3871D383CDA77A65CC177F9E95"
+    },
+    {
+      "file": "Rules/scenario.json",
+      "sha256": "5D6B283CBCA66BF5E16FBBC0DAF29DBE5CE8CC9AF1719BA61EB96838ADB304C2"
+    },
+    {
+      "file": "AIFILES/colony_ai.json",
+      "sha256": "6E3DD99D68A8FA074BB76B4D40C5F4BC5B342C42E8089978E768419DAD520617"
+    },
+    {
+      "file": "AIFILES/developed_start.json",
+      "sha256": "467CCC59F025EDE620068F3E893029C961461B5FEF582FC81B9AB8E50F993B19"
+    },
+    {
+      "file": "Interface/ui.json",
+      "sha256": "106F486CF040091727EDA33B41BCCCF6D0369BC7C67846DF037713A40D1FBCDD"
+    },
+    {
+      "file": "Graphics/scene.json",
+      "sha256": "1E3E6556646A7ACFC387156EF901C57C790EF8F3ECBD10FF9F723664E584DFED"
+    }
+  ]
+}

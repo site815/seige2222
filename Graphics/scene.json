@@ -1,6 +1,7 @@
 {
   "version": 1,
   "world_centimeters_per_unit": 6,
+  "nanite_max_pixels_per_edge": 1.5,
   "camera_fov": 55,
   "camera_pitch": 52,
   "camera_yaw": 135,
@@ -41,10 +42,15 @@
     "RockB": "/Game/Art/Nature/SM_MossRockB.SM_MossRockB"
   },
   "region_map_zoom": 40000,
-  "orbit_yaw_degrees_per_pixel": 0.45,
-  "orbit_pitch_degrees_per_pixel": 0.35,
+  "orbit_yaw_degrees_per_pixel": 0.22,
+  "orbit_pitch_degrees_per_pixel": 0.18,
   "terrain_material": "/Game/Art/NatureV04/M_TerrainV04.M_TerrainV04",
   "ground_cover_candidates": 350000,
-  "grass_scale_min": 1.0,
-  "grass_scale_max": 1.3
+  "grass_scale_min": 1,
+  "grass_scale_max": 1.3,
+  "grass_shadow_distance_m": 100,
+  "grass_programmable_distance_m": 0,
+  "grass_distance_field_lighting": false,
+  "neighboring_forest_candidates_per_sector": 4500,
+  "neighboring_forest_shadow": false
 }

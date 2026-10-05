@@ -93,7 +93,7 @@
       "id": "logistics",
       "name": "Logistics",
       "shortcut": "L",
-      "description": "Extend live sensor coverage and move or store physical goods.",
+      "description": "Charge and maintain robots, extend sensors, and move or store physical goods.",
       "entries": [
         {
           "definition": "sensor",
@@ -102,6 +102,10 @@
         {
           "definition": "depot",
           "shortcut": "D"
+        },
+        {
+          "definition": "robot_service_bay",
+          "shortcut": "C"
         }
       ]
     },

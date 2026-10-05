@@ -16,7 +16,7 @@
 void ASeigeGameMode::RunPresentationSmoke()
 {
     if(!FParse::Param(FCommandLine::Get(),TEXT("UiSmoke")))return;
-    static const double Times[]={2,3,4,5,7,8,10,11,12,13,14,15,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,78,80,84,86,90,92,96,98};
+    static const double Times[]={2,3,4,5,7,8,10,11,12,13,14.5,16,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,78,80,84,86,90,92,96,98,100,102,104,106,108,114,116,138,158,160};
     if(PresentationSmokeStage>=UE_ARRAY_COUNT(Times)||RenderClock<Times[PresentationSmokeStage])return;
     const int32 Stage=PresentationSmokeStage++;
     auto* Controller=Cast<ASeigeController>(UGameplayStatics::GetPlayerController(this,0));
@@ -28,7 +28,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     };
     auto Capture=[&](const TCHAR* Name)
     {
-        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v04"));
+        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v05"));
         if(!Require(IFileManager::Get().MakeDirectory(*Directory,true),TEXT("Could not create screenshot directory")))return;
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Name)+TEXT(".png")),true,false);
         UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CAPTURE %s stage=%d screen=%s"),Name,Stage,*Screen);
@@ -157,9 +157,39 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 49: Capture(TEXT("meadow_ground"));break;
     case 50: CameraCenter=FVector(3000,-700,0);CameraYaw=155;CameraPitch=48;Zoom=7000;UpdateCamera();break;
     case 51: Capture(TEXT("terrain_hills"));break;
-    case 52:
+    case 52: SelectedId=0;CameraCenter=FVector(29000,0,0);CameraYaw=0;CameraPitch=60;Zoom=14000;UpdateCamera();break;
+    case 53: Capture(TEXT("boundary"));break;
+    case 54: ReturnToMainMenu();ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");CameraYaw=135;CameraPitch=50;StartScenario();break;
+    case 55:
+        if(Controller)Controller->SetMouseLocation(800,450);
+        CursorOnWorld=true;CursorWorld=FVector2D::ZeroVector;SyncVisuals();
+        Require(Visuals.Contains(TEXT("placement_")+Sim.CoreDefinition),TEXT("Landing must show the final core footprint as a translucent mesh"));Capture(TEXT("landing_ghost"));break;
+    case 56: WorldClick(FVector2D::ZeroVector);Require(Screen==TEXT("playing")&&Sim.Buildings[0].IsConstructing,TEXT("Landing must begin shuttle deployment"));Zoom=1500;UpdateCamera();break;
+    case 57:
+        Require(Sim.Buildings[0].IsConstructing&&Sim.Buildings[0].ConstructionProgress>0&&Sim.Buildings[0].ConstructionProgress<1,TEXT("Shuttle core must assemble over time"));Capture(TEXT("shuttle_deployment"));break;
+    case 58:
+        Require(!Sim.Buildings[0].IsConstructing,TEXT("Carried core must finish deployment"));
+        Zoom=DefaultZoom;UpdateCamera();
+        if(Hud){Hud->HandleShortcut(EKeys::B);Hud->HandleShortcut(EKeys::L);Hud->HandleShortcut(EKeys::C);}
+        Require(SelectedBuild==TEXT("robot_service_bay"),TEXT("B L C must select robot service hub"));
+        if(Controller)Controller->SetMouseLocation(950,450);
+        CursorOnWorld=true;CursorWorld=FVector2D(700,500);SyncVisuals();
+        Require(Visuals.Contains(TEXT("placement_robot_service_bay")),TEXT("Service blueprint must display a mesh ghost"));Capture(TEXT("service_ghost"));break;
+    case 59:
+        WorldClick(FVector2D(700,500));SelectedBuild.Empty();
+        Require(Sim.Buildings.Num()==2&&Sim.Buildings.Last().IsConstructing,TEXT("Service building must start as a construction site"));
+        if(Sim.Buildings.Num()==2)SelectedId=Sim.Buildings.Last().Id;
+        CameraCenter=FVector(700,500,0);Zoom=1800;UpdateCamera();break;
+    case 60:
+        Require(Sim.Buildings.Num()==2&&Sim.Buildings.Last().IsConstructing,TEXT("Workers must not create a service building instantly"));
+        if(Sim.Buildings.Num()==2){SelectedId=Sim.Buildings.Last().Id;Require(Sim.RobotSupportCapacity==8,TEXT("Unfinished service hub cannot supply charging capacity"));}
+        ClickAction(TEXT("info-section:Overview"));Capture(TEXT("worker_construction"));break;
+    case 61:
+        Require(Sim.Buildings.Num()==2&&!Sim.Buildings.Last().IsConstructing,TEXT("Delivered materials and workers must finish the service hub"));
+        Require(Sim.RobotSupportCapacity==24,TEXT("Completed service hub must expand robot support capacity"));ClickAction(TEXT("info-section:Maintenance"));Capture(TEXT("service_complete"));break;
+    case 62:
     {
-        Require(Ready&&Observer&&Neighbors.Num()==2&&Screen==TEXT("playing"),TEXT("Final observer state is invalid"));
+        Require(Ready&&!Observer&&Neighbors.Num()==0&&Screen==TEXT("playing"),TEXT("Final construction scenario state is invalid"));
         const float Dt=GetWorld()?GetWorld()->GetDeltaSeconds():0;
         auto Report=MakeShared<FJsonObject>();Report->SetBoolField(TEXT("ready"),Ready);Report->SetNumberField(TEXT("failures"),SmokeFailures);
         Report->SetBoolField(TEXT("observer"),Observer);Report->SetNumberField(TEXT("neighbors"),Neighbors.Num());Report->SetNumberField(TEXT("buildings"),Sim.Buildings.Num());

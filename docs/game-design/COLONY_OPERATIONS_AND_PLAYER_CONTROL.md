@@ -4,6 +4,14 @@
 
 How a constructed colony operates with minimal routine adjustment. Automatic behavior and the single-player setup flow are established; prototype algorithms and numerical values remain distinct from final design decisions.
 
+## v0.5 construction and service operation
+
+**Confirmed new requirement:** Buildings need worker construction and physically delivered materials. Initial command-core deployment comes from the orbital shuttle; robot charging/maintenance facilities must support population expansion.
+
+**Current source implementation:** A new order reserves available core inventory after operating buffers, sends physical couriers and waits for the full bill before builders work. Sites contribute temporary builder jobs. External `staffing_priority` orders both construction and operating jobs; current priorities preserve command, services, defenses and sensors ahead of general industry, with stable order for ties. Sites do not produce, repair, sense or fire until complete. Disabling a site pauses work but holds its reservation; there is no cancellation/refund command. Individual builder navigation remains outside the aggregate workforce model.
+
+The core's carried deployment kit and initial crew bootstrap the first service expansion. Completed, enabled and staffed service buildings add support capacity and use local delivered maintenance components. Assembly needs both open jobs and available support. Unsupported existing robots remain but work at reduced efficiency; automatic job-driven retirement is independent. These prototype algorithms use external data and are included in the verified local v0.5 package. The final 29-test native suite and 63-stage packaged route passed; [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) records their evidence and boundaries.
+
 ## Scenario setup and player control
 
 **Confirmed direction:** A main menu leads to single-player scenario setup, settings, credits, and local loading. Setup presents the full 3×3 neighborhood with empty, starting-AI, or developed-AI neighbors. The center can be a player colony or an AI colony for observation. For human play, time stays paused while the player surveys the larger map and chooses the command-core location. Play begins after a valid landing selection.
@@ -29,7 +37,7 @@ Automatic operation does not remove physical goods or transport. Inputs and outp
 
 **Confirmed direction:** The player should be able to see worker demand and unfilled jobs, through an open-jobs or required-workers metric. Staffing should remain understandable even though assignment is automatic.
 
-**Current prototype:** The interface reports colony population/jobs and building staffing and operating status. The v0.4 source adds a sectioned building dossier covering costs, health, staffing, production, local inventories, incoming cargo, repairs, weapon damage/reload/DPS, and power. Required inputs stay visible at zero stock, and unarmed/zero-power values are explicit. Initial native checks passed, but rendered readability and access to every section still require verification. Explanations of the full-game allocation policy under scarcity remain open.
+**Current prototype:** The interface reports colony population/jobs and building staffing and operating status. The building dossier covers costs, construction duration/progress and builders, health, staffing priority, production, local inventories, incoming cargo, service capacity/upkeep, repairs, weapon damage/reload/DPS, and power. Required inputs stay visible at zero stock, and unarmed/zero-power values are explicit. The final v0.5 native suite passed 29 tests (28 clean and one editor background HTTP-warning success), and the packaged interaction route passed 63 stages with zero failures. The captured service bay was empty because it had no assigned supported robots; occupied-bay visuals were not verified. Native save coverage and packaged observations remain distinct in the [development report](../DEVELOPMENT_REPORT.md). Explanations of the full-game allocation policy under scarcity remain open.
 
 ## Population, throughput, and consumption
 
@@ -41,9 +49,9 @@ A populous colony and a small specialized colony should both be viable strategie
 
 ## Current prototype policies
 
-Enabled buildings require full staffing to operate, couriers physically deliver inputs between local inventories, and damage is repaired automatically using the implemented repair inputs. Job demand drives core robot assembly and later surplus retirement, with a configurable population minimum. The assembly-input buffer reserves materials for future robots; it does not add extra robots above job demand. Retirement currently gives no resource refund. Centralized upkeep, the staffing algorithm, and these population choices are editable prototype policies, not settled robot-needs or satisfaction systems.
+Enabled buildings require full staffing to operate, couriers physically deliver inputs between local inventories, and damage is repaired automatically using the implemented repair inputs. Job demand drives core robot assembly and later surplus retirement, with a configurable population minimum. The assembly-input buffer reserves materials for future robots; it does not add extra robots above job demand. Retirement currently gives no resource refund. Local core/service-bay upkeep, external automatic staffing priorities, and these population choices are editable prototype policies, not settled full-game needs or satisfaction systems.
 
-Construction immediately spends core inventory. Construction hauling is still missing even though production inputs and outputs use physical delivery. Local AI issues the same normal construction commands and then relies on the same workers, recipes, logistics, repairs, and threats. It does not receive recurring free inventory. Independent neighbor colonies cannot yet exchange cargo or attack each other.
+Construction reserves core inventory without removing it at order time. Couriers deliver the complete bill to the site before builders advance assembly; completion consumes that site inventory into the structure. Local AI uses the same construction commands, workers, services, recipes, logistics, repairs and threats. Its ordered plan waits for required buildings to finish and be staffed before later spending. It receives no recurring free inventory. Independent neighbor colonies cannot yet exchange cargo or attack each other.
 
 v0.4 building defenses execute data-defined shots and reloads; operating efficiency slows reload progress. The displayed nominal DPS is derived from shot damage and reload time. All buildings currently show 0 kW usage and generation because no separate grid is simulated. These explicit statistics explain the implemented slice without selecting a final energy system or full-game combat balance.
 
@@ -56,7 +64,7 @@ v0.4 building defenses execute data-defined shots and reloads; operating efficie
 - The exact effects of disabling a building on its assigned workers, inputs, queued work, and stored output.
 - How job demand is counted for population production and reduction, including treatment of disabled buildings, temporary resource shortages, hauling, repair work, and defense roles.
 - How surplus robots are removed and whether any resources are recovered; the mechanism and rates have not been chosen.
-- Construction work, automatic-repair costs and rates, and robot upkeep requirements.
+- Final construction, automatic-repair and upkeep balance beyond the implemented external prototype values.
 - Which capabilities make a specialized low-population colony competitive, and how labor relates to defensive participation.
 
 None of these open details establishes manual worker assignment, required production queues, or new priority controls. No additional control should be assumed from the presence of an open question.

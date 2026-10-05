@@ -1,0 +1,326 @@
+{
+  "grass_medium_02": [
+    {
+      "object": "grass_medium_02_b",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.28230175375938416,
+        0.033626753836870193
+      ],
+      "uv_max": [
+        0.8508360981941223,
+        0.945899248123169
+      ],
+      "triangles": 1760,
+      "all_7_samples_opaque_fraction": 0.022727272727272728,
+      "all_7_samples_below_clip_fraction": 0.006818181818181818,
+      "mean_alpha_samples": 0.6842391490936279
+    },
+    {
+      "object": "grass_medium_02_c",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.03295845538377762,
+        0.0013935042079538107
+      ],
+      "uv_max": [
+        0.9833980202674866,
+        0.9818474054336548
+      ],
+      "triangles": 1215,
+      "all_7_samples_opaque_fraction": 0.00823045267489712,
+      "all_7_samples_below_clip_fraction": 0.00411522633744856,
+      "mean_alpha_samples": 0.6250735521316528
+    },
+    {
+      "object": "grass_medium_02_d",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.03295845538377762,
+        0.0013935042079538107
+      ],
+      "uv_max": [
+        0.9833980202674866,
+        0.9818474054336548
+      ],
+      "triangles": 2489,
+      "all_7_samples_opaque_fraction": 0.008437123342707915,
+      "all_7_samples_below_clip_fraction": 0.0044194455604660505,
+      "mean_alpha_samples": 0.625730574131012
+    },
+    {
+      "object": "grass_medium_02_e",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.36142489314079285,
+        0.004904629196971655
+      ],
+      "uv_max": [
+        0.9833980202674866,
+        0.9818474054336548
+      ],
+      "triangles": 1664,
+      "all_7_samples_opaque_fraction": 0.01622596153846154,
+      "all_7_samples_below_clip_fraction": 0.0078125,
+      "mean_alpha_samples": 0.5874197483062744
+    }
+  ],
+  "grass_bermuda_01": [
+    {
+      "object": "grass_bermuda_01_medium_a",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.687624990940094,
+        0.0056401328183710575
+      ],
+      "uv_max": [
+        0.8664465546607971,
+        0.3531229794025421
+      ],
+      "triangles": 17,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.058823529411764705,
+      "mean_alpha_samples": 0.2857142984867096
+    },
+    {
+      "object": "grass_bermuda_01_medium_b",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.5311816334724426,
+        0.4481573700904846
+      ],
+      "uv_max": [
+        0.7210144400596619,
+        0.6450644135475159
+      ],
+      "triangles": 8,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.125,
+      "mean_alpha_samples": 0.20535728335380554
+    },
+    {
+      "object": "grass_bermuda_01_medium_c",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.5311816334724426,
+        0.4481573700904846
+      ],
+      "uv_max": [
+        0.9569569230079651,
+        0.8970926403999329
+      ],
+      "triangles": 20,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.3,
+      "mean_alpha_samples": 0.15334826707839966
+    },
+    {
+      "object": "grass_bermuda_01_medium_d",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.7659047842025757,
+        0.44998615980148315
+      ],
+      "uv_max": [
+        0.9393159747123718,
+        0.6851354837417603
+      ],
+      "triangles": 14,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.0,
+      "mean_alpha_samples": 0.3163665533065796
+    },
+    {
+      "object": "grass_bermuda_01_medium_e",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.2767702639102936,
+        0.44998615980148315
+      ],
+      "uv_max": [
+        0.9393159747123718,
+        0.6851354837417603
+      ],
+      "triangles": 24,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.16666666666666666,
+      "mean_alpha_samples": 0.26788049936294556
+    },
+    {
+      "object": "grass_bermuda_01_medium_f",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.03390590101480484,
+        0.012862096540629864
+      ],
+      "uv_max": [
+        0.1759471893310547,
+        0.3201100826263428
+      ],
+      "triangles": 30,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.06666666666666667,
+      "mean_alpha_samples": 0.281287282705307
+    },
+    {
+      "object": "grass_bermuda_01_seedling_a",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.2265455573797226,
+        0.014894155785441399
+      ],
+      "uv_max": [
+        0.9393159747123718,
+        0.6851354837417603
+      ],
+      "triangles": 147,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.0,
+      "mean_alpha_samples": 0.5400801301002502
+    },
+    {
+      "object": "grass_bermuda_01_seedling_b",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.4137778878211975,
+        0.007792755961418152
+      ],
+      "uv_max": [
+        0.8928850889205933,
+        0.4080924689769745
+      ],
+      "triangles": 140,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.014285714285714285,
+      "mean_alpha_samples": 0.5375959277153015
+    },
+    {
+      "object": "grass_bermuda_01_seedling_c",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.24635787308216095,
+        0.13104090094566345
+      ],
+      "uv_max": [
+        0.892885148525238,
+        0.4080924987792969
+      ],
+      "triangles": 128,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.0,
+      "mean_alpha_samples": 0.5685297250747681
+    },
+    {
+      "object": "grass_bermuda_01_seedling_d",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.24635787308216095,
+        0.007792755961418152
+      ],
+      "uv_max": [
+        0.892885148525238,
+        0.4080924987792969
+      ],
+      "triangles": 268,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.007462686567164179,
+      "mean_alpha_samples": 0.5523702502250671
+    },
+    {
+      "object": "grass_bermuda_01_small_a",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.6747964024543762,
+        0.7567534446716309
+      ],
+      "uv_max": [
+        0.9569569230079651,
+        0.8970926403999329
+      ],
+      "triangles": 12,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.4166666666666667,
+      "mean_alpha_samples": 0.118675597012043
+    },
+    {
+      "object": "grass_bermuda_01_small_b",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.6747964024543762,
+        0.7567534446716309
+      ],
+      "uv_max": [
+        0.9569569230079651,
+        0.8970926403999329
+      ],
+      "triangles": 12,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.4166666666666667,
+      "mean_alpha_samples": 0.118675597012043
+    },
+    {
+      "object": "grass_bermuda_01_small_c",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.049816567450761795,
+        0.45423653721809387
+      ],
+      "uv_max": [
+        0.46595659852027893,
+        0.6087579727172852
+      ],
+      "triangles": 18,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.2777777777777778,
+      "mean_alpha_samples": 0.2058841735124588
+    },
+    {
+      "object": "grass_bermuda_01_small_d",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.2767702639102936,
+        0.4597400426864624
+      ],
+      "uv_max": [
+        0.46595659852027893,
+        0.6087579727172852
+      ],
+      "triangles": 10,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.4,
+      "mean_alpha_samples": 0.20000000298023224
+    },
+    {
+      "object": "grass_bermuda_01_small_e",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.3455089032649994,
+        0.6829149723052979
+      ],
+      "uv_max": [
+        0.4764551520347595,
+        0.9923574924468994
+      ],
+      "triangles": 10,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.2,
+      "mean_alpha_samples": 0.16339294612407684
+    },
+    {
+      "object": "grass_bermuda_01_small_f",
+      "uv_layer": "UVMap",
+      "uv_min": [
+        0.5295122861862183,
+        0.7653217315673828
+      ],
+      "uv_max": [
+        0.6699278354644775,
+        0.9760468602180481
+      ],
+      "triangles": 10,
+      "all_7_samples_opaque_fraction": 0.0,
+      "all_7_samples_below_clip_fraction": 0.4,
+      "mean_alpha_samples": 0.1991071254014969
+    }
+  ]
+}

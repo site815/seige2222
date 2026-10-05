@@ -207,10 +207,12 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
             const int32 I=Y*(Resolution+1)+X;
             // Interior normals use the already sampled vertex grid. Shared-edge
             // normals sample the common triangle cache on either side of the seam.
-            const double DX=X>0&&X<Resolution?(Tile.Heights[I+1]-Tile.Heights[I-1])/(Step*2):
-                (G.GroundHeight(P+FVector2D(Step,0))-G.GroundHeight(P-FVector2D(Step,0)))/(Step*2);
-            const double DY=Y>0&&Y<Resolution?(Tile.Heights[I+Resolution+1]-Tile.Heights[I-Resolution-1])/(Step*2):
-                (G.GroundHeight(P+FVector2D(0,Step))-G.GroundHeight(P-FVector2D(0,Step)))/(Step*2);
+            const bool Boundary=X==0||X==Resolution||Y==0||Y==Resolution;
+            const double NormalStep=Boundary?Half*2/128:Step;
+            const double DX=!Boundary?(Tile.Heights[I+1]-Tile.Heights[I-1])/(Step*2):
+                (G.GroundHeight(P+FVector2D(NormalStep,0))-G.GroundHeight(P-FVector2D(NormalStep,0)))/(NormalStep*2);
+            const double DY=!Boundary?(Tile.Heights[I+Resolution+1]-Tile.Heights[I-Resolution-1])/(Step*2):
+                (G.GroundHeight(P+FVector2D(0,NormalStep))-G.GroundHeight(P-FVector2D(0,NormalStep)))/(NormalStep*2);
             const FVector Normal=FVector(-DX,-DY,1).GetSafeNormal();
             Vertices.Add(FVector(P.X*G.RenderScale,P.Y*G.RenderScale,Tile.Heights[I]*G.RenderScale));Normals.Add(Normal);UVs.Add(P*G.RenderScale/700);
             const double Woodland=G.WoodlandDensity(P);
@@ -259,7 +261,10 @@ void ASeigeGameMode::CreateLandscape()
             Terrain->ComponentTags={FName(*FString::FromInt(TileIndex)),FName(*FString::FromInt(X)),FName(*FString::FromInt(Y))};
             Terrain->RegisterComponent();Ground->AddInstanceComponent(Terrain);
             BuildTerrainChunk(*this,Tile,X,Y,Terrain,DirtPatches);
-            Terrain->SetMaterial(0,TileIndex==RenderedSector&&TerrainMaterial?TerrainMaterial:Material(FLinearColor(.29f,.32f,.22f)));
+            // The neighboring 128 grids retain the same continuous world-space
+            // surface material. Their lower mesh density is the detail boundary,
+            // rather than an unrelated flat-color surface around the home tile.
+            Terrain->SetMaterial(0,TerrainMaterial?TerrainMaterial:Material(FLinearColor(.29f,.32f,.22f)));
         }
     }
     UE_LOG(LogTemp,Display,TEXT("Terrain surface ready: focused %d grid, eight 128 grids, %.3f seconds before foliage"),DetailedTerrainResolution,FPlatformTime::Seconds()-Started);
@@ -292,8 +297,12 @@ void ASeigeGameMode::RefreshBuildingPads()
         for(const auto& Area:Changed)
         {
             const FVector2D P(Area.X-Tile.Offset.X,Area.Y-Tile.Offset.Y);
-            // Two cells also refresh the vertex normals bordering the edited pad.
-            const double Radius=Area.W+Step*2+SharedEdgeInfluence(*this,Area);
+            // Interior normals read one cell either side; shared-edge normals
+            // use the common coarse step, including on the detailed tile.
+            const double CoarseStep=Half*2/128;
+            const double EdgeDistance=Half-FMath::Max(FMath::Abs(P.X),FMath::Abs(P.Y));
+            const double NormalInfluence=EdgeDistance<=Area.W+CoarseStep?CoarseStep:0;
+            const double Radius=Area.W+Step*2+FMath::Max(SharedEdgeInfluence(*this,Area),NormalInfluence);
             if(P.X+Radius<-Half||P.X-Radius>Half||P.Y+Radius<-Half||P.Y-Radius>Half)continue;
             const int32 MinX=FMath::Clamp(FMath::FloorToInt((P.X-Radius+Half)/Step),0,Tile.Resolution),MaxX=FMath::Clamp(FMath::CeilToInt((P.X+Radius+Half)/Step),0,Tile.Resolution);
             const int32 MinY=FMath::Clamp(FMath::FloorToInt((P.Y-Radius+Half)/Step),0,Tile.Resolution),MaxY=FMath::Clamp(FMath::CeilToInt((P.Y+Radius+Half)/Step),0,Tile.Resolution);
@@ -378,7 +387,7 @@ uint32 GroundCellSeed(int32 X,int32 Y)
     uint32 Seed=uint32(X)*0x9e3779b9u^uint32(Y)*0x85ebca6bu^2222u;
     Seed^=Seed>>16;Seed*=0x7feb352du;Seed^=Seed>>15;Seed*=0x846ca68bu;return Seed^(Seed>>16);
 }
-UHierarchicalInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind)
+UHierarchicalInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind,bool GrassIndirectLighting=false,float GrassProgrammableDistanceMeters=0)
 {
     if(!Mesh)return nullptr;
     auto* Set=NewObject<UHierarchicalInstancedStaticMeshComponent>(Actor);Set->bAutoRebuildTreeOnInstanceChanges=false;Set->SetStaticMesh(Mesh);Set->SetupAttachment(Root);
@@ -386,8 +395,42 @@ UHierarchicalInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneCom
     const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
     const bool Sward=Kind.StartsWith(TEXT("Grass"))||Kind==TEXT("Wildflowers");
     Set->SetCullDistances(Tree?0:Sward?50000:15000,Tree?0:Sward?90000:42000);
-    if(Sward)Set->SetCastShadow(true);
+    // These assets have no wind/deformation. Rigid still invalidates when a
+    // foundation moves instances; Static would incorrectly suppress that update.
+    Set->SetEvaluateWorldPositionOffset(false);
+    Set->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
+    // Zero preserves masked rasterization at all distances. Set before scene
+    // registration so the Nanite proxy receives the optional grass-only cutoff.
+    // Wildflower silhouettes remain masked regardless of this experiment.
+    if(Kind==TEXT("Grass")||Kind==TEXT("GrassB"))
+        Set->NanitePixelProgrammableDistance=GrassProgrammableDistanceMeters*100.f;
+    if(Sward)
+    {
+        Set->SetCastShadow(true);
+        // Dense overlapping swards are optional contributors to the Lumen/DF
+        // scene. They still receive scene lighting and retain near VSM shadows.
+        Set->SetAffectDistanceFieldLighting(GrassIndirectLighting);
+        Set->SetAffectDynamicIndirectLighting(GrassIndirectLighting);
+    }
     Set->RegisterComponent();Actor->AddInstanceComponent(Set);return Set;
+}
+const FName SwardTag(TEXT("seige_sward"));
+void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
+{
+    if(!Actor)return;
+    const FVector CameraPosition=G.CameraTransform().GetLocation();
+    const double Distance=G.GrassShadowDistanceMeters*100.;
+    TArray<UHierarchicalInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
+    for(auto* Component:Components)
+    {
+        if(!Component->ComponentHasTag(SwardTag)||Component->GetInstanceCount()==0)continue;
+        // Full grass coverage is retained. Only tiny distant grass shadows are
+        // omitted; tree/building shadows and nearby sward shadows stay enabled.
+        // A small hysteresis avoids rebuilding shadow state at a hovering edge.
+        const double Limit=Distance*(Component->CastShadow?1.1:1.);
+        const bool Cast=Distance>0&&Component->Bounds.GetBox().ComputeSquaredDistanceToPoint(CameraPosition)<=Limit*Limit;
+        if(bool(Component->CastShadow)!=Cast)Component->SetCastShadow(Cast);
+    }
 }
 }
 void ASeigeGameMode::CreateFoliage()
@@ -419,7 +462,40 @@ void ASeigeGameMode::CreateFoliage()
     {
         const FVector2D P=Offset+N.Position+FVector2D(R.FRandRange(-125,125),R.FRandRange(-125,125));Add(I%2?TEXT("RockA"):TEXT("RockB"),P,R.FRandRange(.35,.8),R.FRandRange(0,360));
     }
+    // A sparse background forest shares already loaded meshes and follows the
+    // neighboring coarse triangle surface. It uses only public natural terrain,
+    // never hidden colony positions, inventory, deposits or construction state.
+    int32 BackgroundInstances=0;
+    if(NeighborForestCandidates>0)
+    {
+        TMap<FString,UHierarchicalInstancedStaticMeshComponent*> BackgroundSets;
+        for(const FString Kind:{TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB")})
+            if(auto** Foreground=Sets.Find(Kind))if(auto* Set=VegetationSet(Ground,Root,(*Foreground)->GetStaticMesh(),Kind))
+            {
+                Set->SetCastShadow(NeighborForestShadows);
+                Set->SetAffectDistanceFieldLighting(false);
+                Set->SetAffectDynamicIndirectLighting(false);
+                BackgroundSets.Add(Kind,Set);
+            }
+        for(int32 Sector=0;Sector<9;++Sector)
+        {
+            if(Sector==DetailedSectorIndex())continue;
+            const FVector2D SectorOffset=FVector2D(Sector%3-1,Sector/3-1)*Half*2;
+            FRandomStream BackgroundRandom(2222+Sector*100003);
+            for(int32 I=0;I<NeighborForestCandidates;++I)
+            {
+                const FVector2D P=SectorOffset+FVector2D(BackgroundRandom.FRandRange(-Half,Half),BackgroundRandom.FRandRange(-Half,Half));
+                const double Chance=BackgroundRandom.FRand(),Size=BackgroundRandom.FRandRange(.72,1.16),Yaw=BackgroundRandom.FRandRange(0,360);
+                if(Chance>WoodlandDensity(P)*.9)continue;
+                const FString Kind=I%9==0?(I%2?TEXT("PineA"):TEXT("PineB")):(I%2?TEXT("OakA"):TEXT("OakB"));
+                if(auto** Set=BackgroundSets.Find(Kind))
+                {(*Set)->AddInstance(FTransform(FRotator(0,Yaw,0),RenderPosition(P),FVector(Size)));++BackgroundInstances;}
+            }
+        }
+        for(auto& Pair:BackgroundSets){Pair.Value->BuildTreeIfOutdated(false,true);Pair.Value->bAutoRebuildTreeOnInstanceChanges=true;}
+    }
     for(auto& Pair:Sets){Pair.Value->BuildTreeIfOutdated(false,true);Pair.Value->bAutoRebuildTreeOnInstanceChanges=true;}
+    UE_LOG(LogTemp,Display,TEXT("Neighbor landscape: eight textured coarse tiles, %d background trees, shadows %s"),BackgroundInstances,NeighborForestShadows?TEXT("on"):TEXT("off"));
     CreateGroundCover();
 }
 void ASeigeGameMode::CreateGroundCover()
@@ -453,7 +529,12 @@ void ASeigeGameMode::CreateGroundCover()
         const FVector2D Origin(X*GroundTileSize,Y*GroundTileSize);
         if(Origin.X+GroundTileSize<Offset.X-Half||Origin.X>Offset.X+Half||Origin.Y+GroundTileSize<Offset.Y-Half||Origin.Y>Offset.Y+Half)continue;
         TMap<FString,UHierarchicalInstancedStaticMeshComponent*> Sets;
-        for(const auto& Pair:Meshes)if(auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),Pair.Value,Pair.Key)){Set->ComponentTags.Add(Tag);Sets.Add(Pair.Key,Set);}
+        for(const auto& Pair:Meshes)if(auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),Pair.Value,Pair.Key,GrassDistanceFieldLighting,GrassProgrammableDistanceMeters))
+        {
+            Set->ComponentTags.Add(Tag);
+            if(Pair.Key.StartsWith(TEXT("Grass"))||Pair.Key==TEXT("Wildflowers"))Set->ComponentTags.Add(SwardTag);
+            Sets.Add(Pair.Key,Set);
+        }
         auto Add=[&](const FString& Kind,FVector2D P,double Size,double Yaw){if(auto** Set=Sets.Find(Kind))(*Set)->AddInstance(FTransform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size)));};
         FRandomStream R{static_cast<int32>(GroundCellSeed(X,Y))};
         for(int32 I=0;I<PropsPerCell;++I)
@@ -476,6 +557,7 @@ void ASeigeGameMode::CreateGroundCover()
         }
         for(auto& Pair:Sets){Pair.Value->BuildTreeIfOutdated(false,true);Pair.Value->bAutoRebuildTreeOnInstanceChanges=true;}
     }
+    UpdateGroundCoverShadows(*this,GroundCover);
 }
 void ASeigeGameMode::RefreshEnvironment()
 {
@@ -488,6 +570,7 @@ void ASeigeGameMode::RefreshEnvironment()
             RefreshBuildingPads();
             if(FMath::FloorToInt(FoliageCenter.X/GroundTileSize)!=FMath::FloorToInt(CameraCenter.X/GroundTileSize)||FMath::FloorToInt(FoliageCenter.Y/GroundTileSize)!=FMath::FloorToInt(CameraCenter.Y/GroundTileSize))CreateGroundCover();
         }
+        UpdateGroundCoverShadows(*this,GroundCover);
     }
     if(Landscape)Landscape->SetActorHiddenInGame(Map);if(Foliage)Foliage->SetActorHiddenInGame(Map);if(GroundCover)GroundCover->SetActorHiddenInGame(Map);
 }

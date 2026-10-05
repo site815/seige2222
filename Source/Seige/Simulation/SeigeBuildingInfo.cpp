@@ -24,11 +24,14 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     Add(TEXT("Overview"),TEXT("Status"),B?B->Status:TEXT("Blueprint"));
     Add(TEXT("Overview"),TEXT("Health"),B?N(B->Health)+TEXT(" / ")+N(D.Health):N(D.Health)+TEXT(" maximum"));
     Add(TEXT("Overview"),TEXT("Jobs"),B?FString::Printf(TEXT("%d / %d staffed"),B->Workers,D.Jobs):FString::FromInt(D.Jobs));
+    Add(TEXT("Overview"),TEXT("Automatic staffing priority"),FString::FromInt(D.StaffingPriority)+TEXT(" (lower first; includes construction)"));
     Add(TEXT("Overview"),TEXT("Operating efficiency"),N(Fraction*100)+TEXT("%")+(B?TEXT(""):TEXT(" at full staffing and upkeep")));
     Add(TEXT("Overview"),TEXT("Footprint radius"),Metres(D.Footprint));
     Add(TEXT("Overview"),TEXT("Sensor range"),Metres(D.SensorRange));
     Add(TEXT("Overview"),TEXT("Construction cost"),Amounts(D.Cost));
-    Add(TEXT("Overview"),TEXT("Construction payment"),D.Role==TEXT("core")?TEXT("Scenario command center; cannot build another"):TEXT("Paid from core stock immediately"));
+    Add(TEXT("Overview"),TEXT("Construction payment"),D.Role==TEXT("core")?TEXT("Deployment kit physically carried by the landing shuttle"):TEXT("Reserved at core; couriers deliver before worker construction"));
+    Add(TEXT("Overview"),TEXT("Construction duration"),N(D.ConstructionSeconds)+TEXT(" s with ")+FString::FromInt(D.ConstructionWorkers)+TEXT(" builders at full efficiency"));
+    if(B){Add(TEXT("Overview"),TEXT("Construction progress"),N(B->ConstructionProgress*100)+TEXT("%"));Add(TEXT("Overview"),TEXT("Assigned builders"),FString::FromInt(B->Builders));}
 
     const bool Armed=D.DamagePerShot>0;
     Add(TEXT("Weapons"),TEXT("Weapon"),Armed?D.WeaponName:TEXT("Unarmed"));
@@ -53,7 +56,7 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
         Add(TEXT("Production"),TEXT("Outputs per cycle"),CoreBuilding?TEXT("1 robot when population is below job demand/minimum"):Amounts(Recipe->Outputs));
         Add(TEXT("Production"),TEXT("Base cycle time"),N(Recipe->Seconds)+TEXT(" simulation s"));
         if(!CoreBuilding)Add(TEXT("Production"),TEXT("Operating cycle time"),Fraction>0?N(Recipe->Seconds/Fraction)+TEXT(" s; requires local inputs and output space"):TEXT("Paused until operational"));
-        else Add(TEXT("Production"),TEXT("Assembly policy"),TEXT("Demand timer; robots are produced at the core from local inputs"));
+        else Add(TEXT("Production"),TEXT("Assembly policy"),TEXT("Open jobs, available service capacity and local inputs; after deployment"));
         if(B)
         {
             const int32 Target=FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))));
@@ -86,15 +89,17 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
 
     Add(TEXT("Resources"),TEXT("Local storage"),B?N(Occupied(*B))+TEXT(" / ")+N(D.StorageCapacity)+TEXT(" units"):N(D.StorageCapacity)+TEXT(" units capacity"));
     TSet<FString> StockIds;
+    if(B&&B->IsConstructing)for(const auto& Pair:D.Cost)StockIds.Add(Pair.Key);
     if(CoreBuilding||D.Role==TEXT("storage"))for(const auto& Pair:Resources)StockIds.Add(Pair.Key);
     StockIds.Add(TextRule(TEXT("repair_resource")));
     if(!D.ExtractResource.IsEmpty())StockIds.Add(D.ExtractResource);
     if(Recipe){for(const auto& Pair:Recipe->Inputs)StockIds.Add(Pair.Key);for(const auto& Pair:Recipe->Outputs)StockIds.Add(Pair.Key);}
-    if(B){for(const auto& Pair:B->Inventory)StockIds.Add(Pair.Key);for(const auto& C:Couriers)if(C.TargetId==B->Id)StockIds.Add(C.Resource);}
+    if(B){for(const auto& Pair:B->Inventory)StockIds.Add(Pair.Key);for(const auto& Pair:B->ConstructionMaterials)StockIds.Add(Pair.Key);for(const auto& C:Couriers)if(C.TargetId==B->Id)StockIds.Add(C.Resource);}
     TArray<FString> StockKeys=StockIds.Array();StockKeys.Sort();
     for(const FString& Key:StockKeys)
     {
         FString Value=B?N(B->Inventory.FindRef(Key))+TEXT(" units"):TEXT("0 units (no instance)");
+        if(B&&B->IsConstructing)Value+=TEXT("; construction ")+N(B->ConstructionMaterials.FindRef(Key))+TEXT(" / ")+N(D.Cost.FindRef(Key));
         const double Inbound=B?Incoming(B->Id,Key):0;if(Inbound>0)Value+=TEXT(" (+")+N(Inbound)+TEXT(" inbound)");
         Rows.Add({TEXT("Resources"),Name(Key),Value});
     }
@@ -104,9 +109,11 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     Add(TEXT("Maintenance"),TEXT("Maximum repair rate"),N(Number(TEXT("repair_health_per_second")))+TEXT(" health / s from local stock"));
     Add(TEXT("Maintenance"),TEXT("Repair conversion"),N(Number(TEXT("repair_health_per_unit")))+TEXT(" health / material unit"));
     Add(TEXT("Maintenance"),TEXT("Local repair buffer"),N(Number(TEXT("repair_buffer_units")))+TEXT(" units"));
-    Add(TEXT("Maintenance"),TEXT("Repair operation"),TEXT("Automatic, including while disabled; destroyed buildings do not repair"));
+    Add(TEXT("Maintenance"),TEXT("Repair operation"),TEXT("Automatic after construction, including while disabled; destroyed buildings do not repair"));
     Add(TEXT("Maintenance"),TEXT("Robot upkeep"),N(Number(TEXT("upkeep_per_robot")))+TEXT(" ")+Name(TextRule(TEXT("upkeep_resource")))+TEXT(" / robot every ")+N(Number(TEXT("upkeep_interval")))+TEXT(" s"));
-    Add(TEXT("Maintenance"),TEXT("Upkeep payment"),TEXT("Taken from command-core stock for the whole colony"));
+    Add(TEXT("Maintenance"),TEXT("Robot support capacity"),FString::FromInt(D.RobotSupportCapacity)+TEXT(" robots when completed and operating"));
+    Add(TEXT("Maintenance"),TEXT("Upkeep payment"),TEXT("Local core/service-bay stock, delivered by physical couriers"));
+    if(B&&D.RobotSupportCapacity>0){Add(TEXT("Maintenance"),TEXT("Robots supported here"),FString::FromInt(B->SupportedRobots));Add(TEXT("Maintenance"),TEXT("Service supply"),B->IsConstructing?TEXT("Under construction"):B->MaintenanceSupplied?TEXT("Supplied at last maintenance interval"):TEXT("Maintenance shortage"));}
     Add(TEXT("Maintenance"),TEXT("Shortage efficiency"),N(Number(TEXT("upkeep_shortage_efficiency"))*100)+TEXT("% until a supplied upkeep interval"));
     if(CoreBuilding)
     {

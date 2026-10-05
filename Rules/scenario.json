@@ -1,5 +1,5 @@
 {
-  "version": "prototype-4.0",
+  "version": "prototype-5.0",
   "scenario": {
     "title": "seige2222 - First Landing",
     "core_definition": "command_core",
@@ -8,7 +8,7 @@
     "starting_population": 6,
     "starting_shuttle_cargo": {},
     "starting_inventory": {
-      "alloy": 260,
+      "alloy": 420,
       "circuits": 110,
       "components": 50
     },
@@ -192,6 +192,11 @@
           -14800
         ]
       }
-    ]
+    ],
+    "starting_deployment_materials": {
+      "alloy": 12,
+      "circuits": 6,
+      "components": 2
+    }
   }
 }

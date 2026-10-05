@@ -1,5 +1,5 @@
 {
-  "version": "prototype-4.0",
+  "version": "prototype-5.0",
   "buildings": [
     {
       "id": "command_core",
@@ -8,7 +8,11 @@
       "role": "core",
       "description": "Central command, robot assembly, maintenance and emergency escape shuttle.",
       "visual": "core",
-      "cost": {},
+      "cost": {
+        "alloy": 12,
+        "circuits": 6,
+        "components": 2
+      },
       "jobs": 6,
       "health": 1800,
       "footprint": 240,
@@ -27,7 +31,11 @@
       "damage_per_shot": 30,
       "reload_seconds": 1,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 6,
+      "construction_workers": 6,
+      "robot_support_capacity": 8,
+      "staffing_priority": 0
     },
     {
       "id": "extract_iron_ore",
@@ -58,7 +66,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 12,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "extract_copper_ore",
@@ -89,7 +101,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 12,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "extract_silica",
@@ -120,7 +136,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 12,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "extract_carbon",
@@ -151,7 +171,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 12,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "alloy_refinery",
@@ -182,7 +206,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 18,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "conductor_works",
@@ -213,7 +241,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 18,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "substrate_works",
@@ -244,7 +276,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 18,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "circuit_works",
@@ -275,7 +311,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 18,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "component_works",
@@ -306,7 +346,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 18,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
     },
     {
       "id": "sensor",
@@ -337,7 +381,11 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 8,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 3
     },
     {
       "id": "turret",
@@ -369,7 +417,11 @@
       "damage_per_shot": 25,
       "reload_seconds": 1,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 12,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 2
     },
     {
       "id": "depot",
@@ -400,7 +452,47 @@
       "damage_per_shot": 0,
       "reload_seconds": 0,
       "power_usage_kw": 0,
-      "power_generation_kw": 0
+      "power_generation_kw": 0,
+      "construction_seconds": 12,
+      "construction_workers": 2,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4
+    },
+    {
+      "id": "robot_service_bay",
+      "name": "Robot charging and service bay",
+      "category": "logistics",
+      "role": "service",
+      "description": "Automated charging berths and maintenance for 16 robots. Requires local courier-delivered components; expands population capacity without a separate power grid.",
+      "visual": "robotService",
+      "cost": {
+        "alloy": 12,
+        "circuits": 4,
+        "components": 2
+      },
+      "jobs": 1,
+      "health": 250,
+      "footprint": 140,
+      "storage_capacity": 100,
+      "recipe": "",
+      "extract_resource": "",
+      "extract_rate": 0,
+      "sensor_range": 0,
+      "attack_range": 0,
+      "color": [
+        0.65,
+        0.84,
+        0.9
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0,
+      "construction_seconds": 15,
+      "construction_workers": 2,
+      "robot_support_capacity": 16,
+      "staffing_priority": 1
     }
   ],
   "build_menu": [
@@ -415,6 +507,7 @@
     "component_works",
     "sensor",
     "turret",
-    "depot"
+    "depot",
+    "robot_service_bay"
   ]
 }

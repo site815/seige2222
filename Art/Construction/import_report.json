@@ -1,0 +1,49 @@
+{
+  "source": "Original project Blender geometry",
+  "materials": [
+    "/Game/Art/Construction/M_ConstructionHologram.M_ConstructionHologram",
+    "/Game/Art/Construction/M_ConstructionReveal.M_ConstructionReveal"
+  ],
+  "meshes": {
+    "SM_Shuttle": {
+      "path": "/Game/Art/SM_Shuttle.SM_Shuttle",
+      "dimensions_cm": [
+        614.0000610351562,
+        759.0,
+        448.0
+      ],
+      "ground_z": 0.0,
+      "lods": 3,
+      "materials": [
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Carbon",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Light"
+      ],
+      "uv_channels": 1
+    },
+    "SM_RobotService": {
+      "path": "/Game/Art/SM_RobotService.SM_RobotService",
+      "dimensions_cm": [
+        1600.0001220703125,
+        1250.0001220703125,
+        604.0
+      ],
+      "ground_z": 0.0,
+      "lods": 3,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Copper"
+      ],
+      "uv_channels": 1
+    }
+  }
+}

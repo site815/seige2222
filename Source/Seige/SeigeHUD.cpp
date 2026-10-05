@@ -211,9 +211,9 @@ void ASeigeHUD::Description(const FSeigeBuildingDef& D,ASeigeGameMode& G,float X
 {
     Frame(X,Y,W,360);Icon(D.Visual,X+18,Y+20,40,D.Color);Label(D.Name,X+72,Y+25,20,Gold);float TY=Y+80;
     Wrapped(D.Description,X+18,TY,W-36,15,Text);TY+=10;Label(TEXT("CONSTRUCTION MATERIALS"),X+18,TY,12,Muted);TY+=24;
-    TArray<FString> Keys;D.Cost.GetKeys(Keys);Keys.Sort();const auto* Core=G.Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==G.Sim.CoreDefinition;});
-    for(const FString& Id:Keys){const double Held=Core?Core->Inventory.FindRef(Id):0;Label(FString::Printf(TEXT("%.0f  %s"),D.Cost[Id],*ResourceName(G.Sim,Id)),X+18,TY,15,Held>=D.Cost[Id]?Text:Red);TY+=24;}
-    TY+=7;Label(FString::Printf(TEXT("%d jobs  /  Automatic staffing and repairs"),D.Jobs),X+18,TY,13,Muted);TY+=27;
+    TArray<FString> Keys;D.Cost.GetKeys(Keys);Keys.Sort();
+    for(const FString& Id:Keys){const double Held=G.Sim.ConstructionAvailable(Id);Label(FString::Printf(TEXT("%.0f  %s"),D.Cost[Id],*ResourceName(G.Sim,Id)),X+18,TY,15,Held>=D.Cost[Id]?Text:Red);TY+=24;}
+    TY+=7;Label(FString::Printf(TEXT("%.0fs assembly / %d builders / %d jobs"),D.ConstructionSeconds,D.ConstructionWorkers,D.Jobs),X+18,TY,13,Muted);TY+=27;
     if(const auto* R=G.Sim.Recipes.Find(D.Recipe))
     {
         FString Recipe;TArray<FString> Inputs;R->Inputs.GetKeys(Inputs);Inputs.Sort();
@@ -414,48 +414,82 @@ void ASeigeHUD::DrawHUD()
     auto Ground=[&](FVector2D P,float Lift){return G->RenderPosition(P,Lift);};
     auto Circle=[&](FVector2D Center,double Radius,FLinearColor C){for(int32 I=0;I<64;++I){const double A=I*UE_TWO_PI/64,B=(I+1)*UE_TWO_PI/64;WorldLine(Ground(Center+FVector2D(FMath::Cos(A),FMath::Sin(A))*Radius,12),Ground(Center+FVector2D(FMath::Cos(B),FMath::Sin(B))*Radius,12),C,1.4f);}};
     const bool NeighborhoodOverview=RegionMap;
+    if(!RegionMap)
+    {
+        // Continuous survey boundaries are anchored to the terrain, independent
+        // of the active tile's detail level or hidden settlement information.
+        const double Half=G->Sim.WorldHalfSize,Extent=Half*3;
+        const double Reach=G->Zoom*2.5+1200;
+        for(int32 Axis=0;Axis<2;++Axis)for(double Coordinate:{-Extent,-Half,Half,Extent})
+        {
+            const double Cross=Axis==0?G->CameraCenter.X:G->CameraCenter.Y;
+            if(FMath::Abs(Cross-Coordinate)>Reach)continue;
+            const double Along=Axis==0?G->CameraCenter.Y:G->CameraCenter.X;
+            const double Low=FMath::Max(-Extent,Along-Reach),High=FMath::Min(Extent,Along+Reach);
+            const int32 Segments=FMath::Clamp(FMath::CeilToInt((High-Low)/500),1,192);
+            for(int32 I=0;I<Segments;++I)
+            {
+                const double A=FMath::Lerp(Low,High,double(I)/Segments),B=FMath::Lerp(Low,High,double(I+1)/Segments);
+                const bool Home=FMath::Abs(Coordinate)==Half&&FMath::Abs((A+B)*.5)<=Half;
+                const FVector2D P=Axis==0?FVector2D(Coordinate,A):FVector2D(A,Coordinate);
+                const FVector2D Q=Axis==0?FVector2D(Coordinate,B):FVector2D(B,Coordinate);
+                WorldLine(Ground(P,14),Ground(Q,14),FLinearColor(.015f,.025f,.025f,.85f),4);
+                WorldLine(Ground(P,14),Ground(Q,14),Home?Gold:FLinearColor(.58f,.72f,.7f,.8f),1.8f);
+            }
+        }
+    }
+    const FTransform LabelView=G->CameraTransform();
+    const bool LabelCameraMoved=!LabelCameraPosition.Equals(LabelView.GetLocation(),.1)||!LabelCameraRotation.Equals(LabelView.Rotator(),.01)||!LabelViewport.Equals(FVector2D(W,H),.1);
+    LabelStillSeconds=LabelCameraMoved?0:FMath::Min(1.f,LabelStillSeconds+Dt);
+    LabelCameraPosition=LabelView.GetLocation();LabelCameraRotation=LabelView.Rotator();LabelViewport=FVector2D(W,H);
     auto DrawDeposits=[&](bool Survey,const TArray<FBox2D>& Reserved)
     {
-        // Keep dense survey clusters legible without changing their world positions.
-        struct FMarker { FVector2D Position; FString Resource; int32 Count=1; };
+        // Retain per-deposit anchors during camera movement; resolve overlap only
+        // after it settles. Never hide a badge because greedy placement failed.
+        struct FMarker {FVector2D Position;FString Resource,Key;};
         TArray<FMarker> Markers;TArray<FBox2D> Occupied=Reserved;
-        const bool Overview=G->Zoom>G->Sim.WorldHalfSize*2.5;
         if(RegionMap||!Readable)return;
         for(const auto& N:Local.Nodes)
         {
-            FVector2D P;if((!Survey&&!G->Observer&&!Local.IsVisible(N.Position))||!PC||!PC->ProjectWorldLocationToScreen(Ground(N.Position+SectorOffset,150),P))continue;
-            P/=Scale;if(P.X<16||P.X>W-16||P.Y<TopHeight+24||P.Y>H-28)continue;
-            FMarker* Cluster=Overview?Markers.FindByPredicate([&](const FMarker& M){return M.Resource==N.Resource&&FVector2D::Distance(M.Position,P)<42;}):nullptr;
-            if(Cluster){Cluster->Position=(Cluster->Position*Cluster->Count+P)/(Cluster->Count+1);++Cluster->Count;}
-            else Markers.Add({P,N.Resource,1});
+            FVector2D P;
+            if((!Survey&&!G->Observer&&!Local.IsVisible(N.Position))||!PC||!PC->ProjectWorldLocationToScreen(Ground(N.Position+SectorOffset,150),P))continue;
+            P/=Scale;if(P.X<8||P.X>W-8||P.Y<TopHeight+12||P.Y>H-18)continue;
+            P=FVector2D(FMath::RoundToDouble(P.X),FMath::RoundToDouble(P.Y));
+            Markers.Add({P,N.Resource,FString::Printf(TEXT("%d:%d"),G->DetailedSectorIndex(),N.Id)});
         }
         for(const auto& M:Markers)Occupied.Add(FBox2D(M.Position-FVector2D(10,10),M.Position+FVector2D(10,10)));
         for(const auto& M:Markers)if(const auto* R=Local.Resources.Find(M.Resource))
         {
             const float SX=M.Position.X,SY=M.Position.Y;
             Box(SX-7,SY-7,14,14,R->Color);Box(SX-4,SY-4,8,8,Panel);
-            FString Name=Overview?R->Name.Left(3).ToUpper():R->Name;if(M.Count>1)Name+=FString::Printf(TEXT(" x%d"),M.Count);
-            float TW=0,TH=0,BW=0,BH=0;Canvas->StrLen(GEngine->GetLargeFont(),Name,TW,TH);Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),BW,BH);
-            const float LW=FMath::Max(Overview?54.f:94.f,TW*15/FMath::Max(BH,1.f)+16),LH=29;
-            bool Placed=false;FVector2D At=FVector2D::ZeroVector;
-            for(int32 Ring=0;Ring<5&&!Placed;++Ring)
+            float TW=0,TH=0,BW=0,BH=0;Canvas->StrLen(GEngine->GetLargeFont(),R->Name,TW,TH);Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),BW,BH);
+            const float LW=FMath::Max(94.f,TW*15/FMath::Max(BH,1.f)+16),LH=29;
+            auto& State=DepositLabels.FindOrAdd(M.Key);
+            FVector2D At=M.Position+State.Offset;
+            auto Fits=[&](FVector2D P)
             {
-                const float Gap=14+Ring*33;
-                const FVector2D Candidates[]={FVector2D(SX+14,SY-14+Ring*33),FVector2D(SX-LW-14,SY-14-Ring*33),FVector2D(SX-LW/2,SY-LH-Gap),FVector2D(SX-LW/2,SY+Gap)};
-                for(const auto& Candidate:Candidates)
+                const FBox2D Bounds(P,P+FVector2D(LW,LH));
+                if(Bounds.Min.X<12||Bounds.Max.X>W-12||Bounds.Min.Y<TopHeight+12||Bounds.Max.Y>H-92)return false;
+                return !Occupied.ContainsByPredicate([&](const FBox2D& B){return Bounds.Min.X<B.Max.X+4&&Bounds.Max.X>B.Min.X-4&&Bounds.Min.Y<B.Max.Y+4&&Bounds.Max.Y>B.Min.Y-4;});
+            };
+            if(!State.Initialized||(LabelStillSeconds>.25f&&!Fits(At)))
+            {
+                bool Found=false;
+                for(int32 Ring=0;Ring<5&&!Found;++Ring)
                 {
-                    const FBox2D Bounds(Candidate,Candidate+FVector2D(LW,LH));
-                    if(Bounds.Min.X<12||Bounds.Max.X>W-12||Bounds.Min.Y<TopHeight+12||Bounds.Max.Y>H-12)continue;
-                    if(Occupied.ContainsByPredicate([&](const FBox2D& B){return Bounds.Min.X<B.Max.X+4&&Bounds.Max.X>B.Min.X-4&&Bounds.Min.Y<B.Max.Y+4&&Bounds.Max.Y>B.Min.Y-4;}))continue;
-                    At=Candidate;Occupied.Add(Bounds);Placed=true;break;
+                    const float Gap=14+Ring*33;
+                    const FVector2D Candidates[]={FVector2D(SX+14,SY-14+Ring*33),FVector2D(SX-LW-14,SY-14-Ring*33),FVector2D(SX-LW/2,SY-LH-Gap),FVector2D(SX-LW/2,SY+Gap)};
+                    for(const auto& Candidate:Candidates)if(Fits(Candidate)){At=Candidate;Found=true;break;}
                 }
+                State.Offset=At-M.Position;State.Initialized=true;
             }
-            if(Placed)
-            {
-                const FVector2D End(FMath::Clamp(double(SX),At.X,At.X+LW),FMath::Clamp(double(SY),At.Y,At.Y+LH));
-                DrawLine(SX*Scale,SY*Scale,End.X*Scale,End.Y*Scale,R->Color,Scale);
-                Box(At.X,At.Y,LW,LH,Panel);Label(Name,At.X+8,At.Y+6,15,R->Color);
-            }
+            At.X=FMath::Clamp(At.X,12.,FMath::Max(12.,double(W-LW-12)));
+            At.Y=FMath::Clamp(At.Y,double(TopHeight+12),FMath::Max(double(TopHeight+12),double(H-LH-92)));
+            At=FVector2D(FMath::RoundToDouble(At.X),FMath::RoundToDouble(At.Y));
+            Occupied.Add(FBox2D(At,At+FVector2D(LW,LH)));
+            const FVector2D End(FMath::Clamp(double(SX),At.X,At.X+LW),FMath::Clamp(double(SY),At.Y,At.Y+LH));
+            DrawLine(SX*Scale,SY*Scale,End.X*Scale,End.Y*Scale,R->Color,Scale);
+            Box(At.X,At.Y,LW,LH,Panel);Label(R->Name,At.X+8,At.Y+6,15,R->Color);
         }
     };
     if(G->Screen==TEXT("landing"))
@@ -567,8 +601,8 @@ void ASeigeHUD::DrawHUD()
             Label(TEXT("COLONY MATERIALS"),X+18,TY,18,Gold);TY+=39;Label(TEXT("Includes physical cargo in transit"),X+18,TY,12,Muted);TY+=28;TArray<FString> Keys;Local.Resources.GetKeys(Keys);Keys.Sort();
             for(const FString& Id:Keys){const auto& R=Local.Resources[Id];Box(X+19,TY+4,7,9,R.Color);Label(R.Name,X+37,TY,15,Text);Label(FString::Printf(TEXT("%.1f"),Local.TotalStock(Id)),X+340,TY,15,Text);TY+=26;}
         }
-        else if(Ui.HoverPanel==TEXT("workforce")){Label(TEXT("ROBOT WORKFORCE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.WorkforceStatus(),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Robots fill jobs automatically. The core assembles workers for vacancies and retires surplus when buildings are disabled."),X+18,TY,PW-36,14,Muted);}
-        else if(Ui.HoverPanel==TEXT("logistics")){Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Factories consume locally delivered stock. Protect exposed routes and use depots for overflow. Construction draws from the core."),X+18,TY,PW-36,14,Muted);}
+        else if(Ui.HoverPanel==TEXT("workforce")){Label(TEXT("ROBOT WORKFORCE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.WorkforceStatus(),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Robots fill jobs automatically. The core supports your first workers; charging and maintenance hubs [B L C] support expansion. Keep components supplied for efficient operation."),X+18,TY,PW-36,14,Muted);}
+        else if(Ui.HoverPanel==TEXT("logistics")){Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Factories consume locally delivered stock. Construction reserves core materials, then couriers carry them to the site. Robots assemble buildings once supplies arrive."),X+18,TY,PW-36,14,Muted);}
         else if(Ui.HoverPanel==TEXT("threats")){Label(TEXT("SECTOR PRESSURE"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("Pulse %d / Next pulse in %.0f seconds"),Local.Wave,FMath::Max(0.,Local.NextWaveTime-Local.Time)),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Roaming bugs can arrive at any time. Sensors reveal live contacts; defenses require staffing. Repairs consume local materials."),X+18,TY,PW-36,14,Muted);}
         else{Label(TEXT("FIRST LANDING OBJECTIVES"),X+18,TY,18,Gold);TY+=43;TArray<FString> Goals;Local.ObjectiveText().ParseIntoArray(Goals,TEXT(" | "),true);for(const FString& Goal:Goals){Wrapped(Goal,X+18,TY,PW-36,16,Text);TY+=7;}}
     }

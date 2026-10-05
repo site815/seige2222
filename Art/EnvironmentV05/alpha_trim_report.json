@@ -1,0 +1,124 @@
+{
+  "candidate_only": true,
+  "source_unchanged": true,
+  "tuft_count_unchanged": true,
+  "templates": [
+    {
+      "object": "grass_medium_02_b",
+      "triangles_before": 1760,
+      "triangles_after": 1760,
+      "fully_transparent_triangles_removed": 0,
+      "triangles_clipped": 0,
+      "bound_extrema_triangles_preserved": 22,
+      "surface_area_before": 0.009359830912417537,
+      "surface_area_after": 0.009359830912417537,
+      "surface_area_reduction_percent": 0.0,
+      "bounds_unchanged": true,
+      "texture_margin_texels": 8,
+      "alpha_nonzero_threshold": 0.00392156862745098,
+      "source_asset": "grass_medium_02"
+    },
+    {
+      "object": "grass_medium_02_c",
+      "triangles_before": 1215,
+      "triangles_after": 1215,
+      "fully_transparent_triangles_removed": 0,
+      "triangles_clipped": 0,
+      "bound_extrema_triangles_preserved": 18,
+      "surface_area_before": 0.009201894713231825,
+      "surface_area_after": 0.009201894713231825,
+      "surface_area_reduction_percent": 0.0,
+      "bounds_unchanged": true,
+      "texture_margin_texels": 8,
+      "alpha_nonzero_threshold": 0.00392156862745098,
+      "source_asset": "grass_medium_02"
+    },
+    {
+      "object": "grass_medium_02_d",
+      "triangles_before": 2489,
+      "triangles_after": 2489,
+      "fully_transparent_triangles_removed": 0,
+      "triangles_clipped": 0,
+      "bound_extrema_triangles_preserved": 18,
+      "surface_area_before": 0.02052854539624231,
+      "surface_area_after": 0.02052854539624231,
+      "surface_area_reduction_percent": 0.0,
+      "bounds_unchanged": true,
+      "texture_margin_texels": 8,
+      "alpha_nonzero_threshold": 0.00392156862745098,
+      "source_asset": "grass_medium_02"
+    },
+    {
+      "object": "grass_medium_02_e",
+      "triangles_before": 1664,
+      "triangles_after": 1664,
+      "fully_transparent_triangles_removed": 0,
+      "triangles_clipped": 0,
+      "bound_extrema_triangles_preserved": 17,
+      "surface_area_before": 0.03785553847258958,
+      "surface_area_after": 0.03785553847258958,
+      "surface_area_reduction_percent": 0.0,
+      "bounds_unchanged": true,
+      "texture_margin_texels": 8,
+      "alpha_nonzero_threshold": 0.00392156862745098,
+      "source_asset": "grass_medium_02"
+    },
+    {
+      "object": "SM_MeadowGrassA",
+      "triangles_before": 12265,
+      "triangles_after": 12853,
+      "fully_transparent_triangles_removed": 0,
+      "triangles_clipped": 526,
+      "bound_extrema_triangles_preserved": 62,
+      "surface_area_before": 12331.682882409883,
+      "surface_area_after": 11632.76729322085,
+      "surface_area_reduction_percent": 5.667641601342,
+      "bounds_unchanged": true,
+      "texture_margin_texels": 8,
+      "alpha_nonzero_threshold": 0.00392156862745098,
+      "source_asset": "grass_bermuda_01"
+    }
+  ],
+  "meshes": {
+    "SM_MeadowSwardA": {
+      "triangles_before": 77572,
+      "triangles_after": 79924,
+      "triangle_reduction_percent": -3.03202186355902,
+      "dimensions_cm": [
+        140.39905667304993,
+        143.3177411556244,
+        55.69947510957718
+      ],
+      "baseline_dimensions_cm": [
+        140.39905667304993,
+        143.3177411556244,
+        55.69947510957718
+      ],
+      "bounds_match_cm_tolerance": 0.002,
+      "tall_tufts": 16,
+      "low_tufts": 920,
+      "fbx_bytes": 3306492
+    },
+    "SM_MeadowSwardB": {
+      "triangles_before": 77572,
+      "triangles_after": 79924,
+      "triangle_reduction_percent": -3.03202186355902,
+      "dimensions_cm": [
+        136.50939464569092,
+        131.28322958946228,
+        52.48019574210048
+      ],
+      "baseline_dimensions_cm": [
+        136.50939464569092,
+        131.28322958946228,
+        52.48019574210048
+      ],
+      "bounds_match_cm_tolerance": 0.002,
+      "tall_tufts": 16,
+      "low_tufts": 920,
+      "fbx_bytes": 3304700
+    }
+  },
+  "method": "Conservative convex clipping around all nonzero alpha, eight-texel filter margin; source normals/UV interpolated, horizontal hull and ground extrema preserved.",
+  "validation_limit": "No runtime substitution. Source coverage retained; alpha coverage at distant cooked mips and GPU performance require a fixed-view rendered comparison."
+}

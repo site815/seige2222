@@ -23,6 +23,7 @@ private:
     bool Ready = false;
     FString ConfigFingerprint, Status, SensorDefinition;
     double DecisionInterval = 1, RingStart = 0, RingStep = 1, RingLimit = 1, NodeClearance = 0, SensorOverlap = 0, DefenseDistance = 0;
+    double DevelopedSetupSeconds = 0;
     int32 Angles = 0, MaxActions = 0, MaxSensors = 0, DevelopedSetupLimit = 0;
     TArray<FSeigeAIBuildTarget> Targets;
     bool LoadConfig(const FSeigeSimulation& Colony, const FString& Directory, FString& Error);

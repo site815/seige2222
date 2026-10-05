@@ -51,6 +51,10 @@ bool FSeigeAIValidationTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Unknown building reference is rejected"), AI.Initialize(Colony, AIRules(), Invalid, false, Error));
     if (!WriteAIConfig(Invalid, TEXT("developed_start.json"), [](auto Object) { Object->GetObjectField(TEXT("inventory"))->SetNumberField(TEXT("alloy"), 999999); })) return false;
     TestFalse(TEXT("Over-capacity developed seed is rejected"), AI.Initialize(Colony, AIRules(), Invalid, true, Error));
+    if(!WriteAIConfig(Invalid,TEXT("colony_ai.json"),[](auto Object){Object->SetNumberField(TEXT("developed_setup_seconds"),1.003);}))return false;
+    TestFalse(TEXT("Insufficient developed preparation budget returns instead of spinning"),AI.Initialize(Colony,AIRules(),Invalid,true,Error));
+    TestTrue(TEXT("Preparation failure identifies the unfinished target"),Error.Contains(TEXT("cannot finish")));
+    TestEqual(TEXT("Failed preparation preserves the active colony"),Colony.Time,OriginalTime);
     return true;
 }
 
@@ -62,16 +66,28 @@ bool FSeigeAIStartsTest::RunTest(const FString& Parameters)
     { AddError(Error); return false; }
     TestEqual(TEXT("Starting AI begins with only its command core"), Starting.Buildings.Num(), 1);
     TestTrue(TEXT("Developed preset starts with an established colony"), Developed.Buildings.Num() > Starting.Buildings.Num() + 8);
-    TestEqual(TEXT("Developed setup does not secretly advance the clock"), Developed.Time, 0.0);
-    TestTrue(TEXT("Developed starting stock does not count as manufactured output"), Developed.ProducedUnits.IsEmpty());
+    TestTrue(TEXT("Established scenario contains genuinely elapsed construction time"), Developed.Time>0);
+    for(const auto& B:Developed.Buildings)if(B.Health>0)TestFalse(TEXT("Developed buildings actually completed construction"),B.IsConstructing);
+    TestTrue(TEXT("Developed preparation physically delivered materials"),Developed.DeliveredUnits>0);
     const double Alloy = Starting.Buildings[0].Inventory.FindRef(TEXT("alloy"));
-    StartAI.Tick(Starting, 1);
-    TestTrue(TEXT("Normal AI action constructs a building"), Starting.Buildings.Num() > 1);
+    StartAI.Tick(Starting, Starting.BuildingDefs[Starting.CoreDefinition].ConstructionSeconds+2);
+    TestTrue(TEXT("Normal AI action queues a construction site"), Starting.Buildings.Num() > 1);
+    TestTrue(TEXT("AI cannot instantly finish a new site"),Starting.Buildings.Last().IsConstructing);
     TestTrue(TEXT("AI construction consumes real core inventory"), Starting.Buildings[0].Inventory.FindRef(TEXT("alloy")) < Alloy);
-    StartAI.Tick(Starting, 299);
+    FString PlanText;TSharedPtr<FJsonObject> Plan;
+    if(!FFileHelper::LoadFileToString(PlanText,*FPaths::Combine(AIDirectory(),TEXT("colony_ai.json")))||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(PlanText),Plan))return false;
+    const double PreparationBudget=Plan->GetNumberField(TEXT("developed_setup_seconds"));
+    StartAI.Tick(Starting,FMath::Max(0.,PreparationBudget-Starting.Time));
     DevelopedAI.Tick(Developed, 60);
     AddInfo(TEXT("Starting AI: ") + Starting.ObjectiveText() + TEXT(" | ") + StartAI.GetStatus());
     TestTrue(TEXT("Starting AI develops the industrial chain through normal actions"), Starting.ProducedUnits.FindRef(TEXT("components")) > 0);
+    TestFalse(TEXT("Starting AI survives its configured preparation budget"),Starting.Failed);
+    for(const auto& Value:Plan->GetArrayField(TEXT("build_targets")))
+    {
+        const auto Target=Value->AsObject();const FString Definition=Target->GetStringField(TEXT("definition"));int32 Completed=0;
+        for(const auto& B:Starting.Buildings)if(B.Health>0&&!B.IsConstructing&&B.Enabled&&B.DefId==Definition&&B.Workers>=Starting.Definition(B)->Jobs)++Completed;
+        TestTrue(*FString(TEXT("Starting colony completes and staffs its configured target: ")+Definition),Completed>=Target->GetIntegerField(TEXT("count")));
+    }
     TestTrue(TEXT("Starting AI uses physical deliveries"), Starting.DeliveredUnits > 0);
     TestTrue(TEXT("Developed AI actually produces goods after setup"), Developed.ProducedUnits.FindRef(TEXT("components")) > 0);
     TestTrue(TEXT("Developed AI uses physical deliveries"), Developed.DeliveredUnits > 0);

@@ -77,6 +77,30 @@
     "suppressed_on": "forest and rock",
     "height_displacement": false
   },
+  "forest_far_detail": {
+    "analysis": "Art/EnvironmentV04/forest_far_detail_analysis.json",
+    "fade_distance_meters": [
+      200,
+      600
+    ],
+    "linear_means": {
+      "color": [
+        0.2986148506332322,
+        0.18126343655181562,
+        0.05940324911472282
+      ],
+      "roughness": 0.9334975934598578,
+      "ao": 0.6019214443134477
+    },
+    "normal": [
+      0,
+      0,
+      1
+    ],
+    "near_detail_preserved": true,
+    "forest_tint_and_macro_variation_preserved": true,
+    "purpose": "Suppress unresolved forest-floor tiling; interpolation is a visual fix, not a texture-sample count reduction"
+  },
   "coordinates": "world XY centimetres, two contrast-preserving detail frequencies, broad continuous noise",
   "height_map_runtime_displacement": false
 }

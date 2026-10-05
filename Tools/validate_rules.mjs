@@ -15,6 +15,7 @@ const selectors = {
   logistics_policy:['local_delivery'], enemy_target_policy:['nearest_building'], extraction_limit_policy:['one_extractor_per_node'],
   repair_policy:['local_materials'], objective_policy:['survive_and_manufacture'], shuttle_policy:['preloaded_cargo_only'],
   storage_policy:['overflow_only'], rule_time_basis:['simulation_seconds'],
+  construction_policy:['reserved_core_physical_delivery'], robot_support_policy:['local_capacity_and_maintenance'],
 };
 export function readRules(directory) {
   return Object.fromEntries(names.map(n => [n, JSON.parse(fs.readFileSync(path.join(directory, `${n}.json`), 'utf8').replace(/^\uFEFF/, ''))]));
@@ -37,12 +38,14 @@ export function validateRules(d) {
   const recipes = catalog(d.recipes.recipes,'recipes');
   for (const r of recipes.values()) { num(r.seconds,`${r.id}.seconds`,0,false,true); amounts(r.inputs,`${r.id}.inputs`); amounts(r.outputs,`${r.id}.outputs`); if(sum(r.inputs)<=0) fail(`${r.id} needs positive inputs`); }
   const buildings = catalog(d.buildings.buildings,'buildings');
-  const roles = ['core','extractor','processor','storage','sensor','defense'];
+  const roles = ['core','extractor','processor','storage','sensor','defense','service'];
   for (const b of buildings.values()) {
     for(const k of ['name','category','role','description','visual']) str(b[k],`${b.id}.${k}`);
     for(const k of ['recipe','extract_resource']) str(b[k],`${b.id}.${k}`,true);
     if(!roles.includes(b.role)) fail(`Unsupported building role ${b.role}`);
-    for(const k of ['health','footprint','storage_capacity']) num(b[k],`${b.id}.${k}`,0,false,true);
+    for(const k of ['health','footprint','storage_capacity','construction_seconds']) num(b[k],`${b.id}.${k}`,0,false,true);
+    num(b.construction_workers,`${b.id}.construction_workers`,1,true);num(b.robot_support_capacity,`${b.id}.robot_support_capacity`,0,true);
+    num(b.staffing_priority,`${b.id}.staffing_priority`,0,true);
     for(const k of ['sensor_range','attack_range','damage_per_shot','reload_seconds','extract_rate','power_usage_kw','power_generation_kw']) num(b[k],`${b.id}.${k}`);
     str(b.weapon_name,`${b.id}.weapon_name`,true);
     const armed=b.damage_per_shot>0;
@@ -50,6 +53,7 @@ export function validateRules(d) {
     if(armed && !Number.isFinite(b.damage_per_shot/b.reload_seconds)) fail(`${b.id} derived weapon DPS is not finite`);
     if(b.power_usage_kw!==0 || b.power_generation_kw!==0) fail(`${b.id}: power grid is not implemented; power values must remain zero`);
     num(b.jobs,`${b.id}.jobs`,0,true); color(b.color,`${b.id}.color`); amounts(b.cost,`${b.id}.cost`);
+    if(sum(b.cost)>b.storage_capacity || (!['core','service'].includes(b.role)&&b.robot_support_capacity>0)) fail(`${b.id} invalid construction storage or support role`);
     if(b.recipe && !recipes.has(b.recipe)) fail(`${b.id} references unknown recipe`);
     if(b.extract_resource && !resources.has(b.extract_resource)) fail(`${b.id} references unknown extraction resource`);
     if((b.role==='extractor') !== !!(b.extract_resource && b.extract_rate>0) || (b.role==='processor') !== !!b.recipe) fail(`${b.id} role and capability disagree`);
@@ -72,7 +76,11 @@ export function validateRules(d) {
   str(s.title,'scenario.title'); num(s.world_half_size,'world_half_size',0,false,true); num(s.random_seed,'random_seed',0,true); num(s.starting_population,'starting_population',0,true);
   if(!buildings.has(s.core_definition) || buildings.get(s.core_definition).role!=='core') fail('Scenario core is invalid');
   const core=buildings.get(s.core_definition);
+  if(!menu.some(id=>{const b=buildings.get(id);return b.robot_support_capacity>b.jobs&&core.robot_support_capacity>=core.jobs+Math.max(b.construction_workers,b.jobs);}))fail('Starter support must leave builders and staff for a support expansion');
   position(s.core_position,'core_position'); amounts(s.starting_inventory,'starting_inventory'); amounts(s.starting_shuttle_cargo,'starting_shuttle_cargo');
+  amounts(s.starting_deployment_materials,'starting_deployment_materials');
+  if(Object.entries(core.cost).some(([id,n])=>(s.starting_deployment_materials[id]??0)!==n) || sum(core.cost)!==sum(s.starting_deployment_materials) || s.starting_population<core.construction_workers || core.robot_support_capacity<s.starting_population) fail('Landing shuttle needs the exact deployment kit and enough supported builders');
+  if(sum(s.starting_inventory)+sum(s.starting_deployment_materials)>core.storage_capacity)fail('Shuttle carried stock and deployment kit exceed core capacity');
   if(p.spawn_radius>s.world_half_size || s.core_position.some(x=>Math.abs(x)+core.footprint>s.world_half_size) || s.starting_population<p.minimum_population || sum(s.starting_inventory)>core.storage_capacity || sum(s.starting_shuttle_cargo)>p.shuttle_capacity) fail('Scenario spawn, capacity or population bounds invalid');
   for(const [i,n] of array(s.deposits,'deposits').entries()) { object(n,`deposits[${i}]`); if(!resources.has(n.resource)) fail('Unknown deposit resource'); position(n.position,'deposit.position'); if(n.position.some(x=>Math.abs(x)>s.world_half_size)) fail('Deposit outside sector'); }
   // Reachability ignores initial stock: recurring robot inputs, upkeep and repairs must be renewable.
@@ -86,12 +94,15 @@ export function validateRules(d) {
   for(const id of menu) for(const [r,n] of Object.entries(buildings.get(id).cost)) bootstrap[r]=(bootstrap[r]??0)+n;
   const newJobs=[...buildings.values()].filter(b=>menu.includes(b.id)).reduce((n,b)=>n+b.jobs,0);
   for(const [r,n] of Object.entries(recipes.get(p.population_recipe).inputs)) bootstrap[r]=(bootstrap[r]??0)+n*newJobs;
+  // Each operating structure retains its local repair buffer; these units cannot fund sites.
+  bootstrap[p.repair_resource]=(bootstrap[p.repair_resource]??0)+p.repair_buffer_units*(menu.length+1);
   for(const [r,n] of Object.entries(bootstrap)) if((s.starting_inventory[r]??0)<n) fail(`Starter stock cannot bootstrap the selected building set and workers: ${r} needs ${n}`);
   // Buffer allocations cannot create an unavoidable storage deadlock.
   for(const b of buildings.values()) {
     let reserve=p.repair_buffer_units;
     if(b.recipe) reserve+=sum(recipes.get(b.recipe).inputs)*p.delivery_buffer_cycles;
-    if(b.role==='core') reserve+=sum(p.core_reserves)+sum(recipes.get(p.population_recipe).inputs)*p.population_buffer_robots+s.starting_population*p.upkeep_per_robot*p.upkeep_buffer_intervals;
+    if(b.role==='core') reserve+=sum(p.core_reserves)+sum(recipes.get(p.population_recipe).inputs)*p.population_buffer_robots;
+    reserve+=b.robot_support_capacity*p.upkeep_per_robot*p.upkeep_buffer_intervals;
     if(reserve>b.storage_capacity) fail(`${b.id} storage is smaller than its demand buffers`);
   }
   return {version:d.resources.version,resources:resources.size,recipes:recipes.size,buildings:buildings.size,renewable:[...available].sort(),bootstrap};
@@ -120,6 +131,13 @@ function selfTest(source) {
     ['independent DPS override',d=>d.buildings.buildings[0].damage_per_second=999],
     ['unimplemented power demand',d=>d.buildings.buildings[0].power_usage_kw=1],
     ['nonfinite derived DPS',d=>{d.buildings.buildings[0].damage_per_shot=Number.MAX_VALUE;d.buildings.buildings[0].reload_seconds=.1;}],
+    ['instant construction',d=>d.buildings.buildings[1].construction_seconds=0],
+    ['fractional builders',d=>d.buildings.buildings[1].construction_workers=1.5],
+    ['negative support',d=>d.buildings.buildings[0].robot_support_capacity=-1],
+    ['missing landing kit',d=>d.scenario.scenario.starting_deployment_materials={}],
+    ['unsupported starter crew',d=>d.buildings.buildings[0].robot_support_capacity=1],
+    ['unsupported construction policy',d=>d.policies.policies.construction_policy='instant'],
+    ['missing staffing priority',d=>delete d.buildings.buildings[1].staffing_priority],
   ];
   for(const [name,mutate] of cases) { const d=structuredClone(source); mutate(d); let rejected=false; try {validateRules(d);} catch {rejected=true;} if(!rejected) throw new Error(`Negative test was accepted: ${name}`); }
   return cases.length;

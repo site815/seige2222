@@ -7,6 +7,7 @@ Two offset detail frequencies and broad noise reduce regular repeating tiles.
 from pathlib import Path
 import json,unreal as u
 ROOT=Path(__file__).resolve().parents[1];ART=ROOT/'Art/EnvironmentV04';DEST='/Game/Art/NatureV04'
+FOREST_FAR=json.loads((ART/'forest_far_detail_analysis.json').read_text())
 ED=u.EditorAssetLibrary;ME=u.MaterialEditingLibrary;AT=u.AssetToolsHelpers.get_asset_tools()
 path=DEST+'/M_TerrainV04'
 m=ED.load_asset(path) if ED.does_asset_exist(path) else AT.create_asset('M_TerrainV04',DEST,u.Material,u.MaterialFactoryNew())
@@ -32,6 +33,11 @@ def lerp(a,b,alpha,alpha_pin=''):
 def output(n,prop,pin=''):
     if not ME.connect_material_property(n,pin,prop):raise RuntimeError('Terrain output '+str(prop))
 world=node(u.MaterialExpressionWorldPosition)
+forest_distance=binary(u.MaterialExpressionDistance,world,node(u.MaterialExpressionCameraPositionWS))
+forest_far_blend=node(u.MaterialExpressionSmoothStep)
+wire(scalar('ForestDetailFadeStartCm',FOREST_FAR['fade_start_meters']*100),forest_far_blend,'Min')
+wire(scalar('ForestDetailFadeEndCm',FOREST_FAR['fade_end_meters']*100),forest_far_blend,'Max')
+wire(forest_distance,forest_far_blend,'Value')
 xy=node(u.MaterialExpressionComponentMask,r=True,g=True,b=False,a=False);wire(world,xy,'')
 macro_pos=mul(world,scalar('VariationWorldScale',1/2400))
 noise=node(u.MaterialExpressionNoise,scale=1,quality=1,levels=2,output_min=0,output_max=1);wire(macro_pos,noise,'')
@@ -63,6 +69,17 @@ def surface(name,role):
             sampler_type=u.MaterialSamplerType.SAMPLERTYPE_NORMAL if role=='normal' else u.MaterialSamplerType.SAMPLERTYPE_COLOR if role=='color' else u.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
         wire(coords,n,'UVs');samples.append(n)
     result=lerp(samples[0],samples[1],detail_blend)
+    if name=='Forest':
+        # A repeated 3 m leaf photograph becomes unresolved at regional distance.
+        # Fade every high-frequency forest channel together, keeping its measured
+        # linear energy, layer tint and the broad terrain variation below.
+        if role=='color':
+            far=node(u.MaterialExpressionVectorParameter,parameter_name='ForestFarColor',default_value=u.LinearColor(*FOREST_FAR['linear_means']['color'],1))
+        elif role=='normal':
+            far=node(u.MaterialExpressionConstant3Vector,constant=u.LinearColor(0,0,1,1))
+        else:
+            far=scalar('ForestFar'+role_names[role],FOREST_FAR['linear_means'][role])
+        result=lerp(result,far,forest_far_blend)
     if role=='color' and name!='Meso':
         tint={'Meadow':(.64,.72,.58),'EarthMeadow':(.60,.70,.54),'Forest':(.65,.78,.60),'Dirt':(.65,.62,.57),'Rock':(.64,.66,.64)}[name]
         result=mul(result,node(u.MaterialExpressionVectorParameter,parameter_name=name+'Albedo',default_value=u.LinearColor(*tint,1)))
@@ -107,6 +124,9 @@ report={'material':path,'vertex_channels':{'R':'soil/path','G':'rock','B':'fores
     'albedo_multipliers':{'Meadow':[.64,.72,.58],'EarthMeadow':[.60,.70,.54],'Forest':[.65,.78,.60],'Dirt':[.65,.62,.57],'Rock':[.64,.66,.64]},
     'soil_mask_strength':2.8,'photographic_meadow_blend':[.35,.75],'terrain_textures_never_stream':sorted(resident_textures),
     'medium_detail':{'source':'Poly Haven leafy_grass','size_cm':800,'base_color_use':'desaturated value modulation only, .86 to 1.14 multiplier','linear_luminance_center':.25,'filtered_contrast':4,'normal_strength':.4,'normal_combination':'reoriented normal mapping','roughness_blend':.25,'suppressed_on':'forest and rock','height_displacement':False},
+    'forest_far_detail':{'analysis':'Art/EnvironmentV04/forest_far_detail_analysis.json','fade_distance_meters':[FOREST_FAR['fade_start_meters'],FOREST_FAR['fade_end_meters']],
+        'linear_means':FOREST_FAR['linear_means'],'normal':[0,0,1],'near_detail_preserved':True,'forest_tint_and_macro_variation_preserved':True,
+        'purpose':'Suppress unresolved forest-floor tiling; interpolation is a visual fix, not a texture-sample count reduction'},
     'coordinates':'world XY centimetres, two contrast-preserving detail frequencies, broad continuous noise','height_map_runtime_displacement':False}
 (ART/'terrain_import_report.json').write_text(json.dumps(report,indent=2))
 u.log('SEIGE_TERRAIN_V04_IMPORT_COMPLETE '+json.dumps(report))

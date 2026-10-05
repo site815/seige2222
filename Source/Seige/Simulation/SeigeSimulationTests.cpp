@@ -1,4 +1,5 @@
 #include "SeigeSimulation.h"
+#include "AI/SeigeScenarioAI.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
@@ -12,6 +13,21 @@ namespace
 {
 FString TestRules() { return FPaths::Combine(FPaths::ProjectDir(), TEXT("Rules")); }
 FString TestSave(const FString& Name) { return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Automation"), Name + TEXT(".json")); }
+bool Deploy(FSeigeSimulation& S,FString& Error)
+{
+    if(!S.Initialize(TestRules(),Error))return false;
+    S.Tick(S.BuildingDefs[S.CoreDefinition].ConstructionSeconds+S.FixedStepSeconds());
+    return !S.Buildings[0].IsConstructing;
+}
+bool FinishSites(FSeigeSimulation& S,double Limit=180)
+{
+    for(double Elapsed=0;Elapsed<Limit&&!S.Escaped;Elapsed+=S.FixedStepSeconds())
+    {
+        bool Pending=false;for(const auto& B:S.Buildings)if(B.Health>0&&B.IsConstructing)Pending=true;
+        if(!Pending)return true;S.Tick(S.FixedStepSeconds());
+    }
+    return false;
+}
 constexpr EAutomationTestFlags TestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 }
 
@@ -19,7 +35,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRulesTest,"Seige.Simulation.RuleValidatio
 bool FSeigeRulesTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation S;
-    if (!TestTrue(TEXT("Current rules initialize"),S.Initialize(TestRules(),Error))) { AddError(Error); return false; }
+    if (!TestTrue(TEXT("Current rules initialize"),Deploy(S,Error))) { AddError(Error); return false; }
     TestFalse(TEXT("Cannot build a second core"),S.CanPlaceBuilding(S.CoreDefinition,FVector2D(700,0),Error));
     TestFalse(TEXT("Mismatched extractor cannot mine another material"),S.CanPlaceBuilding(TEXT("extract_iron_ore"),S.Nodes[1].Position,Error));
     TestTrue(TEXT("Matching extractor placement accepted"),S.PlaceBuilding(TEXT("extract_iron_ore"),S.Nodes[0].Position,Error));
@@ -40,7 +56,7 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
     FFileHelper::LoadFileToString(GoodRecipes,*FPaths::Combine(TestRules(),TEXT("recipes.json")));
     FFileHelper::LoadFileToString(GoodBuildings,*FPaths::Combine(TestRules(),TEXT("buildings.json")));
     FFileHelper::SaveStringToFile(GoodRecipes,*FPaths::Combine(BadRules,TEXT("recipes.json")));
-    for(int32 Case=0;Case<5;++Case)
+    for(int32 Case=0;Case<8;++Case)
     {
         TSharedPtr<FJsonObject> Document;FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(GoodBuildings),Document);
         const auto Core=Document->GetArrayField(TEXT("buildings"))[0]->AsObject();
@@ -49,9 +65,12 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
         if(Case==2)Core->SetNumberField(TEXT("power_usage_kw"),1);
         if(Case==3)Core->SetNumberField(TEXT("damage_per_second"),999);
         if(Case==4)Core->RemoveField(TEXT("damage_per_shot"));
+        if(Case==5)Core->SetNumberField(TEXT("construction_seconds"),0);
+        if(Case==6)Core->SetNumberField(TEXT("construction_workers"),0);
+        if(Case==7)Core->SetNumberField(TEXT("robot_support_capacity"),1);
         FString Invalid;FJsonSerializer::Serialize(Document.ToSharedRef(),TJsonWriterFactory<>::Create(&Invalid));
         FFileHelper::SaveStringToFile(Invalid,*FPaths::Combine(BadRules,TEXT("buildings.json")));
-        TestFalse(*FString::Printf(TEXT("Runtime rejects inconsistent weapon/power rule variant %d"),Case),S.Initialize(BadRules,Error));
+        TestFalse(*FString::Printf(TEXT("Runtime rejects invalid weapon/power/construction/support variant %d"),Case),S.Initialize(BadRules,Error));
     }
     return true;
 }
@@ -60,7 +79,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeWeaponCadenceTest,"Seige.Simulation.Weapo
 bool FSeigeWeaponCadenceTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation A,B;
-    if(!A.Initialize(TestRules(),Error)){AddError(Error);return false;}
+    if(!Deploy(A,Error)){AddError(Error);return false;}
     A.TriggerWave();A.Enemies.SetNum(1);A.Enemies[0].Position=FVector2D(500,0);
     const double Health=A.Enemies[0].Health,Damage=A.BuildingDefs[A.CoreDefinition].DamagePerShot;
     A.Tick(.05);
@@ -78,7 +97,7 @@ bool FSeigeWeaponCadenceTest::RunTest(const FString& Parameters)
     if(!A.Save(TestSave(TEXT("weapon-a")),Error)||!B.Save(TestSave(TEXT("weapon-b")),Error)){AddError(Error);return false;}
     FString SA,SB;FFileHelper::LoadFileToString(SA,*TestSave(TEXT("weapon-a")));FFileHelper::LoadFileToString(SB,*TestSave(TEXT("weapon-b")));
     TestEqual(TEXT("Reloaded and uninterrupted combat states remain identical"),SA,SB);
-    FSeigeSimulation C;if(!C.Initialize(TestRules(),Error)){AddError(Error);return false;}
+    FSeigeSimulation C;if(!Deploy(C,Error)){AddError(Error);return false;}
     auto& Weapon=C.BuildingDefs[C.CoreDefinition];Weapon.DamagePerShot=1;Weapon.ReloadSeconds=.17;Weapon.DamagePerSecond=1/.17;
     C.TriggerWave();C.Enemies.SetNum(1);C.Enemies[0].Position=FVector2D(500,0);
     C.Tick(1);
@@ -95,7 +114,7 @@ bool FSeigeWeaponCadenceTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeBuildingInfoTest,"Seige.Simulation.BuildingInformation",TestFlags)
 bool FSeigeBuildingInfoTest::RunTest(const FString& Parameters)
 {
-    FString Error;FSeigeSimulation S;if(!S.Initialize(TestRules(),Error)){AddError(Error);return false;}
+    FString Error;FSeigeSimulation S;if(!Deploy(S,Error)){AddError(Error);return false;}
     auto Value=[](const TArray<FSeigeBuildingInfoRow>& Rows,const FString& Section,const FString& Label)
     {const auto* Row=Rows.FindByPredicate([&](const auto& R){return R.Section==Section&&R.Label==Label;});return Row?Row->Value:FString();};
     for(const auto& Pair:S.BuildingDefs)
@@ -113,7 +132,7 @@ bool FSeigeBuildingInfoTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Unarmed DPS is displayed as zero"),Value(Rows,TEXT("Weapons"),TEXT("Nominal DPS")),FString(TEXT("0 health/s")));
         }
     }
-    if(!S.PlaceBuilding(TEXT("component_works"),FVector2D(700,0),Error)){AddError(Error);return false;}
+    if(!S.PlaceBuilding(TEXT("component_works"),FVector2D(700,0),Error)||!FinishSites(S)){AddError(Error);return false;}
     auto& B=S.Buildings.Last();B.Inventory.Add(TEXT("conductors"),3);
     const auto Live=S.BuildingInfo(B.DefId,B.Id,6);
     TestEqual(TEXT("Required but missing input stock remains visible as zero"),Value(Live,TEXT("Resources"),S.Resources[TEXT("circuits")].Name),FString(TEXT("0 units")));
@@ -129,8 +148,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigePhysicalDeliveryTest,"Seige.Simulation.Ph
 bool FSeigePhysicalDeliveryTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation S;
-    if (!S.Initialize(TestRules(),Error)) { AddError(Error); return false; }
+    if (!Deploy(S,Error)) { AddError(Error); return false; }
     if (!S.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-700,0),Error)) { AddError(Error); return false; }
+    if(!TestTrue(TEXT("Factory finishes using delivered materials and builders"),FinishSites(S)))return false;
     S.Population=8; S.Buildings[0].Inventory.Add(TEXT("iron_ore"),8); S.Buildings[0].Inventory.Add(TEXT("carbon"),4);
     // A very fast recipe cannot consume resources remotely before the physical couriers arrive.
     S.Recipes[TEXT("smelt_alloy")].Seconds=.01;
@@ -155,11 +175,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeWorkforceTest,"Seige.Simulation.Automatic
 bool FSeigeWorkforceTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation S;
-    if (!S.Initialize(TestRules(),Error) || !S.PlaceBuilding(TEXT("sensor"),FVector2D(700,0),Error)) { AddError(Error); return false; }
+    if (!Deploy(S,Error) || !S.PlaceBuilding(TEXT("sensor"),FVector2D(700,0),Error)) { AddError(Error); return false; }
     const int32 Start=S.Population, SensorId=S.Buildings.Last().Id;
-    TestEqual(TEXT("New sensor creates an open job"),S.TotalJobs-S.Employed,1);
-    S.Tick(6);
-    TestEqual(TEXT("Core automatically produces required robot"),S.Population,Start+1);
+    TestEqual(TEXT("Construction creates two builder vacancies"),S.TotalJobs-S.Employed,2);
+    if(!TestTrue(TEXT("Sensor finishes with automatically produced builders"),FinishSites(S)))return false;
+    S.Tick(13);
+    TestEqual(TEXT("Construction surplus retires to the operating job count"),S.Population,Start+1);
     TestEqual(TEXT("All jobs automatically filled"),S.Employed,S.TotalJobs);
     S.ToggleBuilding(SensorId); S.Tick(13);
     TestEqual(TEXT("Disabled building removes job demand and surplus retires"),S.Population,Start);
@@ -174,7 +195,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigePersistenceTest,"Seige.Simulation.SaveLoa
 bool FSeigePersistenceTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation A,B;
-    if (!A.Initialize(TestRules(),Error) || !A.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-700,0),Error)) { AddError(Error); return false; }
+    if (!Deploy(A,Error) || !A.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-700,0),Error)) { AddError(Error); return false; }
     A.Buildings[0].Inventory.Add(TEXT("iron_ore"),8); A.Buildings[0].Inventory.Add(TEXT("carbon"),4); A.Population=8; A.Tick(.4);
     if (!TestTrue(TEXT("Snapshot has in-transit cargo"),A.Couriers.Num()>0) || !A.Save(TestSave(TEXT("roundtrip")),Error) || !B.Initialize(TestRules(),Error) || !B.Load(TestSave(TEXT("roundtrip")),Error)) { AddError(Error); return false; }
     TestEqual(TEXT("Time restored"),A.Time,B.Time); TestEqual(TEXT("Cargo restored"),A.Couriers.Num(),B.Couriers.Num());
@@ -184,7 +205,7 @@ bool FSeigePersistenceTest::RunTest(const FString& Parameters)
     if (!A.Save(TestSave(TEXT("roundtrip-a")),Error) || !B.Save(TestSave(TEXT("roundtrip-b")),Error)) { AddError(Error); return false; }
     FString SA,SB; FFileHelper::LoadFileToString(SA,*TestSave(TEXT("roundtrip-a"))); FFileHelper::LoadFileToString(SB,*TestSave(TEXT("roundtrip-b")));
     TestEqual(TEXT("Continued complete simulation states are identical"),SA,SB);
-    const double Before=B.Time; FString Corrupt=SB; Corrupt.ReplaceInline(TEXT("\"save_format\": 1"),TEXT("\"save_format\": 999"));
+    const double Before=B.Time; FString Corrupt=SB; Corrupt.ReplaceInline(TEXT("\"save_format\": 2"),TEXT("\"save_format\": 999"));
     FFileHelper::SaveStringToFile(Corrupt,*TestSave(TEXT("incompatible")));
     TestFalse(TEXT("Incompatible save rejected"),B.Load(TestSave(TEXT("incompatible")),Error)); TestEqual(TEXT("Rejected save leaves running colony untouched"),B.Time,Before);
     return true;
@@ -194,7 +215,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeFailureTest,"Seige.Simulation.CoreLossAnd
 bool FSeigeFailureTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation S;
-    if (!S.Initialize(TestRules(),Error)) { AddError(Error); return false; }
+    if (!Deploy(S,Error)) { AddError(Error); return false; }
     S.Buildings[0].Health=1; S.Buildings[0].Inventory.Remove(TEXT("alloy"));
     S.ShuttleCargo.Add(TEXT("circuits"),3);
     for(int32 I=0;I<8;++I) { FSeigeEnemy E; E.Id=1000+I; E.Health=45; E.Position=FVector2D(20,20); S.Enemies.Add(E); }
@@ -209,24 +230,93 @@ bool FSeigeFailureTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigePlayableTest,"Seige.Simulation.FirstPlayableSolvable",TestFlags)
 bool FSeigePlayableTest::RunTest(const FString& Parameters)
 {
-    FString Error; FSeigeSimulation S;
-    if (!S.Initialize(TestRules(),Error)) { AddError(Error); return false; }
-    auto Build=[&](const TCHAR* Id,double X,double Y)->bool { if(!S.PlaceBuilding(Id,FVector2D(X,Y),Error)) { AddError(FString(Id)+TEXT(": ")+Error); return false; } return true; };
-    // Protect each resource approach with both visibility and firepower. The northwest
-    // defense covers the nearby iron/copper pair; southwest and southeast cover the
-    // other two deposits. All costs and robot-production delays use the shipped rules.
-    if(!Build(TEXT("sensor"),-900,950) || !Build(TEXT("sensor"),-1100,-750) || !Build(TEXT("sensor"),800,-1000)) return false;
-    S.Tick(15.1);
-    if(!Build(TEXT("turret"),-1450,1225) || !Build(TEXT("turret"),-1400,-1150) || !Build(TEXT("turret"),1250,-1250)) return false;
-    if(!Build(TEXT("extract_iron_ore"),-1800,800) || !Build(TEXT("extract_copper_ore"),-1100,1650) || !Build(TEXT("extract_silica"),1500,-1550) || !Build(TEXT("extract_carbon"),-1700,-1300)) return false;
-    if(!Build(TEXT("alloy_refinery"),-600,150) || !Build(TEXT("conductor_works"),-600,-350) || !Build(TEXT("substrate_works"),650,0) || !Build(TEXT("circuit_works"),650,-500) || !Build(TEXT("component_works"),0,700)) return false;
-    for(int32 I=0;I<90 && !S.Won && !S.Escaped;++I) S.Tick(5);
+    FString Error;FSeigeSimulation S;FSeigeScenarioAI Controller;
+    if(!Controller.Initialize(S,TestRules(),FPaths::Combine(FPaths::ProjectDir(),TEXT("AIFILES")),false,Error)){AddError(Error);return false;}
+    // The controller uses only ordinary placement/toggle commands. No inventory, population,
+    // construction-progress or threat overrides: the entire shipped bootstrap must survive.
+    for(int32 I=0;I<180&&!S.Won&&!S.Escaped;++I)Controller.Tick(S,5);
     AddInfo(S.ObjectiveText()); AddInfo(S.WorkforceStatus());
     TestTrue(TEXT("Shipped first-playable scenario is winnable with only normal build actions"),S.Won);
     TestFalse(TEXT("Winning colony still stands"),S.Failed);
     TestTrue(TEXT("Actual physical deliveries occurred"),S.DeliveredUnits>0);
     TestTrue(TEXT("Scaled alien pulse occurred during test"),S.Wave>0);
     for(const FSeigeBuilding& B:S.Buildings) if(B.Health<=0) AddInfo(TEXT("Lost building during scenario: ")+B.DefId);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeConstructionTest,"Seige.Simulation.PhysicalConstructionAndReservations",TestFlags)
+bool FSeigeConstructionTest::RunTest(const FString& Parameters)
+{
+    FString Error;FSeigeSimulation S,Loaded;
+    if(!S.Initialize(TestRules(),Error)){AddError(Error);return false;}
+    TestTrue(TEXT("Core begins as a shuttle deployment"),S.Buildings[0].IsConstructing);
+    TestFalse(TEXT("Undeployed core has no active sensors"),S.IsVisible(FVector2D::ZeroVector));
+    TestFalse(TEXT("Cannot order buildings during deployment"),S.PlaceBuilding(TEXT("sensor"),FVector2D(700,0),Error));
+    S.Tick(2);
+    TestTrue(TEXT("Builders make partial deployment progress"),S.Buildings[0].ConstructionProgress>0&&S.Buildings[0].ConstructionProgress<1);
+    if(!S.Save(TestSave(TEXT("deploying")),Error)||!Loaded.Initialize(TestRules(),Error)||!Loaded.Load(TestSave(TEXT("deploying")),Error)){AddError(Error);return false;}
+    TestEqual(TEXT("Deployment progress survives loading"),Loaded.Buildings[0].ConstructionProgress,S.Buildings[0].ConstructionProgress);
+    if(!FinishSites(S)||!FinishSites(Loaded))return false;
+    TestTrue(TEXT("Deployed core provides normal visibility"),S.IsVisible(FVector2D::ZeroVector));
+    // Finite stock can fund one sensor plus protected operating buffers, never two.
+    S.Buildings[0].Inventory[TEXT("alloy")]=14;S.Buildings[0].Inventory[TEXT("circuits")]=7;
+    const double AlloyBefore=S.TotalStock(TEXT("alloy"));
+    if(!TestTrue(TEXT("Affordable order queues a site"),S.PlaceBuilding(TEXT("sensor"),FVector2D(700,0),Error)))return false;
+    const int32 Site=S.Buildings.Last().Id;
+    TestEqual(TEXT("Ordering does not consume or teleport stock"),S.TotalStock(TEXT("alloy")),AlloyBefore);
+    TestEqual(TEXT("Reserved materials remain physically at source"),S.FindBuilding(Site)->ConstructionMaterials.Num(),0);
+    TestFalse(TEXT("Second order cannot double-spend queued reservations"),S.PlaceBuilding(TEXT("sensor"),FVector2D(-700,0),Error));
+    S.Tick(.4);
+    TestTrue(TEXT("Construction dispatch creates tagged physical cargo"),S.Couriers.ContainsByPredicate([](const auto& C){return C.ForConstruction;}));
+    TestEqual(TEXT("Shipping conserves construction material"),S.TotalStock(TEXT("alloy")),AlloyBefore);
+    TestEqual(TEXT("Builders wait for physical materials"),S.FindBuilding(Site)->ConstructionProgress,0.);
+    TestFalse(TEXT("Site has no operational sensor range"),S.IsVisible(FVector2D(2350,0)));
+    if(!S.Save(TestSave(TEXT("construction-cargo")),Error)||!Loaded.Load(TestSave(TEXT("construction-cargo")),Error)){AddError(Error);return false;}
+    TestTrue(TEXT("Saved in-flight cargo retains construction destination"),Loaded.Couriers.ContainsByPredicate([](const auto& C){return C.ForConstruction;}));
+    S.Tick(30);Loaded.Tick(30);
+    TestFalse(TEXT("Delivered materials and automatic builders finish the site"),S.FindBuilding(Site)->IsConstructing);
+    TestTrue(TEXT("Only the completed staffed sensor extends coverage"),S.IsVisible(FVector2D(2350,0)));
+    TestEqual(TEXT("Finished building embodies its physical material cost"),S.TotalStock(TEXT("alloy")),AlloyBefore-S.BuildingDefs[TEXT("sensor")].Cost[TEXT("alloy")]);
+    if(!S.Save(TestSave(TEXT("construction-a")),Error)||!Loaded.Save(TestSave(TEXT("construction-b")),Error)){AddError(Error);return false;}
+    FString A,B;FFileHelper::LoadFileToString(A,*TestSave(TEXT("construction-a")));FFileHelper::LoadFileToString(B,*TestSave(TEXT("construction-b")));
+    TestEqual(TEXT("Construction continues deterministically after loading"),A,B);
+    TSharedPtr<FJsonObject> Invalid;FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(B),Invalid);
+    Invalid->GetArrayField(TEXT("buildings"))[1]->AsObject()->SetNumberField(TEXT("construction_progress"),2);
+    FString Raw;FJsonSerializer::Serialize(Invalid.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw));FFileHelper::SaveStringToFile(Raw,*TestSave(TEXT("construction-invalid")));
+    const double Time=Loaded.Time;
+    TestFalse(TEXT("Corrupt construction progress is rejected"),Loaded.Load(TestSave(TEXT("construction-invalid")),Error));
+    TestEqual(TEXT("Rejected construction load is atomic"),Loaded.Time,Time);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRobotSupportTest,"Seige.Simulation.RobotSupportCapacityAndLocalMaintenance",TestFlags)
+bool FSeigeRobotSupportTest::RunTest(const FString& Parameters)
+{
+    FString Error;FSeigeSimulation S;if(!Deploy(S,Error)){AddError(Error);return false;}
+    const int32 CoreCapacity=S.RobotSupportCapacity;
+    // Ordinary job demand exceeds the starter core's support capacity.
+    for(const FVector2D P:{FVector2D(700,0),FVector2D(-700,0),FVector2D(0,700)})
+        if(!S.PlaceBuilding(TEXT("sensor"),P,Error)){AddError(Error);return false;}
+    S.Tick(45);
+    TestEqual(TEXT("Population growth stops at actual service capacity"),S.Population,CoreCapacity);
+    if(!S.PlaceBuilding(TEXT("robot_service_bay"),FVector2D(0,-700),Error)){AddError(Error);return false;}
+    const int32 BayId=S.Buildings.Last().Id;
+    TestEqual(TEXT("A service construction site grants no capacity"),S.RobotSupportCapacity,CoreCapacity);
+    if(!FinishSites(S)){AddError(TEXT("Service expansion did not finish"));return false;}
+    S.Tick(10);
+    TestEqual(TEXT("Completed service bay expands real capacity"),S.RobotSupportCapacity,CoreCapacity+S.BuildingDefs[TEXT("robot_service_bay")].RobotSupportCapacity);
+    TestTrue(TEXT("Open jobs can now grow beyond starter capacity"),S.Population>CoreCapacity);
+    TestTrue(TEXT("Additional robots are allocated to the new service bay"),S.FindBuilding(BayId)->SupportedRobots>0);
+    S.Buildings[0].Inventory.Add(TEXT("components"),2);S.FindBuilding(BayId)->Inventory.Remove(TEXT("components"));
+    S.Couriers.RemoveAll([](const auto& C){return C.Resource==TEXT("components");});
+    S.Tick(11);
+    TestTrue(TEXT("Core can maintain its crew without exporting its protected buffer"),S.Buildings[0].MaintenanceSupplied);
+    TestFalse(TEXT("Service upkeep requires its own local supplies"),S.FindBuilding(BayId)->MaintenanceSupplied);
+    TestTrue(TEXT("Maintenance shortage has a real workforce consequence"),S.OperatingEfficiency()<1);
+    S.FindBuilding(BayId)->Inventory.Add(TEXT("components"),5);S.Tick(11);
+    TestTrue(TEXT("Delivered local components restore service at the next interval"),S.FindBuilding(BayId)->MaintenanceSupplied);
+    S.ToggleBuilding(BayId);
+    TestEqual(TEXT("Disabling a bay removes its usable capacity"),S.RobotSupportCapacity,CoreCapacity);
+    TestTrue(TEXT("Unsupported robots remain and operate at shortage efficiency"),S.SupportedPopulation<S.Population&&S.OperatingEfficiency()<1);
     return true;
 }
 #endif

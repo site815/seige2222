@@ -8,6 +8,14 @@ Actual Unreal prototype development is now authorized. The narrower chain being 
 
 Separate [resource proposals](RESOURCE_PROPOSAL.md) and [building proposals](BUILDING_PROPOSAL.md) develop candidate catalog revisions. The tables here review the original catalog and its dependencies; they are not a competing confirmed specification. Where candidate chains differ, their selection remains open.
 
+## v0.5 concrete bootstrap in source
+
+The prototype now uses a finite, physically carried core deployment kit, operating stock and starting robots. Core deployment precedes normal operation. The starter core supports enough population to keep its jobs filled while two robots construct the first charging/service bay. The completed bay adds population capacity and consumes local delivered maintenance components. Both native and static rule loading validate that some buildable support expansion can be constructed and staffed within starter capacity.
+
+Queued construction reserves only core stock left after earlier reservations and protected operating buffers. Worker construction begins after the full material bill is physically delivered. Production continues to require local inputs. This makes the first service expansion and extraction/processing chain finite-resource bootstrap problems; definitions and static reachability alone do not establish survival. The final v0.5 native suite passed all 29 tests (28 clean, one editor background HTTP-warning success; zero failed or unrun). Actual construction, service expansion and a normal-action first-objective strategy are covered without granting inventory during play; the objective succeeded at 435 simulation seconds. The Shipping package separately passed 63 interaction stages with zero failures and exit 0. These checks establish one finite winning strategy and the tested interaction paths, not indefinite sustainability; [the development report](../DEVELOPMENT_REPORT.md) records packaged and native boundaries.
+
+The proposals and open full-game questions below remain separate from this selected prototype mechanism. See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md).
+
 ## Progression through production
 
 **Confirmed direction:** There is no research tree, research timer, or research currency. What might informally be called an item “tech tree” is a production dependency network: resources and constructed buildings make capabilities available. Shared inputs can connect multiple branches rather than forming one linear ladder.

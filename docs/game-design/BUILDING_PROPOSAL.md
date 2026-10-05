@@ -4,6 +4,12 @@
 
 **Assistant proposal for discussion.** This is a candidate building catalog for a robotic colony. Established functions are identified separately from proposed names, facilities, recipes, and numerical values. The [first playable scope](FIRST_PLAYABLE_SCOPE.md) records the smaller implementation being developed.
 
+## Current v0.5 implementation alongside this proposal
+
+The broader catalog below remains proposed. The current user requirement adds physically supplied worker construction, an initial shuttle-deployed command core and a robot charging/maintenance facility. Source implements these with external construction costs, durations, builder counts and support capacities. The `robot_service_bay` is in Logistics with the B, L, C shortcut, one operating job and local component upkeep. Capacity is usable only after construction and staffing. It is an abstract automatic charging/service system; no battery-meter or kW-grid model is implied.
+
+See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for the fourteen implemented definitions and [Rules and Simulation Architecture](RULES_AND_SIMULATION_ARCHITECTURE.md) for reservations, delivery, construction and save-state contracts. Other proposed buildings and exact full-game balance are not automatically approved by this prototype.
+
 ## Organization
 
 **Confirmed broad direction:** Buildings need at least resource-related, logistics, and defense categories. Resource-related buildings include gathering and storage; logistics includes movement, trade, storage, and possible robot charging or repair facilities. Storage overlaps categories. Resource and logistics buildings may have secondary defensive capabilities.

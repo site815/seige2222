@@ -1,5 +1,7 @@
 # SEIGE — Original Prototype Asset Register
 
+The v0.5 original shuttle, automated robot-service facility, and construction materials are documented in [Construction/README.md](Construction/README.md).
+
 The v0.4 background assets are documented separately in [EnvironmentV04/ATTRIBUTION.md](EnvironmentV04/ATTRIBUTION.md): a licensed full-size mature tree, photographic grass clump, and meadow/forest PBR material. This original prototype register remains historical provenance.
 
 **Current environment update:** The six building meshes below are superseded in the game by the detailed industrial set recorded in [REALISTIC_ASSET_REGISTER.md](REALISTIC_ASSET_REGISTER.md). That set also adds eight temperate vegetation/rock meshes and locally packaged CC0 photographic surfaces. The original prototype source remains for provenance; robot and bug meshes are retained. See [third-party texture attribution](THIRD_PARTY_ASSETS.md) for the new maps.

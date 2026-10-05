@@ -2,7 +2,7 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-Interface direction and the boundary between player decisions and automatic simulation. The latest v0.4 request supersedes the earlier top-only/no-bottom construction layout. The final terrain/close-camera route completed 53 stages with zero failures and corrected the earlier screenshot timing. The Shipping route also passed 53 stages; broader human usability review remains separate.
+Interface direction and the boundary between player decisions and automatic simulation. The floating-bottom construction layout supersedes the earlier top-only requirement. The v0.5 Shipping route completed 63 stages with zero failures, including construction, camera, terrain selection and building information; broader human usability review remains separate.
 
 ## Interface references
 
@@ -38,6 +38,10 @@ Delivered v0.3 bindings use Q/E to rotate, middle-mouse drag to rotate/tilt, WAS
 Zooming out should lead to a less detailed regional map. Zooming/focusing into a sector should reveal that area's detailed environment. The current source uses a 3×3 cartographic survey with selectable sectors; it suppresses world construction while on the map, and human deployment remains limited to the home sector. This is a viewing transition, not cross-sector movement or colony ownership. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md).
 
 ## Colony controls
+
+**v0.5 delivered revision:** Raw middle-drag sensitivity is 0.22 degrees per horizontal pixel and 0.18 per vertical pixel, between the previously rejected slow and fast settings. Resource badges retain their per-deposit offsets while the camera moves and resolve overlaps once it settles. Neighbor terrain remains textured in the local 3D view, with terrain-following sector borders; the cartographic zoom threshold remains separate. Native gesture checks and the 63-stage rendered Shipping route passed. Physical mouse feel still depends on the player's device and preferences.
+
+Placement displays a translucent version of the selected building, green for valid ground and red for a blocked order. The initial placement previews the command core footprint; confirming starts the shuttle landing and deployment. Later construction delivers reserved materials and shows assembly progress. The logistics shortcut **B, L, C** selects charging and maintenance; the workforce hover explains service capacity and supply efficiency.
 
 **Confirmed direction:**
 

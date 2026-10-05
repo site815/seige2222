@@ -39,6 +39,7 @@ public:
     FVector CameraCenter=FVector::ZeroVector;
     float Zoom=3500;
     float RenderScale=6,CameraYaw=135,CameraPitch=52,CameraFov=55;
+    float NaniteMaxPixelsPerEdge=1.5f;
     float DefaultZoom=3500,MinimumZoom=120;
     int32 DetailedTerrainResolution=1024;
     float RollingTerrainWavelength=3200,RollingTerrainAmplitude=360;
@@ -46,11 +47,16 @@ public:
     float CorePadInnerRatio=1.15f,CorePadOuterRatio=1.8f;
     FVector2D RidgeCenter=FVector2D(1900,-1400);
     float RidgeAngleDegrees=35,RidgeWidth=1900,RidgeLength=6500,RidgeHeight=550;
-    float RegionMapZoom=40000,OrbitYawPerPixel=.45f,OrbitPitchPerPixel=.35f;
+    float RegionMapZoom=40000,OrbitYawPerPixel=.22f,OrbitPitchPerPixel=.18f;
     FString TerrainMaterialPath=TEXT("/Game/Art/NatureV04/M_TerrainV04.M_TerrainV04");
     int32 ForestCandidates=85000,NearForestCandidates=8500;
     int32 GroundCoverCandidates=350000;
     float GrassScaleMin=1.f,GrassScaleMax=1.3f;
+    float GrassShadowDistanceMeters=100;
+    float GrassProgrammableDistanceMeters=0;
+    bool GrassDistanceFieldLighting=false;
+    int32 NeighborForestCandidates=4500;
+    bool NeighborForestShadows=false;
     float MinimumCameraPitch=8,MaximumCameraPitch=80,CameraGroundClearance=160;
     float SunIntensity=5.2f,SkyIntensity=1.3f,CloudShadowStrength=.6f;
     FString CloudMaterialPath=TEXT("/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst");
@@ -107,6 +113,7 @@ private:
     bool GraphicsSettingsValid=true;
     int32 PresentationSmokeStage=0,SmokeFailures=0;
     void RunPresentationSmoke();
+    void RunGraphicsBenchmark(float DeltaSeconds);
     TSharedPtr<FSeigeScenarioAI> CenterBrain;
     FString DataDirectory(const TCHAR* Folder) const;
     bool InitializeScenario(FString& Reason);
@@ -127,6 +134,11 @@ private:
     TArray<FSeigeTerrainTile> TerrainTiles;
     void ClearSceneryAt(FVector2D Position,float Radius);
     void SyncVisuals();
+    UMaterialInterface* ConstructionMaterial(FLinearColor Color,bool Reveal=false);
+    void SyncPlacementGhost(TSet<FString>& Live);
+    void SyncConstructionVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
+    void SetConstructionReveal(AActor* Actor,double Progress);
+    void SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
 };
 
 UCLASS()
@@ -154,6 +166,7 @@ struct FSeigeMenuEntry { FString Definition,Shortcut; };
 struct FSeigeMenuGroup { FString Id,Name,Shortcut,Description; TArray<FSeigeMenuEntry> Entries; };
 struct FSeigeCredit { FString Heading,Text; };
 struct FSeigeSummaryResource { FString Resource,Label; };
+struct FSeigeDepositLabelState { FVector2D Offset=FVector2D(14,-14); bool Initialized=false; };
 struct FSeigeUiState
 {
     float ViewportWidth=1600,ViewportHeight=900,Scale=1;
@@ -188,6 +201,11 @@ private:
     FString InterfaceError,Version,LastNotice;
     FString BuildingInfoSection;
     int32 BuildingInfoPage=0;
+    TMap<FString,FSeigeDepositLabelState> DepositLabels;
+    FVector LabelCameraPosition=FVector(1.e10,1.e10,1.e10);
+    FRotator LabelCameraRotation=FRotator::ZeroRotator;
+    FVector2D LabelViewport=FVector2D::ZeroVector;
+    float LabelStillSeconds=0;
     void DrawBuildingInfo(ASeigeGameMode& GameMode,float Width,float Height);
     void DrawRegionMap(ASeigeGameMode& GameMode,float Width,float Height);
     void Box(float X,float Y,float W,float H,FLinearColor Color);

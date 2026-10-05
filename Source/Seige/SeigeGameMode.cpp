@@ -134,6 +134,7 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
     RenderClock+=DeltaSeconds;
     RefreshEnvironment();
     SyncVisuals();
+    if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark")))RunGraphicsBenchmark(DeltaSeconds);
     if(FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))) RunPresentationSmoke();
     if(!ScreenshotRequested && RenderClock>8 && FParse::Param(FCommandLine::Get(),TEXT("PrototypeScreenshot")))
     {
@@ -161,6 +162,7 @@ UMaterialInterface* ASeigeGameMode::Material(FLinearColor Color)
 void ASeigeGameMode::Part(AActor* Actor,const FString& Shape,FVector Offset,FVector Scale3,FLinearColor Color,FRotator Rotation)
 {
     auto* Mesh=NewObject<UStaticMeshComponent>(Actor);
+    Mesh->SetMobility(EComponentMobility::Movable);
     Mesh->SetStaticMesh(LoadObject<UStaticMesh>(nullptr,*FString::Printf(TEXT("/Engine/BasicShapes/%s.%s"),*Shape,*Shape)));
     Mesh->SetMaterial(0,Material(Color));
     Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -178,8 +180,9 @@ AActor* ASeigeGameMode::Visual(const FString& Key,const FString& Kind,FVector Lo
     auto* Imported=LoadObject<UStaticMesh>(nullptr,*FString::Printf(TEXT("/Game/Art/%s.%s"),*MeshName,*MeshName));
     if(Imported)
     {
-        auto* Mesh=NewObject<UStaticMeshComponent>(Actor); Mesh->SetStaticMesh(Imported); Mesh->SetupAttachment(Root);
-        const bool Building=Kind!=TEXT("Robot")&&Kind!=TEXT("Bug");
+        auto* Mesh=NewObject<UStaticMeshComponent>(Actor); Mesh->SetMobility(EComponentMobility::Movable); Mesh->SetStaticMesh(Imported); Mesh->SetupAttachment(Root);
+        const bool Building=Kind!=TEXT("Robot")&&Kind!=TEXT("Bug")&&Kind!=TEXT("Shuttle");
+        if(Building)Mesh->ComponentTags.Add(TEXT("BuildingBody"));
         Mesh->SetCollisionEnabled(Building?ECollisionEnabled::QueryOnly:ECollisionEnabled::NoCollision);
         Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
         if(Building)Mesh->SetCollisionResponseToChannel(ECC_Visibility,ECR_Block);
@@ -199,8 +202,19 @@ AActor* ASeigeGameMode::Visual(const FString& Key,const FString& Kind,FVector Lo
         Part(Actor,TEXT("Sphere"),FVector(0,0,45),FVector(.9,1.4,.55),Color);
         for(int i=0;i<6;i++) Part(Actor,TEXT("Cone"),FVector(i%2?60:-60,(i/2-1)*40,23),FVector(.16,.18,.8),FLinearColor(.17,.05,.15),FRotator(i%2?55:-55,0,0));
     }
+    else if(Kind==TEXT("Shuttle"))
+    {
+        Part(Actor,TEXT("Cube"),FVector(0,0,Size*.2),FVector(Size*.004,Size*.008,Size*.0025),Color);
+        Part(Actor,TEXT("Sphere"),FVector(0,-Size*.31,Size*.25),FVector(Size*.0038,Size*.0028,Size*.002),Ink);
+        for(double Side:{-1.,1.})
+        {
+            Part(Actor,TEXT("Cube"),FVector(Side*Size*.29,0,Size*.12),FVector(Size*.0013,Size*.006,.22),FLinearColor(.18f,.23f,.25f));
+            for(double End:{-1.,1.})Part(Actor,TEXT("Cylinder"),FVector(Side*Size*.29,End*Size*.22,Size*.09),FVector(Size*.0011,Size*.0011,Size*.0016),Muted);
+        }
+    }
     else
     {
+        Actor->Tags.Add(TEXT("PrimitiveFallback"));
         Part(Actor,TEXT("Cylinder"),FVector(0,0,20),FVector(Size/80,Size/80,.35),FLinearColor(.13,.26,.31));
         Part(Actor,TEXT("Cube"),FVector(0,0,Size*.35),FVector(Size/110,Size/110,Size/150),Color);
         Part(Actor,TEXT("Sphere"),FVector(0,0,Size*.65),FVector(Size/115,Size/115,.5),FLinearColor(.87,.96,1));
@@ -227,6 +241,8 @@ void ASeigeGameMode::SyncVisuals()
             FString Kind=D->Visual; if(Kind.IsEmpty()) Kind=TEXT("Factory"); Kind[0]=FChar::ToUpper(Kind[0]);
             if(!Visuals.Contains(Key)) ClearSceneryAt(P,D->Footprint);
             Visual(Key,Kind,RenderPosition(P),D->Color,D->Footprint*2.f*RenderScale);
+            SyncConstructionVisuals(Colony,B,*D,P,Key,Live);
+            SyncServiceVisuals(Colony,B,P,Key,Live);
         }
         for(const auto& C:Colony.Couriers)
         {
@@ -248,7 +264,13 @@ void ASeigeGameMode::SyncVisuals()
     };
     Sync(Sim,FVector2D::ZeroVector,TEXT("home_"),Screen!=TEXT("landing")&&DetailedSectorIndex()==4);
     for(auto& N:Neighbors) Sync(N.Sim,N.Offset,FString::Printf(TEXT("zone_%d_"),N.Index),DetailedSectorIndex()==N.Index);
-    for(auto It=Visuals.CreateIterator();It;++It) if(!Live.Contains(It.Key())) { It.Value()->Destroy(); It.RemoveCurrent(); }
+    SyncPlacementGhost(Live);
+    for(auto It=Visuals.CreateIterator();It;++It) if(!Live.Contains(It.Key()))
+    {
+        const FString OriginalPrefix=TEXT("construction_original_")+It.Value()->GetPathName()+TEXT(".");
+        for(auto MaterialIt=Materials.CreateIterator();MaterialIt;++MaterialIt)if(MaterialIt.Key().StartsWith(OriginalPrefix))MaterialIt.RemoveCurrent();
+        It.Value()->Destroy();It.RemoveCurrent();
+    }
 }
 void ASeigeGameMode::ClickWorld()
 {
@@ -258,7 +280,7 @@ void ASeigeGameMode::ClickWorld()
     if(!SelectedBuild.IsEmpty())
     {
         if(Observer||DetailedSectorIndex()!=4)return;
-        if(Sim.PlaceBuilding(SelectedBuild,CursorWorld,Error)) Notice=TEXT("Building online. Staffing and deliveries are automatic."); else Notice=Error;
+        if(Sim.PlaceBuilding(SelectedBuild,CursorWorld,Error)) Notice=TEXT("Construction queued. Couriers deliver materials; robots assemble the building."); else Notice=Error;
         return;
     }
     SelectedId=0; double Distance=350;

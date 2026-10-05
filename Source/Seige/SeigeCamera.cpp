@@ -5,6 +5,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "HAL/IConsoleManager.h"
 
 bool ASeigeGameMode::LoadGraphicsSettings()
 {
@@ -22,8 +23,9 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         {Error=FString::Printf(TEXT("Invalid Graphics/scene.json value: %s"),Key);return false;}
         Value=Number;return true;
     };
-    float Forest=0,NearForest=0,GroundCandidates=0,TerrainResolution=0,RidgeX=0,RidgeY=0;
+    float Forest=0,NearForest=0,GroundCandidates=0,TerrainResolution=0,RidgeX=0,RidgeY=0,NeighborForest=0;
     if(!Read(TEXT("world_centimeters_per_unit"),1,20,RenderScale)||
+       !Read(TEXT("nanite_max_pixels_per_edge"),.5,4,NaniteMaxPixelsPerEdge)||
        !Read(TEXT("camera_fov"),35,80,CameraFov)||!Read(TEXT("camera_pitch"),5,85,CameraPitch)||
        !Read(TEXT("minimum_camera_pitch"),5,25,MinimumCameraPitch)||!Read(TEXT("maximum_camera_pitch"),60,85,MaximumCameraPitch)||
        !Read(TEXT("camera_ground_clearance_cm"),100,500,CameraGroundClearance)||
@@ -32,6 +34,9 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("camera_yaw"),-360,360,CameraYaw)||!Read(TEXT("default_zoom"),900,20000,DefaultZoom)||
        !Read(TEXT("minimum_zoom"),60,2000,MinimumZoom)||!Read(TEXT("forest_candidates"),1000,200000,Forest)||
        !Read(TEXT("near_forest_candidates"),100,30000,NearForest)||
+       !Read(TEXT("grass_shadow_distance_m"),0,500,GrassShadowDistanceMeters)||
+       !Read(TEXT("grass_programmable_distance_m"),0,900,GrassProgrammableDistanceMeters)||
+       !Read(TEXT("neighboring_forest_candidates_per_sector"),0,12000,NeighborForest)||
        !Read(TEXT("region_map_zoom"),20000,90000,RegionMapZoom)||
        !Read(TEXT("orbit_yaw_degrees_per_pixel"),.05,2,OrbitYawPerPixel)||
        !Read(TEXT("orbit_pitch_degrees_per_pixel"),.05,2,OrbitPitchPerPixel)||
@@ -55,7 +60,10 @@ bool ASeigeGameMode::LoadGraphicsSettings()
     if(CameraPitch<MinimumCameraPitch||CameraPitch>MaximumCameraPitch){Error=TEXT("Default camera pitch lies outside orbit limits");return false;}
     if(MinimumZoom>DefaultZoom){Error=TEXT("Minimum camera zoom exceeds default zoom");return false;}
     if(MinimumZoom>=DefaultZoom*.45f){Error=TEXT("Minimum camera zoom must lie below the close-view transition");return false;}
-    if(FMath::FloorToFloat(Forest)!=Forest||FMath::FloorToFloat(NearForest)!=NearForest||FMath::FloorToFloat(GroundCandidates)!=GroundCandidates){Error=TEXT("Vegetation candidate counts must be integers");return false;}
+    if(FMath::FloorToFloat(Forest)!=Forest||FMath::FloorToFloat(NearForest)!=NearForest||FMath::FloorToFloat(GroundCandidates)!=GroundCandidates||FMath::FloorToFloat(NeighborForest)!=NeighborForest){Error=TEXT("Vegetation candidate counts must be integers");return false;}
+    if(!Root->TryGetBoolField(TEXT("neighboring_forest_shadow"),NeighborForestShadows)){Error=TEXT("Invalid neighboring forest shadow flag");return false;}
+    if(!Root->TryGetBoolField(TEXT("grass_distance_field_lighting"),GrassDistanceFieldLighting)){Error=TEXT("Invalid grass distance-field lighting flag");return false;}
+    NeighborForestCandidates=static_cast<int32>(NeighborForest);
     if(GrassScaleMin>GrassScaleMax){Error=TEXT("Minimum grass scale exceeds maximum");return false;}
     if(TerrainResolution!=512&&TerrainResolution!=1024){Error=TEXT("Detailed terrain resolution must be 512 or 1024");return false;}
     if(CorePadOuterRatio<=CorePadInnerRatio){Error=TEXT("Terrain pad outer ratio must exceed its inner ratio");return false;}
@@ -70,6 +78,13 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         FString Path;
         if(!(*Assets)->TryGetStringField(Key,Path)||!Path.StartsWith(TEXT("/Game/"))){Error=TEXT("Missing or invalid nature asset path: ")+Key;return false;}
         NatureAssets.Add(Key,Path);
+    }
+    if(auto* NaniteEdge=IConsoleManager::Get().FindConsoleVariable(TEXT("r.Nanite.MaxPixelsPerEdge")))
+    {
+        // External project data must not override higher-priority command-line,
+        // console or platform choices. Avoid a rejected lower-priority Set.
+        if((NaniteEdge->GetFlags()&ECVF_SetByMask)<=ECVF_SetByProjectSetting)
+            NaniteEdge->Set(NaniteMaxPixelsPerEdge,ECVF_SetByProjectSetting);
     }
     Zoom=DefaultZoom;return true;
 }

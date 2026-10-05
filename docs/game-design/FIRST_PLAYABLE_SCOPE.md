@@ -2,11 +2,19 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-**Current delivery: verified v0.4.0 Windows Shipping package.** The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
+**Current delivery: v0.5.0 Windows Shipping package, built and verified locally.** The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
 
-## Current graphics revision
+## Current v0.5 construction and services
 
-**v0.4.0 is packaged and verified in `Builds/v0.4.0/Windows`; the launcher selects it.** The slice includes responsive orbit, regional map/focused detail, resource overlays/alerts, floating bottom construction, complete building statistics, and rebuilt terrain with dense low/tall grass. The final native suite passed **27 tests: 26 clean plus one with editor background HTTP warnings; zero failed or unrun**. Shipping packaging exited 0; its interaction route passed **53 stages with zero failures**, 45 process-tree samples each showed zero TCP/UDP endpoints, and ten staged files matched source hashes. The editor warning was not a gameplay assertion failure; the packaged observations are bounded checks, not a guarantee about all runs. Close/middle views improve while distant ground/forest uniformity remain below the reference. **Start a new scenario:** Rules `prototype-4.0` use actual weapon shots/reloads and explicit unarmed/zero-power information; older-rule saves are rejected. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md) and the [development report](../DEVELOPMENT_REPORT.md).
+The user requires buildings assembled by workers from physically delivered materials, initial core deployment from an orbital shuttle, and expandable robot charging/maintenance facilities. These are implemented under Rules `prototype-5.0`. Static validation passes 29 negative Rules cases and the complete configuration check. The final native suite passed **29 tests: 28 clean and one with an Unreal editor background HTTP warning; zero failed or unrun** (`Saved/Automation/v05-final/index.json`). The first-objective test manufactured 12 components at 435 simulation seconds without inventory grants or construction bypasses; the starting AI manufactured 35 by its configured 600-second preparation budget.
+
+The Shipping package in `Builds/v0.5.0/Windows` passed **63 interaction stages with zero failures and exit 0**. Its 73 live process-tree samples each showed zero TCP/UDP endpoints, and all nine external JSON files matched source byte hashes. The launcher selects this version. These bounded checks do not prove every play path or indefinite sustainability; no separate packaged save/load roundtrip or occupied-service-bay visual check is claimed. Native tests cover construction/service persistence and neighborhood saves. See `Saved/packaged-v0.5.0-UiSmoke-verification.json` and the [development report](../DEVELOPMENT_REPORT.md) for full boundaries.
+
+The current data specifies six starting robots, a six-second core deployment, eight starter support berths, and a service bay providing sixteen additional berths with one operating job. The bay takes two builders and fifteen seconds at full efficiency. All quantities remain editable prototype balance. Starter validation checks enough support for core staffing plus construction of the first service expansion, and finite inventory for construction, new workers and retained repair buffers. Current starter alloy is 420 units; this is balance data, not an engine constant. Charging means automated support capacity and local maintenance supplies, without a kW grid or per-robot battery simulation.
+
+## Historical v0.4 graphics revision
+
+**v0.4.0 was packaged and verified in `Builds/v0.4.0/Windows`; the launcher selected it for that release.** The slice includes responsive orbit, regional map/focused detail, resource overlays/alerts, floating bottom construction, complete building statistics, and rebuilt terrain with dense low/tall grass. The final native suite passed **27 tests: 26 clean plus one with editor background HTTP warnings; zero failed or unrun**. Shipping packaging exited 0; its interaction route passed **53 stages with zero failures**, 45 process-tree samples each showed zero TCP/UDP endpoints, and ten staged files matched source hashes. The editor warning was not a gameplay assertion failure; the packaged observations are bounded checks, not a guarantee about all runs. Close/middle views improve while distant ground/forest uniformity remain below the reference. **Start a new scenario:** Rules `prototype-4.0` use actual weapon shots/reloads and explicit unarmed/zero-power information; older-rule saves are rejected. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md) and the [development report](../DEVELOPMENT_REPORT.md).
 
 **Historical v0.3 verification:** The rotatable perspective camera, credible physical scale, detailed original industry, licensed CC0 nature, and revised ground surfaces are included. [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md) records implementation and remaining visual polish. Logical content/balance is unchanged; six rendered centimeters per logical unit gives 3.6 km sectors and a 10.8 km neighborhood.
 
@@ -45,13 +53,13 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | --- | --- |
 | [resources.json](../../Rules/resources.json) | Four raw materials: iron ore, copper ore, silica, carbon. Five manufactured items: alloy stock, conductors, substrates, circuits, and robot components. |
 | [recipes.json](../../Rules/recipes.json) | Alloy, conductor, substrate, circuit, and component recipes; a separate robot-assembly recipe consumed by population production. |
-| [buildings.json](../../Rules/buildings.json) | One command-core definition; four extractor types; alloy refinery, conductor works, substrate works, circuit works, component works; sensor mast, sentinel turret, cargo depot. The core is supplied by the scenario and is not another build-menu option. |
+| [buildings.json](../../Rules/buildings.json) | One command-core definition; four extractor types; alloy refinery, conductor works, substrate works, circuit works, component works; sensor mast, sentinel turret, cargo depot, robot charging/service bay. Each declares construction duration/builders and support capacity. The core is supplied by the scenario and is not another build-menu option. |
 | [policies.json](../../Rules/policies.json) | Simulation timing, staffing, population adjustment, physical delivery, repair/upkeep, visibility, threat behavior, scenario objectives, and numerical tuning. |
-| [scenario.json](../../Rules/scenario.json) | First Landing title, initial core, starting population and inventory, separate initial shuttle cargo, world extent, seed, and irregularly distributed resource-source locations. |
+| [scenario.json](../../Rules/scenario.json) | First Landing title, initial core, starting population and inventory, separate landing deployment kit and escape-shuttle cargo, world extent, seed, and irregularly distributed resource-source locations. |
 | [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a finite developed-colony preset. Runtime AI uses the normal simulation rules. |
 | [Graphics definitions](../../Graphics/scene.json) | Camera limits/clearance and orbit sensitivity, regional-view threshold, logical-to-rendered scale, relief/pad settings, terrain/cloud materials and lighting, vegetation density/scales, and ten nature roles. These change presentation without changing logical costs, rates, or travel times. |
 
-The proposed twelve-resource catalog is not all implemented. The current thirteen building definitions represent reusable prototype functions, not adoption of every proposed facility or upgrade. The JSON files own exact quantities and rates so this document does not become a second balance table.
+The proposed twelve-resource catalog is not all implemented. The current fourteen building definitions represent reusable prototype functions, not adoption of every proposed facility or upgrade. The JSON files own exact quantities and rates so this document does not become a second balance table.
 
 ## Implemented behavior for this slice
 
@@ -59,34 +67,34 @@ These behaviors form the current prototype. The checks above and development rep
 
 | Area | Prototype behavior |
 | --- | --- |
-| Colony start | One command core, a small robotic workforce, and finite inventory supplied by the scenario. |
+| Colony start | One shuttle-carried core kit, starting robots and finite inventory. Workers deploy the only core after site selection; ordinary operations begin on completion. |
 | Scenario and observer | Local setup supports empty, starting-AI, and developed-AI cells. A human center chooses an initial core landing position; an AI center runs under observer controls. The controller does not receive free materials while ticking. |
-| Construction | Place supported buildings, with costs paid directly from available core inventory. Invalid placement or insufficient stock should be rejected. |
+| Construction | Orders reserve uncommitted core stock after protected operating buffers. Physical couriers deliver materials, then assigned builders assemble the site. Construction has no production, repair, sensor or weapon operation. Reservations prevent double spending. |
 | Production | Matching extractors produce at their defined rates. Processors consume delivered local inputs and generate local output through external recipes. |
 | Workforce | Automatic staffing and job-driven population production. A fully staffed operating requirement, a minimum population, and delayed retirement without material refunds are prototype policies. The assembly-input buffer reserves components for future robots; it does not increase the population target above job demand. |
 | Physical delivery | Automatic couriers carry limited cargo between source and destination inventories. Local production availability depends on actual delivery. |
-| Robot support | Component upkeep is collected at the core as a simplified service hub; shortages reduce efficiency. This is a test policy, not the final robot-needs or happiness model. |
+| Robot support | Completed, enabled and staffed cores/service bays provide capacity. Growth needs open jobs and capacity. Each support building consumes local delivered components for its assigned robots; missing support or maintenance lowers efficiency. Capacity loss does not delete existing robots. |
 | Repairs | Automatic repairs consume alloy delivered to the damaged building under the selected local-repair policy. |
 | Visibility | Core and sensor definitions provide finite coverage. Construction/target information should follow the implemented visibility rules. |
 | Threats | Roaming bugs and recurring waves create automatic combat pressure. Wave strength responds to prototype colony metrics, with rates and limits in data. |
 | Defenses | Core and turrets engage threats automatically; building health and damage remain meaningful. |
 | Emergency departure | Manual ejection or core destruction ends the local scenario while retaining only the separately preloaded shuttle cargo. The default scenario starts with an empty shuttle; no core-stock transfer occurs. |
 | Objective | Survive for the configured duration and actually manufacture the configured component output while maintaining the required industrial building. Starting stock alone must not satisfy a production objective. |
-| Local state | Local save/load includes inventory, cargo, timers, population, threats, random state, all occupied sectors, camera/time controls, and rule/AI fingerprints; native continuation tests cover it. It does not implement offline multiplayer progression. |
+| Local state | Local save/load includes inventory, cargo, timers, population, threats, random state, construction progress/site materials and cargo purpose, maintenance state, all occupied sectors, camera/time controls, and rule/AI fingerprints; native continuation tests cover it. It does not implement offline multiplayer progression. |
 
 The precise local interface and input bindings belong with the delivered build's instructions. The full [interface direction](INTERFACE_AND_CONTROLS.md) remains the design guide; fleet controls are not implied to exist in this slice.
 
 ## Explicit simplifications and differences from the full design
 
 - **Placement footprints:** Simulation spacing uses circles, while rendered foundations/pads are square. Diagonal placements can pass spacing checks while square corners overlap; building-art and footprint alignment work is deferred.
-- **Construction delivery:** Costs are debited from core inventory immediately. Material hauling to construction sites, construction jobs, and staged assembly are not yet simulated.
+- **Construction:** Physical delivery and aggregate builders are implemented. Only core stock funds orders; factory input stock cannot be spent remotely. Pausing a site retains its reservation. Cancellation, partial construction bills and individual builder navigation are not implemented.
 - **Workers:** Aggregate job allocation and decorative/representative robot presentation can stand in for fully individualized worker scheduling. Do not present population count as unlimited extraction capacity.
 - **Population reduction:** Retirement without refunds is a selected prototype policy. It does not settle dismantling, deactivation, storage, or recovery for the complete game.
-- **Civilian needs:** Core-collected component upkeep and a shortage efficiency effect are provisional. Happiness, the tentative morale share, dissatisfaction, and revolt remain undesigned or unimplemented here.
-- **Energy:** The resource proposal's carbon-powered starter generator is not part of the current definition set. No full power network, battery charge, or charging-facility simulation is promised by this slice.
+- **Civilian needs:** Local core/service-bay component upkeep and a shortage efficiency effect are prototype policies. Happiness, the tentative morale share, dissatisfaction, and revolt remain undesigned or unimplemented here.
+- **Energy:** The resource proposal's carbon-powered starter generator is not part of the current definition set. Charging/service facilities represent capacity and locally supplied maintenance. No full power network or individual battery charge is simulated.
 - **Transport:** Simple couriers demonstrate inventory movement. The full vehicle/mech fleet production, route planning, cargo loss/salvage, and privateering model is later work.
 - **World:** The local neighborhood presents independent colony sectors. This does not implement cross-sector extraction, travel, shared combat, or persistent-world ownership. Configured sector dimensions and resource placement are prototype values, not final map-scale balance.
-- **AI:** A deterministic target-building controller chooses nearby deposits, extends sensors, and replaces missing facilities when it can afford them. Developed colonies begin with an explicit finite stock/population preset and paid setup construction. This does not model strategic diplomacy, trade, or hostile fleet decisions.
+- **AI:** A deterministic target-building controller chooses nearby deposits, extends sensors, and replaces missing facilities when it can afford them. Developed colonies run the actual simulation from a finite stock/population seed until their required buildings finish, within external time/action bounds. Delivery, staffing, services and threats apply during preparation; elapsed time and manufactured output are genuine. This does not model strategic diplomacy, trade, or hostile fleet decisions.
 - **Emergency escape:** A separate preloaded-cargo state and scenario-ending departure are implemented in the simulation. Interactive shuttle loading, boarding, destination selection, and world relocation are outside this slice. The default shuttle is empty; launch never copies core inventory. This is not a complete physical loading or relocation system.
 - **Balance:** The external files supply playable test assumptions. The final invasion clock, production rates, starter inventory, core defense strength, and victory/loss rules remain subject to review.
 - **Persistence:** Local save/load and any local time controls are prototype facilities. They do not settle the persistent game's authority, server timeline, or offline behavior.
@@ -101,7 +109,7 @@ These omissions do not remove those ideas from their subject documents. The full
 
 ## Acceptance checklist and verification boundaries
 
-This checklist remains useful for subsequent revisions. Current verification is recorded above; it is not a declaration that every item was rerun end to end in the packaged v0.4 build. In particular, save/load is covered natively, while the controlled packaged balance edit is historical v0.2 evidence.
+This checklist remains useful for subsequent revisions. Current verification is recorded above; it is not a declaration that every item was rerun end to end in the packaged v0.5 build. In particular, save/load is covered natively, while the controlled packaged balance edit is historical v0.2 evidence.
 
 1. Compile and launch the native Unreal editor/game targets; produce a standalone package that launches outside the editor.
 2. Load the external definition set with useful errors for broken references or invalid rules. In the packaged build, verify a controlled numerical rule edit takes effect after the documented restart/reload path.

@@ -153,13 +153,15 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
         const FObject O = V->AsObject(); FSeigeBuildingDef B;
         if (!StringField(O, TEXT("id"), B.Id, Error) || !StringField(O, TEXT("name"), B.Name, Error) || !StringField(O, TEXT("category"), B.Category, Error) || !StringField(O, TEXT("role"), B.Role, Error) || !StringField(O, TEXT("description"), B.Description, Error) || !StringField(O, TEXT("visual"), B.Visual, Error) || !StringField(O, TEXT("recipe"), B.Recipe, Error) || !StringField(O, TEXT("extract_resource"), B.ExtractResource, Error) || !ColorField(O, B.Color, Error) || !Amounts(O, TEXT("cost"), B.Cost, Resources, Error)) return false;
         if (!IntegerField(O, TEXT("jobs"), B.Jobs, 0, Error) || !Numeric(O, TEXT("health"), B.Health, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("footprint"), B.Footprint, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("storage_capacity"), B.StorageCapacity, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("sensor_range"), B.SensorRange, 0, Error) || !Numeric(O, TEXT("attack_range"), B.AttackRange, 0, Error) || !Numeric(O, TEXT("extract_rate"), B.ExtractRate, 0, Error) || !StringField(O,TEXT("weapon_name"),B.WeaponName,Error) || !Numeric(O,TEXT("damage_per_shot"),B.DamagePerShot,0,Error) || !Numeric(O,TEXT("reload_seconds"),B.ReloadSeconds,0,Error) || !Numeric(O,TEXT("power_usage_kw"),B.PowerUsageKW,0,Error) || !Numeric(O,TEXT("power_generation_kw"),B.PowerGenerationKW,0,Error)) return false;
+        if (!Numeric(O,TEXT("construction_seconds"),B.ConstructionSeconds,UE_DOUBLE_SMALL_NUMBER,Error) || !IntegerField(O,TEXT("construction_workers"),B.ConstructionWorkers,1,Error) || !IntegerField(O,TEXT("robot_support_capacity"),B.RobotSupportCapacity,0,Error) || !IntegerField(O,TEXT("staffing_priority"),B.StaffingPriority,0,Error)) return false;
+        if (Sum(B.Cost)>B.StorageCapacity || (B.Role!=TEXT("core") && B.Role!=TEXT("service") && B.RobotSupportCapacity>0)) {Error=TEXT("Invalid construction storage or support role: ")+B.Id;return false;}
         const bool Armed=B.DamagePerShot>0;
         if (O->HasField(TEXT("damage_per_second")) || (Armed && (B.WeaponName.IsEmpty() || B.ReloadSeconds<=0 || B.AttackRange<=0)) || (!Armed && (!B.WeaponName.IsEmpty() || B.ReloadSeconds!=0 || B.AttackRange!=0)))
         { Error=TEXT("Weapon requires consistent name, shot damage, reload and range; DPS is derived: ")+B.Id;return false; }
         if (B.PowerUsageKW!=0 || B.PowerGenerationKW!=0) {Error=TEXT("Power grid is not implemented; power values must remain zero: ")+B.Id;return false;}
         B.DamagePerSecond=Armed?B.DamagePerShot/B.ReloadSeconds:0;
         if (!FMath::IsFinite(B.DamagePerSecond)) {Error=TEXT("Weapon DPS is nonfinite: ")+B.Id;return false;}
-        const TArray<FString> Roles = {TEXT("core"), TEXT("extractor"), TEXT("processor"), TEXT("storage"), TEXT("sensor"), TEXT("defense")};
+        const TArray<FString> Roles = {TEXT("core"), TEXT("extractor"), TEXT("processor"), TEXT("storage"), TEXT("sensor"), TEXT("defense"),TEXT("service")};
         if (B.Id.IsEmpty() || BuildingDefs.Contains(B.Id) || !Roles.Contains(B.Role) || (!B.Recipe.IsEmpty() && !Recipes.Contains(B.Recipe)) || (!B.ExtractResource.IsEmpty() && !Resources.Contains(B.ExtractResource))) { Error = TEXT("Invalid building definition: ") + B.Id; return false; }
         if (B.Role == TEXT("core")) ++CoreDefinitions;
         if ((B.Role == TEXT("extractor")) != (!B.ExtractResource.IsEmpty() && B.ExtractRate > 0) || (B.Role == TEXT("processor")) != !B.Recipe.IsEmpty()) { Error = TEXT("Building role/capability mismatch: ") + B.Id; return false; }
@@ -190,7 +192,8 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
         {TEXT("logistics_policy"),TEXT("local_delivery")},{TEXT("enemy_target_policy"),TEXT("nearest_building")},
         {TEXT("extraction_limit_policy"),TEXT("one_extractor_per_node")},{TEXT("repair_policy"),TEXT("local_materials")},
         {TEXT("objective_policy"),TEXT("survive_and_manufacture")},{TEXT("shuttle_policy"),TEXT("preloaded_cargo_only")},
-        {TEXT("storage_policy"),TEXT("overflow_only")},{TEXT("rule_time_basis"),TEXT("simulation_seconds")}};
+        {TEXT("storage_policy"),TEXT("overflow_only")},{TEXT("rule_time_basis"),TEXT("simulation_seconds")},
+        {TEXT("construction_policy"),TEXT("reserved_core_physical_delivery")},{TEXT("robot_support_policy"),TEXT("local_capacity_and_maintenance")}};
     for (const auto& Pair : Selectors)
     { FString Value; if (!StringField(Policy, Pair.Key, Value, Error)) return false; if (Value != Pair.Value) { Error = TEXT("Unsupported policy ") + Pair.Key + TEXT(": ") + Value; return false; } }
     FString Workforce;
@@ -202,10 +205,17 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
     if (!StringField(Policy, TEXT("objective_building"), ObjectiveBuilding, Error) || !BuildingDefs.Contains(ObjectiveBuilding)) { Error = TEXT("Unknown objective building"); return false; }
     if (!Amounts(Policy, TEXT("core_reserves"), CoreReserves, Resources, Error) || !StringField(Scenario, TEXT("title"), Title, Error) || !StringField(Scenario, TEXT("core_definition"), CoreDefinition, Error) || !Numeric(Scenario, TEXT("world_half_size"), WorldHalfSize, UE_DOUBLE_SMALL_NUMBER, Error) || !IntegerField(Scenario, TEXT("starting_population"), Population, 0, Error)) return false;
     if (!BuildingDefs.Contains(CoreDefinition) || BuildingDefs[CoreDefinition].Role != TEXT("core") || Number(TEXT("spawn_radius")) > WorldHalfSize || Population < Number(TEXT("minimum_population"))) { Error = TEXT("Scenario core, population or spawn bounds are invalid"); return false; }
+    bool SupportCanExpand=false;
+    const auto& CoreDef=BuildingDefs[CoreDefinition];
+    for(const FString& Id:BuildMenu){const auto& D=BuildingDefs[Id];if(D.RobotSupportCapacity>D.Jobs && CoreDef.RobotSupportCapacity>=CoreDef.Jobs+FMath::Max(D.ConstructionWorkers,D.Jobs))SupportCanExpand=true;}
+    if(!SupportCanExpand){Error=TEXT("Starter support must leave enough builders and staff to establish a support expansion");return false;}
     int32 Seed = 0; if (!IntegerField(Scenario, TEXT("random_seed"), Seed, 0, Error)) return false; Random.Initialize(Seed);
     FSeigeBuilding B; B.Id = NextId++; B.DefId = CoreDefinition; B.Health = BuildingDefs[CoreDefinition].Health;
-    if (!PositionField(Scenario, TEXT("core_position"), B.Position, Error) || !Amounts(Scenario, TEXT("starting_inventory"), B.Inventory, Resources, Error)) return false;
-    if (FMath::Abs(B.Position.X) + BuildingDefs[CoreDefinition].Footprint > WorldHalfSize || FMath::Abs(B.Position.Y) + BuildingDefs[CoreDefinition].Footprint > WorldHalfSize || Sum(B.Inventory) > BuildingDefs[CoreDefinition].StorageCapacity) { Error = TEXT("Starting core stock or position exceeds capacity"); return false; }
+    if (!PositionField(Scenario, TEXT("core_position"), B.Position, Error) || !Amounts(Scenario, TEXT("starting_inventory"), B.Inventory, Resources, Error) || !Amounts(Scenario,TEXT("starting_deployment_materials"),B.ConstructionMaterials,Resources,Error)) return false;
+    if (!HasAmounts(B.ConstructionMaterials,BuildingDefs[CoreDefinition].Cost) || Sum(B.ConstructionMaterials)!=Sum(BuildingDefs[CoreDefinition].Cost) || Population<BuildingDefs[CoreDefinition].ConstructionWorkers || BuildingDefs[CoreDefinition].RobotSupportCapacity<Population)
+    {Error=TEXT("Landing shuttle must carry the complete deployment kit and enough supported builders");return false;}
+    B.IsConstructing=true;B.ConstructionProgress=0;B.Status=TEXT("Shuttle deploying command core");
+    if (FMath::Abs(B.Position.X) + BuildingDefs[CoreDefinition].Footprint > WorldHalfSize || FMath::Abs(B.Position.Y) + BuildingDefs[CoreDefinition].Footprint > WorldHalfSize || Occupied(B) > BuildingDefs[CoreDefinition].StorageCapacity) { Error = TEXT("Starting core stock or position exceeds capacity"); return false; }
     Buildings.Add(B);
     if (!Amounts(Scenario,TEXT("starting_shuttle_cargo"),ShuttleCargo,Resources,Error) || Sum(ShuttleCargo) > Number(TEXT("shuttle_capacity"))) { Error = TEXT("Invalid preloaded shuttle inventory"); return false; }
     if (!ArrayField(Scenario, TEXT("deposits"), Values, Error)) return false;
@@ -238,7 +248,8 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
         const FSeigeBuildingDef& D = Pair.Value;
         double Buffer = Number(TEXT("repair_buffer_units"));
         if (!D.Recipe.IsEmpty()) Buffer += Sum(Recipes[D.Recipe].Inputs) * Number(TEXT("delivery_buffer_cycles"));
-        if (D.Role == TEXT("core")) Buffer += Sum(CoreReserves) + Sum(Recipes[PopulationRecipe].Inputs) * Number(TEXT("population_buffer_robots")) + Population * Number(TEXT("upkeep_per_robot")) * Number(TEXT("upkeep_buffer_intervals"));
+        if (D.Role == TEXT("core")) Buffer += Sum(CoreReserves) + Sum(Recipes[PopulationRecipe].Inputs) * Number(TEXT("population_buffer_robots"));
+        Buffer+=D.RobotSupportCapacity*Number(TEXT("upkeep_per_robot"))*Number(TEXT("upkeep_buffer_intervals"));
         if (Buffer > D.StorageCapacity) { Error = TEXT("Demand buffers exceed building capacity: ") + D.Id; return false; }
     }
     NextWaveTime = Number(TEXT("wave_first_time")); NextRoamTime = Number(TEXT("roam_first_time"));
@@ -275,13 +286,29 @@ FSeigeBuilding* FSeigeSimulation::FindBuilding(int32 Id) { return Buildings.Find
 const FSeigeBuilding* FSeigeSimulation::FindBuilding(int32 Id) const { return Buildings.FindByPredicate([Id](const FSeigeBuilding& B){return B.Id == Id;}); }
 FSeigeBuilding* FSeigeSimulation::Core() { return Buildings.FindByPredicate([this](const FSeigeBuilding& B){return B.DefId == CoreDefinition;}); }
 const FSeigeBuilding* FSeigeSimulation::Core() const { return Buildings.FindByPredicate([this](const FSeigeBuilding& B){return B.DefId == CoreDefinition;}); }
-double FSeigeSimulation::Occupied(const FSeigeBuilding& B) const { return Sum(B.Inventory); }
+double FSeigeSimulation::Occupied(const FSeigeBuilding& B) const { return Sum(B.Inventory)+Sum(B.ConstructionMaterials); }
+double FSeigeSimulation::ConstructionReserved(const FString& Resource) const
+{
+    double Total=0;
+    for(const FSeigeBuilding& B:Buildings) if(B.Health>0 && B.IsConstructing)
+    {
+        double InTransit=0;for(const FSeigeCourier& C:Couriers)if(C.ForConstruction&&C.TargetId==B.Id&&C.Resource==Resource)InTransit+=C.Amount;
+        Total+=FMath::Max(0.,Definition(B)->Cost.FindRef(Resource)-B.ConstructionMaterials.FindRef(Resource)-InTransit);
+    }
+    return Total;
+}
+double FSeigeSimulation::Spendable(const FSeigeBuilding& B,const FString& Resource) const
+{return FMath::Max(0.,B.Inventory.FindRef(Resource)-(B.DefId==CoreDefinition?ConstructionReserved(Resource):0.));}
+bool FSeigeSimulation::HasSpendable(const FSeigeBuilding& B,const TMap<FString,double>& Amounts) const
+{for(const auto& P:Amounts)if(Spendable(B,P.Key)+UE_DOUBLE_SMALL_NUMBER<P.Value)return false;return true;}
+double FSeigeSimulation::ConstructionAvailable(const FString& Resource) const
+{const auto* C=Core();return C&&!C->IsConstructing&&C->Health>0?FMath::Max(0.,Spendable(*C,Resource)-Demand(*C,Resource,false)):0.;}
 double FSeigeSimulation::Incoming(int32 Target, const FString& Resource) const
 { double Amount = 0; for (const FSeigeCourier& C : Couriers) if (C.TargetId == Target && (Resource.IsEmpty() || Resource == C.Resource)) Amount += C.Amount; return Amount; }
 double FSeigeSimulation::WorkFraction(const FSeigeBuilding& B) const
 {
     const FSeigeBuildingDef* D = Definition(B);
-    if (!D || !B.Enabled || B.Health <= 0) return 0;
+    if (!D || !B.Enabled || B.Health <= 0 || B.IsConstructing) return 0;
     if (D->Jobs == 0) return WorkforceEfficiency;
     if (TextRule(TEXT("workforce_mode")) == TEXT("full_staff")) return B.Workers >= D->Jobs ? WorkforceEfficiency : 0;
     return WorkforceEfficiency * static_cast<double>(B.Workers) / D->Jobs;
@@ -289,7 +316,7 @@ double FSeigeSimulation::WorkFraction(const FSeigeBuilding& B) const
 double FSeigeSimulation::TotalStock(const FString& Resource) const
 {
     double Amount = 0;
-    for (const FSeigeBuilding& B : Buildings) if (B.Health > 0) Amount += B.Inventory.FindRef(Resource);
+    for (const FSeigeBuilding& B : Buildings) if (B.Health > 0) Amount += B.Inventory.FindRef(Resource)+B.ConstructionMaterials.FindRef(Resource);
     for (const FSeigeCourier& C : Couriers) if (C.Resource == Resource) Amount += C.Amount;
     return Amount;
 }
@@ -304,6 +331,7 @@ bool FSeigeSimulation::CanPlaceBuilding(const FString& Id, FVector2D P, FString&
     const FSeigeBuildingDef* D = BuildingDefs.Find(Id);
     const FSeigeBuilding* C = Core();
     if (!Policy || Escaped || Failed || !C || C->Health <= 0) { Error = TEXT("Colony is no longer under your command"); return false; }
+    if(C->IsConstructing){Error=TEXT("Wait for the landing shuttle to finish deploying the command core");return false;}
     if (!D || !BuildMenu.Contains(Id)) { Error = TEXT("Definition is not available in the build menu"); return false; }
     if (D->Role == TEXT("core")) { Error = TEXT("Only one command core is allowed"); return false; }
     if (!FMath::IsFinite(P.X) || !FMath::IsFinite(P.Y) || FMath::Abs(P.X) + D->Footprint > WorldHalfSize || FMath::Abs(P.Y) + D->Footprint > WorldHalfSize) { Error = TEXT("Outside the sector boundary"); return false; }
@@ -319,15 +347,17 @@ bool FSeigeSimulation::CanPlaceBuilding(const FString& Id, FVector2D P, FString&
         for (const FSeigeBuilding& B : Buildings)
             if (B.Health > 0 && Definition(B)->ExtractResource == D->ExtractResource && FVector2D::Distance(B.Position, Selected->Position) <= Number(TEXT("extractor_snap_distance"))) { Error = TEXT("This deposit already has an extractor"); return false; }
     }
-    if (!HasAmounts(C->Inventory, D->Cost)) { Error = TEXT("Insufficient construction materials at the command core"); return false; }
+    for(const auto& Cost:D->Cost)if(ConstructionAvailable(Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value)
+    { Error = TEXT("Insufficient unreserved construction materials at the command core"); return false; }
     Error.Empty(); return true;
 }
 bool FSeigeSimulation::PlaceBuilding(const FString& Id, FVector2D P, FString& Error)
 {
     if (!CanPlaceBuilding(Id, P, Error)) return false;
-    const FSeigeBuildingDef& D = BuildingDefs[Id]; Consume(Core()->Inventory, D.Cost);
-    FSeigeBuilding B; B.Id = NextId++; B.DefId = Id; B.Position = P; B.Health = D.Health; B.Status = TEXT("Awaiting automatic staffing");
-    Buildings.Add(B); AllocateWorkers(); AddEvent(D.Name + TEXT(" established")); return true;
+    const FSeigeBuildingDef& D = BuildingDefs[Id];
+    FSeigeBuilding B; B.Id = NextId++; B.DefId = Id; B.Position = P; B.Health = D.Health; B.Status = TEXT("Construction materials reserved; awaiting couriers");
+    B.IsConstructing=true;B.ConstructionProgress=0;
+    Buildings.Add(B); AllocateWorkers(); AddEvent(D.Name + TEXT(" construction queued")); return true;
 }
 void FSeigeSimulation::ToggleBuilding(int32 Id)
 {
@@ -340,10 +370,50 @@ void FSeigeSimulation::AllocateWorkers()
     TotalJobs = 0; Employed = 0; int32 Available = Population;
     for (FSeigeBuilding& B : Buildings)
     {
-        B.Workers = 0;
+        B.Workers = 0;B.Builders=0;
         if (!B.Enabled || B.Health <= 0) continue;
-        const int32 Jobs = Definition(B)->Jobs; TotalJobs += Jobs;
-        B.Workers = FMath::Min(Jobs, Available); Available -= B.Workers; Employed += B.Workers;
+        TotalJobs+=B.IsConstructing?Definition(B)->ConstructionWorkers:Definition(B)->Jobs;
+    }
+    // One external priority applies to building and operating the workplace. Equal priorities
+    // use stable entity order, so a growing industrial queue cannot silently disable defenses.
+    TArray<int32> Order;for(int32 I=0;I<Buildings.Num();++I)Order.Add(I);
+    Order.Sort([&](int32 A,int32 B){const int32 PA=Definition(Buildings[A])->StaffingPriority,PB=Definition(Buildings[B])->StaffingPriority;return PA==PB?Buildings[A].Id<Buildings[B].Id:PA<PB;});
+    for(int32 Index:Order)
+    {
+        FSeigeBuilding& B=Buildings[Index];
+        if(!B.Enabled||B.Health<=0)continue;const auto& D=*Definition(B);
+        if(B.IsConstructing&&!HasAmounts(B.ConstructionMaterials,D.Cost))continue;
+        int32& Assigned=B.IsConstructing?B.Builders:B.Workers;
+        Assigned=FMath::Min(Available,B.IsConstructing?D.ConstructionWorkers:D.Jobs);Available-=Assigned;Employed+=Assigned;
+    }
+    UpdateSupport();
+}
+void FSeigeSimulation::UpdateSupport()
+{
+    RobotSupportCapacity=0;SupportedPopulation=0;int32 Remaining=Population,Maintained=0;
+    for(FSeigeBuilding& B:Buildings)
+    {
+        B.SupportedRobots=0;const auto& D=*Definition(B);
+        if(B.Health<=0||!B.Enabled||B.IsConstructing||B.Workers<D.Jobs||D.RobotSupportCapacity<=0)continue;
+        RobotSupportCapacity+=D.RobotSupportCapacity;B.SupportedRobots=FMath::Min(Remaining,D.RobotSupportCapacity);
+        Remaining-=B.SupportedRobots;SupportedPopulation+=B.SupportedRobots;if(B.MaintenanceSupplied)Maintained+=B.SupportedRobots;
+    }
+    const auto* C=Core();
+    if(C&&C->Health>0&&C->IsConstructing){RobotSupportCapacity=Definition(*C)->RobotSupportCapacity;SupportedPopulation=FMath::Min(Population,RobotSupportCapacity);Maintained=SupportedPopulation;}
+    WorkforceEfficiency=Population>0?(Maintained+(Population-Maintained)*Number(TEXT("upkeep_shortage_efficiency")))/Population:1.;
+}
+void FSeigeSimulation::StepConstruction(double Seconds)
+{
+    for(FSeigeBuilding& B:Buildings)
+    {
+        if(!B.IsConstructing||B.Health<=0)continue;const auto& D=*Definition(B);
+        if(!B.Enabled){B.Status=TEXT("Construction paused; materials remain reserved");continue;}
+        if(!HasAmounts(B.ConstructionMaterials,D.Cost)){B.Status=TEXT("Awaiting physically delivered construction materials");continue;}
+        if(B.Builders<=0){B.Status=TEXT("Materials ready; waiting for construction robots");continue;}
+        B.Status=B.DefId==CoreDefinition?TEXT("Landing shuttle deploying command core"):TEXT("Robots constructing on site");
+        B.ConstructionProgress=FMath::Min(1.,B.ConstructionProgress+Seconds*WorkforceEfficiency*B.Builders/(D.ConstructionSeconds*D.ConstructionWorkers));
+        if(B.ConstructionProgress+UE_DOUBLE_SMALL_NUMBER>=1)
+        {B.ConstructionProgress=1;B.IsConstructing=false;B.Builders=0;B.ConstructionMaterials.Empty();AddEvent(D.Name+TEXT(" construction completed"));}
     }
 }
 void FSeigeSimulation::Tick(double Seconds)
@@ -353,7 +423,7 @@ void FSeigeSimulation::Tick(double Seconds)
     while (Seconds > UE_DOUBLE_SMALL_NUMBER && !Escaped && !Failed)
     {
         const double Step = FMath::Min(Seconds, Number(TEXT("fixed_step_seconds"))); Seconds -= Step; Time += Step;
-        AllocateWorkers(); StepPopulation(Step); AllocateWorkers(); StepProduction(Step); StepLogistics(Step);
+        AllocateWorkers(); StepPopulation(Step); AllocateWorkers(); StepConstruction(Step); AllocateWorkers(); StepProduction(Step); StepLogistics(Step);
         while (Time >= NextWaveTime) { TriggerWave(); NextWaveTime += Number(TEXT("wave_interval")); }
         while (Time >= NextRoamTime) { SpawnEnemies(static_cast<int32>(Number(TEXT("roam_count")))); NextRoamTime += Number(TEXT("roam_interval")); }
         StepCombat(Step); CheckObjectives();
@@ -361,7 +431,7 @@ void FSeigeSimulation::Tick(double Seconds)
 }
 void FSeigeSimulation::StepPopulation(double Seconds)
 {
-    FSeigeBuilding* C = Core(); if (!C || C->Health <= 0) return;
+    FSeigeBuilding* C = Core(); if (!C || C->Health <= 0 || C->IsConstructing) return;
     const int32 Target = FMath::Max(TotalJobs, static_cast<int32>(Number(TEXT("minimum_population"))));
     const FSeigeRecipeDef& Recipe = Recipes[TextRule(TEXT("population_recipe"))];
     if (Population == Target) PopulationClock = 0;
@@ -372,7 +442,7 @@ void FSeigeSimulation::StepPopulation(double Seconds)
         while (PopulationClock >= Interval && Population != Target)
         {
             if (Population > Target) { --Population; PopulationClock -= Interval; }
-            else if (HasAmounts(C->Inventory, Recipe.Inputs)) { Consume(C->Inventory, Recipe.Inputs); ++Population; PopulationClock -= Interval; }
+            else if (Population<RobotSupportCapacity && HasSpendable(*C, Recipe.Inputs)) { Consume(C->Inventory, Recipe.Inputs); ++Population; PopulationClock -= Interval; }
             else { PopulationClock = Interval; break; }
         }
         if (Population == Target) PopulationClock = 0;
@@ -381,13 +451,16 @@ void FSeigeSimulation::StepPopulation(double Seconds)
     while (UpkeepClock >= Number(TEXT("upkeep_interval")))
     {
         UpkeepClock -= Number(TEXT("upkeep_interval"));
-        const FString Resource = TextRule(TEXT("upkeep_resource")); const double Need = Population * Number(TEXT("upkeep_per_robot"));
-        double& Stock = C->Inventory.FindOrAdd(Resource);
-        const bool Supplied = Stock + UE_DOUBLE_SMALL_NUMBER >= Need;
-        const double NewEfficiency = Supplied ? 1 : Number(TEXT("upkeep_shortage_efficiency"));
-        if (WorkforceEfficiency != NewEfficiency) AddEvent(Supplied ? TEXT("Robot maintenance restored; normal operating efficiency") : TEXT("Core maintenance supply exhausted; workforce efficiency reduced"));
-        if (Supplied) Stock = FMath::Max(0.0, Stock - Need);
-        WorkforceEfficiency = NewEfficiency;
+        const FString Resource = TextRule(TEXT("upkeep_resource"));
+        for(FSeigeBuilding& B:Buildings)if(B.SupportedRobots>0)
+        {
+            const double Need=B.SupportedRobots*Number(TEXT("upkeep_per_robot"));
+            const bool Supplied=Spendable(B,Resource)+UE_DOUBLE_SMALL_NUMBER>=Need;
+            if(B.MaintenanceSupplied!=Supplied)AddEvent(Definition(B)->Name+(Supplied?TEXT(" robot maintenance restored"):TEXT(" needs delivered maintenance supplies")));
+            if(Supplied)B.Inventory.FindOrAdd(Resource)=FMath::Max(0.,B.Inventory.FindRef(Resource)-Need);
+            B.MaintenanceSupplied=Supplied;
+        }
+        UpdateSupport();
     }
 }
 void FSeigeSimulation::StepProduction(double Seconds)
@@ -396,11 +469,12 @@ void FSeigeSimulation::StepProduction(double Seconds)
     {
         const FSeigeBuildingDef& D = *Definition(B);
         if (B.Health <= 0) { B.Status = TEXT("Destroyed"); continue; }
+        if (B.IsConstructing) continue;
         // Repair is automatic even on disabled buildings, but always consumes local material.
         if (B.Health < D.Health)
         {
             const FString Resource = TextRule(TEXT("repair_resource")); double& Stock = B.Inventory.FindOrAdd(Resource);
-            const double Restored = FMath::Min3(D.Health - B.Health, Number(TEXT("repair_health_per_second")) * Seconds, Stock * Number(TEXT("repair_health_per_unit")));
+            const double Restored = FMath::Min3(D.Health - B.Health, Number(TEXT("repair_health_per_second")) * Seconds, Spendable(B,Resource) * Number(TEXT("repair_health_per_unit")));
             Stock = FMath::Max(0.0, Stock - Restored / Number(TEXT("repair_health_per_unit"))); B.Health += Restored;
         }
         if (!B.Enabled) { B.Status = TEXT("Disabled (repairs remain automatic)"); continue; }
@@ -427,7 +501,8 @@ void FSeigeSimulation::StepProduction(double Seconds)
             }
             if (!HasAmounts(B.Inventory,R.Inputs)) B.Progress = 0;
         }
-        else if (B.DefId == CoreDefinition) B.Status = Population < TotalJobs ? TEXT("Assembling robots for open jobs") : TEXT("Command and maintenance online");
+        else if (B.DefId == CoreDefinition) B.Status = Population < TotalJobs ? (Population>=RobotSupportCapacity?TEXT("Robot support capacity full; build a service bay"):TEXT("Assembling robots for open jobs")) : TEXT("Command and maintenance online");
+        else if(D.Role==TEXT("service"))B.Status=B.MaintenanceSupplied?TEXT("Automatic robot charging and maintenance online"):TEXT("Waiting for local maintenance supplies");
         else if (D.Role == TEXT("storage")) B.Status = TEXT("Receiving and redistributing overflow");
         else if (D.Role == TEXT("defense")) B.Status = TEXT("Automatic defense online");
         else B.Status = TEXT("Sensor coverage online");
@@ -435,16 +510,16 @@ void FSeigeSimulation::StepProduction(double Seconds)
 }
 double FSeigeSimulation::Demand(const FSeigeBuilding& B, const FString& Resource, bool IncludeCoreReserve) const
 {
-    if (B.Health <= 0) return 0;
+    if (B.Health <= 0 || B.IsConstructing) return 0;
     const FSeigeBuildingDef& D = *Definition(B); double Need = 0;
     if (Resource == TextRule(TEXT("repair_resource"))) Need += Number(TEXT("repair_buffer_units"));
     if (B.Enabled && !D.Recipe.IsEmpty()) Need += Recipes[D.Recipe].Inputs.FindRef(Resource) * Number(TEXT("delivery_buffer_cycles"));
     if (B.DefId == CoreDefinition)
     {
         Need += Recipes[TextRule(TEXT("population_recipe"))].Inputs.FindRef(Resource) * Number(TEXT("population_buffer_robots"));
-        if (Resource == TextRule(TEXT("upkeep_resource"))) Need += Population * Number(TEXT("upkeep_per_robot")) * Number(TEXT("upkeep_buffer_intervals"));
         if (IncludeCoreReserve) Need += CoreReserves.FindRef(Resource);
     }
+    if(B.Enabled && Resource==TextRule(TEXT("upkeep_resource")))Need+=D.RobotSupportCapacity*Number(TEXT("upkeep_per_robot"))*Number(TEXT("upkeep_buffer_intervals"));
     return Need;
 }
 void FSeigeSimulation::StepLogistics(double Seconds)
@@ -457,7 +532,7 @@ void FSeigeSimulation::StepLogistics(double Seconds)
             Target = FindBuilding(C.SourceId);
             if (!Target || Target->Health <= 0) Target = Core();
             if (!Target || Target->Health <= 0) { ++LostCouriers; Couriers.RemoveAt(I); continue; }
-            C.TargetId = Target->Id;
+            C.TargetId = Target->Id;C.ForConstruction=false;
         }
         const FVector2D Delta = Target->Position - C.Position; const double Distance = Delta.Size();
         const double Move = Number(TEXT("courier_speed")) * Seconds;
@@ -465,7 +540,9 @@ void FSeigeSimulation::StepLogistics(double Seconds)
         {
             C.Position = Target->Position;
             const double Amount = FMath::Min(C.Amount, FMath::Max(0.0, Definition(*Target)->StorageCapacity - Occupied(*Target)));
-            Target->Inventory.FindOrAdd(C.Resource) += Amount; C.Amount -= Amount; DeliveredUnits += Amount;
+            if(C.ForConstruction)Target->ConstructionMaterials.FindOrAdd(C.Resource)+=Amount;
+            else Target->Inventory.FindOrAdd(C.Resource) += Amount;
+            C.Amount -= Amount; DeliveredUnits += Amount;
             if (C.Amount <= UE_DOUBLE_SMALL_NUMBER) Couriers.RemoveAt(I);
         }
         else C.Position += Delta / Distance * Move;
@@ -474,6 +551,19 @@ void FSeigeSimulation::StepLogistics(double Seconds)
     if (DispatchClock < Number(TEXT("dispatch_interval"))) return;
     DispatchClock = FMath::Fmod(DispatchClock, Number(TEXT("dispatch_interval")));
     TArray<FString> ResourceIds; Resources.GetKeys(ResourceIds); ResourceIds.Sort();
+    // Queue order is deterministic. Materials remain inventory until a physical courier departs.
+    if(FSeigeBuilding* Source=Core();Source&&Source->Health>0&&!Source->IsConstructing)
+    for(FSeigeBuilding& Target:Buildings)if(Target.IsConstructing&&Target.Enabled&&Target.Health>0)
+    for(const FString& Resource:ResourceIds)
+    {
+        if(Couriers.Num()>=Number(TEXT("max_couriers")))return;
+        const double Need=Definition(Target)->Cost.FindRef(Resource)-Target.ConstructionMaterials.FindRef(Resource)-Incoming(Target.Id,Resource);
+        const double Supply=Source->Inventory.FindRef(Resource)-Demand(*Source,Resource,false);
+        const double Amount=FMath::Min3(Need,Supply,Number(TEXT("courier_capacity")));
+        if(Amount<=UE_DOUBLE_SMALL_NUMBER)continue;
+        FSeigeCourier C;C.Id=NextId++;C.SourceId=Source->Id;C.TargetId=Target.Id;C.Resource=Resource;C.Amount=Amount;C.Position=Source->Position;C.ForConstruction=true;
+        Source->Inventory.FindOrAdd(Resource)-=Amount;Couriers.Add(C);
+    }
     // Supply consuming workplaces before building up the construction reserve at the core.
     TArray<int32> Targets;
     for (int32 I = 0; I < Buildings.Num(); ++I) if (Buildings[I].DefId != CoreDefinition && Definition(Buildings[I])->Role != TEXT("storage")) Targets.Add(I);
@@ -481,7 +571,7 @@ void FSeigeSimulation::StepLogistics(double Seconds)
     for (int32 I = 0; I < Buildings.Num(); ++I) if (Definition(Buildings[I])->Role == TEXT("storage")) Targets.Add(I);
     for (int32 TargetIndex : Targets)
     {
-        FSeigeBuilding& Target = Buildings[TargetIndex]; if (Target.Health <= 0) continue;
+        FSeigeBuilding& Target = Buildings[TargetIndex]; if (Target.Health <= 0 || Target.IsConstructing) continue;
         const FSeigeBuildingDef& TD = *Definition(Target);
         if (TD.Role == TEXT("storage") && WorkFraction(Target) <= 0) continue;
         for (const FString& Resource : ResourceIds)
@@ -494,10 +584,10 @@ void FSeigeSimulation::StepLogistics(double Seconds)
             FSeigeBuilding* Source = nullptr; double Closest = TNumericLimits<double>::Max(); double Supply = 0;
             for (FSeigeBuilding& Candidate : Buildings)
             {
-                if (Candidate.Id == Target.Id || Candidate.Health <= 0) continue;
+                if (Candidate.Id == Target.Id || Candidate.Health <= 0 || Candidate.IsConstructing) continue;
                 const FSeigeBuildingDef& SD = *Definition(Candidate);
                 if (TD.Role == TEXT("storage") && (SD.Role == TEXT("storage") || SD.Role == TEXT("core"))) continue;
-                double Available = Candidate.Inventory.FindRef(Resource) - Demand(Candidate, Resource, false);
+                double Available = Spendable(Candidate,Resource) - Demand(Candidate, Resource, false);
                 if (TD.Role == TEXT("storage"))
                 {
                     // Only overflow when all non-depot demand is fulfilled; no depot-to-depot loops.
@@ -574,7 +664,7 @@ void FSeigeSimulation::StepCombat(double Seconds)
             {
                 AddEvent(Definition(*Target)->Name + TEXT(" destroyed")); Target->Workers = 0;
                 if (Target->DefId == CoreDefinition) { Failed = true; LaunchShuttle(); return; }
-                Target->Inventory.Empty();
+                Target->Inventory.Empty();Target->ConstructionMaterials.Empty();Target->Builders=0;
             }
         }
         for (int32 I = Couriers.Num() - 1; I >= 0; --I)
@@ -590,7 +680,7 @@ void FSeigeSimulation::LaunchShuttle()
 void FSeigeSimulation::CheckObjectives()
 {
     if (Won || Failed || Escaped) return;
-    int32 Count = 0; for (const FSeigeBuilding& B : Buildings) if (B.Health > 0 && B.DefId == TextRule(TEXT("objective_building"))) ++Count;
+    int32 Count = 0; for (const FSeigeBuilding& B : Buildings) if (B.Health > 0 && !B.IsConstructing && B.DefId == TextRule(TEXT("objective_building"))) ++Count;
     if (Time >= Number(TEXT("objective_survival_seconds")) && Count >= Number(TEXT("objective_building_count")) && ProducedUnits.FindRef(TextRule(TEXT("objective_resource"))) >= Number(TEXT("objective_produced_amount")))
     { Won = true; AddEvent(TEXT("First landing objective complete. Your industry survived; you may keep building.")); }
 }
@@ -602,17 +692,17 @@ void FSeigeSimulation::AddEvent(const FString& Message)
 FString FSeigeSimulation::ObjectiveText() const
 {
     if (!Policy) return TEXT("Rules not loaded");
-    int32 Count = 0; for (const FSeigeBuilding& B : Buildings) if (B.Health > 0 && B.DefId == TextRule(TEXT("objective_building"))) ++Count;
+    int32 Count = 0; for (const FSeigeBuilding& B : Buildings) if (B.Health > 0 && !B.IsConstructing && B.DefId == TextRule(TEXT("objective_building"))) ++Count;
     return FString::Printf(TEXT("Survive %.0f / %.0f s | Manufacture %.0f / %.0f %s | %s %d / %.0f"), Time, Number(TEXT("objective_survival_seconds")), ProducedUnits.FindRef(TextRule(TEXT("objective_resource"))), Number(TEXT("objective_produced_amount")), *Resources[TextRule(TEXT("objective_resource"))].Name, *BuildingDefs[TextRule(TEXT("objective_building"))].Name, Count, Number(TEXT("objective_building_count")));
 }
 FString FSeigeSimulation::WorkforceStatus() const
-{ return FString::Printf(TEXT("Robots %d | Jobs %d | Open %d | Efficiency %.0f%%"), Population, TotalJobs, FMath::Max(0, TotalJobs - Employed), WorkforceEfficiency * 100); }
+{ return FString::Printf(TEXT("Robots %d | Jobs %d | Open %d | Service capacity %d | Supported %d | Efficiency %.0f%%"), Population, TotalJobs, FMath::Max(0, TotalJobs - Employed),RobotSupportCapacity,SupportedPopulation, WorkforceEfficiency * 100); }
 double FSeigeSimulation::FixedStepSeconds() const { return Policy ? Number(TEXT("fixed_step_seconds")) : 0; }
 
 bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
 {
     if (!Policy) { Error = TEXT("Cannot save before rules are initialized"); return false; }
-    FObject O = MakeShared<FJsonObject>(); O->SetNumberField(TEXT("save_format"), 1);
+    FObject O = MakeShared<FJsonObject>(); O->SetNumberField(TEXT("save_format"), 2);
     O->SetStringField(TEXT("rules_version"), RulesVersion); O->SetStringField(TEXT("rules_fingerprint"), RulesFingerprint);
     O->SetNumberField(TEXT("time"),Time); O->SetNumberField(TEXT("next_wave_time"),NextWaveTime); O->SetNumberField(TEXT("next_roam_time"),NextRoamTime);
     O->SetNumberField(TEXT("population_clock"),PopulationClock); O->SetNumberField(TEXT("dispatch_clock"),DispatchClock); O->SetNumberField(TEXT("upkeep_clock"),UpkeepClock); O->SetNumberField(TEXT("workforce_efficiency"),WorkforceEfficiency);
@@ -624,13 +714,15 @@ bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
     {
         FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),B.Id); V->SetStringField(TEXT("definition"),B.DefId); V->SetStringField(TEXT("status"),B.Status); WritePosition(V,B.Position);
         V->SetNumberField(TEXT("health"),B.Health); V->SetNumberField(TEXT("progress"),B.Progress); V->SetBoolField(TEXT("enabled"),B.Enabled); V->SetObjectField(TEXT("inventory"),JsonAmounts(B.Inventory));
+        V->SetBoolField(TEXT("is_constructing"),B.IsConstructing);V->SetNumberField(TEXT("construction_progress"),B.ConstructionProgress);
+        V->SetObjectField(TEXT("construction_materials"),JsonAmounts(B.ConstructionMaterials));V->SetBoolField(TEXT("maintenance_supplied"),B.MaintenanceSupplied);
         V->SetNumberField(TEXT("weapon_cooldown"),B.WeaponCooldown);V->SetNumberField(TEXT("last_shot_time"),B.LastShotTime);
         V->SetArrayField(TEXT("last_shot_position"),{MakeShared<FJsonValueNumber>(B.LastShotPosition.X),MakeShared<FJsonValueNumber>(B.LastShotPosition.Y)});A.Add(MakeShared<FJsonValueObject>(V));
     }
     O->SetArrayField(TEXT("buildings"),A); A.Empty();
     for (const FSeigeNode& N : Nodes) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),N.Id); V->SetStringField(TEXT("resource"),N.Resource); WritePosition(V,N.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
     O->SetArrayField(TEXT("nodes"),A); A.Empty();
-    for (const FSeigeCourier& C : Couriers) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),C.Id); V->SetNumberField(TEXT("source"),C.SourceId); V->SetNumberField(TEXT("target"),C.TargetId); V->SetStringField(TEXT("resource"),C.Resource); V->SetNumberField(TEXT("amount"),C.Amount); WritePosition(V,C.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
+    for (const FSeigeCourier& C : Couriers) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),C.Id); V->SetNumberField(TEXT("source"),C.SourceId); V->SetNumberField(TEXT("target"),C.TargetId); V->SetStringField(TEXT("resource"),C.Resource); V->SetNumberField(TEXT("amount"),C.Amount); V->SetBoolField(TEXT("for_construction"),C.ForConstruction); WritePosition(V,C.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
     O->SetArrayField(TEXT("couriers"),A); A.Empty();
     for (const FSeigeEnemy& E : Enemies) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),E.Id); V->SetNumberField(TEXT("health"),E.Health); WritePosition(V,E.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
     O->SetArrayField(TEXT("enemies"),A); A.Empty();
@@ -643,7 +735,7 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
     if (!Policy) { Error = TEXT("Initialize rules before loading a colony"); return false; }
     FObject O; FString Raw, Version, Fingerprint; double Format = 0;
     if (!ReadJson(Filename,O,Raw,Error) || !Numeric(O,TEXT("save_format"),Format,1,Error,true) || !StringField(O,TEXT("rules_version"),Version,Error) || !StringField(O,TEXT("rules_fingerprint"),Fingerprint,Error)) return false;
-    if (Format != 1 || Version != RulesVersion || Fingerprint != RulesFingerprint) { Error = TEXT("Save is incompatible with this rule version or edited rule files. Start a new colony."); return false; }
+    if (Format != 2 || Version != RulesVersion || Fingerprint != RulesFingerprint) { Error = TEXT("Save is incompatible with this rule version or edited rule files. Start a new colony."); return false; }
     // Parse into a temporary simulation: a corrupt save must never damage the running colony.
     FSeigeSimulation Candidate = *this;
     if (!Numeric(O,TEXT("time"),Candidate.Time,0,Error) || !Numeric(O,TEXT("next_wave_time"),Candidate.NextWaveTime,0,Error) || !Numeric(O,TEXT("next_roam_time"),Candidate.NextRoamTime,0,Error) || !Numeric(O,TEXT("population_clock"),Candidate.PopulationClock,0,Error) || !Numeric(O,TEXT("dispatch_clock"),Candidate.DispatchClock,0,Error) || !Numeric(O,TEXT("upkeep_clock"),Candidate.UpkeepClock,0,Error) || !Numeric(O,TEXT("workforce_efficiency"),Candidate.WorkforceEfficiency,0,Error) || !Numeric(O,TEXT("delivered_units"),Candidate.DeliveredUnits,0,Error) || !IntegerField(O,TEXT("population"),Candidate.Population,0,Error) || !IntegerField(O,TEXT("wave"),Candidate.Wave,0,Error) || !IntegerField(O,TEXT("lost_couriers"),Candidate.LostCouriers,0,Error) || !IntegerField(O,TEXT("next_id"),Candidate.NextId,1,Error)) return false;
@@ -663,9 +755,14 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
     {
         const FObject V = Value->AsObject(); FSeigeBuilding B;
         if (!ReadId(V,B.Id) || !StringField(V,TEXT("definition"),B.DefId,Error) || !BuildingDefs.Contains(B.DefId) || !StringField(V,TEXT("status"),B.Status,Error) || !PositionField(V,TEXT("position"),B.Position,Error) || !Inside(B.Position) || !Numeric(V,TEXT("health"),B.Health,0,Error) || !Numeric(V,TEXT("progress"),B.Progress,0,Error) || !Amounts(V,TEXT("inventory"),B.Inventory,Resources,Error)) { if (Error.IsEmpty()) Error = TEXT("Invalid saved building"); return false; }
+        if(!V->TryGetBoolField(TEXT("is_constructing"),B.IsConstructing)||!V->TryGetBoolField(TEXT("maintenance_supplied"),B.MaintenanceSupplied)||!Numeric(V,TEXT("construction_progress"),B.ConstructionProgress,0,Error)||!Amounts(V,TEXT("construction_materials"),B.ConstructionMaterials,Resources,Error)) {Error=TEXT("Missing construction or maintenance state");return false;}
+        if(B.ConstructionProgress>1 || (!B.IsConstructing&&(B.ConstructionProgress!=1||Sum(B.ConstructionMaterials)>0)) || (B.IsConstructing&&(B.ConstructionProgress>=1||B.Progress>0||B.WeaponCooldown>0))) {Error=TEXT("Inconsistent construction state");return false;}
+        for(const auto& P:B.ConstructionMaterials)if(P.Value>BuildingDefs[B.DefId].Cost.FindRef(P.Key)+UE_DOUBLE_SMALL_NUMBER){Error=TEXT("Construction delivery exceeds blueprint cost");return false;}
+        if(B.IsConstructing&&B.ConstructionProgress>0&&B.Health>0&&!HasAmounts(B.ConstructionMaterials,BuildingDefs[B.DefId].Cost)){Error=TEXT("Construction work lacks delivered materials");return false;}
         if (!V->TryGetBoolField(TEXT("enabled"),B.Enabled) || B.Health > BuildingDefs[B.DefId].Health || B.Progress > 1 + UE_DOUBLE_SMALL_NUMBER || Occupied(B) > BuildingDefs[B.DefId].StorageCapacity + UE_DOUBLE_SMALL_NUMBER) { Error = TEXT("Invalid building health, progress or storage"); return false; }
         if (!Numeric(V,TEXT("weapon_cooldown"),B.WeaponCooldown,0,Error) || B.WeaponCooldown>BuildingDefs[B.DefId].ReloadSeconds+UE_DOUBLE_SMALL_NUMBER || !Numeric(V,TEXT("last_shot_time"),B.LastShotTime,-1,Error) || B.LastShotTime>Candidate.Time || (B.LastShotTime<0 && B.LastShotTime!=-1) || !PositionField(V,TEXT("last_shot_position"),B.LastShotPosition,Error) || !Inside(B.LastShotPosition))
         {Error=TEXT("Invalid saved weapon timing or target position");return false;}
+        if(B.IsConstructing&&(B.WeaponCooldown>0||B.LastShotTime>=0)){Error=TEXT("Unfinished building cannot have fired a weapon");return false;}
         if (B.DefId == CoreDefinition) ++CoreCount;
         Candidate.Buildings.Add(B);
     }
@@ -677,7 +774,10 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
     {
         const FObject V = Value->AsObject(); FSeigeCourier C;
         if (!ReadId(V,C.Id) || !IntegerField(V,TEXT("source"),C.SourceId,1,Error) || !IntegerField(V,TEXT("target"),C.TargetId,1,Error) || !StringField(V,TEXT("resource"),C.Resource,Error) || !Resources.Contains(C.Resource) || !Numeric(V,TEXT("amount"),C.Amount,UE_DOUBLE_SMALL_NUMBER,Error) || !PositionField(V,TEXT("position"),C.Position,Error) || !Inside(C.Position)) { if(Error.IsEmpty()) Error = TEXT("Invalid saved courier"); return false; }
-        if (C.Amount > Number(TEXT("courier_capacity")) + UE_DOUBLE_SMALL_NUMBER || !Candidate.FindBuilding(C.SourceId) || !Candidate.FindBuilding(C.TargetId)) { Error = TEXT("Invalid courier capacity or endpoint"); return false; } Candidate.Couriers.Add(C);
+        if (!V->TryGetBoolField(TEXT("for_construction"),C.ForConstruction) || C.Amount > Number(TEXT("courier_capacity")) + UE_DOUBLE_SMALL_NUMBER || !Candidate.FindBuilding(C.SourceId) || !Candidate.FindBuilding(C.TargetId)) { Error = TEXT("Invalid courier capacity or endpoint"); return false; }
+        const auto* Target=Candidate.FindBuilding(C.TargetId);
+        if(C.ForConstruction&&Target->Health>0&&(!Target->IsConstructing||Target->ConstructionMaterials.FindRef(C.Resource)+Candidate.Incoming(Target->Id,C.Resource)+C.Amount>Candidate.Definition(*Target)->Cost.FindRef(C.Resource)+UE_DOUBLE_SMALL_NUMBER)){Error=TEXT("Invalid construction courier destination or excess payload");return false;}
+        Candidate.Couriers.Add(C);
     }
     if (Candidate.Couriers.Num() > Number(TEXT("max_couriers"))) { Error = TEXT("Saved courier count exceeds rule limit"); return false; }
     if (!ArrayField(O,TEXT("enemies"),A,Error)) return false;

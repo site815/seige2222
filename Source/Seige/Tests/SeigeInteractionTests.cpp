@@ -34,6 +34,7 @@ struct FInteractionWorld : FTestWorldWrapper
             Test.AddError(Game->Error);
             return false;
         }
+        Game->Sim.Tick(Game->Sim.BuildingDefs[Game->Sim.CoreDefinition].ConstructionSeconds+Game->Sim.FixedStepSeconds());
         Controller = GetTestWorld()->SpawnActor<ASeigeController>();
         if (!Test.TestNotNull(TEXT("Real player controller exists"), Controller)) return false;
         // No LocalPlayer/net connection exists in this headless fixture. Invoke the
