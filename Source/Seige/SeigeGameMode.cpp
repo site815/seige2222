@@ -60,9 +60,11 @@ void ASeigeGameMode::BeginPlay()
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureMethod=true;
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureMethod=EAutoExposureMethod::AEM_Manual;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureBias=true;
-    Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=-.1f;
+    Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=ExposureBias;
+    Camera->GetCameraComponent()->PostProcessSettings.bOverride_ColorSaturation=true;
+    Camera->GetCameraComponent()->PostProcessSettings.ColorSaturation=FVector4(ColorSaturation,ColorSaturation,ColorSaturation,1);
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionIntensity=true;
-    Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionIntensity=.8f;
+    Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionIntensity=AmbientOcclusionIntensity;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionRadius=true;
     Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionRadius=120;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_BloomIntensity=true;
@@ -70,7 +72,7 @@ void ASeigeGameMode::BeginPlay()
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureApplyPhysicalCameraExposure=true;
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureApplyPhysicalCameraExposure=false;
     if(auto* PC=UGameplayStatics::GetPlayerController(this,0)) PC->SetViewTarget(Camera);
-    auto* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,3000),FRotator(-38,-28,0));
+    auto* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,3000),FRotator(-SunElevation,-28,0));
     Sun->GetLightComponent()->SetIntensity(SunIntensity);
     auto* SunComponent=Cast<UDirectionalLightComponent>(Sun->GetLightComponent());
     SunComponent->SetMobility(EComponentMobility::Movable);

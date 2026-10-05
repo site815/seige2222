@@ -1,0 +1,32 @@
+{
+  "source_asset": "jacaranda_tree",
+  "source_object": "jacaranda_tree_LOD1",
+  "fbx": "SM_JacarandaNearV07.fbx",
+  "sha256": "e50c72c1ed17067b3f24039e8475d7b9624ba0f355aa2a98042673df5393a247",
+  "materials": [
+    "PH_jacaranda_tree_trunk",
+    "PH_jacaranda_tree_branches",
+    "PH_jacaranda_tree_leaves"
+  ],
+  "dimensions_cm": [
+    2441.704833984375,
+    1915.45751953125,
+    1946.8875732421875
+  ],
+  "triangles": 1845603,
+  "vertices": 1813490,
+  "pivot": "horizontal bounds center, ground z=0",
+  "nanite": true,
+  "shape_preservation": "PRESERVE_AREA",
+  "unreal_path": "/Game/Art/NatureV07/SM_JacarandaNearV07",
+  "license": "CC0-1.0",
+  "source_page": "https://polyhaven.com/a/jacaranda_tree",
+  "matches_existing_bounds": "SM_JacarandaA",
+  "bounds_scale_from_authored_lod1": [
+    0.9999999562553519,
+    0.9999999920338672,
+    0.9997825480105916
+  ],
+  "candidate_only": true,
+  "existing_runtime_asset_unchanged": true
+}

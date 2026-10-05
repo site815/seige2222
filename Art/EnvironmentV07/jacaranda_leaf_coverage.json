@@ -1,0 +1,55 @@
+{
+  "method": "128 deterministic uniform barycentric samples per leaf triangle; weighted by triangle area; UV repeats; alpha>=0.33; estimate, not a GPU overdraw measurement",
+  "templates": [
+    {
+      "object": "jacaranda_tree_leaves_a_LOD0",
+      "triangles": 239,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.4679003420928677
+    },
+    {
+      "object": "jacaranda_tree_leaves_a_LOD1",
+      "triangles": 156,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.4690391324770477
+    },
+    {
+      "object": "jacaranda_tree_leaves_b_LOD0",
+      "triangles": 195,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.466663695579245
+    },
+    {
+      "object": "jacaranda_tree_leaves_b_LOD1",
+      "triangles": 121,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.4730824397515464
+    },
+    {
+      "object": "jacaranda_tree_leaves_c_LOD0",
+      "triangles": 36,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.43918437722973774
+    },
+    {
+      "object": "jacaranda_tree_leaves_c_LOD1",
+      "triangles": 18,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.4333756962438292
+    },
+    {
+      "object": "jacaranda_tree_leaves_d_LOD0",
+      "triangles": 41,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.47215486992977823
+    },
+    {
+      "object": "jacaranda_tree_leaves_d_LOD1",
+      "triangles": 20,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.4733073249154417
+    },
+    {
+      "object": "jacaranda_tree_leaves_e_LOD0",
+      "triangles": 46,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.4940358635469738
+    },
+    {
+      "object": "jacaranda_tree_leaves_e_LOD1",
+      "triangles": 23,
+      "sampled_surface_opaque_fraction_at_alpha_033": 0.502965439581658
+    }
+  ]
+}

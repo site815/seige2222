@@ -75,7 +75,7 @@ struct FSeigeBuildingInfoRow
 class SEIGE_API FSeigeSimulation
 {
 public:
-    bool Initialize(const FString& RulesDirectory, FString& Error);
+    bool Initialize(const FString& RulesDirectory, FString& Error, bool bBackgroundBugs = true, bool bPeriodicAttacks = true);
     bool SetInitialCorePosition(FVector2D Position, FString& Error);
     bool CanSetInitialCorePosition(FVector2D Position, FString& Error) const;
     void Tick(double Seconds);
@@ -110,6 +110,8 @@ public:
     TArray<FSeigeEnemy> Enemies;
     TArray<FSeigeEvent> Events;
     FString Title, RulesVersion, CoreDefinition, RulesPath;
+    // Scenario settings are chosen before initialization and restored with the save.
+    bool BackgroundBugsEnabled = true, PeriodicAttacksEnabled = true;
     double Time = 0, NextWaveTime = 0, WorldHalfSize = 5000;
     int32 Population = 0, TotalJobs = 0, Employed = 0, Wave = 0, LostCouriers = 0;
     int32 RobotSupportCapacity = 0, SupportedPopulation = 0;

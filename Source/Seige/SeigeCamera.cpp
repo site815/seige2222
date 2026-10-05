@@ -26,7 +26,7 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         {Error=FString::Printf(TEXT("Invalid Graphics/scene.json value: %s"),Key);return false;}
         Value=Number;return true;
     };
-    float Forest=0,NearForest=0,GroundCandidates=0,TerrainResolution=0,RidgeX=0,RidgeY=0,NeighborForest=0;
+    float Forest=0,NearForest=0,GroundCandidates=0,TerrainResolution=0,RidgeX=0,RidgeY=0,NeighborForest=0,StreamCells=0;
     if(!Read(TEXT("world_centimeters_per_unit"),1,20,RenderScale)||
        !Read(TEXT("nanite_max_pixels_per_edge"),.5,4,NaniteMaxPixelsPerEdge)||
        !Read(TEXT("nanite_survey_pixels_per_edge"),.5,4,NaniteSurveyPixelsPerEdge)||
@@ -38,6 +38,10 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("sun_intensity"),.1,20,SunIntensity)||!Read(TEXT("sky_intensity"),.1,5,SkyIntensity)||
        !Read(TEXT("cloud_shadow_strength"),0,1,CloudShadowStrength)||
        !Read(TEXT("sun_source_angle"),.1,5,SunSourceAngle)||
+       !Read(TEXT("sun_elevation_degrees"),15,80,SunElevation)||
+       !Read(TEXT("exposure_bias"),-2,2,ExposureBias)||
+       !Read(TEXT("color_saturation"),.5,1.5,ColorSaturation)||
+       !Read(TEXT("ambient_occlusion_intensity"),0,1,AmbientOcclusionIntensity)||
        !Read(TEXT("cloud_shadow_resolution_scale"),.25,2,CloudShadowResolutionScale)||
        !Read(TEXT("fog_density"),0,.01,FogDensity)||
        !Read(TEXT("fog_start_distance_m"),0,10000,FogStartDistanceMeters)||
@@ -50,6 +54,13 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("camera_zoom_response"),1,30,CameraZoomResponse)||
        !Read(TEXT("near_forest_candidates"),100,30000,NearForest)||
        !Read(TEXT("grass_shadow_distance_m"),0,500,GrassShadowDistanceMeters)||
+       !Read(TEXT("grass_detail_distance_m"),10,150,GrassDetailDistanceMeters)||
+       !Read(TEXT("grass_lod_transition_m"),10,200,GrassLodTransitionMeters)||
+       !Read(TEXT("grass_stream_radius_m"),150,1200,GrassStreamRadiusMeters)||
+       !Read(TEXT("grass_stream_budget_ms"),.5,8,GrassStreamBudgetMs)||
+       !Read(TEXT("grass_stream_cells_per_frame"),1,8,StreamCells)||
+       !Read(TEXT("forest_detail_distance_m"),75,1000,ForestDetailDistanceMeters)||
+       !Read(TEXT("forest_lod_transition_m"),20,500,ForestLodTransitionMeters)||
        !Read(TEXT("grass_programmable_distance_m"),0,900,GrassProgrammableDistanceMeters)||
        !Read(TEXT("neighboring_forest_candidates_per_sector"),0,12000,NeighborForest)||
        !Read(TEXT("region_map_zoom"),60000,240000,RegionMapZoom)||
@@ -71,6 +82,12 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("ridge_height"),0,1500,RidgeHeight))return false;
     if(!Root->TryGetStringField(TEXT("terrain_material"),TerrainMaterialPath)||!TerrainMaterialPath.StartsWith(TEXT("/Game/")))
     {Error=TEXT("Invalid terrain material path");return false;}
+    for(const auto& Entry:{TPair<const TCHAR*,FString*>(TEXT("grass_proxy_asset"),&GrassProxyAsset),TPair<const TCHAR*,FString*>(TEXT("broadleaf_proxy_asset"),&BroadleafProxyAsset),TPair<const TCHAR*,FString*>(TEXT("conifer_proxy_asset"),&ConiferProxyAsset)})
+        if(!Root->TryGetStringField(Entry.Key,*Entry.Value)||!Entry.Value->StartsWith(TEXT("/Game/")))
+        {Error=TEXT("Invalid scenery proxy asset");return false;}
+    if(StreamCells!=FMath::FloorToFloat(StreamCells)||GrassStreamRadiusMeters<=GrassDetailDistanceMeters+GrassLodTransitionMeters)
+    {Error=TEXT("Invalid scenery streaming budget or range");return false;}
+    GrassStreamCellsPerFrame=FMath::RoundToInt(StreamCells);
     if(!Root->TryGetStringField(TEXT("cloud_material"),CloudMaterialPath)||!(CloudMaterialPath.StartsWith(TEXT("/Game/"))||CloudMaterialPath==TEXT("/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst")))
     {Error=TEXT("Invalid cloud material path");return false;}
     if(CameraPitch<MinimumCameraPitch||CameraPitch>MaximumCameraPitch){Error=TEXT("Default camera pitch lies outside orbit limits");return false;}
@@ -102,6 +119,14 @@ bool ASeigeGameMode::LoadGraphicsSettings()
     }
     const TSharedPtr<FJsonObject>* Profile=nullptr;
     if(!Root->TryGetObjectField(TEXT("medium_profile"),Profile)){Error=TEXT("Missing Medium graphics profile");return false;}
+    auto ReadAntialiasing=[&](const TCHAR* Key,int32& Target)
+    {
+        FString Value;
+        if(!(*Profile)->TryGetStringField(Key,Value)||(Value!=TEXT("taa")&&Value!=TEXT("tsr")))
+        {Error=TEXT("Invalid Medium antialiasing method: ")+FString(Key);return false;}
+        Target=Value==TEXT("taa")?2:4;return true;
+    };
+    if(!ReadAntialiasing(TEXT("native_antialiasing"),NativeAntialiasing)||!ReadAntialiasing(TEXT("upscaling_antialiasing"),UpscalingAntialiasing))return false;
     MediumQualityGroups.Reset();MediumRenderSettings.Reset();
     const TSharedPtr<FJsonObject>* Groups=nullptr;
     if(!(*Profile)->TryGetObjectField(TEXT("quality_groups"),Groups)||(*Groups)->Values.Num()!=11){Error=TEXT("Invalid Medium quality groups");return false;}
@@ -113,9 +138,9 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         MediumQualityGroups.Add(Key,static_cast<int32>(Value));
     }
     const TSharedPtr<FJsonObject>* Settings=nullptr;
-    if(!(*Profile)->TryGetObjectField(TEXT("render_settings"),Settings)||(*Settings)->Values.Num()!=6){Error=TEXT("Invalid Medium rendering settings");return false;}
+    if(!(*Profile)->TryGetObjectField(TEXT("render_settings"),Settings)||(*Settings)->Values.Num()!=9){Error=TEXT("Invalid Medium rendering settings");return false;}
     struct FSettingRange{const TCHAR* Name;double Min,Max;bool Integer;};
-    for(const auto& Range:{FSettingRange{TEXT("r.TSR.History.ScreenPercentage"),100,200,false},FSettingRange{TEXT("r.TSR.ThinGeometryDetection"),0,1,true},FSettingRange{TEXT("r.TSR.ThinGeometryDetection.Coverage.ShadingRange"),0,3,true},FSettingRange{TEXT("r.TSR.Velocity.WeightClampingSampleCount"),1,8,false},FSettingRange{TEXT("r.Tonemapper.Sharpen"),0,1,false},FSettingRange{TEXT("r.MaxAnisotropy"),4,16,true}})
+    for(const auto& Range:{FSettingRange{TEXT("r.TSR.History.ScreenPercentage"),100,200,false},FSettingRange{TEXT("r.TSR.ThinGeometryDetection"),0,1,true},FSettingRange{TEXT("r.TSR.ThinGeometryDetection.Coverage.ShadingRange"),0,3,true},FSettingRange{TEXT("r.TSR.Velocity.WeightClampingSampleCount"),1,8,false},FSettingRange{TEXT("r.Tonemapper.Sharpen"),0,1,false},FSettingRange{TEXT("r.MaxAnisotropy"),4,16,true},FSettingRange{TEXT("r.TemporalAA.Quality"),1,2,true},FSettingRange{TEXT("r.TemporalAAFilterSize"),.5,1,false},FSettingRange{TEXT("r.TemporalAACurrentFrameWeight"),.04,.2,false}})
     {
         double Value=0;
         if(!(*Settings)->TryGetNumberField(Range.Name,Value)||!FMath::IsFinite(Value)||Value<Range.Min||Value>Range.Max||(Range.Integer&&Value!=FMath::FloorToDouble(Value)))
@@ -155,6 +180,11 @@ void ASeigeGameMode::ApplyMediumPreset()
         // These complete the custom scalability profile. Keeping the same
         // priority avoids rejected group reapplication when display options change.
         if((Variable->GetFlags()&ECVF_SetByMask)<=ECVF_SetByScalability)Variable->Set(Pair.Value,ECVF_SetByScalability);
+    // Native TAA avoids an unnecessary high-cost reconstruction pass at 100%.
+    // Keep TSR when the user chooses a smaller internal rendering resolution.
+    if(auto* Method=IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))
+        if((Method->GetFlags()&ECVF_SetByMask)<=ECVF_SetByProjectSetting)
+            Method->Set(Resolution>=99.9f?NativeAntialiasing:UpscalingAntialiasing,ECVF_SetByProjectSetting);
 }
 FVector ASeigeGameMode::RenderPosition(FVector2D P,float Offset) const
 {

@@ -2,7 +2,41 @@
 
 Updated: **2026-10-05** (Asia/Seoul). Engine: Unreal Engine 5.8.3. Platform: Windows x64.
 
-## v0.6.0 local delivery verified
+## v0.7.0 scenery, performance and scenario controls
+
+The v0.7 source adds independent **Background bugs** and **Periodic attacks** switches to scenario setup. Both default on and apply to the player and every AI colony before developed-start preparation. Saves retain the switches; legacy v0.6 snapshots without them load as on/on. The unchanged `prototype-6.0` Rules fingerprint preserves v0.6 compatibility. Partial, invalid or inconsistent flags reject the entire load without replacing the current scenario.
+
+The environment uses brighter sunlight and sky fill, more colorful photographic terrain, simpler distant foliage and the provider's authored lower-detail nearby broadleaf tree. All nine sectors retain the same deterministic tree placements across focus changes. Grass streams under a soft per-frame budget in spatially grouped instances; this removes the global batch updates that made rotation particularly expensive in the first candidate. Native rendering uses TAA; reduced rendering percentages retain TSR. The user-facing quality choice remains **Medium**, with render resolution separate.
+
+These changes reduce scenery disappearance and camera cost; they do not establish zero popping or Manor Lords quality. Visible detail changes and softness remain possible. Switching the detailed sector still rebuilds terrain/forest and refills nearby grass, so a transition hitch remains outside the fixed-focus orbit measurements. See the [v0.7 graphics record](game-design/GRAPHICS_PERFORMANCE_0_7.md) and [asset provenance](../Art/EnvironmentV07/README.md).
+
+**v0.7.0 is built and verified in `Builds/v0.7.0/Windows`; `Play-seige2222.cmd` selects it.** Compatible v0.6 saves remain supported.
+
+| v0.7 check | Result |
+| --- | --- |
+| Native automation | **38 clean passes; zero warnings, failures or unrun tests** |
+| Definitions | Configuration validation and **32 negative Rules cases** passed; all nine staged JSON hashes match source |
+| Shipping package and interaction route | **Build exit 0; 79 stages, zero failures, game exit 0**; 874 courier-motion frames between fixed simulation ticks |
+| Offline observation | **86 process-tree samples, zero TCP/UDP endpoints**; bounded endpoint observation, not packet capture |
+| Actual display route | **Four states, zero failures**: 3840×1600 borderless, 1280×720 windowed, 75% rendering, restored native; AA methods 2/2/4/2 confirm TAA/TSR selection |
+
+The [verification record](verification/v0.7.0.json) retains executable and external-definition hashes. [Scenario controls](../Art/Previews/v07_scenario.png), [main menu](../Art/Previews/v07_main.png) and [display results](../Art/EnvironmentV07/display-shipping.json) come from the Shipping package. Full generated logs and binaries remain local. Interaction-route FPS is not a benchmark.
+
+Final Shipping measurements on the RTX 4070 Ti SUPER / Ryzen 7 9800X3D, at 100% rendering:
+
+| View | v0.6 native static FPS | v0.7 native static FPS | v0.7 native orbit FPS | v0.7 1600×900 static FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Colony | 26.96 | 46.23 | 46.85 | 153.74 |
+| Meadow | 20.11 | 31.84 | 42.19 | 103.30 |
+| Ground | 20.25 | 30.35 | 32.95 | 102.86 |
+| Hills | 23.78 | 36.81 | 36.40 | 94.18 |
+| Boundary | 35.06 | 43.98 | 41.49 | 107.25 |
+
+Native means **3840×1600**. Each view waits for initial scenery, settles for four seconds and samples at least five seconds. Orbit adds one complete yaw turn with modest pitch variation, including ongoing camera-driven streaming; it does not cross sectors. The simulation is paused with empty neighbors. These are one-run mean FPS values, not minimum FPS or busy-colony stress results. The old static route began warmup directly after synchronous setup. The full v0.7 comparison changes foliage, shaders, lighting and quality settings together, so it is not an equal-quality or single-optimization claim.
+
+[Native static](../Art/EnvironmentV07/benchmark-shipping-native.json), [native orbit](../Art/EnvironmentV07/benchmark-shipping-orbit-native.json), and [1600×900 static](../Art/EnvironmentV07/benchmark-shipping-medium.json) reports retain frame-time distributions, hardware and settings. Native orbit p95 ranges from 24.33 to 37.27 ms. **Native ultrawide still does not sustain 60 FPS.** The 1600×900 boundary view regressed from v0.6's 145.45 to 107.25 FPS; denser neighboring scenery and other concurrent changes mean gains are not universal. [Colony](../Art/Previews/v07_colony.png) and [ground](../Art/Previews/v07_ground.png) show the actual Shipping rendering. Distant silhouettes, aerial ground variation and temporal foliage quality still fall short of the reference target.
+
+## Historical v0.6.0 local delivery verified
 
 **The v0.6.0 Windows Shipping package is built and verified in `Builds/v0.6.0/Windows`; `Play-seige2222.cmd` selects it. Start a new scenario using `prototype-6.0`.** All 34 native tests passed cleanly. The packaged interaction route passed 79 stages with zero failures and exit 0; the separate actual-display route passed four states with zero failures. This is a functional release, with native-resolution performance and reference-quality visuals still unfinished.
 
@@ -214,4 +248,4 @@ powershell -ExecutionPolicy Bypass -File Tools/build.ps1 -Package
 
 Native tests use UnrealEditor-Cmd with `-NullRHI`, `-ExecCmds="Automation RunTests Seige"`, `-TestExit="Automation Test Queue Empty"`, and a report export directory. Inspect test result JSON; an editor process exit code alone does not report individual test failures. Rendered verification uses `-UiSmoke -RenderOffscreen -ForceRes -ResX=1600 -ResY=900`. The flag drives test-only interactions and exits after writing its report.
 
-The build script generates a directory for the current `ProjectVersion`. The verified v0.4.0 package is in `Builds/v0.4.0/Windows`; `Play-seige2222.cmd` launches it and honors saved display settings. Start a new scenario for `prototype-4.0` rules. Versioned binaries remain local and are excluded from the source repository. Older packages are retained. Build output, caches, downloaded tools, and test logs are excluded from Git; source assets and their provenance are tracked.
+The build script generates a directory for the current `ProjectVersion`. The verified v0.7.0 package is in `Builds/v0.7.0/Windows`; `Play-seige2222.cmd` launches it and honors saved display settings. Compatible v0.6 saves use the same `prototype-6.0` rules. Versioned binaries remain local and are excluded from the source repository. Older packages are retained. Build output, caches, downloaded tools, and test logs are excluded from Git; source assets and their provenance are tracked.

@@ -1,0 +1,68 @@
+{
+  "material": "/Game/Art/NatureV07/M_TerrainV07.M_TerrainV07",
+  "texture_sources": {
+    "MeadowColor": "/Game/Art/NatureV04/Textures/T_Grass004_surface_color.T_Grass004_surface_color",
+    "MeadowNormal": "/Game/Art/NatureV04/Textures/T_Grass004_surface_normal.T_Grass004_surface_normal",
+    "MeadowRoughness": "/Game/Art/NatureV04/Textures/T_Grass004_surface_roughness.T_Grass004_surface_roughness",
+    "EarthMeadowColor": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+    "EarthMeadowNormal": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+    "EarthMeadowRoughness": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+    "ForestColor": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.T_forest_leaves_02_surface_color",
+    "ForestNormal": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.T_forest_leaves_02_surface_normal",
+    "ForestRoughness": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness.T_forest_leaves_02_surface_roughness",
+    "DirtColor": "/Game/Art/Textures/T_Dirt_Color.T_Dirt_Color",
+    "DirtNormal": "/Game/Art/Textures/T_Dirt_Normal.T_Dirt_Normal",
+    "DirtRoughness": "/Game/Art/Textures/T_Dirt_Roughness.T_Dirt_Roughness",
+    "RockColor": "/Game/Art/Textures/T_Rock_Color.T_Rock_Color",
+    "RockNormal": "/Game/Art/Textures/T_Rock_Normal.T_Rock_Normal",
+    "RockRoughness": "/Game/Art/Textures/T_Rock_Roughness.T_Rock_Roughness"
+  },
+  "opaque": true,
+  "photographic_layers": [
+    "Meadow",
+    "EarthMeadow",
+    "Forest",
+    "Dirt",
+    "Rock"
+  ],
+  "samples_per_active_layer": {
+    "near": 4,
+    "far": 2
+  },
+  "normal_detail_blend_cm": [
+    18000,
+    36000
+  ],
+  "spatial_branch_threshold": 0.0001,
+  "albedo_multipliers": {
+    "Meadow": [
+      0.7,
+      0.86,
+      0.67
+    ],
+    "EarthMeadow": [
+      0.7,
+      0.83,
+      0.68
+    ],
+    "Forest": [
+      0.78,
+      0.9,
+      0.76
+    ],
+    "Dirt": [
+      0.88,
+      0.84,
+      0.76
+    ],
+    "Rock": [
+      0.9,
+      0.93,
+      0.92
+    ]
+  },
+  "procedural_noise_evaluations": 0,
+  "runtime_displacement": false,
+  "geometry_changed": false,
+  "notes": "Original v0.4 asset retained. Requires rendered review and timing; sample counts do not establish GPU gains."
+}

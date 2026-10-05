@@ -15,13 +15,28 @@ This document records the confirmed local setup flow and the current prototype i
 
 The default setup is one player center and eight empty neighbors. Before a human landing, the view surveys the resource deposits; placement uses the simulation's sector-edge and deposit-clearance validation. This selects the site for the player's only core; v0.5 source then advances worker-driven deployment from the landing shuttle's carried kit. It does not introduce a second core or move an established colony.
 
+## Independent alien pressure options
+
+**Implemented in the verified v0.7 package:** Single-player setup offers independent **Background bugs** and **Periodic attacks** switches. Both default to ON. The choices apply to the human or AI center and every occupied neighbor, including the actual simulation used to prepare a developed AI colony.
+
+| Background bugs | Periodic attacks | Pressure in this scenario |
+| --- | --- | --- |
+| ON | ON | Roaming bugs and scheduled invasion pulses; preserves the previous behavior. |
+| ON | OFF | Roaming bugs only. |
+| OFF | ON | Scheduled invasion pulses only. |
+| OFF | OFF | Neither source spawns bugs. Economy, construction and objectives continue normally. |
+
+The switches are available only before starting a scenario. The live interface shows **Disabled** instead of a pulse countdown when periodic attacks are OFF; the pressure details show both choices. These options do not introduce privateers or any other threat system.
+
+Save snapshots and neighborhood metadata store the two strict boolean settings. Loading restores saved settings rather than adopting the current setup selections. Compatible format-2 saves with neither field present retain the historical ON/ON behavior; a partial pair, non-boolean value, or disagreement between metadata and any colony is rejected without replacing the active scenario. Existing Rules and AI fingerprint checks still apply. Disabled schedules remain valid future timestamps but spawn no bugs and accumulate no delayed attacks.
+
 ## Map and information
 
 **Current prototype:** Each colony uses a sector 60,000 logical units square and the same template of 25 irregularly clustered resource nodes. The v0.3 graphics conversion maps these to 3.6 km sectors and a 10.8 km neighborhood. The earlier v0.2 values of 600 m and 1.8 km came from its smaller rendering conversion. Logical distances, travel times, and balance are unchanged. These are editable scenario and presentation values, not randomized planetary geography. See [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md); broader wilderness and remote-outpost proportions remain design targets in [World, Visibility, and Relocation](WORLD_AND_RELOCATION.md).
 
 After human landing, live information uses finite sensor coverage. Seeing sector borders does not reveal its buildings or threats. Observer mode shows the simulated colonies so the player can watch AI behavior; this is an observation tool, not a scouting advantage in human play.
 
-The current presentation retains the v0.4 cartographic neighborhood and detailed focused sector, with v0.5 adding continuous coarse neighboring terrain and sparse background woodland at the same scale conversion. Selecting a sector changes the view, not ownership or sensor knowledge. Human commands remain restricted to the home colony; observer inspection does not grant construction control. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md) for verification status.
+The current presentation retains the cartographic neighborhood and detailed focused sector. v0.7 uses the same deterministic forest population throughout all nine sectors, with simpler distant geometry replacing the earlier sparse neighboring woodland. Selecting a sector changes the view, not ownership or sensor knowledge. Human commands remain restricted to the home colony; observer inspection does not grant construction control. See [Graphics Performance 0.7](GRAPHICS_PERFORMANCE_0_7.md) for presentation evidence and limitations.
 
 ## AI behavior and editable files
 
@@ -41,11 +56,11 @@ This is a deterministic construction controller. It does not implement diplomacy
 
 ## Time, settings, and saves
 
-Only active, unpaused play advances the colony simulations. Main menu, setup, landing, settings, and credits stop their clocks. Settings currently offer Low/Medium/High/Ultra graphics quality and windowed/fullscreen selection. Observer mode supports camera movement, pause, and saving while disabling player construction and colony commands.
+Only active, unpaused play advances the colony simulations. Main menu, setup, landing, settings, and credits stop their clocks. Settings use the calibrated Medium preset with render resolution and windowed/native-borderless selection; the game menu preserves the previous pause state when returning to play. Observer mode supports camera movement, pause, and saving while disabling player construction and colony commands.
 
 Local scenario saves include every occupied colony, scenario selections, camera, speed, pause state, and AI configuration fingerprints. Loading validates all snapshots before replacing the active scenario. AI cadence derives from saved simulation time; it has no separate hidden timer. Changed Rules or AI definitions invalidate incompatible saves. v0.3 adds optional bounded yaw/pitch fields with defaults for older format-2 saves. Restart scenarios to apply gameplay definition changes, and restart the application after interface or graphics edits. Live reload and general gameplay-save migration are not implemented.
 
-Current v0.5 source uses Rules `prototype-5.0` and simulation save format 2 to persist construction, local maintenance and cargo purpose alongside weapon state. Earlier-rule saves are intentionally rejected with a new-scenario diagnostic; optional camera-field compatibility does not override the rule fingerprint.
+The v0.5 release introduced simulation save format 2 to persist construction, local maintenance and cargo purpose alongside weapon state; those fields remain in the current format. Earlier-rule saves are intentionally rejected with a new-scenario diagnostic; optional camera-field compatibility does not override the rule fingerprint.
 
 These single-player controls do not establish how a future persistent multiplayer world pauses, simulates offline colonies, or transfers a relocating core.
 
@@ -53,7 +68,9 @@ These single-player controls do not establish how a future persistent multiplaye
 
 Run `node Tools/validate_configuration.mjs` before building. It checks Rules plus AI/UI references, bounds, construction-menu coverage, shortcut conflicts, developed preset capacity and necessary cost bounds, and Graphics settings and asset references. [Tools/build.ps1](../../Tools/build.ps1) and the [GitHub workflow](../../.github/workflows/rules.yml) run it automatically. Geometric feasibility and long-term survival still require simulation tests and playtesting.
 
-**Current v0.6 source boundary:** AI decision rules, preparation and local simulation rates are unchanged. The Rules schema adds stockpile/work presentation metadata; visual snapshots reset after a new scenario, landing relocation or load, so reused entity IDs cannot inherit previous motion. This does not alter AI inventory, population or construction. The v0.6 editor compiled, all 34 native tests passed cleanly (zero warnings, failed or unrun) and the 79-stage editor route passed with zero failures. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; the evidence below belongs to v0.5.
+**v0.7 verification status:** The final complete native suite passed 38 tests cleanly: zero warnings, failed or unrun tests (`Saved/Automation/v07-final/index.json`). The three threat-setting tests cover all four independent spawn combinations, deterministic save continuation, default ON behavior, malformed/partial flag rejection, real frontend button routes, starting/developed center and neighbor propagation, whole-scenario save/load, legacy defaults, and atomic rejection of inconsistent child snapshots. The setup panel fits 1366×768 by its existing proportional bounds, including its maximum four-line notice; this is a source-layout check, not a rendered screenshot check. The v0.7 Shipping route passed 79 stages with zero failures and exit 0; all nine loose JSON files matched source hashes. See the [verification record](../verification/v0.7.0.json).
+
+**Historical v0.6 verification:** AI decision rules, preparation and local simulation rates are unchanged. The Rules schema adds stockpile/work presentation metadata; visual snapshots reset after a new scenario, landing relocation or load, so reused entity IDs cannot inherit previous motion. This does not alter AI inventory, population or construction. The v0.6 editor compiled, all 34 native tests passed cleanly (zero warnings, failed or unrun) and the 79-stage editor route passed with zero failures. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; the evidence below belongs to v0.5.
 
 **Historical v0.5 status:** Static configuration and 29 negative Rules cases pass. The final native suite passed 29 tests (28 clean, one editor background HTTP-warning success; zero failed or unrun), including AI development, landing, observation and neighborhood save continuation. The first objective succeeds at 435 simulation seconds, and starting AI manufactures 35 components by the configured 600-second budget. The Windows Shipping package passed 63 stages with zero failures and exit 0; all 73 process-tree samples showed zero TCP/UDP endpoints, and nine external JSON files matched source byte hashes. The [development report](../DEVELOPMENT_REPORT.md) distinguishes these bounded packaged checks from native save coverage; no separate packaged save/load roundtrip is claimed.
 

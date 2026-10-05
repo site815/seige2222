@@ -6,7 +6,7 @@ public class Seige : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicIncludePaths.Add(ModuleDirectory);
         PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities", "ProceduralMeshComponent"});
-        PrivateDependencyModuleNames.AddRange(new string[] {"SlateCore", "RenderCore"});
+        PrivateDependencyModuleNames.AddRange(new string[] {"SlateCore", "RenderCore", "RHI"});
         RuntimeDependencies.Add("$(TargetOutputDir)/Rules/...", System.IO.Path.Combine(ModuleDirectory, "../../Rules/..."), StagedFileType.NonUFS);
         RuntimeDependencies.Add("$(TargetOutputDir)/Interface/...", System.IO.Path.Combine(ModuleDirectory, "../../Interface/..."), StagedFileType.NonUFS);
         RuntimeDependencies.Add("$(TargetOutputDir)/AIFILES/...", System.IO.Path.Combine(ModuleDirectory, "../../AIFILES/..."), StagedFileType.NonUFS);

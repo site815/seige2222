@@ -7,3 +7,5 @@
 *.png binary
 Content/Art/NatureV04/SM_JacarandaA.uasset filter=lfs diff=lfs merge=lfs -text
 Art/EnvironmentV04/Source/*.blend filter=lfs diff=lfs merge=lfs -text
+Content/Art/NatureV07/SM_JacarandaNearV07.uasset filter=lfs diff=lfs merge=lfs -text
+Art/EnvironmentV07/Source/SM_JacarandaNearV07.blend filter=lfs diff=lfs merge=lfs -text

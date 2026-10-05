@@ -22,6 +22,8 @@ AI neighboring factions serve as stand-ins for human neighbors and should share 
 
 **Confirmed direction:** Single-player is a version of the persistent-world game with AI opponents, not a different colony design. There is no separate protection period for a new colony in either version. Roaming threats can arrive immediately; main alien invasions occur periodically and allocate forces proportionate to each colony's strength. The starting core's ability to repel ordinary attacks, and its vulnerability to repeated unrepaired damage, fit those shared rules. The final invasion interval and scaling method remain open.
 
+**Current single-player options:** v0.7 independently enables or disables background bugs and periodic attacks before a scenario starts, with both ON by default. Every occupied colony and developed AI preparation uses the same selection, which is restored on loading. These are whole-scenario choices, not temporary protection periods; persistent-server configuration remains open. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
+
 In the intended persistent multiplayer game, colonies and expeditions continue while their players are offline. They can be attacked, lose assets, and be destroyed.
 
 **Confirmed fleet-control direction:** Players can leave fleets on autonomous missions with a chosen aggressiveness while offline. A cautious posture may reduce exposure; an aggressive posture can lead to greater risk, including the fleet being lost before the player returns. No posture guarantees safety. The exact behaviors are still to be designed in [Fleets, Physical Logistics, and Loot](FLEETS_AND_LOGISTICS.md).
@@ -30,7 +32,7 @@ In the intended persistent multiplayer game, colonies and expeditions continue w
 
 **Confirmed direction:** The [orbital shuttle system](WORLD_AND_RELOCATION.md) connects emergency escape to multiplayer relocation, including movement between servers. Automatic launch on command-core destruction carries the existing onboard contents, potentially allowing the player to relocate with valuable assets. The transfer mechanism, destination reservations, and exact mapping between planets and servers remain open.
 
-**Open:** Single-player pause and save behavior was not explicitly settled. A transcript reference to “possible” may have meant “pausable”; neither interpretation establishes a requirement. Permanent online-only operation was considered earlier and should not be treated as settled after the single-player-first direction emerged.
+**Current local implementation:** Single-player supports pause and whole-neighborhood save/load. Setup, landing, menus, settings and credits suspend local simulation, while the game menu restores the preceding pause state on return. These implemented controls supersede the earlier ambiguous discussion of pausing; they do not establish offline or save authority for persistent multiplayer. See [Interface and Controls](INTERFACE_AND_CONTROLS.md).
 
 ### Networking and simulation ownership
 
@@ -44,7 +46,7 @@ In the intended persistent multiplayer game, colonies and expeditions continue w
 
 **Confirmed direction:** The persistent world and its single-player version need a deliberate relationship between game time and real time. Five or ten times real time were examples, not chosen multipliers. The robot-only population scope is intended to make rapid population growth plausible without having to design human reproduction or immigration now.
 
-**Open:** The time scale, any player speed control, and which processes use game time versus real time. In particular, the tentative thirty-minute invasion interval is not yet assigned to either clock. Single-player pause behavior remains unresolved.
+**Current local controls:** Pause and 1×, 5×, and 10× playback are implemented. The persistent world's final time scale and which processes use game time versus real time remain open. In particular, the tentative thirty-minute invasion interval is not yet assigned to either clock.
 
 ## Development constraints
 

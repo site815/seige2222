@@ -1,0 +1,142 @@
+[
+  {
+    "object": "jacaranda_tree_leaves_a_LOD0",
+    "triangles": 365,
+    "vertices": 294,
+    "materials": {
+      "jacaranda_tree_branches": 126,
+      "jacaranda_tree_leaves": 239
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_leaves_a_LOD1",
+    "triangles": 182,
+    "vertices": 189,
+    "materials": {
+      "jacaranda_tree_branches": 26,
+      "jacaranda_tree_leaves": 156
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_leaves_b_LOD0",
+    "triangles": 288,
+    "vertices": 239,
+    "materials": {
+      "jacaranda_tree_branches": 93,
+      "jacaranda_tree_leaves": 195
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_leaves_b_LOD1",
+    "triangles": 144,
+    "vertices": 158,
+    "materials": {
+      "jacaranda_tree_branches": 23,
+      "jacaranda_tree_leaves": 121
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_leaves_c_LOD0",
+    "triangles": 36,
+    "vertices": 36,
+    "materials": {
+      "jacaranda_tree_leaves": 36
+    },
+    "modifiers": [
+      "NODES"
+    ]
+  },
+  {
+    "object": "jacaranda_tree_leaves_c_LOD1",
+    "triangles": 18,
+    "vertices": 23,
+    "materials": {
+      "jacaranda_tree_leaves": 18
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_leaves_d_LOD0",
+    "triangles": 41,
+    "vertices": 37,
+    "materials": {
+      "jacaranda_tree_leaves": 41
+    },
+    "modifiers": [
+      "NODES"
+    ]
+  },
+  {
+    "object": "jacaranda_tree_leaves_d_LOD1",
+    "triangles": 20,
+    "vertices": 22,
+    "materials": {
+      "jacaranda_tree_leaves": 20
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_leaves_e_LOD0",
+    "triangles": 46,
+    "vertices": 40,
+    "materials": {
+      "jacaranda_tree_leaves": 46
+    },
+    "modifiers": [
+      "NODES"
+    ]
+  },
+  {
+    "object": "jacaranda_tree_leaves_e_LOD1",
+    "triangles": 23,
+    "vertices": 26,
+    "materials": {
+      "jacaranda_tree_leaves": 23
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_LOD0",
+    "triangles": 3863832,
+    "vertices": 3055019,
+    "materials": {
+      "jacaranda_tree_branches": 1231286,
+      "jacaranda_tree_trunk": 230112,
+      "jacaranda_tree_leaves": 2402434
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_LOD1",
+    "triangles": 1845603,
+    "vertices": 1813490,
+    "materials": {
+      "jacaranda_tree_trunk": 28744,
+      "jacaranda_tree_branches": 615642,
+      "jacaranda_tree_leaves": 1201217
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_trunk_LOD0",
+    "triangles": 115056,
+    "vertices": 57661,
+    "materials": {
+      "jacaranda_tree_trunk": 115056
+    },
+    "modifiers": []
+  },
+  {
+    "object": "jacaranda_tree_trunk_LOD1",
+    "triangles": 28744,
+    "vertices": 14439,
+    "materials": {
+      "jacaranda_tree_trunk": 28744
+    },
+    "modifiers": []
+  }
+]

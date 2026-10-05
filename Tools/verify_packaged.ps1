@@ -30,6 +30,7 @@ $result=Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
 $record=[pscustomobject]@{mode=$Mode;started=$started.ToString('o');exit_code=$launch.ExitCode;report=$result;socket_samples=$samples}
 $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $projectRoot "Saved/packaged-v$version-$Mode-verification.json")
 $record | ConvertTo-Json -Depth 8
+if($launch.ExitCode -ne 0){throw "Packaged game exited with code $($launch.ExitCode)"}
 if(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 79))){throw 'Packaged smoke assertions failed'}
 if($samples.Count -eq 0){throw 'No live process observed'}
 if(@($samples | Where-Object {$_.tcp -gt 0 -or $_.udp -gt 0}).Count -gt 0){throw 'Game opened a network endpoint'}

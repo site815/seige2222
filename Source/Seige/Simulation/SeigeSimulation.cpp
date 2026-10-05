@@ -113,9 +113,10 @@ bool WriteJson(const FObject& O, const FString& Filename, FString& Error)
 }
 }
 
-bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
+bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error, bool bBackgroundBugs, bool bPeriodicAttacks)
 {
     *this = FSeigeSimulation();
+    BackgroundBugsEnabled = bBackgroundBugs; PeriodicAttacksEnabled = bPeriodicAttacks;
     RulesPath = FPaths::ConvertRelativePathToFull(RulesDirectory);
     FString Fingerprint;
     TMap<FString, FObject> Documents;
@@ -429,7 +430,9 @@ void FSeigeSimulation::Tick(double Seconds)
         const double Step = FMath::Min(Seconds, Number(TEXT("fixed_step_seconds"))); Seconds -= Step; Time += Step;
         AllocateWorkers(); StepPopulation(Step); AllocateWorkers(); StepConstruction(Step); AllocateWorkers(); StepProduction(Step); StepLogistics(Step);
         while (Time >= NextWaveTime) { TriggerWave(); NextWaveTime += Number(TEXT("wave_interval")); }
-        while (Time >= NextRoamTime) { SpawnEnemies(static_cast<int32>(Number(TEXT("roam_count")))); NextRoamTime += Number(TEXT("roam_interval")); }
+        // Advance disabled schedules too: saves always retain a future deadline,
+        // while the switches suppress spawning rather than accumulating a backlog.
+        while (Time >= NextRoamTime) { if (BackgroundBugsEnabled) SpawnEnemies(static_cast<int32>(Number(TEXT("roam_count")))); NextRoamTime += Number(TEXT("roam_interval")); }
         StepCombat(Step); CheckObjectives();
     }
 }
@@ -640,7 +643,7 @@ void FSeigeSimulation::SpawnEnemies(int32 Count)
 }
 void FSeigeSimulation::TriggerWave()
 {
-    if (!Policy || Escaped || Failed) return;
+    if (!Policy || Escaped || Failed || !PeriodicAttacksEnabled) return;
     int32 Live = 0; for (const FSeigeBuilding& B : Buildings) if (B.Health > 0) ++Live;
     const int32 Count = FMath::Clamp(FMath::CeilToInt(Number(TEXT("wave_base_count")) + Live * Number(TEXT("wave_per_building")) + Population * Number(TEXT("wave_per_population")) + Wave * Number(TEXT("wave_escalation_per_wave"))), 0, static_cast<int32>(Number(TEXT("wave_max_count"))));
     ++Wave; SpawnEnemies(Count); AddEvent(TEXT("Alien pulse activity detected. Live positions require sensor coverage."));
@@ -724,6 +727,7 @@ bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
     FObject O = MakeShared<FJsonObject>(); O->SetNumberField(TEXT("save_format"), 2);
     O->SetStringField(TEXT("rules_version"), RulesVersion); O->SetStringField(TEXT("rules_fingerprint"), RulesFingerprint);
     O->SetNumberField(TEXT("time"),Time); O->SetNumberField(TEXT("next_wave_time"),NextWaveTime); O->SetNumberField(TEXT("next_roam_time"),NextRoamTime);
+    O->SetBoolField(TEXT("background_bugs"),BackgroundBugsEnabled); O->SetBoolField(TEXT("periodic_attacks"),PeriodicAttacksEnabled);
     O->SetNumberField(TEXT("population_clock"),PopulationClock); O->SetNumberField(TEXT("dispatch_clock"),DispatchClock); O->SetNumberField(TEXT("upkeep_clock"),UpkeepClock); O->SetNumberField(TEXT("workforce_efficiency"),WorkforceEfficiency);
     O->SetNumberField(TEXT("population"),Population); O->SetNumberField(TEXT("wave"),Wave); O->SetNumberField(TEXT("lost_couriers"),LostCouriers); O->SetNumberField(TEXT("delivered_units"),DeliveredUnits); O->SetNumberField(TEXT("next_id"),NextId); O->SetNumberField(TEXT("random_seed"),Random.GetCurrentSeed());
     O->SetBoolField(TEXT("escaped"),Escaped); O->SetBoolField(TEXT("failed"),Failed); O->SetBoolField(TEXT("won"),Won);
@@ -757,6 +761,15 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
     if (Format != 2 || Version != RulesVersion || Fingerprint != RulesFingerprint) { Error = TEXT("Save is incompatible with this rule version or edited rule files. Start a new colony."); return false; }
     // Parse into a temporary simulation: a corrupt save must never damage the running colony.
     FSeigeSimulation Candidate = *this;
+    // Compatible format-2 snapshots written before these switches had both threats
+    // enabled. A partially present or mistyped pair is corruption, not a default.
+    Candidate.BackgroundBugsEnabled = true; Candidate.PeriodicAttacksEnabled = true;
+    if (O->HasField(TEXT("background_bugs")) || O->HasField(TEXT("periodic_attacks")))
+    {
+        if (!O->HasTypedField<EJson::Boolean>(TEXT("background_bugs")) || !O->HasTypedField<EJson::Boolean>(TEXT("periodic_attacks")) ||
+            !O->TryGetBoolField(TEXT("background_bugs"),Candidate.BackgroundBugsEnabled) || !O->TryGetBoolField(TEXT("periodic_attacks"),Candidate.PeriodicAttacksEnabled))
+        { Error = TEXT("Invalid saved scenario threat settings"); return false; }
+    }
     if (!Numeric(O,TEXT("time"),Candidate.Time,0,Error) || !Numeric(O,TEXT("next_wave_time"),Candidate.NextWaveTime,0,Error) || !Numeric(O,TEXT("next_roam_time"),Candidate.NextRoamTime,0,Error) || !Numeric(O,TEXT("population_clock"),Candidate.PopulationClock,0,Error) || !Numeric(O,TEXT("dispatch_clock"),Candidate.DispatchClock,0,Error) || !Numeric(O,TEXT("upkeep_clock"),Candidate.UpkeepClock,0,Error) || !Numeric(O,TEXT("workforce_efficiency"),Candidate.WorkforceEfficiency,0,Error) || !Numeric(O,TEXT("delivered_units"),Candidate.DeliveredUnits,0,Error) || !IntegerField(O,TEXT("population"),Candidate.Population,0,Error) || !IntegerField(O,TEXT("wave"),Candidate.Wave,0,Error) || !IntegerField(O,TEXT("lost_couriers"),Candidate.LostCouriers,0,Error) || !IntegerField(O,TEXT("next_id"),Candidate.NextId,1,Error)) return false;
     double Seed = 0;
     if (!Numeric(O,TEXT("random_seed"),Seed,MIN_int32,Error) || Seed > MAX_int32 || Seed != FMath::FloorToDouble(Seed)) { Error = TEXT("Invalid saved random state"); return false; }

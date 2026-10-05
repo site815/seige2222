@@ -1,0 +1,125 @@
+{
+  "license": "Original grass geometry; source-derived tree geometry and retained photographic materials CC0-1.0",
+  "units": "centimeters",
+  "meshes": {
+    "SM_GrassProxy": {
+      "fbx": "SM_GrassProxy.fbx",
+      "triangles": 1280,
+      "vertices": 2816,
+      "dimensions_cm": [
+        140,
+        140,
+        55
+      ],
+      "material": "M_GrassProxy",
+      "sha256": "48873ed9818f963ecf36635710c69e41cfe8893a90fc03bca74779297c23395c",
+      "opaque": true,
+      "ground_z": 0,
+      "unreal_path": "/Game/Art/NatureV07/SM_GrassProxy",
+      "linear_vertex_color_min": [
+        0.04257066410229849,
+        0.05722222054012075,
+        0.010545592061840778
+      ],
+      "linear_vertex_color_max": [
+        0.2542108254409153,
+        0.2972056053001369,
+        0.0966371525700339
+      ]
+    },
+    "SM_BroadleafProxy": {
+      "fbx": "SM_BroadleafProxy.fbx",
+      "triangles": 23422,
+      "vertices": 13920,
+      "dimensions_cm": [
+        2441.704956,
+        1915.457458,
+        1946.887451
+      ],
+      "material": "M_CanopyProxy",
+      "sha256": "7d3b279ce82e0fb31d288d2af36f967b9d3e36658fa8b4389d504942305fb29c",
+      "opaque": true,
+      "ground_z": 0,
+      "unreal_path": "/Game/Art/NatureV07/SM_BroadleafProxy",
+      "linear_vertex_color_min": [
+        0.06,
+        0.06,
+        0.024
+      ],
+      "linear_vertex_color_max": [
+        0.12,
+        0.135,
+        0.035
+      ],
+      "source_asset": "jacaranda_tree",
+      "source_object": "SM_JacarandaNearV07",
+      "source_file": "Art/EnvironmentV07/Source/SM_JacarandaNearV07.blend",
+      "license": "CC0-1.0 derivative",
+      "method": "leaf-vertex occupancy surface plus reduced original woody structure",
+      "leaf_cell_cm": 30,
+      "occupied_cells": 52843,
+      "material_slots": [
+        "M_CanopyProxy",
+        "PH_jacaranda_tree_trunk",
+        "PH_jacaranda_tree_branches"
+      ],
+      "source_leaf_vertices": 1358284,
+      "runtime_review_pending": false,
+      "small_branch_face_area_cutoff_cm2": 25
+    },
+    "SM_ConiferProxy": {
+      "fbx": "SM_ConiferProxy.fbx",
+      "triangles": 18000,
+      "vertices": 9305,
+      "dimensions_cm": [
+        658.326508,
+        646.704773,
+        1895.460083
+      ],
+      "material": "M_CanopyProxy",
+      "sha256": "8baecf01f0b3f91e5108dc0b22480639a776c3042e4baf37a94f18c53d2941ca",
+      "opaque": true,
+      "ground_z": 0,
+      "unreal_path": "/Game/Art/NatureV07/SM_ConiferProxy",
+      "linear_vertex_color_min": [
+        0.06,
+        0.06,
+        0.024
+      ],
+      "linear_vertex_color_max": [
+        0.12,
+        0.135,
+        0.035
+      ],
+      "source_asset": "fir_tree_01",
+      "source_object": "SM_FirA",
+      "source_file": "Art/Nature/Source/fir_tree_01.blend",
+      "license": "CC0-1.0 derivative",
+      "method": "leaf-vertex occupancy surface plus reduced original woody structure",
+      "leaf_cell_cm": 24,
+      "occupied_cells": 14897,
+      "material_slots": [
+        "M_CanopyProxy",
+        "PH_fir_tree_01_bark",
+        "PH_fir_tree_01_trunk_a"
+      ],
+      "source_leaf_vertices": 80087,
+      "runtime_review_pending": false,
+      "small_branch_face_area_cutoff_cm2": 25
+    }
+  },
+  "runtime_review_pending": false,
+  "rendered_review": {
+    "status": "accepted incremental revision; no reference-game quality parity",
+    "captures": [
+      "Art/Previews/v07_ground.png",
+      "Art/Previews/v07_colony.png",
+      "Art/Previews/v07_hills.png",
+      "Art/Previews/v07_boundary.png"
+    ],
+    "remaining_limits": [
+      "Recognizable distant low-detail silhouettes and LOD color changes",
+      "Foliage stability during movement and native-resolution cost remain limitations"
+    ]
+  }
+}

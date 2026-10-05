@@ -36,6 +36,8 @@ The core automatically produces robots to fill open jobs and automatically reduc
 
 The recurring choice is what to build and prepare first. These priorities operate under three sources of pressure: roaming background aliens, periodic alien invasion pulses, and possible privateer attacks sent by developed neighbors. The latter is a possible consequence of neighboring an established faction, not a mandatory attack from every such faction.
 
+**Current local prototype:** v0.7 scenario setup independently enables background bugs and periodic attacks, both ON by default. The choices apply to every occupied colony and developed AI preparation, persist in saves, and remain fixed during play. Privateers are not implemented. These local options do not select persistent-server settings; see [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
+
 **Current scope:** Formal war against neighboring regions is removed. Privateering, attacks on neighbors, and theft remain part of the loop.
 
 **Confirmed direction:** Population needs should make sense for robots. The precise goods and the robot-appropriate meaning or replacement for happiness remain open; this adaptation preserves the intended economic tradeoffs.
@@ -48,7 +50,7 @@ The recurring choice is what to build and prepare first. These priorities operat
 
 **Illustrative only:** Five or ten times real time. Neither multiplier is selected.
 
-**Open:** The game-time rate, whether any speed control exists, and which timers are expressed in game time versus real time. The tentative thirty-minute alien invasion interval also needs that clock defined.
+**Current local controls:** Pause and 1×, 5×, and 10× playback are implemented; see [Interface and Controls](INTERFACE_AND_CONTROLS.md). The persistent world's final game-time rate and which timers use game time versus real time remain open. The tentative thirty-minute alien invasion interval also needs that clock defined.
 
 ## Everyday operation and settlement strategies
 

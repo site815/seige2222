@@ -1,5 +1,5 @@
 #include "SeigeGameMode.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "ProceduralMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
@@ -7,8 +7,43 @@
 #include "Misc/App.h"
 #include "HAL/PlatformTime.h"
 
+struct FSeigeStreamedCell
+{
+    bool BaseReady=false,DetailReady=false;
+    TMap<FName,TArray<FPrimitiveInstanceId>> Instances;
+};
+struct FSeigeSceneryStreamState
+{
+    TMap<FName,TWeakObjectPtr<UInstancedStaticMeshComponent>> Sets;
+    TMap<FIntPoint,FSeigeStreamedCell> Cells;
+    TMap<FString,TWeakObjectPtr<UStaticMesh>> Meshes;
+    TArray<FIntPoint> Wanted;
+    TArray<FIntPoint> Retiring;
+    FIntPoint FocusCell=FIntPoint(MAX_int32,MAX_int32),CameraCell=FIntPoint(MAX_int32,MAX_int32);
+    FIntPoint PendingCell;
+    int32 PendingIndex=MIN_int32;
+    bool PendingBase=false,PendingDetail=false;
+    FRandomStream Random;
+    TMap<FName,TArray<FTransform>> PendingTransforms;
+    int32 Remaining=0;
+    double Started=0;
+};
+
 namespace
 {
+FTransform AlignProxyBounds(const FTransform& SourceTransform,const UStaticMesh* Source,const UStaticMesh* Proxy)
+{
+    FTransform Result=SourceTransform;
+    Result.SetScale3D(SourceTransform.GetScale3D()*Source->GetBounds().BoxExtent/Proxy->GetBounds().BoxExtent);
+    const FVector Center=SourceTransform.TransformPosition(Source->GetBounds().Origin);
+    Result.SetLocation(Center-Result.TransformVector(Proxy->GetBounds().Origin));
+    return Result;
+}
+FVector ProxyPivotOffset(const FTransform& Transform,const UStaticMesh* Source,const UStaticMesh* Proxy)
+{
+    const FVector SourceScale=Transform.GetScale3D()*Proxy->GetBounds().BoxExtent/Source->GetBounds().BoxExtent;
+    return Transform.GetRotation().RotateVector(Source->GetBounds().Origin*SourceScale-Proxy->GetBounds().Origin*Transform.GetScale3D());
+}
 bool HidePendingHomeFoundation(const ASeigeGameMode& G)
 {
     if(G.Observer)return false;
@@ -195,7 +230,8 @@ TArray<FDirtPatch> PrepareDirt(const ASeigeGameMode& G)
                 // graded bank remains a meadow rather than a square dirt lot.
                 DirtPatches.Add({B.Position+Offset,D->Footprint*.72,D->Footprint+90,.65,true,PadOuter+Step});
             }
-        for(const auto& N:Colony->Nodes)DirtPatches.Add({N.Position+Offset,110,210,.6});
+        if(G.Observer||G.DetailedSectorIndex()==4)
+            for(const auto& N:Colony->Nodes)DirtPatches.Add({N.Position+Offset,110,210,.6});
     }
     return DirtPatches;
 }
@@ -336,9 +372,16 @@ void ASeigeGameMode::RefreshBuildingPads()
     // regeneration is unnecessary, so a new foundation cannot reshuffle trees.
     for(AActor* Actor:{Foliage.Get(),GroundCover.Get()})if(Actor)
     {
-        TArray<UHierarchicalInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
+        TArray<UInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
         for(auto* Component:Components)
         {
+            UStaticMesh* ProxySource=nullptr;
+            for(const FName Tag:Component->ComponentTags)
+            {
+                const FString Text=Tag.ToString();
+                if(Text.StartsWith(TEXT("seige_source:")))
+                {const FString Path=NatureAssets.FindRef(Text.RightChop(13));if(!Path.IsEmpty())ProxySource=LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn);break;}
+            }
             TSet<int32> Touched;
             for(const auto& Area:Changed)
             {
@@ -349,19 +392,19 @@ void ASeigeGameMode::RefreshBuildingPads()
                 const FBox Bounds(FVector((P.X-Radius)*RenderScale,(P.Y-Radius)*RenderScale,-6000*RenderScale),FVector((P.X+Radius)*RenderScale,(P.Y+Radius)*RenderScale,6000*RenderScale));
                 for(int32 Index:Component->GetInstancesOverlappingBox(Bounds,true))Touched.Add(Index);
             }
-            const bool AutoRebuild=Component->bAutoRebuildTreeOnInstanceChanges;
-            if(!Touched.IsEmpty())Component->bAutoRebuildTreeOnInstanceChanges=false;
             for(int32 Index:Touched)
             {
                 FTransform Transform;
                 if(Component->GetInstanceTransform(Index,Transform,true))
                 {
-                    FVector P=Transform.GetLocation();P.Z=GroundHeight(FVector2D(P)/RenderScale)*RenderScale;Transform.SetLocation(P);
+                    const FVector Pivot=ProxySource?ProxyPivotOffset(Transform,ProxySource,Component->GetStaticMesh()):FVector::ZeroVector;
+                    FVector P=Transform.GetLocation()-Pivot;P.Z=GroundHeight(FVector2D(P)/RenderScale)*RenderScale;
                     if(Actor==GroundCover.Get())Transform.SetRotation(GroundCoverRotation(*this,FVector2D(P)/RenderScale,Transform.Rotator().Yaw));
+                    Transform.SetLocation(P+(ProxySource?ProxyPivotOffset(Transform,ProxySource,Component->GetStaticMesh()):FVector::ZeroVector));
                     Component->UpdateInstanceTransform(Index,Transform,true,false,true);
                 }
             }
-            if(!Touched.IsEmpty()){Component->BuildTreeIfOutdated(false,true);Component->MarkRenderStateDirty();Component->bAutoRebuildTreeOnInstanceChanges=AutoRebuild;}
+            if(!Touched.IsEmpty())Component->MarkRenderStateDirty();
         }
     }
     UE_LOG(LogTemp,Display,TEXT("Terrain foundation update: %d vertices, %d chunks, %.3f seconds; forest retained"),UpdatedVertices,UpdatedChunks,FPlatformTime::Seconds()-Started);
@@ -369,7 +412,8 @@ void ASeigeGameMode::RefreshBuildingPads()
 namespace
 {
 constexpr double GroundTileSize=900;
-constexpr int32 GroundTileRadius=4;
+constexpr int32 GroundReferenceCells=81;
+constexpr int32 SceneryLodBands=8;
 struct FSceneryClearance {FVector2D Position;double Radius;bool Square=false;};
 TArray<FSceneryClearance> VisibleClearances(const ASeigeGameMode& G)
 {
@@ -377,7 +421,8 @@ TArray<FSceneryClearance> VisibleClearances(const ASeigeGameMode& G)
     const FVector2D Offset=G.DetailedSectorOffset();
     if(G.DetailedSectorIndex()!=4||!HidePendingHomeFoundation(G))for(const auto& B:Colony->Buildings)
         if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.Sim.IsVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->Footprint,true});
-    for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
+    if(G.Observer||G.DetailedSectorIndex()==4)
+        for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
     return Areas;
 }
 bool IsSceneryClear(FVector2D P,double Radius,FVector2D Offset,double Half,const TArray<FSceneryClearance>& Areas)
@@ -395,14 +440,16 @@ uint32 GroundCellSeed(int32 X,int32 Y)
     uint32 Seed=uint32(X)*0x9e3779b9u^uint32(Y)*0x85ebca6bu^2222u;
     Seed^=Seed>>16;Seed*=0x7feb352du;Seed^=Seed>>15;Seed*=0x846ca68bu;return Seed^(Seed>>16);
 }
-UHierarchicalInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind,bool GrassIndirectLighting=false,float GrassProgrammableDistanceMeters=0)
+UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind,bool GrassIndirectLighting=false,float GrassProgrammableDistanceMeters=0,float MinDistance=0,float MaxDistance=0)
 {
     if(!Mesh)return nullptr;
-    auto* Set=NewObject<UHierarchicalInstancedStaticMeshComponent>(Actor);Set->bAutoRebuildTreeOnInstanceChanges=false;Set->SetStaticMesh(Mesh);Set->SetupAttachment(Root);
-    Set->SetLODDistanceScale(1);Set->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
+    // Nanite handles per-instance culling/LOD itself. CPU HISM trees were built
+    // synchronously for each streamed strip despite never supplying these LODs.
+    auto* Set=NewObject<UInstancedStaticMeshComponent>(Actor);Set->SetStaticMesh(Mesh);Set->SetupAttachment(Root);
+    Set->SetCollisionEnabled(ECollisionEnabled::NoCollision);Set->SetCanEverAffectNavigation(false);Set->SetRemoveSwap();
     const bool Sward=Kind.StartsWith(TEXT("Grass"))||Kind==TEXT("Wildflowers");
-    Set->SetCullDistances(Tree?0:Sward?50000:15000,Tree?0:Sward?90000:42000);
+    Set->InstanceMinDrawDistance=FMath::RoundToInt(MinDistance);
+    Set->SetCullDistances(FMath::RoundToInt(MaxDistance),FMath::RoundToInt(MaxDistance));
     // These assets have no wind/deformation. Rigid still invalidates when a
     // foundation moves instances; Static would incorrectly suppress that update.
     Set->SetEvaluateWorldPositionOffset(false);
@@ -423,15 +470,17 @@ UHierarchicalInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneCom
     Set->RegisterComponent();Actor->AddInstanceComponent(Set);return Set;
 }
 const FName SwardTag(TEXT("seige_sward"));
+const FName ProxyTag(TEXT("seige_proxy"));
 void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
 {
     if(!Actor)return;
     const FVector CameraPosition=G.CameraTransform(G.CameraViewZoom()).GetLocation();
     const double Distance=G.GrassShadowDistanceMeters*100.;
-    TArray<UHierarchicalInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
+    TArray<UInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
     for(auto* Component:Components)
     {
         if(!Component->ComponentHasTag(SwardTag)||Component->GetInstanceCount()==0)continue;
+        if(Component->ComponentHasTag(ProxyTag)){if(Component->CastShadow)Component->SetCastShadow(false);continue;}
         // Full grass coverage is retained. Only tiny distant grass shadows are
         // omitted; tree/building shadows and nearby sward shadows stay enabled.
         // A small hysteresis avoids rebuilding shadow state at a hovering edge.
@@ -444,66 +493,92 @@ void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
 void ASeigeGameMode::CreateFoliage()
 {
     if(!FApp::CanEverRender())return;
-    if(Foliage)Foliage->Destroy();if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}
+    const double Started=FPlatformTime::Seconds();
+    if(Foliage)Foliage->Destroy();if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}SceneryStream.Reset();SceneryMeshReferences.Reset();
     auto* Ground=GetWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();Foliage=Ground;
-    const FVector2D Offset=DetailedSectorOffset();const double Half=Sim.WorldHalfSize;const auto Areas=VisibleClearances(*this);
-    TMap<FString,UHierarchicalInstancedStaticMeshComponent*> Sets;
+    const double Half=Sim.WorldHalfSize,FarDistance=Half*RenderScale*8;
+    auto* BroadProxy=LoadObject<UStaticMesh>(nullptr,*BroadleafProxyAsset,nullptr,LOAD_NoWarn);
+    auto* PineProxy=LoadObject<UStaticMesh>(nullptr,*ConiferProxyAsset,nullptr,LOAD_NoWarn);
+    TMap<FString,UStaticMesh*> Meshes;
+    TMap<FName,UInstancedStaticMeshComponent*> Sets;
+    TMap<FName,TArray<FTransform>> Batches;
     for(const FString Kind:{TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB"),TEXT("RockA"),TEXT("RockB")})
     {
         const FString Name=TEXT("SM_")+Kind,Path=NatureAssets.Contains(Kind)?NatureAssets[Kind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
-        if(auto* Set=VegetationSet(Ground,Root,LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn),Kind))Sets.Add(Kind,Set);
+        if(auto* Mesh=LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn))Meshes.Add(Kind,Mesh);
     }
-    auto Add=[&](const FString& Kind,FVector2D P,double Size,double Rotation){if(auto** Set=Sets.Find(Kind))(*Set)->AddInstance(FTransform(FRotator(0,Rotation,0),RenderPosition(P),FVector(Size)));};
-    FRandomStream R(2222+DetailedSectorIndex()*100003);
-    auto Tree=[&](FVector2D P,int32 I)
+    auto EnsureSet=[&](const FString& Kind,int32 Band,bool Proxy)->UInstancedStaticMeshComponent*
     {
-        // Consume a fixed random sequence before visibility/clearance filtering.
-        // Returning to a changed colony therefore cannot relocate unrelated trees.
-        const double Chance=R.FRand(),Size=R.FRandRange(.72,1.16),Yaw=R.FRandRange(0,360);
-        if(IsSceneryClear(P,210,Offset,Half,Areas)||Chance>WoodlandDensity(P)*.9)return;
-        const FString Kind=I%9==0?(I%2?TEXT("PineA"):TEXT("PineB")):(I%2?TEXT("OakA"):TEXT("OakB"));Add(Kind,P,Size,Yaw);
-    };
-    for(int32 I=0;I<ForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half)),I);
-    // Supplemental woodland is fixed to the sector, never to the moving camera.
-    for(int32 I=0;I<NearForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000)),I);
-    if(const auto* Colony=ViewedSimulation())for(const auto& N:Colony->Nodes)for(int32 I=0;I<13;++I)
-    {
-        const FVector2D P=Offset+N.Position+FVector2D(R.FRandRange(-125,125),R.FRandRange(-125,125));Add(I%2?TEXT("RockA"):TEXT("RockB"),P,R.FRandRange(.35,.8),R.FRandRange(0,360));
-    }
-    // A sparse background forest shares already loaded meshes and follows the
-    // neighboring coarse triangle surface. It uses only public natural terrain,
-    // never hidden colony positions, inventory, deposits or construction state.
-    int32 BackgroundInstances=0;
-    if(NeighborForestCandidates>0)
-    {
-        TMap<FString,UHierarchicalInstancedStaticMeshComponent*> BackgroundSets;
-        for(const FString Kind:{TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB")})
-            if(auto** Foreground=Sets.Find(Kind))if(auto* Set=VegetationSet(Ground,Root,(*Foreground)->GetStaticMesh(),Kind))
-            {
-                Set->SetCastShadow(NeighborForestShadows);
-                Set->SetAffectDistanceFieldLighting(false);
-                Set->SetAffectDynamicIndirectLighting(false);
-                BackgroundSets.Add(Kind,Set);
-            }
-        for(int32 Sector=0;Sector<9;++Sector)
+        const FName Key(*FString::Printf(TEXT("%s_%d_%s"),*Kind,Band,Proxy?TEXT("proxy"):TEXT("detail")));
+        if(auto** Existing=Sets.Find(Key))return *Existing;
+        const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
+        auto* Source=Meshes.FindRef(Kind);auto* ProxyMesh=Kind.StartsWith(TEXT("Pine"))?PineProxy:BroadProxy;
+        // Missing optional cooked proxy falls back to continuous source foliage,
+        // never an invisible band. Configuration validation normally catches it.
+        const bool HasProxy=Tree&&ProxyMesh;
+        const double Cut=(ForestDetailDistanceMeters+ForestLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
+        auto* Set=VegetationSet(Ground,Root,Proxy?ProxyMesh:Source,Kind,false,0,Proxy?Cut:0,Tree?(Proxy?FarDistance:HasProxy?Cut:FarDistance):FarDistance);
+        if(!Set)return nullptr;
+        if(Proxy)
         {
-            if(Sector==DetailedSectorIndex())continue;
-            const FVector2D SectorOffset=FVector2D(Sector%3-1,Sector/3-1)*Half*2;
-            FRandomStream BackgroundRandom(2222+Sector*100003);
-            for(int32 I=0;I<NeighborForestCandidates;++I)
+            Set->ComponentTags.Add(ProxyTag);Set->SetCastShadow(NeighborForestShadows);
+            Set->ComponentTags.Add(FName(*(TEXT("seige_source:")+Kind)));
+            Set->SetAffectDistanceFieldLighting(false);Set->SetAffectDynamicIndirectLighting(false);
+        }
+        Sets.Add(Key,Set);return Set;
+    };
+    auto Add=[&](const FString& Kind,FVector2D P,double Size,double Yaw,int32 Band)
+    {
+        const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
+        auto* Source=Meshes.FindRef(Kind);if(!Source)return;
+        const FTransform Transform(FRotator(0,Yaw,0),RenderPosition(P),FVector(Size));
+        const FName DetailKey(*FString::Printf(TEXT("%s_%d_detail"),*Kind,Band));
+        if(EnsureSet(Kind,Band,false))Batches.FindOrAdd(DetailKey).Add(Transform);
+        if(Tree)if(auto* Proxy=Kind.StartsWith(TEXT("Pine"))?PineProxy:BroadProxy)
+        {
+            if(EnsureSet(Kind,Band,true))
             {
-                const FVector2D P=SectorOffset+FVector2D(BackgroundRandom.FRandRange(-Half,Half),BackgroundRandom.FRandRange(-Half,Half));
-                const double Chance=BackgroundRandom.FRand(),Size=BackgroundRandom.FRandRange(.72,1.16),Yaw=BackgroundRandom.FRandRange(0,360);
-                if(Chance>WoodlandDensity(P)*.9)continue;
-                const FString Kind=I%9==0?(I%2?TEXT("PineA"):TEXT("PineB")):(I%2?TEXT("OakA"):TEXT("OakB"));
-                if(auto** Set=BackgroundSets.Find(Kind))
-                {(*Set)->AddInstance(FTransform(FRotator(0,Yaw,0),RenderPosition(P),FVector(Size)));++BackgroundInstances;}
+                const FTransform Far=AlignProxyBounds(Transform,Source,Proxy);
+                const FName ProxyKey(*FString::Printf(TEXT("%s_%d_proxy"),*Kind,Band));
+                Batches.FindOrAdd(ProxyKey).Add(Far);
             }
         }
-        for(auto& Pair:BackgroundSets){Pair.Value->BuildTreeIfOutdated(false,true);Pair.Value->bAutoRebuildTreeOnInstanceChanges=true;}
+    };
+    int32 Trees=0;
+    // Every sector keeps the same full placement sequence and density at every
+    // focus level. Only the representation changes with camera distance.
+    for(int32 Sector=0;Sector<9;++Sector)
+    {
+        const FVector2D Offset=FVector2D(Sector%3-1,Sector/3-1)*Half*2;
+        const FSeigeSimulation* Colony=Sector==4?&Sim:nullptr;
+        if(!Colony)for(const auto& N:Neighbors)if(N.Index==Sector){Colony=&N.Sim;break;}
+        TArray<FSceneryClearance> Areas;
+        if(Colony&&(Sector!=4||!HidePendingHomeFoundation(*this)))
+        {
+            for(const auto& B:Colony->Buildings)if(B.Health>0&&(Observer||Sector==4||Sim.IsVisible(B.Position+Offset)))
+                if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->Footprint,true});
+            if(Observer||Sector==4)for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
+        }
+        FRandomStream R(2222+Sector*100003);
+        auto Tree=[&](FVector2D P,int32 I)
+        {
+            const double Chance=R.FRand(),Size=R.FRandRange(.72,1.16),Yaw=R.FRandRange(0,360);
+            if(IsSceneryClear(P,210,Offset,Half,Areas)||Chance>WoodlandDensity(P)*.9)return;
+            const FString Kind=I%9==0?(I%2?TEXT("PineA"):TEXT("PineB")):(I%2?TEXT("OakA"):TEXT("OakB"));
+            const int32 Band=int32(GroundCellSeed(I,Sector)%SceneryLodBands);
+            Add(Kind,P,Size,Yaw,Band);++Trees;
+        };
+        for(int32 I=0;I<ForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half)),I);
+        for(int32 I=0;I<NearForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000)),I);
+        // Resource-specific clusters must not reveal a hidden neighbor's nodes.
+        if(Sector==DetailedSectorIndex()&&Colony&&(Observer||Sector==4))for(const auto& N:Colony->Nodes)for(int32 I=0;I<13;++I)
+        {
+            const FVector2D P=Offset+N.Position+FVector2D(R.FRandRange(-125,125),R.FRandRange(-125,125));
+            Add(I%2?TEXT("RockA"):TEXT("RockB"),P,R.FRandRange(.35,.8),R.FRandRange(0,360),0);
+        }
     }
-    for(auto& Pair:Sets){Pair.Value->BuildTreeIfOutdated(false,true);Pair.Value->bAutoRebuildTreeOnInstanceChanges=true;}
-    UE_LOG(LogTemp,Display,TEXT("Neighbor landscape: eight textured coarse tiles, %d background trees, shadows %s"),BackgroundInstances,NeighborForestShadows?TEXT("on"):TEXT("off"));
+    for(auto& Pair:Batches)if(auto** Set=Sets.Find(Pair.Key))(*Set)->AddInstances(Pair.Value,false,false,false);
+    UE_LOG(LogTemp,Display,TEXT("SCENERY_FOREST_READY: %d stable trees across nine sectors, %d ISM batches, %.3f seconds; opaque distance proxies %s"),Trees,Sets.Num(),FPlatformTime::Seconds()-Started,BroadProxy&&PineProxy?TEXT("enabled"):TEXT("fallback"));
     CreateGroundCover();
 }
 void ASeigeGameMode::CreateGroundCover()
@@ -512,60 +587,230 @@ void ASeigeGameMode::CreateGroundCover()
     if(!GroundCover)
     {
         GroundCover=GetWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(GroundCover);GroundCover->SetRootComponent(Root);Root->RegisterComponent();
+        SceneryStream=MakeShared<FSeigeSceneryStreamState>();SceneryStream->Started=FPlatformTime::Seconds();
     }
-    FoliageCenter=FVector2D(CameraCenter);const FVector2D Offset=DetailedSectorOffset();const double Half=Sim.WorldHalfSize;const auto Areas=VisibleClearances(*this);
-    const int32 CenterX=FMath::FloorToInt(FoliageCenter.X/GroundTileSize),CenterY=FMath::FloorToInt(FoliageCenter.Y/GroundTileSize);
-    TSet<FName> Wanted,Present;
-    for(int32 Y=CenterY-GroundTileRadius;Y<=CenterY+GroundTileRadius;++Y)for(int32 X=CenterX-GroundTileRadius;X<=CenterX+GroundTileRadius;++X)Wanted.Add(FName(*FString::Printf(TEXT("ground_%d_%d"),X,Y)));
-    TArray<UHierarchicalInstancedStaticMeshComponent*> Existing;GroundCover->GetComponents(Existing);
-    for(auto* Component:Existing)
+    if(!SceneryStream)SceneryStream=MakeShared<FSeigeSceneryStreamState>();
+    auto& State=*SceneryStream;
+    const double Started=FPlatformTime::Seconds(),Budget=GrassStreamBudgetMs*.001;
+    // ISM bounds changes invalidate every instance in that primitive in the
+    // renderer's scene-culling hierarchy. A world-wide group made a small cell
+    // upload resubmit over a million instances. Bound each group to a 2x2-cell
+    // (108m) page while retaining the existing per-species/per-LOD batching.
+    auto InstancePageKey=[](FIntPoint Cell,const FString& Kind,int32 Band)
     {
-        if(Component->ComponentTags.IsEmpty()||!Wanted.Contains(Component->ComponentTags[0])){GroundCover->RemoveInstanceComponent(Component);Component->DestroyComponent();}
-        else Present.Add(Component->ComponentTags[0]);
-    }
-    TMap<FString,UStaticMesh*> Meshes;
-    for(const FString Kind:{TEXT("Grass"),TEXT("GrassB"),TEXT("Wildflowers"),TEXT("Shrub"),TEXT("RockA"),TEXT("RockB")})
+        constexpr int32 CellsPerInstancePage=2;
+        const int32 X=FMath::FloorToInt(double(Cell.X)/CellsPerInstancePage);
+        const int32 Y=FMath::FloorToInt(double(Cell.Y)/CellsPerInstancePage);
+        return FName(*FString::Printf(TEXT("%d:%d:%s_%d"),X,Y,*Kind,Band));
+    };
+    const FVector CameraPosition=CameraTransform(CameraViewZoom()).GetLocation();
+    const FVector2D CameraXY=FVector2D(CameraPosition)/RenderScale,Focus=FVector2D(CameraCenter),Offset=DetailedSectorOffset();
+    const double Half=Sim.WorldHalfSize,Radius=GrassStreamRadiusMeters*100/RenderScale;
+    const double DetailPreload=(GrassDetailDistanceMeters+GrassLodTransitionMeters)*100/RenderScale+GroundTileSize*2;
+    const int32 RadiusCells=FMath::CeilToInt(Radius/GroundTileSize);
+    const FIntPoint FocusCell(FMath::FloorToInt(Focus.X/GroundTileSize),FMath::FloorToInt(Focus.Y/GroundTileSize));
+    const FIntPoint CameraCell(FMath::FloorToInt(CameraXY.X/GroundTileSize),FMath::FloorToInt(CameraXY.Y/GroundTileSize));
+    auto CellDistanceSq=[](FIntPoint Cell,FVector2D P)
     {
-        const FString Name=TEXT("SM_")+Kind,Path=NatureAssets.Contains(Kind)?NatureAssets[Kind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
-        if(auto* Mesh=LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn))Meshes.Add(Kind,Mesh);
-    }
-    constexpr int32 Cells=(GroundTileRadius*2+1)*(GroundTileRadius*2+1),PropsPerCell=6500/Cells;
-    const int32 GrassPerCell=GroundCoverCandidates/Cells;
-    for(int32 Y=CenterY-GroundTileRadius;Y<=CenterY+GroundTileRadius;++Y)for(int32 X=CenterX-GroundTileRadius;X<=CenterX+GroundTileRadius;++X)
+        const FVector2D Min(Cell.X*GroundTileSize,Cell.Y*GroundTileSize),Max=Min+FVector2D(GroundTileSize);
+        return FMath::Square(FMath::Max(FMath::Max(Min.X-P.X,P.X-Max.X),0.))+FMath::Square(FMath::Max(FMath::Max(Min.Y-P.Y,P.Y-Max.Y),0.));
+    };
+    auto WantsDetail=[&](FIntPoint Cell){return CellDistanceSq(Cell,CameraXY)<=DetailPreload*DetailPreload;};
+    if(State.FocusCell!=FocusCell||State.CameraCell!=CameraCell)
     {
-        const FName Tag(*FString::Printf(TEXT("ground_%d_%d"),X,Y));if(Present.Contains(Tag))continue;
-        const FVector2D Origin(X*GroundTileSize,Y*GroundTileSize);
-        if(Origin.X+GroundTileSize<Offset.X-Half||Origin.X>Offset.X+Half||Origin.Y+GroundTileSize<Offset.Y-Half||Origin.Y>Offset.Y+Half)continue;
-        TMap<FString,UHierarchicalInstancedStaticMeshComponent*> Sets;
-        for(const auto& Pair:Meshes)if(auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),Pair.Value,Pair.Key,GrassDistanceFieldLighting,GrassProgrammableDistanceMeters))
+        State.FocusCell=FocusCell;State.CameraCell=CameraCell;FoliageCenter=Focus;
+        State.Wanted.Reset();TSet<FIntPoint> Wanted;
+        for(const FIntPoint Center:{FocusCell,CameraCell})
+            for(int32 Y=Center.Y-RadiusCells;Y<=Center.Y+RadiusCells;++Y)for(int32 X=Center.X-RadiusCells;X<=Center.X+RadiusCells;++X)
+            {
+                const FIntPoint Cell(X,Y);const FVector2D Origin(X*GroundTileSize,Y*GroundTileSize);
+                if(Origin.X+GroundTileSize<Offset.X-Half||Origin.X>Offset.X+Half||Origin.Y+GroundTileSize<Offset.Y-Half||Origin.Y>Offset.Y+Half)continue;
+                if(FMath::Min(CellDistanceSq(Cell,Focus),CellDistanceSq(Cell,CameraXY))<=Radius*Radius)Wanted.Add(Cell);
+            }
+        State.Wanted=Wanted.Array();
+        State.Wanted.Sort([&](const FIntPoint& A,const FIntPoint& B)
         {
-            Set->ComponentTags.Add(Tag);
-            if(Pair.Key.StartsWith(TEXT("Grass"))||Pair.Key==TEXT("Wildflowers"))Set->ComponentTags.Add(SwardTag);
-            Sets.Add(Pair.Key,Set);
+            const double DA=CellDistanceSq(A,CameraXY),DB=CellDistanceSq(B,CameraXY);
+            if(DA!=DB)return DA<DB;
+            return A.Y==B.Y?A.X<B.X:A.Y<B.Y;
+        });
+        // One-cell retention hysteresis prevents churn when a camera hovers on
+        // a grid edge. Existing proxy cover remains while incoming cells fill.
+        State.Retiring.Reset();
+        const double RetainRadius=Radius+GroundTileSize;
+        for(auto& Pair:State.Cells)
+            if(!Wanted.Contains(Pair.Key)&&FMath::Min(CellDistanceSq(Pair.Key,Focus),CellDistanceSq(Pair.Key,CameraXY))>RetainRadius*RetainRadius)State.Retiring.Add(Pair.Key);
+        if(State.PendingIndex!=MIN_int32&&!Wanted.Contains(State.PendingCell))
+        {State.PendingIndex=MIN_int32;State.PendingTransforms.Reset();}
+    }
+    // Retiring an entire strip in one frame caused the same hitch as building
+    // it. Retire at most one cell here; removal is also inside the frame budget.
+    if(!State.Retiring.IsEmpty())
+    {
+        const FIntPoint Cell=State.Retiring.Pop(EAllowShrinking::No);
+        if(auto* Record=State.Cells.Find(Cell))
+        {
+            for(auto& Pair:Record->Instances)if(auto* Set=State.Sets.FindRef(Pair.Key).Get())
+            {
+                Pair.Value.RemoveAll([&](FPrimitiveInstanceId Id){return !Set->IsValidId(Id);});
+                Set->RemoveInstancesById(Pair.Value,false);
+                if(Set->GetInstanceCount()==0)
+                {
+                    // Never keep empty page primitives or growing stale bounds
+                    // behind a camera that travels across the sector.
+                    State.Sets.Remove(Pair.Key);
+                    GroundCover->RemoveInstanceComponent(Set);Set->DestroyComponent();
+                }
+            }
+            State.Cells.Remove(Cell);
         }
-        auto Add=[&](const FString& Kind,FVector2D P,double Size,double Yaw){if(auto** Set=Sets.Find(Kind))(*Set)->AddInstance(FTransform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size)));};
-        FRandomStream R{static_cast<int32>(GroundCellSeed(X,Y))};
-        for(int32 I=0;I<PropsPerCell;++I)
+    }
+    const auto Areas=VisibleClearances(*this);
+    if(State.Meshes.IsEmpty())
+    {
+        for(const FString Kind:{TEXT("Grass"),TEXT("GrassB"),TEXT("Wildflowers"),TEXT("Shrub"),TEXT("RockA"),TEXT("RockB")})
         {
-            const FVector2D P=Origin+FVector2D(R.FRandRange(0,GroundTileSize),R.FRandRange(0,GroundTileSize));const double Size=R.FRandRange(.4,1.1),Yaw=R.FRandRange(0,360);
-            if(IsSceneryClear(P,30,Offset,Half,Areas))continue;const bool Outcrop=FMath::PerlinNoise2D(P/950+FVector2D(13,-8))>.24;
-            Add(I%5==0&&Outcrop?(I%2?TEXT("RockA"):TEXT("RockB")):TEXT("Shrub"),P,Size,Yaw);
+            const FString Name=TEXT("SM_")+Kind,Path=NatureAssets.Contains(Kind)?NatureAssets[Kind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
+            auto* Mesh=LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn);State.Meshes.Add(Kind,Mesh);SceneryMeshReferences.Add(Kind,Mesh);
         }
-        for(int32 I=0;I<GrassPerCell;++I)
+        State.Meshes.Add(TEXT("GrassProxy"),LoadObject<UStaticMesh>(nullptr,*GrassProxyAsset,nullptr,LOAD_NoWarn));
+        SceneryMeshReferences.Add(TEXT("GrassProxy"),State.Meshes.FindRef(TEXT("GrassProxy")).Get());
+    }
+    const bool HasProxy=State.Meshes.FindRef(TEXT("GrassProxy")).IsValid();
+    auto EnsureSet=[&](const FString& Kind,int32 Band)->UInstancedStaticMeshComponent*
+    {
+        const FName Key=InstancePageKey(State.PendingCell,Kind,Band);
+        if(auto* Existing=State.Sets.FindRef(Key).Get())return Existing;
+        const bool Proxy=Kind.StartsWith(TEXT("GrassProxy")),Detail=Kind==TEXT("Grass")||Kind==TEXT("GrassB");
+        const double Cut=(GrassDetailDistanceMeters+GrassLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
+        const double End=(Detail&&HasProxy)?Cut:Sim.WorldHalfSize*RenderScale*8;
+        auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),State.Meshes.FindRef(Proxy?TEXT("GrassProxy"):Kind).Get(),Kind,GrassDistanceFieldLighting,GrassProgrammableDistanceMeters,Proxy?Cut:0,End);
+        if(!Set)return nullptr;
+        // Cheap incremental bounds remain confined to this page. They cannot
+        // grow across the whole sector as cells are inserted and retired.
+        Set->SetUseConservativeBounds(true);
+        Set->ComponentTags.Add(Key);
+        if(Detail||Proxy||Kind==TEXT("Wildflowers"))Set->ComponentTags.Add(SwardTag);
+        if(Proxy){Set->ComponentTags.Add(ProxyTag);Set->ComponentTags.Add(FName(Kind==TEXT("GrassProxyA")?TEXT("seige_source:Grass"):TEXT("seige_source:GrassB")));Set->SetCastShadow(false);Set->SetAffectDistanceFieldLighting(false);Set->SetAffectDynamicIndirectLighting(false);}
+        State.Sets.Add(Key,Set);return Set;
+    };
+    constexpr int32 PropsPerCell=6500/GroundReferenceCells;
+    const int32 GrassPerCell=GroundCoverCandidates/GroundReferenceCells;
+    int32 Completed=0;
+    while(Completed<GrassStreamCellsPerFrame&&(FPlatformTime::Seconds()-Started<Budget||State.PendingIndex==MIN_int32))
+    {
+        if(State.PendingIndex==MIN_int32)
         {
+            bool Found=false;
+            // Detail replacements are preloaded before the camera reaches the
+            // handoff band; proxy-only cells extend much farther into the view.
+            for(const FIntPoint Cell:State.Wanted)
+            {
+                const auto* Record=State.Cells.Find(Cell);
+                if(!Record||!Record->BaseReady||((!Record->DetailReady)&&(!HasProxy||WantsDetail(Cell))))
+                {
+                    State.PendingCell=Cell;State.PendingBase=!Record||!Record->BaseReady;
+                    State.PendingDetail=!HasProxy||WantsDetail(Cell);State.PendingIndex=-PropsPerCell;
+                    State.Random.Initialize(static_cast<int32>(GroundCellSeed(Cell.X,Cell.Y)));State.PendingTransforms.Reset();Found=true;break;
+                }
+            }
+            if(!Found)break;
+        }
+        const FVector2D Origin(State.PendingCell.X*GroundTileSize,State.PendingCell.Y*GroundTileSize);
+        auto Add=[&](const FString& Kind,int32 Band,const FTransform& Transform)
+        {
+            State.PendingTransforms.FindOrAdd(FName(*FString::Printf(TEXT("%s_%d"),*Kind,Band))).Add(Transform);
+        };
+        for(int32 Batch=0;Batch<128&&State.PendingIndex<GrassPerCell;++Batch,++State.PendingIndex)
+        {
+            const int32 I=State.PendingIndex;auto& R=State.Random;
+            if(I<0)
+            {
+                const FVector2D P=Origin+FVector2D(R.FRandRange(0,GroundTileSize),R.FRandRange(0,GroundTileSize));const double Size=R.FRandRange(.4,1.1),Yaw=R.FRandRange(0,360);
+                if(!State.PendingBase||IsSceneryClear(P,30,Offset,Half,Areas))continue;
+                const bool Outcrop=FMath::PerlinNoise2D(P/950+FVector2D(13,-8))>.24;const int32 Index=I+PropsPerCell;
+                const FString Kind=Index%5==0&&Outcrop?(Index%2?TEXT("RockA"):TEXT("RockB")):TEXT("Shrub");
+                Add(Kind,0,FTransform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size)));continue;
+            }
             const FVector2D P=Origin+FVector2D(R.FRandRange(0,GroundTileSize),R.FRandRange(0,GroundTileSize));const double Chance=R.FRand(),Size=R.FRandRange(GrassScaleMin,GrassScaleMax),Yaw=R.FRandRange(0,360);
-            const double Woodland=WoodlandDensity(P);
-            const bool Flowers=I%35==0&&Woodland<.15&&FMath::PerlinNoise2D(P/700+FVector2D(4.2,18.6))>.02;
+            const double Woodland=WoodlandDensity(P);const bool Flowers=I%35==0&&Woodland<.15&&FMath::PerlinNoise2D(P/700+FVector2D(4.2,18.6))>.02;
             const FString Kind=Flowers?TEXT("Wildflowers"):I%2?TEXT("Grass"):TEXT("GrassB");
-            const UStaticMesh* Mesh=Meshes.FindRef(Kind);
-            // Include the rotated, scaled clump footprint so blades stay outside foundations.
-            const double Margin=Mesh?Mesh->GetBounds().SphereRadius*Size/RenderScale:15.;
-            if(IsSceneryClear(P,Margin,Offset,Half,Areas)||Chance<Woodland*.7||Chance>MeadowSwardDensity(P))continue;
-            Add(Kind,P,Size,Yaw);
+            const UStaticMesh* Mesh=State.Meshes.FindRef(Kind).Get();const double Margin=Mesh?Mesh->GetBounds().SphereRadius*Size/RenderScale:15.;
+            if(!Mesh||IsSceneryClear(P,Margin,Offset,Half,Areas)||Chance<Woodland*.7||Chance>MeadowSwardDensity(P))continue;
+            const FTransform Transform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size));
+            const int32 Band=int32(GroundCellSeed(I,State.PendingCell.X*31+State.PendingCell.Y)%SceneryLodBands);
+            if(Flowers){if(State.PendingBase)Add(Kind,0,Transform);continue;}
+            if(State.PendingDetail)Add(Kind,Band,Transform);
+            if(State.PendingBase&&HasProxy)
+            {
+                auto* Proxy=State.Meshes.FindRef(TEXT("GrassProxy")).Get();
+                // Matching full XYZ bounds keeps the Nanite center-point near
+                // and far distance tests coincident even between grass variants.
+                const FTransform Far=AlignProxyBounds(Transform,Mesh,Proxy);
+                Add(Kind==TEXT("Grass")?TEXT("GrassProxyA"):TEXT("GrassProxyB"),Band,Far);
+            }
         }
-        for(auto& Pair:Sets){Pair.Value->BuildTreeIfOutdated(false,true);Pair.Value->bAutoRebuildTreeOnInstanceChanges=true;}
+        if(State.PendingIndex>=GrassPerCell)
+        {
+            auto& Record=State.Cells.FindOrAdd(State.PendingCell);
+            for(auto& Pair:State.PendingTransforms)
+            {
+                FString Kind,BandText;Pair.Key.ToString().Split(TEXT("_"),&Kind,&BandText,ESearchCase::CaseSensitive,ESearchDir::FromEnd);
+                // A construction pad may change during multi-frame preparation.
+                // Recheck the full source clump against current clearances,
+                // including when its pivot is outside a newly built foundation.
+                const bool Proxy=Kind.StartsWith(TEXT("GrassProxy"));
+                const auto* Source=State.Meshes.FindRef(Proxy?(Kind==TEXT("GrassProxyA")?TEXT("Grass"):TEXT("GrassB")):Kind).Get();
+                const auto* ProxyMesh=State.Meshes.FindRef(TEXT("GrassProxy")).Get();
+                Pair.Value.RemoveAll([&](const FTransform& Transform)
+                {
+                    const FVector Pivot=Proxy?ProxyPivotOffset(Transform,Source,ProxyMesh):FVector::ZeroVector;
+                    const FVector2D Logical=FVector2D(Transform.GetLocation()-Pivot)/RenderScale;
+                    const FVector SourceScale=Proxy&&Source&&ProxyMesh?Transform.GetScale3D()*ProxyMesh->GetBounds().BoxExtent/Source->GetBounds().BoxExtent:Transform.GetScale3D();
+                    const double Margin=Source?Source->GetBounds().SphereRadius*SourceScale.GetAbsMax()/RenderScale:30.;
+                    return IsSceneryClear(Logical,Margin,Offset,Half,Areas);
+                });
+                // Commit retained instances against the authoritative surface.
+                for(auto& Transform:Pair.Value)
+                {
+                    const FVector Pivot=Proxy?ProxyPivotOffset(Transform,Source,ProxyMesh):FVector::ZeroVector;
+                    FVector P=Transform.GetLocation()-Pivot;const FVector2D Logical=FVector2D(P)/RenderScale;
+                    P.Z=GroundHeight(Logical)*RenderScale;
+                    Transform.SetRotation(GroundCoverRotation(*this,Logical,Transform.Rotator().Yaw));
+                    Transform.SetLocation(P+(Proxy?ProxyPivotOffset(Transform,Source,ProxyMesh):FVector::ZeroVector));
+                }
+                if(!Pair.Value.IsEmpty())
+                {
+                    const int32 Band=FCString::Atoi(*BandText);
+                    if(auto* Set=EnsureSet(Kind,Band))
+                        Record.Instances.FindOrAdd(InstancePageKey(State.PendingCell,Kind,Band)).Append(Set->AddInstancesById(Pair.Value,false,false));
+                }
+            }
+            Record.BaseReady|=State.PendingBase;Record.DetailReady|=State.PendingDetail;
+            State.PendingIndex=MIN_int32;State.PendingTransforms.Reset();++Completed;
+        }
+        if(FPlatformTime::Seconds()-Started>=Budget)break;
+    }
+    State.Remaining=0;
+    for(const FIntPoint Cell:State.Wanted)
+    {
+        const auto* Record=State.Cells.Find(Cell);
+        if(!Record||!Record->BaseReady||(!Record->DetailReady&&(!HasProxy||WantsDetail(Cell))))++State.Remaining;
+    }
+    if(State.Remaining==0&&State.Started>0)
+    {
+        int32 Instances=0;for(const auto& Pair:State.Sets)if(auto* Set=Pair.Value.Get())Instances+=Set->GetInstanceCount();
+        UE_LOG(LogTemp,Display,TEXT("SCENERY_STREAM_READY: %d cells, %d ISM groups, %d representations, %.3f seconds elapsed; no density reduction"),State.Cells.Num(),State.Sets.Num(),Instances,FPlatformTime::Seconds()-State.Started);State.Started=0;
     }
     UpdateGroundCoverShadows(*this,GroundCover);
+}
+bool ASeigeGameMode::IsSceneryStreamingReady() const
+{
+    return !FApp::CanEverRender()||RegionMapAlpha()>=1||(SceneryStream&&SceneryStream->Remaining==0&&SceneryStream->PendingIndex==MIN_int32&&SceneryStream->Retiring.IsEmpty());
+}
+int32 ASeigeGameMode::PendingSceneryCells() const
+{
+    return SceneryStream?SceneryStream->Remaining+SceneryStream->Retiring.Num():0;
 }
 void ASeigeGameMode::RefreshEnvironment()
 {
@@ -576,9 +821,8 @@ void ASeigeGameMode::RefreshEnvironment()
         else
         {
             RefreshBuildingPads();
-            if(FMath::FloorToInt(FoliageCenter.X/GroundTileSize)!=FMath::FloorToInt(CameraCenter.X/GroundTileSize)||FMath::FloorToInt(FoliageCenter.Y/GroundTileSize)!=FMath::FloorToInt(CameraCenter.Y/GroundTileSize))CreateGroundCover();
+            CreateGroundCover();
         }
-        UpdateGroundCoverShadows(*this,GroundCover);
     }
     if(Landscape)Landscape->SetActorHiddenInGame(Map);if(Foliage)Foliage->SetActorHiddenInGame(Map);if(GroundCover)GroundCover->SetActorHiddenInGame(Map);
 }
@@ -588,12 +832,30 @@ void ASeigeGameMode::ClearSceneryAt(FVector2D Position,float Radius)
     if(!Observer&&!Home&&!Sim.IsVisible(Position))return;
     for(AActor* Actor:{Foliage.Get(),GroundCover.Get()})if(Actor)
     {
-        TArray<UHierarchicalInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
+        TArray<UInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
         for(auto* Component:Components)
         {
             const FBox Bounds(FVector((Position.X-Radius)*RenderScale,(Position.Y-Radius)*RenderScale,-6000*RenderScale),FVector((Position.X+Radius)*RenderScale,(Position.Y+Radius)*RenderScale,6000*RenderScale));
             const auto Indices=Component->GetInstancesOverlappingBox(Bounds,true);
-            if(!Indices.IsEmpty())Component->RemoveInstances(Indices);
+            if(!Indices.IsEmpty())
+            {
+                // Forget handles before removing indexed instances: the ISM ID
+                // allocator may reuse freed IDs for a different streamed cell.
+                if(Actor==GroundCover.Get()&&SceneryStream)
+                {
+                    TSet<int32> Removed;for(int32 Index:Indices)Removed.Add(Index);
+                    for(auto& Cell:SceneryStream->Cells)for(auto& Pair:Cell.Value.Instances)
+                        if(SceneryStream->Sets.FindRef(Pair.Key).Get()==Component)
+                            Pair.Value.RemoveAll([&](FPrimitiveInstanceId Id){return !Component->IsValidId(Id)||Removed.Contains(Component->GetInstanceIndexForId(Id));});
+                }
+                Component->RemoveInstances(Indices);
+            }
         }
     }
+    if(SceneryStream)for(auto& Pair:SceneryStream->PendingTransforms)
+        Pair.Value.RemoveAll([&](const FTransform& Transform)
+        {
+            const FVector2D Delta=FVector2D(Transform.GetLocation())/RenderScale-Position;
+            return FMath::Abs(Delta.X)<=Radius&&FMath::Abs(Delta.Y)<=Radius;
+        });
 }

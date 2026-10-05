@@ -1,0 +1,97 @@
+{
+  "grass_medium_02": {
+    "source_color": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_diff_2k.jpg",
+    "source_alpha": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_alpha_2k.png",
+    "linear_albedo_mean": [
+      0.23128076402130904,
+      0.27039737330622704,
+      0.08792038828588754
+    ],
+    "linear_albedo_median": [
+      0.21170993939570856,
+      0.2788942634768104,
+      0.07662319754480952
+    ],
+    "near_material_tint": [
+      0.82,
+      1,
+      0.7
+    ]
+  },
+  "grass_bermuda_01": {
+    "source_color": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_diff_2k.jpg",
+    "source_alpha": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_alpha_2k.png",
+    "linear_albedo_mean": [
+      0.08722914944657416,
+      0.11725082829726208,
+      0.021608378571553663
+    ],
+    "linear_albedo_median": [
+      0.06918849346620203,
+      0.10702310297826761,
+      0.01691034271395333
+    ],
+    "near_material_tint": [
+      0.82,
+      1,
+      0.7
+    ]
+  },
+  "jacaranda": {
+    "source_color": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_leaves_diff_4k.jpg",
+    "source_alpha": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_leaves_alpha_4k.png",
+    "linear_albedo_mean": [
+      0.07504938170730378,
+      0.14175656004694567,
+      0.02277808757419762
+    ],
+    "linear_albedo_median": [
+      0.07291321903759995,
+      0.14604580910167902,
+      0.02153317251709816
+    ],
+    "near_material_tint": [
+      0.45,
+      0.7,
+      0.42
+    ]
+  },
+  "tree_small": {
+    "source_color": "Art/Nature/Textures/tree_small_02/tree_small_02_leaves_diff_2k.jpg",
+    "source_alpha": "Art/Nature/Textures/tree_small_02/tree_small_02_leaves_alpha_2k.png",
+    "linear_albedo_mean": [
+      0.11537269400102883,
+      0.1542371813693703,
+      0.03663379607165847
+    ],
+    "linear_albedo_median": [
+      0.10702310297826761,
+      0.14995978981060856,
+      0.042311410620809675
+    ],
+    "near_material_tint": [
+      1,
+      1,
+      1
+    ]
+  },
+  "fir": {
+    "source_color": "Art/Nature/Textures/fir_tree_01/fir_tree_01_twig_diff_2k.jpg",
+    "source_alpha": "Art/Nature/Textures/fir_tree_01/fir_tree_01_twig_alpha_2k.png",
+    "linear_albedo_mean": [
+      0.09452825324881041,
+      0.08768835152015883,
+      0.03287380097180349
+    ],
+    "linear_albedo_median": [
+      0.09758734714186246,
+      0.08021982031446832,
+      0.033104766570885055
+    ],
+    "near_material_tint": [
+      1,
+      1,
+      1
+    ]
+  }
+}

@@ -27,6 +27,8 @@ void ASeigeGameMode::SaveGame()
     Metadata->SetNumberField(TEXT("camera_yaw"),CameraYaw); Metadata->SetNumberField(TEXT("camera_pitch"),CameraPitch);
     Metadata->SetNumberField(TEXT("zoom"),Zoom); Metadata->SetBoolField(TEXT("paused"),Paused); Metadata->SetNumberField(TEXT("speed"),Speed);
     Metadata->SetBoolField(TEXT("objective_acknowledged"),WinAcknowledged);
+    Metadata->SetBoolField(TEXT("background_bugs"),Sim.BackgroundBugsEnabled);
+    Metadata->SetBoolField(TEXT("periodic_attacks"),Sim.PeriodicAttacksEnabled);
     Metadata->SetStringField(TEXT("center_ai"),CenterBrain?CenterBrain->GetConfigFingerprint():TEXT(""));
     TArray<TSharedPtr<FJsonValue>> Slots;
     for(const auto& Slot:ScenarioSlots) Slots.Add(MakeShared<FJsonValueString>(Slot));
@@ -56,7 +58,7 @@ void ASeigeGameMode::LoadGame()
     // a stable perspective view rather than inheriting an unrelated current view.
     double StoredYaw=GetDefault<ASeigeGameMode>()->CameraYaw,StoredPitch=GetDefault<ASeigeGameMode>()->CameraPitch;
     FString Generation,CenterFingerprint;
-    bool StoredPaused=false,StoredAcknowledged=false;
+    bool StoredPaused=false,StoredAcknowledged=false,StoredBackgroundBugs=true,StoredPeriodicAttacks=true;
     const TArray<TSharedPtr<FJsonValue>>* Slots=nullptr; const TArray<TSharedPtr<FJsonValue>>* Fingerprints=nullptr;
     FGuid GenerationId;
     if(!Metadata->TryGetNumberField(TEXT("format"),Format)||Format!=2||!Metadata->TryGetStringField(TEXT("generation"),Generation)||!FGuid::ParseExact(Generation,EGuidFormats::Digits,GenerationId)||
@@ -65,6 +67,12 @@ void ASeigeGameMode::LoadGame()
        !Metadata->TryGetNumberField(TEXT("camera_y"),CameraY)||!FMath::IsFinite(CameraY)||!Metadata->TryGetNumberField(TEXT("zoom"),StoredZoom)||!FMath::IsFinite(StoredZoom)||
        !Metadata->TryGetNumberField(TEXT("speed"),StoredSpeed)||!IsSupportedGameSpeed(StoredSpeed==3?5:StoredSpeed)||!Metadata->TryGetBoolField(TEXT("paused"),StoredPaused)||
        !Metadata->TryGetBoolField(TEXT("objective_acknowledged"),StoredAcknowledged)) { Notice=TEXT("Scenario save metadata is invalid."); return; }
+    if(Metadata->HasField(TEXT("background_bugs"))||Metadata->HasField(TEXT("periodic_attacks")))
+    {
+        if(!Metadata->HasTypedField<EJson::Boolean>(TEXT("background_bugs"))||!Metadata->HasTypedField<EJson::Boolean>(TEXT("periodic_attacks"))||
+           !Metadata->TryGetBoolField(TEXT("background_bugs"),StoredBackgroundBugs)||!Metadata->TryGetBoolField(TEXT("periodic_attacks"),StoredPeriodicAttacks))
+        {Notice=TEXT("Saved scenario threat settings are invalid.");return;}
+    }
     if((Metadata->HasField(TEXT("camera_yaw"))&&(!Metadata->TryGetNumberField(TEXT("camera_yaw"),StoredYaw)||!FMath::IsFinite(StoredYaw)||StoredYaw < -360||StoredYaw > 360))||
        (Metadata->HasField(TEXT("camera_pitch"))&&(!Metadata->TryGetNumberField(TEXT("camera_pitch"),StoredPitch)||!FMath::IsFinite(StoredPitch)||StoredPitch < MinimumCameraPitch||StoredPitch > MaximumCameraPitch)))
     { Notice=TEXT("Saved camera orientation is invalid."); return; }
@@ -89,19 +97,23 @@ void ASeigeGameMode::LoadGame()
     if(NewObserver)
     {
         NewBrain=MakeShared<FSeigeScenarioAI>();
-        if(!NewBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error)) { Notice=Error; return; }
+        if(!NewBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error,StoredBackgroundBugs,StoredPeriodicAttacks)) { Notice=Error; return; }
         if(NewBrain->GetConfigFingerprint()!=CenterFingerprint) { Notice=TEXT("AI files have changed since this save. Restore those files or start a new scenario."); return; }
     }
-    else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Error)) { Notice=Error; return; }
+    else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Error,StoredBackgroundBugs,StoredPeriodicAttacks)) { Notice=Error; return; }
     if(!NewCenter.Load(FPaths::Combine(Directory,TEXT("center.json")),Error)) { Notice=Error; return; }
+    if(NewCenter.BackgroundBugsEnabled!=StoredBackgroundBugs||NewCenter.PeriodicAttacksEnabled!=StoredPeriodicAttacks)
+    {Notice=TEXT("Scenario threat settings disagree with the saved center.");return;}
     for(int32 Index=0;Index<9;Index++)
     {
         if(Index==4||NewSlots[Index]==TEXT("empty")) continue;
         FSeigeNeighbor N; N.Index=Index; N.Type=NewSlots[Index]; N.Offset=FVector2D(Index%3-1,Index/3-1)*NewCenter.WorldHalfSize*2;
         N.Brain=MakeShared<FSeigeScenarioAI>();
-        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error)) { Notice=Error; return; }
+        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error,StoredBackgroundBugs,StoredPeriodicAttacks)) { Notice=Error; return; }
         if(SavedFingerprints.FindRef(Index)!=N.Brain->GetConfigFingerprint()) { Notice=TEXT("AI files have changed since this save. Restore those files or start a new scenario."); return; }
         if(!N.Sim.Load(FPaths::Combine(Directory,FString::Printf(TEXT("sector_%d.json"),Index)),Error)) { Notice=Error; return; }
+        if(N.Sim.BackgroundBugsEnabled!=StoredBackgroundBugs||N.Sim.PeriodicAttacksEnabled!=StoredPeriodicAttacks)
+        {Notice=TEXT("Scenario threat settings disagree with a saved neighbor.");return;}
         NewNeighbors.Add(MoveTemp(N));
     }
     if(SavedFingerprints.Num()!=NewNeighbors.Num()) { Notice=TEXT("Scenario save has inconsistent neighbor records."); return; }
@@ -109,6 +121,7 @@ void ASeigeGameMode::LoadGame()
     Visuals.Empty();
     for(auto It=Materials.CreateIterator();It;++It)if(It.Key().StartsWith(TEXT("construction_original_")))It.RemoveCurrent();
     Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewBrain); Neighbors=MoveTemp(NewNeighbors); ScenarioSlots=MoveTemp(NewSlots);
+    ScenarioBackgroundBugs=StoredBackgroundBugs;ScenarioPeriodicAttacks=StoredPeriodicAttacks;
     Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=0; SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed==3?5:StoredSpeed; WinAcknowledged=StoredAcknowledged;
     ResetSimulationPresentation();
     CameraCenter=FVector(FMath::Clamp(CameraX,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),FMath::Clamp(CameraY,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),0);

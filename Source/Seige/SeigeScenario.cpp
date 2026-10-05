@@ -79,6 +79,12 @@ void ASeigeGameMode::CycleScenarioSlot(int32 Index)
     if(Index==4) Value=Value==TEXT("player")?TEXT("starting"):Value==TEXT("starting")?TEXT("developed"):TEXT("player");
     else Value=Value==TEXT("empty")?TEXT("starting"):Value==TEXT("starting")?TEXT("developed"):TEXT("empty");
 }
+void ASeigeGameMode::ToggleScenarioThreat(const FString& Threat)
+{
+    if(Screen!=TEXT("scenario"))return;
+    if(Threat==TEXT("background"))ScenarioBackgroundBugs=!ScenarioBackgroundBugs;
+    else if(Threat==TEXT("periodic"))ScenarioPeriodicAttacks=!ScenarioPeriodicAttacks;
+}
 bool ASeigeGameMode::InitializeScenario(FString& Reason)
 {
     FSeigeSimulation NewCenter;
@@ -88,16 +94,16 @@ bool ASeigeGameMode::InitializeScenario(FString& Reason)
     if(NewObserver)
     {
         NewCenterBrain=MakeShared<FSeigeScenarioAI>();
-        if(!NewCenterBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),ScenarioSlots[4]==TEXT("developed"),Reason)) return false;
+        if(!NewCenterBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),ScenarioSlots[4]==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks)) return false;
     }
-    else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Reason)) return false;
+    else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks)) return false;
     for(int32 Index=0;Index<9;Index++)
     {
         if(Index==4||ScenarioSlots[Index]==TEXT("empty")) continue;
         FSeigeNeighbor N; N.Index=Index; N.Type=ScenarioSlots[Index];
         N.Offset=FVector2D(Index%3-1,Index/3-1)*NewCenter.WorldHalfSize*2;
         N.Brain=MakeShared<FSeigeScenarioAI>();
-        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),N.Type==TEXT("developed"),Reason)) return false;
+        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),N.Type==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks)) return false;
         NewNeighbors.Add(MoveTemp(N));
     }
     Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewCenterBrain); Neighbors=MoveTemp(NewNeighbors); Observer=NewObserver;

@@ -146,7 +146,7 @@ bool ASeigeHUD::ProcessClick(float X,float Y,ASeigeGameMode& G)
     {
         if(!Action.IsEmpty())
         {
-            if(Action.StartsWith(TEXT("focus-sector:"))||Action==TEXT("region-map")||Action.StartsWith(TEXT("screen:"))||Action.StartsWith(TEXT("slot:"))||Action.StartsWith(TEXT("render-scale:"))||Action.StartsWith(TEXT("window-resolution:"))||Action.StartsWith(TEXT("display:"))||Action==TEXT("start-scenario")||Action==TEXT("main-menu")||Action==TEXT("back-screen")||Action==TEXT("load")||Action==TEXT("save")||Action==TEXT("fullscreen")||Action==TEXT("game-menu")||Action==TEXT("resume-game")||Action==TEXT("exit"))ExecuteAction(Action,G);
+            if(Action.StartsWith(TEXT("focus-sector:"))||Action==TEXT("region-map")||Action.StartsWith(TEXT("screen:"))||Action.StartsWith(TEXT("slot:"))||Action.StartsWith(TEXT("scenario-threat:"))||Action.StartsWith(TEXT("render-scale:"))||Action.StartsWith(TEXT("window-resolution:"))||Action.StartsWith(TEXT("display:"))||Action==TEXT("start-scenario")||Action==TEXT("main-menu")||Action==TEXT("back-screen")||Action==TEXT("load")||Action==TEXT("save")||Action==TEXT("fullscreen")||Action==TEXT("game-menu")||Action==TEXT("resume-game")||Action==TEXT("exit"))ExecuteAction(Action,G);
             return true;
         }
         return G.Screen!=TEXT("landing");
@@ -167,6 +167,7 @@ bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
     if(A==TEXT("game-menu")){Ui.CloseMenus();G.ToggleGameMenu();return true;}
     if(A==TEXT("resume-game")){Ui.CloseMenus();G.ResumeGameMenu();return true;}
     if(A.StartsWith(TEXT("screen:"))){G.ReturnScreen=G.Screen;Ui.CloseMenus();G.ShowScreen(A.RightChop(7));return true;}
+    if(A.StartsWith(TEXT("scenario-threat:"))){G.ToggleScenarioThreat(A.RightChop(16));return true;}
     if(A.StartsWith(TEXT("slot:"))){G.CycleScenarioSlot(FCString::Atoi(*A.RightChop(5)));return true;}
     if(A.StartsWith(TEXT("render-scale:"))){G.SetRenderResolutionPercent(G.RenderResolutionPercent+FCString::Atof(*A.RightChop(13)));return true;}
     if(A.StartsWith(TEXT("window-resolution:"))){G.CycleWindowResolution(FCString::Atoi(*A.RightChop(18)));return true;}
@@ -351,8 +352,8 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
     {
         const auto NoticeLines=WrapLines(G.Notice,844,16);
         const float Extra=FMath::Min(NoticeLines.Num(),4)*23+(!NoticeLines.IsEmpty()?20:0);
-        const float X=W/2-450,Y=H/2-(655+Extra)*.5f;
-        Frame(X,Y,900,655+Extra);Label(TEXT("CHOOSE YOUR NEIGHBORHOOD"),X+28,Y+25,27,Gold);
+        const float X=W/2-450,Y=H/2-(731+Extra)*.5f;
+        Frame(X,Y,900,731+Extra);Label(TEXT("CHOOSE YOUR NEIGHBORHOOD"),X+28,Y+25,27,Gold);
         float TY=Y+72;Wrapped(TEXT("Click a sector to cycle its starting state. Choose Human in the center to command your colony, or an AI to observe the simulation."),X+28,TY,844,16,Text);
         for(int32 I=0;I<9;++I)
         {
@@ -365,10 +366,14 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
             Label(TEXT("Click to change"),CX+16,CY+82,11,Muted);
         }
         const bool Human=G.ScenarioSlots.IsValidIndex(4)&&G.ScenarioSlots[4]==TEXT("player");
-        float NY=Y+523;for(int32 I=0;I<FMath::Min(NoticeLines.Num(),4);++I){Label(NoticeLines[I]+(I==3&&NoticeLines.Num()>4?TEXT(" ..."):TEXT("")),X+28,NY,16,!G.Error.IsEmpty()&&G.Notice==G.Error?Red:Gold);NY+=23;}
-        Button(TEXT("Back"),TEXT("main-menu"),X+28,Y+560+Extra,190,46);
-        Button(Human?TEXT("Choose landing site"):TEXT("Start observer scenario"),TEXT("start-scenario"),X+474,Y+560+Extra,398,46,true);
-        Label(TEXT("Independent AI colonies share the same simulation rules."),X+28,Y+623+Extra,13,Muted);
+        Button(G.ScenarioBackgroundBugs?TEXT("Background bugs: ON"):TEXT("Background bugs: OFF"),TEXT("scenario-threat:background"),X+28,Y+518,408,42,G.ScenarioBackgroundBugs);
+        Button(G.ScenarioPeriodicAttacks?TEXT("Periodic attacks: ON"):TEXT("Periodic attacks: OFF"),TEXT("scenario-threat:periodic"),X+450,Y+518,422,42,G.ScenarioPeriodicAttacks);
+        Label(TEXT("Roaming bugs throughout the wilderness"),X+40,Y+570,12,Muted);
+        Label(TEXT("Timed invasion pulses against colonies"),X+462,Y+570,12,Muted);
+        float NY=Y+599;for(int32 I=0;I<FMath::Min(NoticeLines.Num(),4);++I){Label(NoticeLines[I]+(I==3&&NoticeLines.Num()>4?TEXT(" ..."):TEXT("")),X+28,NY,16,!G.Error.IsEmpty()&&G.Notice==G.Error?Red:Gold);NY+=23;}
+        Button(TEXT("Back"),TEXT("main-menu"),X+28,Y+636+Extra,190,46);
+        Button(Human?TEXT("Choose landing site"):TEXT("Start observer scenario"),TEXT("start-scenario"),X+474,Y+636+Extra,398,46,true);
+        Label(TEXT("Independent AI colonies share the same simulation rules."),X+28,Y+699+Extra,13,Muted);
     }
     else if(G.Screen==TEXT("settings"))
     {
@@ -667,7 +672,7 @@ void ASeigeHUD::DrawHUD()
     Summary(TEXT("resources"),TEXT("MATERIAL STOCKPILES"),Readable?MajorStock:TEXT("No colony data"),0,300,Text);
     Summary(TEXT("workforce"),TEXT("ROBOT WORKFORCE"),Readable?FString::Printf(TEXT("%d / %d jobs"),Local.Population,Local.TotalJobs):TEXT("Unavailable"),300,190,Local.TotalJobs>Local.Employed?Gold:Text);
     Summary(TEXT("logistics"),TEXT("IN TRANSIT"),Readable?FString::Printf(TEXT("%d couriers"),Local.Couriers.Num()):TEXT("Unavailable"),490,150,Text);
-    Summary(TEXT("threats"),TEXT("NEXT ALIEN PULSE"),Readable?FString::Printf(TEXT("%.0f seconds"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):TEXT("Unavailable"),640,210,Gold);
+    Summary(TEXT("threats"),TEXT("NEXT ALIEN PULSE"),Readable?(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("%.0f seconds"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Disabled"))):TEXT("Unavailable"),640,210,Gold);
     Summary(TEXT("objective"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("OBSERVATION"):TEXT("FIRST LANDING"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("Read only"):G->Sim.Won?TEXT("Complete"):TEXT("Objectives"),850,190,Green);
     const float DockW=666,DockX=(W-DockW)*.5f,DockY=H-75;
     Frame(DockX,DockY,DockW,60);
@@ -734,7 +739,7 @@ void ASeigeHUD::DrawHUD()
         }
         else if(Ui.HoverPanel==TEXT("workforce")){Label(TEXT("ROBOT WORKFORCE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.WorkforceStatus(),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Robots fill jobs automatically. The core supports your first workers; charging and maintenance hubs [B L C] support expansion. Keep components supplied for efficient operation."),X+18,TY,PW-36,14,Muted);}
         else if(Ui.HoverPanel==TEXT("logistics")){Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Factories consume locally delivered stock. Construction reserves core materials, then couriers carry them to the site. Robots assemble buildings once supplies arrive."),X+18,TY,PW-36,14,Muted);}
-        else if(Ui.HoverPanel==TEXT("threats")){Label(TEXT("SECTOR PRESSURE"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("Pulse %d / Next pulse in %.0f seconds"),Local.Wave,FMath::Max(0.,Local.NextWaveTime-Local.Time)),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Roaming bugs can arrive at any time. Sensors reveal live contacts; defenses require staffing. Repairs consume local materials."),X+18,TY,PW-36,14,Muted);}
+        else if(Ui.HoverPanel==TEXT("threats")){Label(TEXT("SECTOR PRESSURE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Pulse %d / Next pulse in %.0f seconds"),Local.Wave,FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Periodic attacks: disabled for this scenario.")),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(Local.BackgroundBugsEnabled?TEXT("Background bugs: enabled. Roaming bugs can arrive between invasion pulses."):TEXT("Background bugs: disabled for this scenario."),X+18,TY,PW-36,14,Muted);TY+=12;Wrapped(TEXT("Sensors reveal live contacts; defenses require staffing. Repairs consume local materials."),X+18,TY,PW-36,14,Muted);}
         else{Label(TEXT("FIRST LANDING OBJECTIVES"),X+18,TY,18,Gold);TY+=43;TArray<FString> Goals;Local.ObjectiveText().ParseIntoArray(Goals,TEXT(" | "),true);for(const FString& Goal:Goals){Wrapped(Goal,X+18,TY,PW-36,16,Text);TY+=7;}}
     }
     if(!Ui.BuildOpen&&!Ui.ColonyOpen&&Ui.HoverPanel.IsEmpty())

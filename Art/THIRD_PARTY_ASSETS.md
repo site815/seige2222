@@ -21,6 +21,12 @@ The [nature register](Nature/ATTRIBUTION.md) documents the preparation workflow 
 
 Exact downloads, source authors, byte counts, official MD5 values, and independently calculated SHA-256 values are recorded in [Nature/sources.json](Nature/sources.json). [Prepared-file hashes](Nature/prepared_hashes.json), the [export manifest](Nature/Exports/nature_manifest.json), and the [Unreal import report](Nature/import_report.json) track the derivatives. Required maps are retained in `Nature/Textures`; compact editable Blender derivatives are in `Nature/Source`. Large unmodified downloads remain in the ignored tool cache and can be recovered from their recorded URLs. Review images were rendered locally, not copied from the provider's website.
 
+## v0.7 distance-detail derivatives
+
+The [v0.7 asset record](EnvironmentV07/README.md) retains editable Blender sources, generators, import evidence, dimensions and hashes. `SM_JacarandaNearV07` derives from Poly Haven's authored CC0 Jacaranda LOD1 and retains its photographic materials. The broadleaf and conifer distance meshes follow the actual Jacaranda/FirA leaf distribution and simplified source trunks/branches; these are **CC0 source derivatives**, not original tree modeling. Source creators remain credited in the [v0.4 register](EnvironmentV04/ATTRIBUTION.md) and [nature register](Nature/ATTRIBUTION.md).
+
+The separate 1,280-triangle grass distance mesh is original project geometry. Its project licensing remains distinct from CC0 provider assets. Terrain and canopy materials reuse the already recorded photographic maps; this version downloads no new runtime assets. The lower-detail crowns use opaque geometry and existing leaf color/normal variation, while woody surfaces retain photographic bark materials.
+
 ## Photographic surface maps
 
 | Surface | Creator credited by Poly Haven | License | Included maps |

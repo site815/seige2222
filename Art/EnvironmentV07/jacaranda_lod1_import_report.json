@@ -1,0 +1,36 @@
+{
+  "path": "/Game/Art/NatureV07/SM_JacarandaNearV07.SM_JacarandaNearV07",
+  "dimensions_cm": [
+    2441.704833984375,
+    1915.45751953125,
+    1946.8875732421875
+  ],
+  "ground_z": 0.0,
+  "source_triangles": 1845603,
+  "materials": [
+    "/Game/Art/NatureV04/MI_jacaranda_tree_trunk",
+    "/Game/Art/NatureV04/MI_jacaranda_tree_branches",
+    "/Game/Art/NatureV04/MI_jacaranda_tree_leaves"
+  ],
+  "nanite_preserve_area": true,
+  "candidate_only": false,
+  "existing_runtime_asset_unchanged": true,
+  "rendered_review_pending": false,
+  "configured_runtime_roles": [
+    "OakA",
+    "OakB"
+  ],
+  "rendered_review": {
+    "status": "accepted incremental revision; no reference-game quality parity",
+    "captures": [
+      "Art/Previews/v07_ground.png",
+      "Art/Previews/v07_colony.png",
+      "Art/Previews/v07_hills.png",
+      "Art/Previews/v07_boundary.png"
+    ],
+    "remaining_limits": [
+      "Recognizable distant low-detail silhouettes and LOD color changes",
+      "Foliage stability during movement and native-resolution cost remain limitations"
+    ]
+  }
+}

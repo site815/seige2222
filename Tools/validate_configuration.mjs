@@ -89,6 +89,10 @@ export function validateConfiguration(data) {
   number(graphics.sky_intensity, 'Graphics sky_intensity', .1, 5);
   number(graphics.cloud_shadow_strength, 'Graphics cloud_shadow_strength', 0, 1);
   number(graphics.sun_source_angle, 'Graphics sun_source_angle', .1, 5);
+  number(graphics.sun_elevation_degrees, 'Graphics sun_elevation_degrees', 15, 80);
+  number(graphics.exposure_bias, 'Graphics exposure_bias', -2, 2);
+  number(graphics.color_saturation, 'Graphics color_saturation', .5, 1.5);
+  number(graphics.ambient_occlusion_intensity, 'Graphics ambient_occlusion_intensity', 0, 1);
   number(graphics.cloud_shadow_resolution_scale, 'Graphics cloud_shadow_resolution_scale', .25, 2);
   if (typeof graphics.sky_realtime_capture !== 'boolean') fail('Graphics sky_realtime_capture must be boolean');
   number(graphics.fog_density, 'Graphics fog_density', 0, .01);
@@ -121,6 +125,14 @@ export function validateConfiguration(data) {
   number(graphics.forest_candidates, 'Graphics forest_candidates', 1000, 200000, true);
   number(graphics.near_forest_candidates, 'Graphics near_forest_candidates', 100, 30000, true);
   number(graphics.grass_shadow_distance_m, 'Graphics grass_shadow_distance_m', 0, 500);
+  number(graphics.grass_detail_distance_m, 'Graphics grass_detail_distance_m', 10, 150);
+  number(graphics.grass_lod_transition_m, 'Graphics grass_lod_transition_m', 10, 200);
+  number(graphics.grass_stream_radius_m, 'Graphics grass_stream_radius_m', 150, 1200);
+  number(graphics.grass_stream_budget_ms, 'Graphics grass_stream_budget_ms', .5, 8);
+  number(graphics.grass_stream_cells_per_frame, 'Graphics grass_stream_cells_per_frame', 1, 8, true);
+  number(graphics.forest_detail_distance_m, 'Graphics forest_detail_distance_m', 75, 1000);
+  number(graphics.forest_lod_transition_m, 'Graphics forest_lod_transition_m', 20, 500);
+  if (graphics.grass_stream_radius_m <= graphics.grass_detail_distance_m + graphics.grass_lod_transition_m) fail('Grass proxy streaming must extend beyond the detail transition');
   number(graphics.grass_programmable_distance_m, 'Graphics grass_programmable_distance_m', 0, 900);
   if(typeof graphics.grass_distance_field_lighting !== 'boolean') fail('Graphics grass_distance_field_lighting must be boolean');
   number(graphics.neighboring_forest_candidates_per_sector, 'Graphics neighboring_forest_candidates_per_sector', 0, 12000, true);
@@ -130,12 +142,15 @@ export function validateConfiguration(data) {
   if (graphics.region_map_zoom - graphics.region_map_transition_width / 2 < 60000 || graphics.region_map_zoom + graphics.region_map_transition_width / 2 >= graphics.maximum_zoom) fail('Graphics region transition must follow the sector overview and end before maximum zoom');
   if (graphics.nanite_survey_pixels_per_edge < graphics.nanite_max_pixels_per_edge || graphics.nanite_survey_start_zoom < graphics.default_zoom || graphics.nanite_survey_end_zoom <= graphics.nanite_survey_start_zoom || graphics.nanite_survey_end_zoom > graphics.region_map_zoom - graphics.region_map_transition_width / 2) fail('Invalid Nanite survey transition');
   const medium = object(graphics.medium_profile, 'Graphics medium_profile');
+  for (const key of ['native_antialiasing', 'upscaling_antialiasing']) {
+    if (!['taa', 'tsr'].includes(medium[key])) fail(`Invalid Medium ${key}`);
+  }
   const quality = object(medium.quality_groups, 'Medium quality_groups');
   const mediumGroups = ['ViewDistance', 'AntiAliasing', 'Shadow', 'GlobalIllumination', 'Reflection', 'PostProcess', 'Texture', 'Effects', 'Foliage', 'Shading', 'Landscape'];
   if (Object.keys(quality).length !== mediumGroups.length) fail('Invalid Medium quality groups');
   for (const key of mediumGroups) number(quality[key], `Medium quality ${key}`, 0, 3, true);
   const rendering = object(medium.render_settings, 'Medium render_settings');
-  const ranges = [['r.TSR.History.ScreenPercentage', 100, 200, false], ['r.TSR.ThinGeometryDetection', 0, 1, true], ['r.TSR.ThinGeometryDetection.Coverage.ShadingRange', 0, 3, true], ['r.TSR.Velocity.WeightClampingSampleCount', 1, 8, false], ['r.Tonemapper.Sharpen', 0, 1, false], ['r.MaxAnisotropy', 4, 16, true]];
+  const ranges = [['r.TSR.History.ScreenPercentage', 100, 200, false], ['r.TSR.ThinGeometryDetection', 0, 1, true], ['r.TSR.ThinGeometryDetection.Coverage.ShadingRange', 0, 3, true], ['r.TSR.Velocity.WeightClampingSampleCount', 1, 8, false], ['r.Tonemapper.Sharpen', 0, 1, false], ['r.MaxAnisotropy', 4, 16, true], ['r.TemporalAA.Quality', 1, 2, true], ['r.TemporalAAFilterSize', .5, 1, false], ['r.TemporalAACurrentFrameWeight', .04, .2, false]];
   if (Object.keys(rendering).length !== ranges.length) fail('Invalid Medium rendering settings');
   for (const [key, min, max, integer] of ranges) number(rendering[key], `Medium rendering ${key}`, min, max, integer);
   number(graphics.orbit_yaw_degrees_per_pixel, 'Graphics orbit_yaw_degrees_per_pixel', .05, 2);
@@ -148,7 +163,7 @@ export function validateConfiguration(data) {
   const natureRoles = ['OakA', 'OakB', 'PineA', 'PineB', 'Shrub', 'Grass', 'GrassB', 'Wildflowers', 'RockA', 'RockB'];
   for (const role of natureRoles) text(natureAssets[role], `Graphics nature_assets.${role}`);
   if (!(data.availableAssetPackages instanceof Set)) fail('Configuration is missing its project asset index; load it with readConfiguration');
-  for (const [role, asset] of Object.entries({...natureAssets, terrain_material: graphics.terrain_material, cloud_material: graphics.cloud_material})) {
+  for (const [role, asset] of Object.entries({...natureAssets, terrain_material: graphics.terrain_material, cloud_material: graphics.cloud_material, grass_proxy_asset: graphics.grass_proxy_asset, broadleaf_proxy_asset: graphics.broadleaf_proxy_asset, conifer_proxy_asset: graphics.conifer_proxy_asset})) {
     text(asset, `Graphics nature_assets.${role}`);
     // This bundled Unreal material is explicitly included by the cooker; custom
     // replacements must be project assets so missing packages are caught here.

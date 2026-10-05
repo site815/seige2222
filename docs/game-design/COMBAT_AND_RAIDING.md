@@ -6,7 +6,7 @@ Alien pressure, automatic combat, privateering, raids, theft, and colony defense
 
 ## Current conflict scope
 
-**Confirmed scope change:** War against other colonies or regions is removed for now. Players can still privateer, attack neighbors, and steal goods. Formal war declarations and war-fleet missions are not current mechanics.
+**Confirmed full-game scope change:** War against other colonies or regions is removed for now. Privateering, attacks on neighbors, and theft remain in the wider design. Formal war declarations and war-fleet missions are not current mechanics. Privateering and cross-colony combat are also not yet implemented in the playable slice.
 
 The wider setting of humanity's war against the aliens remains. This change concerns conflict between neighboring colonies.
 
@@ -28,6 +28,14 @@ The wider setting of humanity's war against the aliens remains. This change conc
 **Provisional example:** A main invasion pulse approximately once every thirty minutes. The interval is not fixed.
 
 **Open:** The final invasion interval, warnings, how colony strength is measured, how that measure determines the force sent, when it is evaluated, and the detailed combat model. Proportionate scaling is confirmed; its formula and inputs are not. These scaling rules concern the main alien invasions.
+
+## Single-player pressure choices — v0.7
+
+**Confirmed and implemented:** Before starting a single-player scenario, independently choose **Background bugs** and **Periodic attacks**. Both default to ON, retaining the earlier roaming-plus-pulse behavior. Either source can be disabled independently; disabling both creates no new bugs while ordinary colony operation and objectives continue.
+
+The same choices govern the player or AI center and all occupied neighbors, including the elapsed simulation used to construct developed AI starts. They are not separate player protection timers. The settings remain fixed during play, are restored by save/load, and appear in the pressure interface; disabled periodic attacks have no active countdown. Existing numerical spawn, damage, repair and scaling rules are unchanged.
+
+The final v0.7 native suite passed 38 tests cleanly, including independent spawning, all four frontend choices, developed AI preparation and save compatibility (`Saved/Automation/v07-final/index.json`). The v0.7 Shipping route passed 79 stages with zero failures and exit 0; see the [verification record](../verification/v0.7.0.json). These local scenario controls do not settle future persistent-server configuration or implement the wider raiding/fleet design below. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
 
 ## Privateering, fixed defenses, and colony attacks
 

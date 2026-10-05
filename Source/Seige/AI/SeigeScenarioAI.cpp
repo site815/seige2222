@@ -123,11 +123,11 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
     return true;
 }
 
-bool FSeigeScenarioAI::Initialize(FSeigeSimulation& Colony, const FString& RulesDirectory, const FString& AIDirectory, bool bDeveloped, FString& Error)
+bool FSeigeScenarioAI::Initialize(FSeigeSimulation& Colony, const FString& RulesDirectory, const FString& AIDirectory, bool bDeveloped, FString& Error, bool bBackgroundBugs, bool bPeriodicAttacks)
 {
     *this = FSeigeScenarioAI();
     FSeigeSimulation Candidate;
-    if (!Candidate.Initialize(RulesDirectory, Error) || !LoadConfig(Candidate, AIDirectory, Error)) return false;
+    if (!Candidate.Initialize(RulesDirectory, Error, bBackgroundBugs, bPeriodicAttacks) || !LoadConfig(Candidate, AIDirectory, Error)) return false;
     if (bDeveloped)
     {
         FObject Preset; FString Raw; int32 Population = 0; TMap<FString, double> Inventory;

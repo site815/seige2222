@@ -2,7 +2,7 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-Interface direction and the boundary between player decisions and automatic simulation. The floating-bottom construction layout supersedes the earlier top-only requirement. The v0.6 menu, display, and speed revision passed **34 clean native tests**, the **79-stage Shipping interaction route with zero failures and exit code 0**, and all **four Shipping native-display states with zero failures**. The earlier v0.5 Shipping route completed 63 stages with zero failures, including construction, camera, terrain selection and building information. Automated checks do not establish exhaustive human usability.
+Interface direction and the boundary between player decisions and automatic simulation. The floating-bottom construction layout supersedes the earlier top-only requirement. The verified v0.7 package adds independent scenario threat controls. It passed **38 clean native tests**, the **79-stage Shipping interaction route with zero failures and exit 0**, and **four actual Shipping display states with zero failures**. See the [v0.7 verification record](../verification/v0.7.0.json). Historically, the v0.6 menu, display, and speed revision passed 34 clean native tests, 79 Shipping interaction stages, and four Shipping display states. The earlier v0.5 Shipping route completed 63 stages with zero failures, including construction, camera, terrain selection and building information. Automated checks do not establish exhaustive human usability.
 
 ## Interface references
 
@@ -27,6 +27,14 @@ Hover and keyboard behavior must preserve ordinary world controls. Interface cli
 
 The displayed version must match the delivered build's version. The v0.3 package passed its 28-stage rendered interaction route, including menus, construction shortcuts, and perspective world clicks. This does not establish exhaustive human usability or completed visual polish.
 
+## Scenario setup — v0.7
+
+**Confirmed and implemented:** Keep **Background bugs** and **Periodic attacks** as two independent ON/OFF controls beneath the 3×3 neighborhood selector. Both default ON. The choices apply before initialization to every occupied colony and to developed AI preparation. The player can choose either source, both, or neither; controls from setup cannot alter a running scenario.
+
+In play, the pulse summary reads **Disabled** when periodic attacks are OFF. Pressure details state the status of both sources. Loading restores the saved choices rather than using whatever is currently selected in setup. Compatible v0.6 saves without these fields default to ON/ON; malformed or inconsistent settings fail without replacing the active game. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
+
+All three threat-setting native tests passed in the final 38-test suite (`Saved/Automation/v07-final/index.json`), including real controller/HUD routing without a drawing canvas, all four setups, AI propagation, and save/load. At 1366×768 the proportional layout's largest panel, including four notice lines, fits within 24-pixel top/bottom margins; this is a source-bounds review, not a rendered usability claim. The passing 79-stage Shipping route includes real OFF and ON button clicks; see the [verification record](../verification/v0.7.0.json).
+
 ## Main menu and game menu — v0.6
 
 **Confirmed user requirements:** Use a polished main menu over the actual landscaped 3D scene, with restrained typography, clear hierarchy, and consistent navigation. The main menu offers Begin a colony, Load colony, Settings, Credits, and Exit game. Multiplayer is labelled as coming later. Menu title, eyebrow, and tagline are editable in `Interface/ui.json`.
@@ -47,11 +55,12 @@ Main menu, scenario setup, and human landing survey also suspend the local simul
 - **Windowed** is selectable. Its resolution selector offers 1280×720, 1600×900, 1920×1080, 2560×1440, and 3840×2160 when they fit the desktop. The window choice is retained separately from the borderless monitor size.
 - **3D render resolution** is independent of window/display resolution. It defaults to 100%, has 50–100% controls in ten-percentage-point steps, and shows the effective width and height in pixels. Menus and text remain at full display resolution.
 - **Medium** is the sole graphics quality label. It is a custom, externally configured preset in `Graphics/scene.json`, with selected lighting, landscape, texture, and antialiasing settings. It is not an exposed choice among Unreal's generic Low/High/Epic presets. Applying a display or render-resolution change preserves this custom profile.
+- **v0.7 antialiasing:** The current Medium preset uses TAA at 100% render resolution and TSR below 100%. Changing render resolution selects the corresponding method automatically. Shadows remain at the custom profile's level 2; no additional quality selector is introduced. Native regression covers 100% → 75% → 100% and preserves explicit diagnostic overrides. Actual Shipping display checks passed native borderless, windowed 100%, windowed 75%, and restored native borderless, with engine AA methods **2 / 2 / 4 / 2** (TAA / TAA / TSR / TAA) and zero failures; see the [verification record](../verification/v0.7.0.json).
 - Local playback speeds are **1×, 5×, and 10×**. The speed button and **+** cycle forward; **−** cycles backward. Main-keyboard and numeric-keypad variants work. **Space** pauses/resumes without changing the selected speed. The supported list is stored in `Interface/ui.json`; legacy saved 3× playback migrates to 5×.
 
 Normal display preferences persist locally. Automated `-UiSmoke`, `-GraphicsBenchmark`, and `-ForceRes` runs leave the player's display preferences untouched and retain their explicitly requested capture size. The separate `-DisplaySmoke -NoSaveDisplay` route applies actual borderless/windowed and render-resolution changes, but the `NoSaveDisplay` guard suppresses preference saves and display config writes. It is a verification path, not a player-facing option.
 
-**Verified development and final Shipping display routes:** On a 3840×1600 monitor using Windows 200% display scaling, both routes passed all four actual viewport checks with zero failures:
+**Historical v0.6 development and final Shipping display routes:** On a 3840×1600 monitor using Windows 200% display scaling, both routes passed all four actual viewport checks with zero failures:
 
 | State | Display pixels | 3D render scale | Effective render pixels |
 | --- | --- | --- | --- |
@@ -74,7 +83,7 @@ The custom Medium shadow quality remained active in every state. High-DPI game m
 | Q / E; middle drag | Rotate; rotate and tilt |
 | Wheel / Home | Zoom; return to the command core view |
 
-Native regression coverage includes direct menu access, pausing center and neighbor simulations, returning from Settings/Credits, saving the pre-menu pause state, loading from the menu, pre-landing resume and F9 load, speed keys, restoring the main-menu backdrop, and rejection of stale blueprint actions through the menu. The latest rebuilt headless run passed all **34 tests cleanly**, with **zero warnings, failures, or unrun tests**. This supersedes the earlier run containing an engine HTTP connectivity-probe warning. The report is `Saved/Automation/v06-final`. The final Shipping interaction route completed all **79 stages with zero failures**, including game-menu pause/restoration, settings, speeds, map transitions, and service activity; its report also counted 831 courier-motion frames between simulation ticks at 1×. Packaged captures and the report are under `%LOCALAPPDATA%/seige2222/Saved`. The separate Shipping native-display check also passed all four states, as recorded above.
+Native regression coverage includes direct menu access, pausing center and neighbor simulations, returning from Settings/Credits, saving the pre-menu pause state, loading from the menu, pre-landing resume and F9 load, speed keys, restoring the main-menu backdrop, and rejection of stale blueprint actions through the menu. The final v0.6 headless run passed all **34 tests cleanly**, with **zero warnings, failures, or unrun tests**. This supersedes the earlier run containing an engine HTTP connectivity-probe warning. The report is `Saved/Automation/v06-final`. The final Shipping interaction route completed all **79 stages with zero failures**, including game-menu pause/restoration, settings, speeds, map transitions, and service activity; its report also counted 831 courier-motion frames between simulation ticks at 1×. Packaged captures and the report are under `%LOCALAPPDATA%/seige2222/Saved`. The separate Shipping native-display check also passed all four states, as recorded above.
 
 ## Perspective camera revision
 
@@ -82,11 +91,13 @@ Native regression coverage includes direct menu access, pausing center and neigh
 
 Delivered v0.3 bindings use Q/E to rotate, middle-mouse drag to rotate/tilt, WASD/arrows to pan, the wheel to zoom, and Home to return to the core view. Saved camera yaw and pitch are added without requiring them in older format-2 saves. Native camera tests and the packaged rendered route pass; save-format compatibility was tested natively, without a separate packaged save/load roundtrip. See [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md).
 
-**Latest v0.4 request:** The middle/third mouse button should orbit responsively like the reference; the prior sensitivity was too low. The implementation captures pointer motion, uses editable sensitivity, and restores the pointer on release. Current configured limits are 8–80° pitch, minimum zoom 120 logical units, and 160 cm camera-to-ground clearance. At close zoom, the view smoothly lowers while retaining the user's orbit angle for zoom-out. Native tests cover clearance and angle restoration; final feel, gesture behavior, and appearance remain under rendered review.
+**Retained v0.4 request:** The middle/third mouse button should orbit responsively like the reference; the prior sensitivity was too low. The implementation captures pointer motion, uses editable sensitivity, and restores the pointer on release. Current configured limits are 8–80° pitch, minimum zoom 120 logical units, and 160 cm camera-to-ground clearance. At close zoom, the view smoothly lowers while retaining the user's orbit angle for zoom-out. Native tests cover clearance and angle restoration; final feel, gesture behavior, and appearance remain under rendered review.
 
 Zooming out should lead to a less detailed regional map. Zooming/focusing into a sector should reveal that area's detailed environment. The current source uses a 3×3 cartographic survey with selectable sectors; it suppresses world construction while on the map, and human deployment remains limited to the home sector. This is a viewing transition, not cross-sector movement or colony ownership. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md).
 
 **v0.6 revision:** Wheel zoom, Home, the Regions button, and player-triggered sector focus ease toward their requested zoom. The cartographic overlay fades in across the configured transition band rather than replacing the world abruptly; a whole-sector survey remains a 3D view below that band. Input and map visibility use the displayed zoom, and projected world labels follow the actual camera. Scenario initialization, loaded-camera restoration, and direct setup/test calls can establish a view immediately; the `FocusSector` API uses its smooth-transition option for UI and controller actions. Maximum zoom and transition limits remain editable graphics parameters. Regional viewing continues to respect ownership and sensor boundaries.
+
+**v0.7 scenery continuity:** Focusing a neighboring sector retains the same deterministic tree population. Distance selects detailed or simpler geometry at those positions; focusing does not replace a sparse placeholder forest with different trees. This changes presentation only and does not reveal hidden colony state or expand player control. Implementation, visual checks and performance evidence are tracked in [Graphics Performance 0.7](GRAPHICS_PERFORMANCE_0_7.md).
 
 ## Colony controls
 

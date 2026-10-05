@@ -13,7 +13,7 @@ struct FSeigeAIBuildTarget
 class SEIGE_API FSeigeScenarioAI
 {
 public:
-    bool Initialize(FSeigeSimulation& Colony, const FString& RulesDirectory, const FString& AIDirectory, bool bDeveloped, FString& Error);
+    bool Initialize(FSeigeSimulation& Colony, const FString& RulesDirectory, const FString& AIDirectory, bool bDeveloped, FString& Error, bool bBackgroundBugs = true, bool bPeriodicAttacks = true);
     void Tick(FSeigeSimulation& Colony, double Seconds);
     FString GetConfigFingerprint() const { return ConfigFingerprint; }
     FString GetStatus() const { return Status; }

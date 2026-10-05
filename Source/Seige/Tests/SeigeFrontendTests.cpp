@@ -5,6 +5,8 @@
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
 #include "HAL/FileManager.h"
+#include "HAL/IConsoleManager.h"
+#include "Scalability.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Tests/AutomationCommon.h"
@@ -233,4 +235,127 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     G.LoadGame();TestEqual(TEXT("Loading enforces the current configured minimum zoom"),G.Zoom,G.MinimumZoom);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeScenarioThreatSettingsTest,"Seige.Frontend.ScenarioThreatSettings",FrontendFlags)
+bool FSeigeScenarioThreatSettingsTest::RunTest(const FString& Parameters)
+{
+    FSavePointerGuard SaveGuard;if(!SaveGuard.Valid){AddError(TEXT("Could not preserve existing save pointer"));return false;}
+    FFrontendWorld W;if(!W.Prepare(*this))return false;auto& G=*W.Game;
+    TestTrue(TEXT("New scenario threat choices both default on"),G.ScenarioBackgroundBugs&&G.ScenarioPeriodicAttacks);
+    FString LastMetadata;
+    for(int32 Combination=0;Combination<4;++Combination)
+    {
+        const bool Background=(Combination&1)!=0,Periodic=(Combination&2)!=0;
+        G.ReturnToMainMenu();W.ClickAction(TEXT("screen:scenario"));
+        if(G.ScenarioBackgroundBugs!=Background)W.ClickAction(TEXT("scenario-threat:background"));
+        if(G.ScenarioPeriodicAttacks!=Periodic)W.ClickAction(TEXT("scenario-threat:periodic"));
+        TestTrue(TEXT("Real scenario button routes set independent choices"),G.ScenarioBackgroundBugs==Background&&G.ScenarioPeriodicAttacks==Periodic);
+        G.ScenarioSlots[0]=TEXT("starting");G.ScenarioSlots[8]=TEXT("developed");
+        G.ScenarioSlots[4]=Combination==3?TEXT("developed"):Combination==1?TEXT("starting"):TEXT("player");
+        W.ClickAction(TEXT("start-scenario"));
+        if(!TestTrue(TEXT("All four combinations start a complete neighborhood"),G.Ready&&G.Neighbors.Num()==2&&G.Screen!=(TEXT("scenario")))){AddError(G.Notice);return false;}
+        if(G.Screen==TEXT("landing"))G.ConfirmLanding(FVector2D(700,0));
+        TestTrue(TEXT("Human and AI centers receive the chosen threats"),G.Sim.BackgroundBugsEnabled==Background&&G.Sim.PeriodicAttacksEnabled==Periodic);
+        for(const auto& N:G.Neighbors)
+        {
+            TestTrue(TEXT("Starting and developed neighbors receive the same settings"),N.Sim.BackgroundBugsEnabled==Background&&N.Sim.PeriodicAttacksEnabled==Periodic);
+            if(N.Type==TEXT("developed"))
+            {
+                TestTrue(TEXT("Developed preparation actually advances the simulation"),N.Sim.Time>0&&N.Sim.DeliveredUnits>0);
+                TestEqual(TEXT("Periodic waves honor the selection during preparation, not just afterward"),N.Sim.Wave>0,Periodic);
+                if(!Background&&!Periodic)TestTrue(TEXT("Peaceful developed preparation creates no bugs"),N.Sim.Enemies.IsEmpty());
+            }
+        }
+        W.ClickAction(TEXT("scenario-threat:background"));W.ClickAction(TEXT("scenario-threat:periodic"));
+        TestTrue(TEXT("Stale scenario controls cannot change an active game"),G.ScenarioBackgroundBugs==Background&&G.ScenarioPeriodicAttacks==Periodic&&G.Sim.BackgroundBugsEnabled==Background&&G.Sim.PeriodicAttacksEnabled==Periodic);
+        G.SaveGame();
+        if(!TestTrue(TEXT("Each selected combination saves"),G.Notice.Contains(TEXT("Entire scenario saved")))){AddError(G.Notice);return false;}
+        if(!FFileHelper::LoadFileToString(LastMetadata,*SaveGuard.Filename))return false;
+        G.ReturnToMainMenu();G.ScenarioBackgroundBugs=!Background;G.ScenarioPeriodicAttacks=!Periodic;
+        G.LoadGame();
+        TestTrue(TEXT("Load restores scenario choices instead of current menu choices"),G.Notice.Contains(TEXT("Scenario restored"))&&G.ScenarioBackgroundBugs==Background&&G.ScenarioPeriodicAttacks==Periodic);
+        TestTrue(TEXT("Saved center preserves the chosen threats"),G.Sim.BackgroundBugsEnabled==Background&&G.Sim.PeriodicAttacksEnabled==Periodic);
+        for(const auto& N:G.Neighbors)TestTrue(TEXT("Saved neighbors preserve the chosen threats"),N.Sim.BackgroundBugsEnabled==Background&&N.Sim.PeriodicAttacksEnabled==Periodic);
+    }
+    const FString CenterBefore=StateText(G.Sim,TEXT("threat-center-before"),*this);
+    TMap<int32,FString> NeighborBefore;for(const auto& N:G.Neighbors)NeighborBefore.Add(N.Index,StateText(N.Sim,TEXT("threat-neighbor-before-")+FString::FromInt(N.Index),*this));
+    auto ReadOriginal=[&](){TSharedPtr<FJsonObject> Object;FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(LastMetadata),Object);return Object;};
+    auto WriteJson=[](const TSharedPtr<FJsonObject>& Object,const FString& Filename)
+    {FString Raw;return Object&&FJsonSerializer::Serialize(Object.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw))&&FFileHelper::SaveStringToFile(Raw,*Filename);};
+    auto AssertUnchanged=[&]()
+    {
+        TestTrue(TEXT("Rejected load preserves active settings and screen"),G.ScenarioBackgroundBugs&&G.ScenarioPeriodicAttacks&&G.Screen==TEXT("playing"));
+        TestEqual(TEXT("Rejected threat metadata cannot mutate the center"),StateText(G.Sim,TEXT("threat-center-after"),*this),CenterBefore);
+        for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected threat metadata cannot mutate neighbors"),StateText(N.Sim,TEXT("threat-neighbor-after-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
+    };
+    for(int32 Variant=0;Variant<5;++Variant)
+    {
+        auto Object=ReadOriginal();if(!Object)return false;
+        if(Variant==0)Object->RemoveField(TEXT("background_bugs"));
+        if(Variant==1)Object->SetStringField(TEXT("background_bugs"),TEXT("true"));
+        if(Variant==2)Object->SetNumberField(TEXT("periodic_attacks"),1);
+        if(Variant==3)Object->SetField(TEXT("periodic_attacks"),MakeShared<FJsonValueNull>());
+        if(Variant==4)Object->SetBoolField(TEXT("background_bugs"),false);
+        if(!WriteJson(Object,SaveGuard.Filename))return false;
+        G.LoadGame();
+        TestTrue(TEXT("Malformed or inconsistent scenario threat metadata is rejected"),G.Notice.Contains(TEXT("threat settings")));
+        AssertUnchanged();
+    }
+    auto Original=ReadOriginal();if(!Original)return false;
+    const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("SaveGames/Scenarios"),Original->GetStringField(TEXT("generation")));
+    const FString NeighborFile=FPaths::Combine(Directory,TEXT("sector_0.json"));
+    FString NeighborText;TSharedPtr<FJsonObject> Neighbor;
+    if(!FFileHelper::LoadFileToString(NeighborText,*NeighborFile)||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(NeighborText),Neighbor))return false;
+    Neighbor->SetBoolField(TEXT("periodic_attacks"),false);
+    if(!WriteJson(Original,SaveGuard.Filename)||!WriteJson(Neighbor,NeighborFile))return false;
+    G.LoadGame();TestTrue(TEXT("A disagreeing child snapshot is rejected atomically"),G.Notice.Contains(TEXT("saved neighbor")));AssertUnchanged();
+    if(!FFileHelper::SaveStringToFile(NeighborText,*NeighborFile))return false;
+    // This test owns the new generation. Remove both fields throughout it to exercise
+    // an actual legacy scenario, without altering any user's original save generation.
+    Original->RemoveField(TEXT("background_bugs"));Original->RemoveField(TEXT("periodic_attacks"));
+    if(!WriteJson(Original,SaveGuard.Filename))return false;
+    for(const TCHAR* Name:{TEXT("center.json"),TEXT("sector_0.json"),TEXT("sector_8.json")})
+    {
+        const FString Filename=FPaths::Combine(Directory,Name);FString Raw;TSharedPtr<FJsonObject> Child;
+        if(!FFileHelper::LoadFileToString(Raw,*Filename)||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Child))return false;
+        Child->RemoveField(TEXT("background_bugs"));Child->RemoveField(TEXT("periodic_attacks"));if(!WriteJson(Child,Filename))return false;
+    }
+    G.ScenarioBackgroundBugs=false;G.ScenarioPeriodicAttacks=false;G.LoadGame();
+    TestTrue(TEXT("Compatible legacy scenario restores both threats enabled"),G.Notice.Contains(TEXT("Scenario restored"))&&G.ScenarioBackgroundBugs&&G.ScenarioPeriodicAttacks);
+    TestEqual(TEXT("Legacy threat defaults leave all other center state intact"),StateText(G.Sim,TEXT("threat-center-legacy"),*this),CenterBefore);
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeDisplayAntialiasingTest,"Seige.Frontend.DisplayAntialiasingSelection",FrontendFlags)
+bool FSeigeDisplayAntialiasingTest::RunTest(const FString& Parameters)
+{
+    FFrontendWorld W;if(!W.Prepare(*this))return false;auto& G=*W.Game;
+    auto* Method=IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod"));
+    if(!TestNotNull(TEXT("Engine antialiasing selector exists"),Method))return false;
+    struct FRestoreGraphics
+    {
+        Scalability::FQualityLevels Levels=Scalability::GetQualityLevels();
+        IConsoleVariable* Method=nullptr;FString Value;EConsoleVariableFlags Priority;
+        explicit FRestoreGraphics(IConsoleVariable* Variable):Method(Variable),Value(Variable->GetString()),Priority(static_cast<EConsoleVariableFlags>(Variable->GetFlags()&ECVF_SetByMask)){}
+        ~FRestoreGraphics(){Scalability::SetQualityLevels(Levels,true);Method->ClearFlags(ECVF_SetByMask);Method->Set(*Value,Priority);}
+    } Restore(Method);
+    TestEqual(TEXT("Default full-resolution profile selects TAA"),G.NativeAntialiasing,2);
+    TestEqual(TEXT("Default reduced-resolution profile selects TSR"),G.UpscalingAntialiasing,4);
+    // NullRHI does not resize an actual viewport. Exercise the same profile method
+    // against the engine's authoritative resolution setting; DisplaySmoke covers
+    // the real window/settings route. Restore every changed global on return.
+    Method->ClearFlags(ECVF_SetByMask);
+    for(const float Resolution:{100.f,75.f,100.f})
+    {
+        auto Levels=Scalability::GetQualityLevels();Levels.ResolutionQuality=Resolution;
+        Scalability::SetQualityLevels(Levels,true);G.ApplyMediumPreset();
+        TestEqual(*FString::Printf(TEXT("Medium applies the correct engine AA method at %.0f percent"),Resolution),Method->GetInt(),Resolution==75.f?4:2);
+        TestTrue(TEXT("Reapplying Medium preserves the selected rendering resolution"),FMath::IsNearlyEqual(Scalability::GetQualityLevels().ResolutionQuality,Resolution,.01f));
+    }
+    Method->Set(1,ECVF_SetByConsole);G.ApplyMediumPreset();
+    TestEqual(TEXT("An explicit diagnostic console override retains priority"),Method->GetInt(),1);
+    return true;
+}
+
 #endif

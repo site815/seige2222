@@ -47,7 +47,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     };
     auto Capture=[&](const TCHAR* Name)
     {
-        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v06"));
+        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v07"));
         if(!Require(IFileManager::Get().MakeDirectory(*Directory,true),TEXT("Could not create screenshot directory")))return;
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Name)+TEXT(".png")),true,false);
         UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CAPTURE %s stage=%d screen=%s"),Name,Stage,*Screen);
@@ -83,9 +83,14 @@ void ASeigeGameMode::RunPresentationSmoke()
         Require(Screen==TEXT("main"),TEXT("Application did not open at the main menu"));Capture(TEXT("main"));break;
     case 1:
         ClickAction(TEXT("screen:scenario"));Require(Screen==TEXT("scenario"),TEXT("Single-player action did not open scenario setup"));break;
-    case 2: Capture(TEXT("scenario"));break;
+    case 2:
+        Require(ScenarioBackgroundBugs&&ScenarioPeriodicAttacks,TEXT("New scenarios default both threat types on"));
+        ClickAction(TEXT("scenario-threat:background"));ClickAction(TEXT("scenario-threat:periodic"));
+        Require(!ScenarioBackgroundBugs&&!ScenarioPeriodicAttacks,TEXT("Independent scenario threat buttons must turn both types off"));
+        Capture(TEXT("scenario"));break;
     case 3:
-        ClickAction(TEXT("start-scenario"));Require(Screen==TEXT("landing")&&Ready,TEXT("Human scenario did not enter ready landing mode"));break;
+        ClickAction(TEXT("start-scenario"));Require(Screen==TEXT("landing")&&Ready,TEXT("Human scenario did not enter ready landing mode"));
+        Require(!Sim.BackgroundBugsEnabled&&!Sim.PeriodicAttacksEnabled,TEXT("New colony must inherit disabled threats"));break;
     case 4:
         Require(Sim.Time==0,TEXT("Scenario time advanced before human landing"));Capture(TEXT("landing"));break;
     case 5:
@@ -124,6 +129,8 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 17:
         ClickAction(TEXT("screen:scenario"));Require(Screen==TEXT("scenario"),TEXT("Scenario setup could not be reopened"));break;
     case 18:
+        ClickAction(TEXT("scenario-threat:background"));ClickAction(TEXT("scenario-threat:periodic"));
+        Require(ScenarioBackgroundBugs&&ScenarioPeriodicAttacks,TEXT("Threat buttons must also restore both types"));
         ClickAction(TEXT("slot:4"));ClickAction(TEXT("slot:4"));
         ClickAction(TEXT("slot:0"));ClickAction(TEXT("slot:0"));ClickAction(TEXT("slot:2"));
         Require(ScenarioSlots.Num()==9&&ScenarioSlots[4]==TEXT("developed")&&ScenarioSlots[0]==TEXT("developed")&&ScenarioSlots[2]==TEXT("starting"),TEXT("Scenario cell clicks did not configure the requested AI types"));break;

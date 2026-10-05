@@ -8,6 +8,7 @@
 #include "SeigeGameMode.generated.h"
 
 class FSeigeScenarioAI;
+struct FSeigeSceneryStreamState;
 struct FSeigeNeighbor
 {
     int32 Index=0;
@@ -57,22 +58,31 @@ public:
     float GrassScaleMin=1.f,GrassScaleMax=1.3f;
     float GrassShadowDistanceMeters=100;
     float GrassProgrammableDistanceMeters=0;
+    float GrassDetailDistanceMeters=45,GrassLodTransitionMeters=35,GrassStreamRadiusMeters=540,GrassStreamBudgetMs=2;
+    int32 GrassStreamCellsPerFrame=2;
+    float ForestDetailDistanceMeters=300,ForestLodTransitionMeters=120;
+    FString GrassProxyAsset=TEXT("/Game/Art/NatureV07/SM_GrassProxy.SM_GrassProxy");
+    FString BroadleafProxyAsset=TEXT("/Game/Art/NatureV07/SM_BroadleafProxy.SM_BroadleafProxy");
+    FString ConiferProxyAsset=TEXT("/Game/Art/NatureV07/SM_ConiferProxy.SM_ConiferProxy");
     bool GrassDistanceFieldLighting=false;
     int32 NeighborForestCandidates=4500;
     bool NeighborForestShadows=false;
     float MinimumCameraPitch=8,MaximumCameraPitch=80,CameraGroundClearance=160;
     float SunIntensity=5.2f,SkyIntensity=1.3f,CloudShadowStrength=.6f;
     float SunSourceAngle=.6f,CloudShadowResolutionScale=1;
+    float ExposureBias=.25f,ColorSaturation=1.1f,AmbientOcclusionIntensity=.5f,SunElevation=52;
     float FogDensity=0,FogStartDistanceMeters=1000,AtmosphereMieScale=.2f,AtmosphereAerialPerspectiveScale=.15f,BloomIntensity=.03f;
     bool SkyRealtimeCapture=false;
     TMap<FString,int32> MediumQualityGroups;
     TMap<FString,float> MediumRenderSettings;
+    int32 NativeAntialiasing=2,UpscalingAntialiasing=4;
     FString CloudMaterialPath=TEXT("/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst");
     TMap<FString,FString> NatureAssets;
     FVector2D CursorWorld=FVector2D::ZeroVector;
     bool CursorOnWorld=false;
     FString Screen=TEXT("main"),ReturnScreen=TEXT("main");
     TArray<FString> ScenarioSlots;
+    bool ScenarioBackgroundBugs=true,ScenarioPeriodicAttacks=true;
     TArray<FSeigeNeighbor> Neighbors;
     bool Observer=false,Fullscreen=true;
     int32 GraphicsQuality=1;
@@ -85,6 +95,7 @@ public:
     void StartScenario();
     void ConfirmLanding(FVector2D Position);
     void CycleScenarioSlot(int32 Index);
+    void ToggleScenarioThreat(const FString& Threat);
     void ReturnToMainMenu();
     void SetGraphicsQuality(int32 Quality);
     void SetFullscreen(bool Enabled);
@@ -112,6 +123,8 @@ public:
     bool TraceGroundRay(const FVector& Origin,const FVector& Direction,FVector& Hit) const;
     bool SelectBuildingRay(const FVector& Origin,const FVector& Direction);
     void RebuildTerrainHeights();
+    bool IsSceneryStreamingReady() const;
+    int32 PendingSceneryCells() const;
     FTransform CameraTransform(float ZoomOverride=-1) const;
     FVector2D CameraPanDirection(float Forward,float Right) const;
     void ApplyOrbitDrag(FVector2D Pixels);
@@ -129,6 +142,7 @@ private:
     UPROPERTY() TObjectPtr<AActor> Landscape;
     UPROPERTY() TObjectPtr<AActor> Foliage;
     UPROPERTY() TObjectPtr<AActor> GroundCover;
+    UPROPERTY() TMap<FString,TObjectPtr<class UStaticMesh>> SceneryMeshReferences;
     UPROPERTY() TObjectPtr<class UMaterialInterface> BaseMaterial;
     UPROPERTY() TMap<FString, TObjectPtr<AActor>> Visuals;
     UPROPERTY() TMap<FString, TObjectPtr<class UMaterialInstanceDynamic>> Materials;
@@ -153,6 +167,7 @@ private:
     TMap<FString,FVector4> TerrainPadBounds;
     void CreateFoliage();
     void CreateGroundCover();
+    TSharedPtr<FSeigeSceneryStreamState> SceneryStream;
     int32 RenderedSector=-1;
     FVector2D FoliageCenter=FVector2D(1.e10,1.e10);
     double TerrainHeight(FVector2D Position) const;

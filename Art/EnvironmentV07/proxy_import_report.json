@@ -1,0 +1,149 @@
+{
+  "license": "Original grass geometry; source-derived tree geometry and retained photographic materials CC0-1.0",
+  "meshes": {
+    "SM_GrassProxy": {
+      "path": "/Game/Art/NatureV07/SM_GrassProxy.SM_GrassProxy",
+      "source_triangles": 1280,
+      "dimensions_cm": [
+        140.00000762939453,
+        139.99999237060547,
+        55.0
+      ],
+      "ground_z": 0.0,
+      "nanite": true,
+      "material": "/Game/Art/NatureV07/MI_GrassProxy.MI_GrassProxy",
+      "material_slots": [
+        "/Game/Art/NatureV07/MI_GrassProxy.MI_GrassProxy"
+      ],
+      "imported_vertex_colors": {
+        "count": 3840,
+        "linear_min": [
+          0.04231141110401684,
+          0.05612849604490199,
+          0.010329823246527583
+        ],
+        "linear_max": [
+          0.25415212231135476,
+          0.29613829877445186,
+          0.09530747209664751
+        ],
+        "linear_mean": [
+          0.11716243054203522,
+          0.14255744308216772,
+          0.04019764245774953
+        ]
+      }
+    },
+    "SM_BroadleafProxy": {
+      "path": "/Game/Art/NatureV07/SM_BroadleafProxy.SM_BroadleafProxy",
+      "source_triangles": 23422,
+      "dimensions_cm": [
+        2441.704833984375,
+        1915.4573364257812,
+        1946.887451171875
+      ],
+      "ground_z": 0.0,
+      "nanite": true,
+      "material": "/Game/Art/NatureV07/MI_CanopyProxy.MI_CanopyProxy",
+      "material_slots": [
+        "/Game/Art/NatureV07/MI_CanopyProxy.MI_CanopyProxy",
+        "/Game/Art/NatureV04/MI_jacaranda_tree_trunk.MI_jacaranda_tree_trunk",
+        "/Game/Art/NatureV04/MI_jacaranda_tree_branches.MI_jacaranda_tree_branches"
+      ],
+      "imported_vertex_colors": {
+        "count": 70266,
+        "linear_min": [
+          0.0595112441614073,
+          0.0595112441614073,
+          0.023153367463938503
+        ],
+        "linear_max": [
+          0.11953843268596626,
+          0.13286832573117277,
+          0.034339807682898134
+        ],
+        "linear_mean": [
+          0.07604832961002404,
+          0.10792928867896934,
+          0.027540105523406543
+        ]
+      }
+    },
+    "SM_ConiferProxy": {
+      "path": "/Game/Art/NatureV07/SM_ConiferProxy.SM_ConiferProxy",
+      "source_triangles": 18000,
+      "dimensions_cm": [
+        658.3265380859375,
+        646.7047729492188,
+        1895.4600830078125
+      ],
+      "ground_z": 0.0,
+      "nanite": true,
+      "material": "/Game/Art/NatureV07/MI_ConiferProxy.MI_ConiferProxy",
+      "material_slots": [
+        "/Game/Art/NatureV07/MI_ConiferProxy.MI_ConiferProxy",
+        "/Game/Art/Nature/MI_fir_tree_01_bark.MI_fir_tree_01_bark",
+        "/Game/Art/Nature/MI_fir_tree_01_trunk_a.MI_fir_tree_01_trunk_a"
+      ],
+      "imported_vertex_colors": {
+        "count": 54000,
+        "linear_min": [
+          0.0595112441614073,
+          0.0595112441614073,
+          0.023153367463938503
+        ],
+        "linear_max": [
+          0.11953843268596626,
+          0.13286832573117277,
+          0.034339807682898134
+        ],
+        "linear_mean": [
+          0.07453888281236934,
+          0.10985229749902364,
+          0.02737244017366147
+        ]
+      }
+    }
+  },
+  "opaque": true,
+  "opacity_mask": false,
+  "dither": false,
+  "rendered_review_pending": false,
+  "all_material_links_checked": true,
+  "combined_color_pin": "unnamed_first_output",
+  "canopy_shading": "one_sided_default_lit_outward_normals",
+  "vertex_albedo": "explicit MeanAlbedo; vertex green only changes brightness within 0.85..1.15",
+  "mean_albedo": {
+    "grass": [
+      0.1,
+      0.15,
+      0.045
+    ],
+    "broadleaf": [
+      0.045,
+      0.08,
+      0.022
+    ],
+    "conifer": [
+      0.04,
+      0.06,
+      0.018
+    ]
+  },
+  "fbx_importer": "legacy; Interchange disabled for this commandlet",
+  "canopy_detail": "existing licensed leaf color/normal; alpha only controls bounded surface variation, never opacity",
+  "palette_update": "Material-instance parameters only; geometry and quantitative imported-color data unchanged",
+  "rendered_review": {
+    "status": "accepted incremental revision; no reference-game quality parity",
+    "captures": [
+      "Art/Previews/v07_ground.png",
+      "Art/Previews/v07_colony.png",
+      "Art/Previews/v07_hills.png",
+      "Art/Previews/v07_boundary.png"
+    ],
+    "remaining_limits": [
+      "Recognizable distant low-detail silhouettes and LOD color changes",
+      "Foliage stability during movement and native-resolution cost remain limitations"
+    ]
+  }
+}

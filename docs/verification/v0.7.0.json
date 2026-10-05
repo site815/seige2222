@@ -1,0 +1,126 @@
+{
+  "version": "0.7.0",
+  "engine": "5.8.3",
+  "platform": "Windows x64 Shipping",
+  "native": {
+    "passed": 38,
+    "succeeded_with_warnings": 0,
+    "failed": 0,
+    "not_run": 0
+  },
+  "shipping": {
+    "exit_code": 0,
+    "stages": 79,
+    "failures": 0,
+    "courier_motion_frames_between_ticks_at_1x": 874,
+    "socket_samples": 86,
+    "tcp_max": 0.0,
+    "udp_max": 0.0
+  },
+  "display": {
+    "failures": 0,
+    "states": [
+      {
+        "state": "borderless",
+        "valid": true,
+        "mode": 1,
+        "width": 3840,
+        "height": 1600,
+        "expected_width": 3840,
+        "expected_height": 1600,
+        "render_percent": 100,
+        "shadow_quality": 2,
+        "antialiasing_method": 2,
+        "expected_antialiasing_method": 2
+      },
+      {
+        "state": "windowed",
+        "valid": true,
+        "mode": 2,
+        "width": 1280,
+        "height": 720,
+        "expected_width": 1280,
+        "expected_height": 720,
+        "render_percent": 100,
+        "shadow_quality": 2,
+        "antialiasing_method": 2,
+        "expected_antialiasing_method": 2
+      },
+      {
+        "state": "render75",
+        "valid": true,
+        "mode": 2,
+        "width": 1280,
+        "height": 720,
+        "expected_width": 1280,
+        "expected_height": 720,
+        "render_percent": 75,
+        "shadow_quality": 2,
+        "antialiasing_method": 4,
+        "expected_antialiasing_method": 4
+      },
+      {
+        "state": "restored",
+        "valid": true,
+        "mode": 1,
+        "width": 3840,
+        "height": 1600,
+        "expected_width": 3840,
+        "expected_height": 1600,
+        "render_percent": 100,
+        "shadow_quality": 2,
+        "antialiasing_method": 2,
+        "expected_antialiasing_method": 2
+      }
+    ]
+  },
+  "graphics": {
+    "gpu": "NVIDIA GeForce RTX 4070 Ti SUPER",
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+    "profile": "Medium",
+    "resolution_percent": 100,
+    "native": "Art/EnvironmentV07/benchmark-shipping-native.json",
+    "orbit_native": "Art/EnvironmentV07/benchmark-shipping-orbit-native.json",
+    "windowed": "Art/EnvironmentV07/benchmark-shipping-medium.json",
+    "scope": "One five-view run per mode/resolution. Complete initial scenery, 4s settle, at least 5s sample per view. Empty neighbors and paused simulation. Orbit includes live camera-driven streaming, but excludes sector changes. Whole-release comparison includes quality/profile changes; not minimum FPS or simulation stress."
+  },
+  "packaged_executable_sha256": "E28DF2768A5047FA30FC57F2E0643AA631C5EF9AAC16CFADD26A065BAEDA080C",
+  "matching_external_definitions": [
+    {
+      "file": "Rules/buildings.json",
+      "sha256": "A9650467CDE81302C29073F4764C4EC8870ADFA0840C921968FC15AF63103C5B"
+    },
+    {
+      "file": "Rules/policies.json",
+      "sha256": "B415345C0E8393901AA9FC77A9BFD61B1648F9028F808A43D4B4036C6CED8227"
+    },
+    {
+      "file": "Rules/recipes.json",
+      "sha256": "554E2DDC6454C36F840E44C8D68C4C0C812F16504C8350C5308CBA2AB252DE71"
+    },
+    {
+      "file": "Rules/resources.json",
+      "sha256": "27ACA103D7558E0AD25F930569F0D8E0159C29335AFD771894493A63A45CAEF5"
+    },
+    {
+      "file": "Rules/scenario.json",
+      "sha256": "C80331238C3430569A42A4683EBECB68DE873516EA5A904EF25210C1BEB09D08"
+    },
+    {
+      "file": "AIFILES/colony_ai.json",
+      "sha256": "6E3DD99D68A8FA074BB76B4D40C5F4BC5B342C42E8089978E768419DAD520617"
+    },
+    {
+      "file": "AIFILES/developed_start.json",
+      "sha256": "467CCC59F025EDE620068F3E893029C961461B5FEF582FC81B9AB8E50F993B19"
+    },
+    {
+      "file": "Interface/ui.json",
+      "sha256": "B46ECA0ED6B4B3E6C78F5232806C162750849BCC300C211604B2AFD7DC294AE1"
+    },
+    {
+      "file": "Graphics/scene.json",
+      "sha256": "77CD9B7A546DD599AD4A68CEA9B82ADC679D9A37AED6AE19E7D6CA20060CE3B0"
+    }
+  ]
+}

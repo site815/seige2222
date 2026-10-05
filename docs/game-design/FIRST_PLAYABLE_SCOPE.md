@@ -2,9 +2,17 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-**Current delivery: v0.6.0 Windows Shipping package, built and verified locally. All 34 native tests passed cleanly; both editor and Shipping interaction routes passed 79 stages with zero failures.** The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
+**Current verified package: v0.7.0.** Packaging exited 0; all 38 native tests passed cleanly, the 79-stage Shipping interaction route passed with zero failures and exit 0, and all four actual Shipping display states passed. The route recorded 874 courier-motion frames; all 86 process-tree socket samples showed zero TCP/UDP endpoints. All nine loose JSON files matched source hashes. See the [v0.7 verification record](../verification/v0.7.0.json). Final performance benchmarks remain separate. The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
 
-## Current v0.6 presentation work
+## Current v0.7 scenario and scenery revision
+
+Single-player setup now offers independent **Background bugs** and **Periodic attacks** switches, both ON by default. They apply to the human or AI center, every occupied neighbor, and developed AI preparation. Turning either OFF disables only that spawn source; turning both OFF leaves the economy and objectives running without bug spawning. The choices are made before starting, persisted with the whole neighborhood, and shown in the pressure hover. A disabled pulse shows **Disabled** instead of a countdown. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
+
+Rules remain `prototype-6.0`; this revision adds saved scenario choices rather than changing economic definitions. Compatible format-2 v0.6 saves with neither threat flag present retain ON/ON. Partial, non-boolean or inconsistent settings are rejected before any live state is replaced. The final native report, `Saved/Automation/v07-final/index.json`, records 38 successes with zero warnings, failed or unrun tests, including all four choices, AI propagation, save continuation and legacy compatibility. The Shipping interaction route also passed; native persistence coverage does not imply a separate packaged save/load roundtrip. Evidence is retained in the [v0.7 verification record](../verification/v0.7.0.json).
+
+The scenery implementation uses the same deterministic tree placements across all nine sectors. Distance changes the tree representation, not the forest population when a sector becomes focused. Near meshes and simpler distant geometry share aligned bounds; budgeted ground-cover streaming prepares detail around the view while preserving placements. This replaces the earlier sparse-neighbor-forest approach. Appearance and performance evidence remain separate from the successful package checks in [Graphics Performance 0.7](GRAPHICS_PERFORMANCE_0_7.md); no target frame rate or finished-art claim follows from the native tests.
+
+## Retained v0.6 presentation and historical verification
 
 Rules `prototype-6.0` add explicit `stockpile_visual` resource metadata and `inventory_presentation` / `worker_activity` building metadata. Ore/carbon/silica use irregular bulk rock piles, alloy uses ingots and manufactured goods use crates; indoor inventories remain inside their declared buildings. Costs, production/construction rates, population/support rules, AI plans and physical delivery mechanics are unchanged from v0.5. Static checks pass 32 deliberately invalid Rules cases and the complete configuration check. The final native report passed 34 tests cleanly (zero warnings, failed or unrun). The editor interaction route passed all 79 stages with zero failures and recorded 413 courier-motion frames between fixed simulation ticks at 1× speed. The v0.6 Shipping interaction route also passed 79 stages with zero failures and exit 0, recording 831 courier-motion frames between fixed ticks at 1× speed (`Saved/packaged-v0.6.0-UiSmoke-verification.json`).
 
@@ -53,7 +61,7 @@ See the [development report](../DEVELOPMENT_REPORT.md) for logs and actual game 
 
 ## Purpose
 
-Test whether a visible robotic colony is engaging when the player establishes an interconnected industrial chain, keeps materials moving, and prepares automatic defenses against alien pressure. The authorized expansion adds a local scenario setup, simple AI colonies, and observation of an AI-controlled center before persistent multiplayer.
+Test whether a visible robotic colony is engaging when the player establishes an interconnected industrial chain, keeps materials moving, and prepares automatic defenses against enabled alien pressure. The authorized expansion adds a local scenario setup, simple AI colonies, and observation of an AI-controlled center before persistent multiplayer.
 
 The complete design remains broader than this prototype. Scenario cells can be empty, starting AI, or developed AI; empty neighbors are the default. Assigning AI to the center selects observer play. The first AI implementation uses independent instances of the same colony simulation. Cross-colony combat, trade, and fleet missions are not included. The persistent-world design baseline remains unchanged.
 
@@ -88,11 +96,11 @@ These behaviors form the current prototype. The checks above and development rep
 | Robot support | Completed, enabled and staffed cores/service bays provide capacity. Growth needs open jobs and capacity. Each support building consumes local delivered components for its assigned robots; missing support or maintenance lowers efficiency. Capacity loss does not delete existing robots. |
 | Repairs | Automatic repairs consume alloy delivered to the damaged building under the selected local-repair policy. |
 | Visibility | Core and sensor definitions provide finite coverage. Construction/target information should follow the implemented visibility rules. |
-| Threats | Roaming bugs and recurring waves create automatic combat pressure. Wave strength responds to prototype colony metrics, with rates and limits in data. |
+| Threats | Independent start-only switches enable background roaming bugs and periodic attack waves; both default ON and apply to every colony. Enabled waves scale with prototype colony metrics, with rates and limits in data. |
 | Defenses | Core and turrets engage threats automatically; building health and damage remain meaningful. |
 | Emergency departure | Manual ejection or core destruction ends the local scenario while retaining only the separately preloaded shuttle cargo. The default scenario starts with an empty shuttle; no core-stock transfer occurs. |
 | Objective | Survive for the configured duration and actually manufacture the configured component output while maintaining the required industrial building. Starting stock alone must not satisfy a production objective. |
-| Local state | Local save/load includes inventory, cargo, timers, population, threats, random state, construction progress/site materials and cargo purpose, maintenance state, all occupied sectors, camera/time controls, and rule/AI fingerprints; native continuation tests cover it. It does not implement offline multiplayer progression. |
+| Local state | Local save/load includes inventory, cargo, timers, population, threats, random state, construction progress/site materials and cargo purpose, maintenance state, both threat settings, all occupied sectors, camera/time controls, and rule/AI fingerprints; native continuation tests cover it. It does not implement offline multiplayer progression. |
 
 The precise local interface and input bindings belong with the delivered build's instructions. The full [interface direction](INTERFACE_AND_CONTROLS.md) remains the design guide; fleet controls are not implied to exist in this slice.
 
@@ -106,14 +114,14 @@ The precise local interface and input bindings belong with the delivered build's
 - **Energy:** The resource proposal's carbon-powered starter generator is not part of the current definition set. Charging/service facilities represent capacity and locally supplied maintenance. No full power network or individual battery charge is simulated.
 - **Transport:** Simple couriers demonstrate inventory movement. The full vehicle/mech fleet production, route planning, cargo loss/salvage, and privateering model is later work.
 - **World:** The local neighborhood presents independent colony sectors. This does not implement cross-sector extraction, travel, shared combat, or persistent-world ownership. Configured sector dimensions and resource placement are prototype values, not final map-scale balance.
-- **AI:** A deterministic target-building controller chooses nearby deposits, extends sensors, and replaces missing facilities when it can afford them. Developed colonies run the actual simulation from a finite stock/population seed until their required buildings finish, within external time/action bounds. Delivery, staffing, services and threats apply during preparation; elapsed time and manufactured output are genuine. This does not model strategic diplomacy, trade, or hostile fleet decisions.
+- **AI:** A deterministic target-building controller chooses nearby deposits, extends sensors, and replaces missing facilities when it can afford them. Developed colonies run the actual simulation from a finite stock/population seed until their required buildings finish, within external time/action bounds. Delivery, staffing, services and the selected threats apply during preparation; elapsed time and manufactured output are genuine. This does not model strategic diplomacy, trade, or hostile fleet decisions.
 - **Emergency escape:** A separate preloaded-cargo state and scenario-ending departure are implemented in the simulation. Interactive shuttle loading, boarding, destination selection, and world relocation are outside this slice. The default shuttle is empty; launch never copies core inventory. This is not a complete physical loading or relocation system.
 - **Balance:** The external files supply playable test assumptions. The final invasion clock, production rates, starter inventory, core defense strength, and victory/loss rules remain subject to review.
 - **Persistence:** Local save/load and any local time controls are prototype facilities. They do not settle the persistent game's authority, server timeline, or offline behavior.
 
 ## Deliberately later work
 
-The single-player target is configured for offline Shipping packaging. HTTP, network discovery, and telemetry plugins are disabled, and the Shipping configuration avoids Unreal's development profiling listener. The v0.3 packaged interaction check completed, with zero TCP/UDP endpoints in eighteen observed process-tree samples. Future multiplayer work must introduce networking deliberately; it is not a dependency of this playable.
+The single-player target is configured for offline Shipping packaging. HTTP, network discovery, and telemetry plugins are disabled, and the Shipping configuration avoids Unreal's development profiling listener. The v0.7 packaged interaction check completed with zero TCP/UDP endpoints in all 86 observed process-tree samples. These are bounded observations of that route. Future multiplayer work must introduce networking deliberately; it is not a dependency of this playable.
 
 Strategic AI faction choices beyond the simple colony controller; privateers and fleet missions; aggression settings and fleet-level orders; trade; inter-sector extraction; sensor theft; full loot and salvage; orbital relocation and adjacent destinations; leaderless areas and scavenging; revolt; building upgrades; the remaining proposed resource branches; specialized low-population balance; complete robot-needs design; and persistent multiplayer services.
 
@@ -121,7 +129,7 @@ These omissions do not remove those ideas from their subject documents. The full
 
 ## Acceptance checklist and verification boundaries
 
-This checklist remains useful for subsequent revisions. Current verification is recorded above; it is not a declaration that every item was rerun end to end in the packaged v0.5 build. In particular, save/load is covered natively, while the controlled packaged balance edit is historical v0.2 evidence.
+This checklist remains useful for subsequent revisions. Current verification is recorded above; it is not a declaration that every item was rerun end to end in every packaged revision. In particular, save/load is covered natively, while the controlled packaged balance edit is historical v0.2 evidence.
 
 1. Compile and launch the native Unreal editor/game targets; produce a standalone package that launches outside the editor.
 2. Load the external definition set with useful errors for broken references or invalid rules. In the packaged build, verify a controlled numerical rule edit takes effect after the documented restart/reload path.
@@ -133,6 +141,8 @@ This checklist remains useful for subsequent revisions. Current verification is 
 8. Check save/load across active production, threats, and cargo if the save feature is delivered. Record remaining unsupported behavior rather than declaring the full state model verified.
 9. Record actual build, package, and gameplay results in the development report. Push only the intended project contents, with generated build/cache output excluded from source control.
 10. Exercise actual controller clicks outside HUD draw passes, menu/observer input isolation, legal and rejected landings, starting/developed AI operation, and deterministic AI continuation after save/load. Verify scenario metadata protects the AI configuration fingerprint as well as each colony's rule fingerprint.
+
+11. Exercise all four background-bug/periodic-attack combinations, verify center and AI preparation use the same choices, and confirm saved settings override current setup choices without accepting partial or inconsistent snapshots.
 
 ## Related documents
 
