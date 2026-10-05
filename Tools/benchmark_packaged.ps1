@@ -24,7 +24,7 @@ https://dev.epicgames.com/documentation/en-us/unreal-engine/introduction-to-perf
 param(
     [ValidatePattern('^[a-zA-Z0-9_-]+$')][string]$Name='release',
     [switch]$NaniteBaseline, [switch]$EpicReference,
-    [switch]$Orbit, [switch]$SimpleTerrain, [switch]$HideSward,
+    [switch]$Orbit, [switch]$SimpleTerrain, [switch]$HideSward, [switch]$Clearing,
     [ValidateSet('colony','meadow','ground','hills','boundary')][string]$View,
     [switch]$NativeResolution,
     [int]$Width=1600, [int]$Height=900,
@@ -82,6 +82,7 @@ if($EpicReference){$arguments+=' -BenchmarkV05Epic'}
 if($Orbit){$arguments+=' -BenchmarkOrbit'}
 if($SimpleTerrain){$arguments+=' -BenchmarkSimpleTerrain'}
 if($HideSward){$arguments+=' -BenchmarkHideSward'}
+if($Clearing){if($View -ne 'colony'){throw 'Clearing diagnostic requires -View colony'}; $arguments+=' -BenchmarkClearing'}
 if($View){$arguments+=" -BenchmarkView=$($View.ToLowerInvariant())"}
 $started=Get-Date
 $process=Start-Process -FilePath $gameExe -WorkingDirectory $gameDirectory -ArgumentList $arguments -WindowStyle Hidden -PassThru -Wait
@@ -105,6 +106,9 @@ Copy-Item -LiteralPath $reportPath -Destination (Join-Path $projectRoot "Saved/G
 if($BaselineReport){
     $baseline=Get-Content -LiteralPath $BaselineReport -Raw | ConvertFrom-Json
     $baselineMode=if($baseline.camera_mode){$baseline.camera_mode}else{'static'}
+    $baselineSpeed=if($null -ne $baseline.simulation_speed){$baseline.simulation_speed}else{0}
+    $currentSpeed=if($null -ne $report.simulation_speed){$report.simulation_speed}else{0}
+    if($baselineSpeed -ne $currentSpeed){throw 'Baseline simulation workload differs: compare benchmarks at the same simulation speed'}
     if($baselineMode -ne $reportedMode -or $baseline.width -ne $report.width -or $baseline.height -ne $report.height){throw 'Baseline must have the same camera mode and output dimensions'}
     if($Orbit -and ($baseline.camera_path_version -ne $report.camera_path_version -or $baseline.orbit_degrees_per_second -ne $report.orbit_degrees_per_second -or $baseline.orbit_pitch_amplitude_degrees -ne $report.orbit_pitch_amplitude_degrees)){throw 'Orbit trajectories differ'}
     if($baseline.quality.runtime_resolution_quality -ne $report.quality.runtime_resolution_quality){throw 'Baseline render resolution differs'}

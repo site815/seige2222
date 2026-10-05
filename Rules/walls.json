@@ -1,0 +1,14 @@
+{
+  "version": "prototype-8.0",
+  "walls": {
+    "level_definitions": ["wall_segment", "wall_segment_2", "wall_segment_3"],
+    "segment_length_meters": 6,
+    "minimum_edge_meters": 1,
+    "width_meters": 1.2,
+    "height_meters": [3, 4, 5],
+    "access_clearance_meters": 1.5,
+    "maximum_joints": 64,
+    "maximum_segments": 256,
+    "joint_pick_radius_meters": 4
+  }
+}

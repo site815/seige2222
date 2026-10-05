@@ -1,0 +1,211 @@
+{
+  "status": "local_prototype_verified_with_remaining_grass_patches_and_soil_banding",
+  "observed_captures": [
+    "worker_reserve.png",
+    "worker_export_target.png",
+    "Saved/Screenshots/Benchmark/v08-soil-clearing/colony.png",
+    "Saved/Screenshots/Benchmark/v08-soil-final/colony.png",
+    "Saved/Screenshots/Benchmark/v08-soil-antialias/colony.png",
+    "Saved/Screenshots/Benchmark/v08-contact-ground/ground.png",
+    "Saved/Screenshots/Benchmark/v08-placement-ground/ground.png"
+  ],
+  "observation": "The matching stratified-placement ground capture has markedly fewer long exposed grass gaps than the root-contact-only view, while some bare patches remain. Residual brown soil banding is still visible; no complete visual fix is claimed.",
+  "method": "Decode source RGB from sRGB to linear, compute Rec.709 luminance, average along each image axis, and measure standard deviation/mean plus the largest Fourier amplitude among cycles 1 through 31 per tile. Values rounded to four decimal places.",
+  "sources": {
+    "forest_leaves_02": {
+      "path": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_diffuse_2k.jpg",
+      "column_mean_cv": 0.0573,
+      "row_mean_cv": 0.148,
+      "dominant_row_cycles_per_tile": 1,
+      "dominant_row_relative_amplitude": 0.1917
+    },
+    "leafy_grass": {
+      "path": "Art/Textures/PolyHaven/leafy_grass_diff_2k.jpg",
+      "column_mean_cv": 0.0281,
+      "row_mean_cv": 0.0385,
+      "dominant_row_cycles_per_tile": 1,
+      "dominant_row_relative_amplitude": 0.0302
+    },
+    "Grass004": {
+      "path": "Art/EnvironmentV04/Textures/Grass004/Grass004_2K-JPG_Color.jpg",
+      "column_mean_cv": 0.0334,
+      "row_mean_cv": 0.0294,
+      "dominant_row_cycles_per_tile": 26,
+      "dominant_row_relative_amplitude": 0.0077
+    }
+  },
+  "cause_assessment": "Source luminance statistics document directional photo content but do not identify the sole cause of rendered bands. Higher-sample stochastic sampling and omission of the fine sward-derived vertex Dirt contribution did not remove the residual bands. Grass strips remain a separate unresolved observation; no cause is asserted proven.",
+  "correction": {
+    "implementation": "Tools/import_terrain_v08.py",
+    "import_report": "Art/EnvironmentV08/surface_import_report.json",
+    "import_status": "restored_forest_fade_imported",
+    "ordinary_layers": "Retain two photographic color scales with near normal/roughness detail.",
+    "forest": {
+      "near_source": "forest_leaves_02",
+      "far_source": "leafy_grass",
+      "far_sampling": "One rotated retained photograph with matching explicit gradients.",
+      "fade_start_meters": 40,
+      "fade_end_meters": 120,
+      "near_max_samples": 4,
+      "far_max_samples": 1
+    },
+    "samples_per_active_layer": {
+      "ordinary_near": 4,
+      "ordinary_far": 2,
+      "forest_near_max": 4,
+      "forest_far": 1
+    },
+    "shared_macro_samples": 1,
+    "shared_macro_scale_meters": 22,
+    "flat_color_fill": false,
+    "source_photo_pixels_changed": false,
+    "new_downloads": false,
+    "opacity_masks_added": false,
+    "dither": false,
+    "rendered_quality_verified": false,
+    "performance_verified": false,
+    "import_log": "Saved/import-terrain-v08-final.log",
+    "import_log_sha256": "08F87D187D4823B9AE847D9D063ACD32ECEF55747590869227949EA8064A870E",
+    "import_report_sha256": "1071DB6865DCCE154467EB6319BDB8343523D2D309399CAFACF30F6E1614FF8B",
+    "import_errors": 0,
+    "import_warnings": 0
+  },
+  "vertex_soil_change": {
+    "status": "implemented_and_rendered_residual_banding_remains",
+    "change": "Remove the small MeadowSwardDensity contribution from vertex Dirt; retain broad soil variation and local building/deposit patches. Grass placement retains its existing fine occupancy field.",
+    "scope": "Avoids mixing the thresholded 7.8 m sward field into the coarser terrain-color lattice; does not establish that this field caused all visible bands."
+  },
+  "grass_root_contact": {
+    "status": "native_geometry_checks_passed_visible_strips_remain",
+    "implementation": "Source/Seige/SeigeSceneryContact.h",
+    "method": "Sample a 3-by-3 grid across the authored root plane and raise each clump only by measured terrain penetration. Reconstruct aligned proxy transforms from the corrected source.",
+    "unchanged": [
+      "XY placement",
+      "rotation",
+      "scale",
+      "density",
+      "terrain geometry",
+      "LOD distances"
+    ],
+    "rendered_resolution_accepted": false
+  },
+  "diagnostic_findings": [
+    {
+      "change": "Reduce shuffled soil lattice from 12 m to 3 m",
+      "result": "Residual broad banding remains; not a verified visual fix."
+    },
+    {
+      "change": "Omit fine sward-derived vertex Dirt field",
+      "result": "Residual banding remains."
+    },
+    {
+      "change": "Fit grass root plane to measured triangle-surface penetration",
+      "result": "Native root support checks pass, but visible pale grass strips persist."
+    },
+    {
+      "change": "Nanite quality 1 and opaque-material isolation",
+      "result": "Did not establish removal of the strips; one-sided opaque-material caveat remains. Further diagnosis is ongoing."
+    }
+  ],
+  "remaining_acceptance": [],
+  "rejected_stochastic_experiment": {
+    "implementation": "Tools/import_terrain_v08.py",
+    "import_report": "Art/EnvironmentV08/surface_import_report.json",
+    "photograph_sampling": "Blend three independently rotated and offset photo lookups over shared triangle-lattice vertices, with rotated explicit texture gradients and variance-preserving color blending.",
+    "lattice_cell_meters": 3,
+    "dirt": {
+      "near_source": "brown_mud_dry",
+      "far_source": "brown_mud_dry",
+      "fade_start_meters": 12,
+      "fade_end_meters": 40
+    },
+    "forest": {
+      "near_source": "forest_leaves_02",
+      "far_source": "leafy_grass",
+      "fade_start_meters": 40,
+      "fade_end_meters": 120
+    },
+    "normal_and_roughness": "Original near-surface detail fades with each layer transition.",
+    "samples_per_active_layer": {
+      "ordinary_near": 4,
+      "ordinary_far": 2,
+      "soil_or_forest_transition_max": 6,
+      "soil_or_forest_far": 3
+    },
+    "shared_macro_samples": 1,
+    "shared_macro_scale_meters": 22,
+    "flat_color_fill": false,
+    "source_photo_pixels_changed": false,
+    "new_downloads": false,
+    "opacity_masks_added": false,
+    "dither": false,
+    "rendered_quality_verified": false,
+    "performance_verified": false,
+    "status": "rejected_not_current_shipping_shader",
+    "reason": "Matched 12 m and 3 m lattice renders did not demonstrate a useful reduction of visible bands. Additional 6-transition/3-far samples were not justified; no measured GPU benefit or regression is asserted.",
+    "evidence_reports": [
+      "Saved/GraphicsBenchmark-v08-soil-clearing.json",
+      "Saved/GraphicsBenchmark-v08-soil-final.json"
+    ]
+  },
+  "placement_change": {
+    "implementation": "Source/Seige/SeigeSceneryPlacement.h",
+    "status": "native_passed_matching_view_improved_remaining_bare_patches",
+    "change": "Generate one lightly jittered candidate per staggered stratum while retaining the exact requested candidate count, including nonsquare totals.",
+    "retained": [
+      "per-cell deterministic seed",
+      "near/proxy position correspondence",
+      "coherent density filters",
+      "plot and woodland exclusions",
+      "size ranges",
+      "LOD distances"
+    ],
+    "scope": "Candidate XY positions change. Equal candidate count does not imply identical post-mask accepted instances or proven elimination of visible strips.",
+    "before_capture": "Saved/Screenshots/Benchmark/v08-contact-ground/ground.png",
+    "after_capture": "Saved/Screenshots/Benchmark/v08-placement-ground/ground.png",
+    "visual_finding": "Long gaps are markedly reduced; some bare patches remain. This comparison does not establish whole-scene appearance or performance acceptance."
+  },
+  "targeted_native_verification": {
+    "runs": [
+      {
+        "id": "v08-final-rules-terrain",
+        "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+        "report_sha256": "45412947E5628F6711B32B8C02159A3C02C67FF2C7D725182CB5E8F8A654B929",
+        "reported_utc": "2026.10.05-19.13.26",
+        "clean_passes": 23,
+        "failed": 0,
+        "warnings": 0,
+        "not_run": 0,
+        "duration_seconds": 3.012648820877075
+      },
+      {
+        "id": "v08-final-placement",
+        "report": "Saved/Automation/v08-final-placement/index.json",
+        "report_sha256": "749BFA456D7BF94BF81802F80C9C86943914447B051AD9BEC10CD0096860C4E8",
+        "reported_utc": "2026.10.05-19.16.56",
+        "clean_passes": 17,
+        "failed": 0,
+        "warnings": 0,
+        "not_run": 0,
+        "duration_seconds": 2.8842501640319824
+      }
+    ],
+    "scope": "Overlapping targeted native runs; do not sum them as unique coverage. Geometry/placement assertions are not rendered artifact or performance acceptance."
+  },
+  "known_limits": [
+    "Some exposed grass patches remain after stratified placement.",
+    "Residual brown soil pattern remains; no proven single cause.",
+    "Native3840x1600 Medium100% samples yield30.5-48.9meanFPS across static/orbit views, not sustained60."
+  ],
+  "final_verification": {
+    "executable_sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877",
+    "native_unique_clean": 84,
+    "display_states_passed": 4,
+    "boot_offline_zero_endpoint_samples": 8,
+    "static_report": "Art/EnvironmentV08/benchmark-shipping-native.json",
+    "static_report_sha256": "7E87D620A6C4AB36F84696BD9519570C4F7D2373AD149EB209B02AD3EE95DCBF",
+    "orbit_report": "Art/EnvironmentV08/benchmark-shipping-orbit-native.json",
+    "orbit_report_sha256": "1290C8E279CDB45BFA1131A91AAC327F3FAB98B781E5691B5A64666FEEB720D0",
+    "scope": "Final package local checks complete;117-stage gameplay result belongs to prior A081430D executable. Publication tracking lives in Git history and delivery message."
+  }
+}

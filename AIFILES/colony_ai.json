@@ -1,22 +1,79 @@
 {
   "version": 1,
-  "decision_interval_seconds": 1,
+  "decision_interval_seconds": 10,
   "max_actions_per_decision": 1,
+  "decision_scheduling_policy": "independent_tactics_trade_construction",
+  "guard_service": {
+    "recharge_below_fraction": 0.3,
+    "resume_above_fraction": 0.9
+  },
   "sensor_definition": "sensor",
   "max_sensors": 24,
   "developed_setup_action_limit": 80,
   "placement": {
-    "ring_start": 500,
-    "ring_step": 350,
-    "ring_limit": 2250,
+    "ring_start": 1100,
+    "ring_step": 300,
+    "ring_limit": 2400,
     "angles": 16,
     "node_clearance": 210,
     "sensor_overlap": 0.75,
-    "defense_distance": 1650
+    "defense_distance": 1100
   },
   "build_targets": [
     {
+      "definition": "solar_array",
+      "count": 1
+    },
+    {
       "definition": "robot_service_bay",
+      "count": 1
+    },
+    {
+      "definition": "sensor",
+      "count": 1
+    },
+    {
+      "definition": "turret",
+      "count": 1
+    },
+    {
+      "definition": "extract_water",
+      "count": 1
+    },
+    {
+      "definition": "extract_iron_ore",
+      "count": 1
+    },
+    {
+      "definition": "extract_silica",
+      "count": 1
+    },
+    {
+      "definition": "extract_carbon",
+      "count": 1
+    },
+    {
+      "definition": "extract_copper_ore",
+      "count": 1
+    },
+    {
+      "definition": "extract_radioactive_ore",
+      "count": 1
+    },
+    {
+      "definition": "extract_crystalline",
+      "count": 1
+    },
+    {
+      "definition": "extract_hydrocarbons",
+      "count": 1
+    },
+    {
+      "definition": "trading_port",
+      "count": 1
+    },
+    {
+      "definition": "worker_factory",
       "count": 1
     },
     {
@@ -25,26 +82,14 @@
     },
     {
       "definition": "sensor",
-      "count": 4
+      "count": 2
     },
     {
       "definition": "robot_service_bay",
       "count": 2
     },
     {
-      "definition": "extract_iron_ore",
-      "count": 1
-    },
-    {
-      "definition": "extract_carbon",
-      "count": 1
-    },
-    {
       "definition": "alloy_refinery",
-      "count": 1
-    },
-    {
-      "definition": "extract_copper_ore",
       "count": 1
     },
     {
@@ -52,11 +97,11 @@
       "count": 1
     },
     {
-      "definition": "extract_silica",
+      "definition": "substrate_works",
       "count": 1
     },
     {
-      "definition": "substrate_works",
+      "definition": "biofuel_refinery",
       "count": 1
     },
     {
@@ -76,6 +121,20 @@
       "count": 3
     }
   ],
-  "developed_setup_seconds": 600,
-  "target_policy": "complete_and_staff_in_order"
+  "developed_setup_seconds": 64800,
+  "target_policy": "complete_and_staff_in_order",
+  "support_recovery_policy": "restore_capacity_before_expansion",
+  "economy": {
+    "solar_definition": "solar_array",
+    "trade_definition": "trading_port",
+    "export_batch": 20,
+    "import_batch": 10,
+    "reserve_targets": {
+      "alloy": 80,
+      "circuits": 16,
+      "components": 12
+    },
+    "recipe_input_buffer_cycles": 4,
+    "credit_buffer_batches": 3
+  }
 }

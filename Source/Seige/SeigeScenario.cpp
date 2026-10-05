@@ -1,5 +1,6 @@
 #include "SeigeGameMode.h"
 #include "AI/SeigeScenarioAI.h"
+#include "Simulation/SeigeResourceGeneration.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
@@ -11,6 +12,20 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Kismet/GameplayStatics.h"
+#include "HAL/PlatformTime.h"
+
+struct FSeigeScenarioPreparation
+{
+    TArray<FString> Slots;
+    FString ReturnScreen;
+    bool Background=true,Periodic=true,Observer=false,SlotActive=false;
+    int32 Cursor=0;
+    TArray<int32> Order={4,0,1,2,3,5,6,7,8};
+    FSeigeSimulation Center;
+    TSharedPtr<FSeigeScenarioAI> CenterBrain;
+    TArray<FSeigeNeighbor> Neighbors;
+    FSeigeNeighbor ActiveNeighbor;
+};
 
 namespace
 {
@@ -37,6 +52,7 @@ FVector2D ASeigeGameMode::HomePosition() const
 }
 void ASeigeGameMode::ShowScreen(const FString& NewScreen)
 {
+    if(IsPreparingScenario()&&NewScreen!=TEXT("preparing"))CancelScenarioPreparation();
     if((NewScreen==TEXT("settings")||NewScreen==TEXT("credits"))&&(Screen==TEXT("playing")||Screen==TEXT("landing")))ToggleGameMenu();
     if(NewScreen==TEXT("settings")||NewScreen==TEXT("credits")) ReturnScreen=Screen;
     Screen=NewScreen;
@@ -46,6 +62,7 @@ void ASeigeGameMode::ToggleGameMenu()
 {
     if(MenuOpen){ResumeGameMenu();return;}
     if(Screen!=TEXT("playing")&&Screen!=TEXT("landing"))return;
+    CancelRoadTool();CancelWallTool();SelectedRoadId=0;
     MenuReturnScreen=Screen;PauseBeforeMenu=Paused;MenuOpen=true;Paused=true;
     Screen=TEXT("game-menu");SelectedBuild.Empty();SelectedId=0;
 }
@@ -56,6 +73,9 @@ void ASeigeGameMode::ResumeGameMenu()
 }
 void ASeigeGameMode::ReturnToMainMenu()
 {
+    if(IsPreparingScenario())CancelScenarioPreparation();
+    ExitCompanionView();SelectedCompanionId=0;
+    CancelRoadTool();CancelWallTool();SelectedRoadId=0;
     MenuOpen=false;
     Screen=TEXT("main"); SelectedBuild.Empty(); SelectedId=0;
     CameraCenter=FVector::ZeroVector;Zoom=DefaultZoom;
@@ -74,6 +94,7 @@ void ASeigeGameMode::ReturnToMainMenu()
 }
 void ASeigeGameMode::CycleScenarioSlot(int32 Index)
 {
+    if(IsPreparingScenario())return;
     if(!ScenarioSlots.IsValidIndex(Index)) return;
     FString& Value=ScenarioSlots[Index];
     if(Index==4) Value=Value==TEXT("player")?TEXT("starting"):Value==TEXT("starting")?TEXT("developed"):TEXT("player");
@@ -103,25 +124,104 @@ bool ASeigeGameMode::InitializeScenario(FString& Reason)
         FSeigeNeighbor N; N.Index=Index; N.Type=ScenarioSlots[Index];
         N.Offset=FVector2D(Index%3-1,Index/3-1)*NewCenter.WorldHalfSize*2;
         N.Brain=MakeShared<FSeigeScenarioAI>();
-        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),N.Type==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks)) return false;
+        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),N.Type==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks,SeigeSectorResourceSeed(NewCenter.GenerationSeed,Index))) return false;
         NewNeighbors.Add(MoveTemp(N));
     }
+    TArray<FSeigeRegionResources> NewEmptyRegions;
+    if(!GenerateEmptyRegionResources(NewCenter,ScenarioSlots,NewEmptyRegions,Reason))return false;
+    ExitCompanionView();
     Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewCenterBrain); Neighbors=MoveTemp(NewNeighbors); Observer=NewObserver;
+    EmptyRegionResources=MoveTemp(NewEmptyRegions);ConfigureCombatTerrain();SelectedFleetId=0;FleetOrderActive=false;
     return true;
 }
 void ASeigeGameMode::StartScenario()
 {
     if(!GraphicsSettingsValid){Notice=Error.IsEmpty()?TEXT("Correct Graphics/scene.json and restart the game."):Error;return;}
+    if(FApp::CanEverRender()&&ScenarioSlots.Contains(TEXT("developed"))){BeginScenarioPreparation();return;}
+    if(IsPreparingScenario())CancelScenarioPreparation();
     if(!InitializeScenario(Error)) { Notice=Error; return; }
+    FinishScenarioStart();
+}
+void ASeigeGameMode::FinishScenarioStart()
+{
     for(auto& Pair:Visuals) if(Pair.Value) Pair.Value->Destroy();
     Visuals.Empty();
     for(auto It=Materials.CreateIterator();It;++It)if(It.Key().StartsWith(TEXT("construction_original_")))It.RemoveCurrent();
+    CancelRoadTool();CancelWallTool();SelectedRoadId=0;
     Ready=true; SelectedId=0; SelectedBuild.Empty(); WinAcknowledged=false;
     Accumulator=0; Speed=1; Paused=false;MenuOpen=false;
     Screen=Observer?TEXT("playing"):TEXT("landing");
     CameraCenter=FVector(HomePosition(),0); Zoom=DefaultZoom*2;
     Notice=Observer?TEXT("OBSERVATION MODE | AI colonies follow the same industry and defense rules."):TEXT("CHOOSE YOUR COMMAND CENTER | Time is paused. Survey deposits, then click a landing site.");
     ResetSimulationPresentation();CreateLandscape(); SyncVisuals(); UpdateCamera();
+}
+bool ASeigeGameMode::IsPreparingScenario() const{return ScenarioPreparation.IsValid();}
+void ASeigeGameMode::BeginScenarioPreparation()
+{
+    if(!GraphicsSettingsValid){Notice=Error.IsEmpty()?TEXT("Correct Graphics/scene.json and restart the game."):Error;return;}
+    if(IsPreparingScenario())return;
+    if(ScenarioSlots.Num()!=9){Notice=TEXT("Scenario requires exactly nine region choices");return;}
+    for(int32 I=0;I<9;++I)if(ScenarioSlots[I]!=TEXT("starting")&&ScenarioSlots[I]!=TEXT("developed")&&ScenarioSlots[I]!=(I==4?TEXT("player"):TEXT("empty")))
+    {Notice=TEXT("Invalid scenario region choice");return;}
+    ScenarioPreparation=MakeShared<FSeigeScenarioPreparation>();auto& P=*ScenarioPreparation;
+    P.Slots=ScenarioSlots;P.Background=ScenarioBackgroundBugs;P.Periodic=ScenarioPeriodicAttacks;P.Observer=P.Slots[4]!=TEXT("player");P.ReturnScreen=Screen;
+    Screen=TEXT("preparing");Notice=TEXT("Preparing colonies with the same construction and defense rules. You can cancel.");
+}
+void ASeigeGameMode::CancelScenarioPreparation()
+{
+    if(!ScenarioPreparation)return;
+    Screen=ScenarioPreparation->ReturnScreen;ScenarioPreparation.Reset();Notice=TEXT("Scenario preparation cancelled. Your current colony is unchanged.");
+}
+double ASeigeGameMode::ScenarioPreparationProgress() const
+{
+    if(!ScenarioPreparation)return 0;const auto& P=*ScenarioPreparation;double Fraction=0;
+    if(P.SlotActive&&P.Order.IsValidIndex(P.Cursor))
+    {const bool Center=P.Order[P.Cursor]==4;const auto Brain=Center?P.CenterBrain:P.ActiveNeighbor.Brain;const auto& Candidate=Center?P.Center:P.ActiveNeighbor.Sim;if(Brain&&Brain->PreparationLimit()>0)Fraction=FMath::Clamp(Candidate.Time/Brain->PreparationLimit(),0.,1.);}
+    return FMath::Clamp((P.Cursor+Fraction)/P.Order.Num(),0.,1.);
+}
+FString ASeigeGameMode::ScenarioPreparationStatus() const
+{
+    if(!ScenarioPreparation)return {};const auto& P=*ScenarioPreparation;
+    if(!P.Order.IsValidIndex(P.Cursor))return TEXT("Preparing the region map");
+    const int32 Index=P.Order[P.Cursor];const auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;const auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;
+    return FString::Printf(TEXT("Region %d of 9 | %s | Simulated %.0f minutes\n%s"),P.Cursor+1,*P.Slots[Index],Candidate.Time/60.,Brain?*Brain->GetStatus():TEXT("Loading region definitions"));
+}
+void ASeigeGameMode::TickScenarioPreparation(double BudgetMilliseconds)
+{
+    if(!ScenarioPreparation||!FMath::IsFinite(BudgetMilliseconds)||BudgetMilliseconds<=0)return;
+    const double Deadline=FPlatformTime::Seconds()+BudgetMilliseconds/1000.;
+    auto Fail=[&](const FString& Reason){const FString Back=ScenarioPreparation->ReturnScreen;ScenarioPreparation.Reset();Screen=Back;Error=Reason;Notice=Reason;};
+    while(ScenarioPreparation&&FPlatformTime::Seconds()<Deadline)
+    {
+        auto& P=*ScenarioPreparation;
+        if(P.Cursor>=P.Order.Num())
+        {
+            TArray<FSeigeRegionResources> Empty;FString Reason;
+            if(!GenerateEmptyRegionResources(P.Center,P.Slots,Empty,Reason)){Fail(Reason);return;}
+            ExitCompanionView();Sim=MoveTemp(P.Center);CenterBrain=MoveTemp(P.CenterBrain);Neighbors=MoveTemp(P.Neighbors);Observer=P.Observer;
+            ScenarioSlots=P.Slots;ScenarioBackgroundBugs=P.Background;ScenarioPeriodicAttacks=P.Periodic;EmptyRegionResources=MoveTemp(Empty);
+            ScenarioPreparation.Reset();ConfigureCombatTerrain();SelectedFleetId=0;FleetOrderActive=false;FinishScenarioStart();return;
+        }
+        const int32 Index=P.Order[P.Cursor];const FString Type=P.Slots[Index];
+        if(Type==TEXT("empty")){++P.Cursor;continue;}
+        if(!P.SlotActive)
+        {
+            FString Reason;
+            if(Index==4&&Type==TEXT("player"))
+            {if(!P.Center.Initialize(DataDirectory(TEXT("Rules")),Reason,P.Background,P.Periodic)){Fail(Reason);return;}++P.Cursor;continue;}
+            if(Index==4)P.CenterBrain=MakeShared<FSeigeScenarioAI>();
+            else{P.ActiveNeighbor=FSeigeNeighbor();P.ActiveNeighbor.Index=Index;P.ActiveNeighbor.Type=Type;P.ActiveNeighbor.Offset=FVector2D(Index%3-1,Index/3-1)*P.Center.WorldHalfSize*2;P.ActiveNeighbor.Brain=MakeShared<FSeigeScenarioAI>();}
+            auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;
+            if(!Brain->BeginInitialize(Candidate,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),Type==TEXT("developed"),Reason,P.Background,P.Periodic,Index==4?INDEX_NONE:SeigeSectorResourceSeed(P.Center.GenerationSeed,Index))){Fail(Reason);return;}
+            P.SlotActive=true;
+        }
+        auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;bool Complete=!Brain->IsPreparing();FString Reason;
+        const double Remaining=(Deadline-FPlatformTime::Seconds())*1000.;
+        if(!Complete&&Remaining<=0)return;
+        if(!Complete&&!Brain->AdvancePreparation(Candidate,Remaining,Complete,Reason)){Fail(Reason);return;}
+        if(!Complete)return;
+        if(Index!=4)P.Neighbors.Add(MoveTemp(P.ActiveNeighbor));P.SlotActive=false;++P.Cursor;
+    }
 }
 bool ASeigeGameMode::CanLand(FVector2D Position,FString& Reason) const
 {
@@ -133,7 +233,7 @@ void ASeigeGameMode::ConfirmLanding(FVector2D Position)
     if(Screen!=TEXT("landing")) return;
     if(!CanLand(Position,Error)||!Sim.SetInitialCorePosition(Position,Error)) { Notice=Error; return; }
     Screen=TEXT("playing"); Paused=false; CameraCenter=FVector(Position,0); Zoom=DefaultZoom;
-    Notice=TEXT("SHUTTLE LANDING | Robots are deploying the command center. Time is running.");
+    Notice=TEXT("SHUTTLE LANDING | Workers are deploying the command center. Time is running.");
     ResetSimulationPresentation();CreateLandscape(); SyncVisuals(); UpdateCamera();
 }
 void ASeigeGameMode::SetGraphicsQuality(int32 Quality)
@@ -205,9 +305,15 @@ FIntPoint ASeigeGameMode::DisplayResolution() const
 }
 void ASeigeGameMode::CycleGameSpeed(int32 Direction)
 {
+    if(CompanionView){Speed=1;Notice=TEXT("Rex roams at 1x. Press Esc to return to colony speed controls.");return;}
     if(GameSpeeds.IsEmpty())return;
-    int32 Index=GameSpeeds.IndexOfByKey(FMath::RoundToInt(Speed));if(Index==INDEX_NONE)Index=0;
-    Speed=GameSpeeds[(Index+(Direction<0?-1:1)+GameSpeeds.Num())%GameSpeeds.Num()];
+    // Pause is a selectable step, while Speed always retains the last running
+    // rate so Space can resume it and existing saves keep a nonzero speed.
+    int32 Index=Paused?0:GameSpeeds.IndexOfByKey(FMath::RoundToInt(Speed))+1;
+    const int32 Count=GameSpeeds.Num()+1;
+    Index=(Index+(Direction<0?-1:1)+Count)%Count;
+    Paused=Index==0;
+    if(!Paused)Speed=GameSpeeds[Index-1];
 }
 bool ASeigeGameMode::IsSupportedGameSpeed(double Value) const
 {

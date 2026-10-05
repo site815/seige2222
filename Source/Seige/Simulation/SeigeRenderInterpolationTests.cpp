@@ -30,18 +30,18 @@ bool FSeigeRenderInterpolationTest::RunTest(const FString& Parameters)
     FSeigeBuilding Target=Source;Target.Id=102;Target.Position=FVector2D(1000,0);S.Buildings.Add(Source);S.Buildings.Add(Target);
     FSeigeCourier Cargo;Cargo.Id=103;Cargo.SourceId=Source.Id;Cargo.TargetId=Target.Id;Cargo.Position=Source.Position;Cargo.Amount=8;
     FSeigeRenderSnapshot Ports;
-    TestTrue(TEXT("Dispatch is visible at the exterior loading port"),Ports.CourierAtLoadingPorts(S,Cargo,.5,10).Equals(FVector2D(110,0)));
-    Cargo.Position=FVector2D(500,0);
-    TestTrue(TEXT("Open route display keeps actual cargo position"),Ports.CourierAtLoadingPorts(S,Cargo,.5,10).Equals(Cargo.Position));
+    Cargo.Position=FVector2D(125,0);
+    TestTrue(TEXT("Renderer preserves the real exterior port position"),Ports.CourierAtLoadingPorts(S,Cargo,.5,10).Equals(Cargo.Position));
     Cargo.Position=FVector2D(960,0);
-    TestTrue(TEXT("Cargo waits visibly outside until actual arrival"),Ports.CourierAtLoadingPorts(S,Cargo,.5,10).Equals(FVector2D(890,0)));
-    TestTrue(TEXT("Loading-port display does not alter authoritative movement"),Cargo.Position.Equals(FVector2D(960,0)));
-    TestEqual(TEXT("Loading-port hold cannot deliver or consume goods"),Cargo.Amount,8.);
-    S.Buildings[1].Position=FVector2D(1000,1000);Cargo.Position=FVector2D(980,980);
-    TestTrue(TEXT("Diagonal dock holds clear the square footprint corner"),Ports.CourierAtLoadingPorts(S,Cargo,.5,10).Equals(FVector2D(890,890)));
-    S.Buildings[1].Position=FVector2D(1000,0);Cargo.Position=FVector2D(500,0);S.Couriers.Reset();S.Couriers.Add(Cargo);Ports.Capture(S);
+    TestTrue(TEXT("Renderer never changes movement speed with endpoint clamps"),Ports.CourierAtLoadingPorts(S,Cargo,.5,10).Equals(Cargo.Position));
+    TestEqual(TEXT("Port presentation cannot deliver or consume goods"),Cargo.Amount,8.);
+    Cargo.Position=FVector2D(500,0);S.Couriers.Reset();S.Couriers.Add(Cargo);Ports.Capture(S);
     Cargo.Position=FVector2D(520,0);
-    TestTrue(TEXT("Port rendering retains frame interpolation on the open route"),Ports.CourierAtLoadingPorts(S,Cargo,.25,10).Equals(FVector2D(505,0)));
+    TestTrue(TEXT("Port rendering retains frame interpolation on the route"),Ports.CourierAtLoadingPorts(S,Cargo,.25,10).Equals(FVector2D(505,0)));
+    S.Buildings[0].BuilderPosition=FVector2D(110,20);FSeigeTransportSegment Road;Road.Id=44;Road.BuilderPosition=FVector2D(200,0);S.Roads.Add(Road);Ports.Capture(S);
+    S.Buildings[0].BuilderPosition=FVector2D(130,20);S.Roads[0].BuilderPosition=FVector2D(220,0);
+    TestTrue(TEXT("Building crew moves smoothly between fixed ticks"),Ports.Builder(S.Buildings[0],.25).Equals(FVector2D(115,20)));
+    TestTrue(TEXT("Road crew moves smoothly between fixed ticks"),Ports.RoadBuilder(S.Roads[0],.75).Equals(FVector2D(215,0)));
     // This diagonal neighbor is legal under circular building spacing, but its
     // square footprint covers one of the preferred exterior stockyard slots.
     TArray<FSeigeWorksiteBounds> Occupied;Occupied.Add({FVector2D(230,-230),140});

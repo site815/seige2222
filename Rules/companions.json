@@ -1,0 +1,27 @@
+{
+  "version": "prototype-8.0",
+  "dog": {
+    "name": "Rex",
+    "initial_count": 1,
+    "seed": 2222005,
+    "food_resource": "organic_food",
+    "mesh": "/Game/Art/CompanionDog/SK_CompanionDog.SK_CompanionDog",
+    "walk_animation": "/Game/Art/CompanionDog/A_DogWalk.A_DogWalk",
+    "idle_animation": "/Game/Art/CompanionDog/A_DogIdle.A_DogIdle",
+    "walk_kmh": 5,
+    "roam_radius_meters": 35,
+    "food_per_meal_kg": 0.1,
+    "meal_interval_seconds": 1800,
+    "fed_duration_seconds": 2400,
+    "feed_radius_meters": 100,
+    "morale_bonus": 0.05,
+    "morale_radius_meters": 60,
+    "rest_seconds": 8,
+    "eye_height_cm": 80,
+    "view_fov": 85,
+    "look_sensitivity": 0.13,
+    "body_radius_meters": 0.3,
+    "maximum_slope_grade": 0.8,
+    "walk_cycle_meters": 0.6018518518518519
+  }
+}

@@ -85,8 +85,10 @@ bool FSeigeThreatSaveValidationTest::RunTest(const FString& Parameters)
     }
     TSharedPtr<FJsonObject> Legacy;if(!ReadThreatJson(Original,Legacy))return false;
     Legacy->RemoveField(TEXT("background_bugs"));Legacy->RemoveField(TEXT("periodic_attacks"));
-    if(!WriteThreatJson(Invalid,Legacy)||!S.Load(Invalid,Error)){AddError(Error);return false;}
-    TestTrue(TEXT("Compatible legacy snapshots with neither field use the original enabled behavior"),S.BackgroundBugsEnabled&&S.PeriodicAttacksEnabled);
+    Legacy->SetNumberField(TEXT("save_format"),2);
+    if(!WriteThreatJson(Invalid,Legacy))return false;
+    TestFalse(TEXT("Version 8 explicitly rejects old construction save formats"),S.Load(Invalid,Error));
+    TestTrue(TEXT("Old format rejection explains incompatibility"),Error.Contains(TEXT("incompatible")));
     return true;
 }
 #endif

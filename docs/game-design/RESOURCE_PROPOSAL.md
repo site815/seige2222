@@ -1,109 +1,65 @@
 # seige2222 — Resource Proposal
 
-[Design index](README.md) · [Status definitions](README.md#design-status)
+[Design index](README.md) · [Resource rules](RESOURCES_AND_INDUSTRY.md) · [Product and recipe proposal](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md)
 
-**Assistant proposal for discussion.** This is a candidate revision of the resource list, not an approved catalog or a balanced specification. The existing [resource rules](RESOURCES_AND_INDUSTRY.md) remain authoritative. Building choices, complete production chains, and runtime data files are separate work.
+**Confirmed direction plus provisional balancing.** The latest user choices supersede the earlier twelve-raw-material proposal and four-material starter guarantee. The v0.8 source now implements this catalog; current engine and packaged verification are pending. Numerical recipes, prices and operating rates remain provisional.
 
-## Recommendation
+## Confirmed resource pool and placement
 
-Use **12 raw materials**, with four common materials forming a proposed starter industrial base. Additional common and rare materials open branches or improve particular products. Give each material a recognizable industrial purpose; avoid a generic exotic ingredient that every advanced product requires.
+Each region contains **exactly three standard deposits and two rare deposits**, with **no duplicate resource type in the region**. For now, draw three different types from the four standard types and two different types from the four rare types below. Do not add more resource types to the current pool.
 
-The proposal preserves the established direction: physical batches, finite carrying capacity, extraction at defined rates, recipes enabled by buildings and material access, and deep manufactured chains without a research tree. Adding robots alone must not bypass extraction limits. All new catalog entries, classes, applications, and starter arrangements below are proposals.
+Deposits are randomized inside the **inner 75% of the region's area**. The current implementation uses a centered square with half-width `sector_half_width × sqrt(0.75)`, approximately 86.6% of the sector side length. A seeded, separated placement pass chooses distinct types; each occupied region receives a different derived seed. Saves retain the generated nodes and seed. Minimum separation is provisional external data; spatial and long-term economic fairness still need verification.
 
-## What counts as a resource
-
-| Category | Proposed meaning | Examples and boundary |
+| Confirmed class | Confirmed resource | Proposed industrial purpose |
 | --- | --- | --- |
-| Raw material | A material acquired from a world source before industrial processing. These are the entries counted toward the approximately 10–15 raw types. | Iron ore, water, silica. Source locations and extracted batches are distinct: a deposit is not inventory already available at the core. |
-| Manufactured item | A physical output made from raw materials or other manufactured items. | Metal stock, circuits, motors, battery packs, sensor equipment. These do not increase the raw-material count. |
-| Energy | A proposed operating input or output, distinct from a material stockpile. | Electricity is not automatically a cargo item. Fuel and battery packs are physical items; a pack's stored charge, if modeled, is a separate property. Power generation, distribution, and charging remain design questions. |
+| Standard | Water | Processing, cooling and organic feedstock treatment; not a worker drinking need. |
+| Standard | Metal ore | A mixed industrial ore family supplying construction metals and conductors. |
+| Standard | Silica | Industrial glass, insulating materials and electronic substrates. |
+| Standard | Biomass | Fuel, bio-derived polymers, Rex's organic food and food exports. |
+| Rare | Rare metals | Precision electronics, specialty alloys and advanced equipment. |
+| Rare | Radioactive ore | A candidate nuclear-energy or isotope branch; not automatically fusion fuel. |
+| Rare | Crystalline material | High-purity optical/electronic or advanced-power components. Exact composition remains fictional/abstract. |
+| Rare | Hydrocarbons | A concentrated alternative feedstock for fuel and plastic pellets. |
 
-Water and industrial biomass are material inputs, not assumed robot food or drinking requirements. Robot needs, consumption, and happiness effects remain open in the [population design](POPULATION_AND_MORALE.md).
+These are **gameplay resource families**, not a mineralogical taxonomy or purity specification. Metal ore combines several useful metals so the design need not track iron, copper and every alloying element separately. Rare metals and crystalline material similarly cover specialist feedstocks. Rarity describes availability; it does not by itself determine loot tier, product quality or whether a material is mandatory for every advanced recipe.
 
-## Candidate raw-material catalog
+## Confirmed trade, credits and energy
 
-Common and rare are proposed availability classes, not automatic quality levels or restrictions on what a material can unlock. Both classes can support new branches and specialized variants. Product loot tier must be assigned separately from deposit rarity.
+- **Galactic credits are used only for external trade.** Local construction and production consume physical goods, labor and energy rather than local credit wages or money fees.
+- External trade uses a **trading port upgradeable through levels 1–3**. Its level-specific capacity, access, delivery delay, fees and upgrade bills are not selected here.
+- **1 Galactic Credit is anchored to the price/value of 1 kg of gold.** This is a fictional accounting anchor, not a real-world exchange-rate quote, a guaranteed conversion/redemption mechanism, or a requirement to add a gold deposit.
+- **Energy is the main operating resource.** Active buildings have passive consumption per simulation second; production also has an energy requirement per transaction. A transaction can produce multiple outputs.
+- **A connected road network shares an electricity grid, with battery storage.** Disconnected networks must not silently share generation or stored charge. Exact connectivity, losses, charging/discharging limits and outage behavior remain to define.
 
-| Proposed material | Availability | Industrial role | Reason to develop, defend, or trade it |
-| --- | --- | --- | --- |
-| Iron ore | Common | Structural metal stock, ordinary robot frames, machine housings, cargo containers, and basic armor. | A broadly useful construction and replacement-parts supply. |
-| Copper ore | Common | Conductors, motor windings, electrical connections, and circuit inputs. | Competing demand from robot production, logistics equipment, sensors, and defenses. |
-| Silica | Common | Glass, ceramic insulation, and simplified semiconductor substrates. | Makes electronics and optical equipment a material-dependent branch. |
-| Carbon | Common | Alloying input, carbon-based industrial materials, filters, and processed fuel. | Connects structural production with a candidate starter fuel path and later composites. |
-| Water | Common | Process fluids, coolant preparation, and chemical inputs. | Supports chemical and thermal-management branches without becoming a biological need. |
-| Industrial biomass | Common | Feedstock for polymers, industrial lubricants, and processed fuels. | Adds materials for casings, seals, cables, and flexible parts; it is not a food supply. |
-| Aluminum ore | Common | Lightweight metal stock for robot bodies, containers, and vehicle or equipment frames. | Offers lighter construction variants alongside iron-based structures; exact benefits need balancing. |
-| Titanium ore | Rare | Advanced structural alloys, protective parts, and high-load components. | Supports durable specialized robots and defenses without becoming a requirement for ordinary repairs. |
-| Rare-earth minerals | Rare | Precision magnetic components, specialized actuators, and sensor assemblies. | Opens precision equipment and stronger compact motors while leaving a basic motor path available. |
-| Lithium-bearing mineral | Rare | Processed battery materials and higher-performance energy-storage assemblies. | Supports mobile equipment and remote installations; lithium batteries need not be a prerequisite for every robot or transport. |
-| Platinum-group ore | Rare | Manufactured catalyst modules for specialized chemical processing and material recovery. | Creates an industrial specialization resource, rather than another armor ingredient. Catalyst consumption and recovery are undecided. |
-| Fictional superconductive crystals | Rare | Manufactured superconductive assemblies for advanced power equipment and electromagnetic systems. | Retains one explicit science-fiction branch with a defined purpose; it should not become the universal late-game ingredient. |
+The colony remains robotic and the interface calls its population workers. Organic food feeds Rex, the morale companion, and can be exported externally. It is not worker food. Trade delivery must still respect physical inventory and transport; a credit balance is not a shared material inventory.
 
-These are game material families and fictional recipe abstractions, not validated chemistry or complete real-world supply chains. In particular, the proposed starter electronics simplify semiconductor manufacture.
+## Current prototype units and accounting
 
-### Changes from the earlier catalog
-
-- Replace the **unnamed exotic mineral** with **lithium-bearing mineral**. Energy storage gives it a clear production and logistics role; the earlier possible shield use is not carried forward as a requirement.
-- Refine **catalytic minerals** to **platinum-group ore**, making the extracted input distinct from the catalyst modules manufactured from it.
-- Describe **biomass** as industrial feedstock and shift water's emphasis to processing and cooling. Human-oriented uses remain historical proposals, not robot needs.
-- Retain superconductive crystals as explicitly fictional. Their role is narrow enough to evaluate or remove later without blocking the whole economy.
-
-These are recommended revisions, not decisions to erase the [initial catalog](PROVISIONAL_CATALOG.md).
-
-## Proposed starter subset and viability
-
-**Recommended prototype subset:** iron ore, copper ore, silica, and carbon. Test these four before adding the other eight. This is a proposed first-playable slice, not a settled rule that every final sector contains these deposits.
-
-For that test, provide reachable sources of all four within the starting sector. This uses a subset of the full catalog and avoids requiring trade with an uncertain neighbor merely to replace ordinary workers or repair the starter economy. The earlier example of three common and two rare materials was never a fixed distribution rule.
-
-**Proposed bootstrap arrangement:**
-
-1. The starting command center and robots arrive with finite, physically stored construction kits, components, and a startup fuel reserve. Specify their quantities when the candidate recipes are drafted; they are not a shared or unlimited inventory.
-2. Those supplies must allow extraction, processing, transport, and the first replacement components to become operational before startup stocks run out. Starter construction cannot require a product that only the unfinished starter building can make.
-3. A candidate power solution is a preinstalled, rate-limited core generator consuming delivered carbon fuel. This is an explicitly proposed simplification for the test, not an established power system or free energy. Its fuel preparation must be available during startup.
-4. Ordinary robot production, basic hauling equipment, basic repairs, and a starter defensive capability should have recurring input paths using these four materials. Rare materials must not be hidden prerequisites for this test. This is a proposed viability constraint, not a completed recipe graph.
-5. The loop must remain workable after the initial component stock is exhausted. Local extraction rates, hauling time, fuel consumption, and job-driven robot production must be checked together. Deposit depletion and replenishment remain undecided; this proposal does not make deposits infinite.
-
-The final game's fair-subset rule needs a separate viability check. A starting sector should either support the chosen baseline production path or have an explicitly designed alternative; the existence of nearby deposits or a potential trade partner alone does not prove viability. Distribution fairness should consider reachable output and transport exposure as well as material counts. Exact site numbers, yields, and access guarantees are open.
-
-### Manufactured examples for this discussion
-
-| Proposed output | Illustrative dependency | Purpose |
+| Kind | Prototype unit | Accounting boundary |
 | --- | --- | --- |
-| Structural alloy stock | Processed iron + carbon | Frames, machinery, basic armor, and repair parts. |
-| Conductor parts | Processed copper | Wiring and motor inputs. |
-| Insulating substrate | Processed silica + carbon-based industrial material | A simplified starter alternative that does not require industrial biomass or a rare deposit. |
-| Basic control circuit | Conductor parts + insulating substrate | Shared electronics for robots, equipment, and basic control systems. |
-| Basic actuator | Structural parts + conductor parts + control circuit | A layered component serving robots and machinery. |
-| Specialized component variants | Add appropriate processed aluminum, titanium, rare-earth, battery, catalyst, or superconductive inputs | Distinct product branches or variants, subject to separate recipe design. |
+| Solid/raw/manufactured material | kg | Recipes and cargo count physical mass. A discrete machine may also have a count and declared mass. |
+| Liquids | L | Declare density in kg/L when checking recipes, transport mass and storage. |
+| Electricity | kWh | Grid generation/storage is separate from physical cargo. |
+| Passive electrical draw | kW, equivalent to kWh per simulation second multiplied by 3,600 | Over `dt` seconds, energy used is `kW × dt / 3600`. |
+| Recipe electricity | kWh per completed transaction | Do not charge independently for each co-product or also count the same process energy as passive draw. |
+| External account | Galactic Credit | Used at the external trading port; not a material unit or local construction input. |
 
-These examples demonstrate a possible four-material path. They are neither complete bills of materials nor production quantities. The earlier polymer-based circuit example remains another proposed path; it would add biomass dependencies and should not silently enter this starter test. Robot assembly, sensors, transport equipment, and defenses still need full recipe and building definitions. No recurring robot happiness good is selected here.
+Battery equipment is a physical manufactured item; its stored electrical energy is a separate grid state. Manufacturing an empty battery must not manufacture charge. Battery mass, capacity, efficiency, throughput and lifetime are proposed balance fields, not implied by selecting storage.
 
-## Fields to keep in external editable definitions
+## Proposed viability approach
 
-**User direction:** Game rules should live in editable external files. The following resource-related fields are design recommendations for that requirement. The current prototype's JSON definitions and smaller implemented content target are recorded in [Rules and Simulation Architecture](RULES_AND_SIMULATION_ARCHITECTURE.md) and [First Playable Scope](FIRST_PLAYABLE_SCOPE.md).
+There are **24 possible resource-type combinations** before considering positions: four choices of the missing standard type, multiplied by six rare pairs. No region has all four standard resources. A mandatory four-standard closed starter chain would contradict the confirmed distribution.
 
-| Definition area | Fields to externalize |
-| --- | --- |
-| Material identity | Stable ID, display name, description, category, tags, visual reference, and availability class. |
-| Physical item behavior | Quantity unit, batch size, transport load per unit, storage compatibility, and destruction or salvage parameters once selected. |
-| Automatic loot | Item tier and any eventual comparison-unit metadata needed for the confirmed highest-tier/least-held rule. Normalization and tie handling remain open; do not add player priority fields. |
-| World sources | Material reference, source type, placement constraints, distribution weights, and any quantity, depletion, or renewal policy once selected. |
-| Extraction | Resource/site and extracting-capability references, output quantity, duration, explicit time basis, worker requirements, operating inputs, and the chosen rate-limit scope. Avoid assuming whether the ceiling belongs to a deposit or facility. |
-| Recipes and variants | Stable recipe references, explicit material/product inputs and outputs with quantities, duration, required building capabilities, and operating energy if adopted. Quantities and variant rules belong in recipe definitions rather than scattered resource descriptions. |
-| Starting scenario | Accessible source set, physical starting stock, already installed equipment, and the proposed starter recipe subset. Keep these separate from the universal resource catalog. |
-| Validation metadata | Units, permitted ranges, reference checks, and scenario viability checks. An unresolved parameter should remain visibly undecided rather than acquire a silent gameplay default. |
+**Confirmed bootstrap:** Start with **zero credits**. Landed physical materials must suffice for a **road, solar generation and level-one trading port**. Export available raw goods to earn credits, then buy the missing standard resource. No free starting credit or import is granted. Initial battery charge, port throughput, market demand and exact starting quantities remain open.
 
-The prototype uses external JSON; the long-term schema, live reload, and migration behavior still need development. Stored world stockpiles must remain tied to actual locations and transports regardless of how definitions are loaded, with temporary construction simplifications recorded in the first-playable scope.
+**Recommendation:** Include the equipment/labor needed to extract and deliver a saleable local material in that finite bootstrap. Solar, road-grid connection and port operation must work before the first import. Then test whether trade and local specialization sustain worker support, repairs and expansion after the landed stock is consumed.
 
-## Next decisions
+Check every one of the 24 type combinations with the chosen starter recipes, port cost, power demand, trade delay and physical hauling. A port must not need an import to become able to import; a generator must not depend on a factory that cannot start without that generator. Spatial randomness should be validated separately for core reservation clearance, reachability and useful extraction access. Final depletion, extraction yields and market availability remain open.
 
-Evaluate whether the four-material test can sustain its own construction, fuel, replacements, and repairs. Then assess whether each of the eight additional materials creates a useful choice or only an extra ingredient. Agree on the candidate catalog and starter path before tuning quantities, deciding final sector distribution, or treating these examples as implementation requirements.
+## What stays external and what remains open
 
-## Related documents
+External definitions hold resource IDs/display names, class, unit, `unit_mass_kg` and `litres_per_unit` in [resources.json](../../Rules/resources.json); recipe inputs, all outputs and `energy_kwh` in [recipes.json](../../Rules/recipes.json); building and extraction properties in [buildings.json](../../Rules/buildings.json); generation and finite landed stock in [scenario.json](../../Rules/scenario.json); connected grids/batteries in [energy.json](../../Rules/energy.json); and port levels, prices and shipment timing in [trade.json](../../Rules/trade.json). Storage is measured in litres, courier/shipment capacity in kilograms, battery state in kWh and credits in a separate account. Fuel generation consumes physical fuel. Solar generation is passive. Balance values are editable candidates, not settled design facts.
 
-- [Resources, Industry, and Progression](RESOURCES_AND_INDUSTRY.md)
-- [Initial Provisional Catalog](PROVISIONAL_CATALOG.md)
-- [Population, Necessities, and Morale](POPULATION_AND_MORALE.md)
-- [Fleets, Physical Logistics, and Loot](FLEETS_AND_LOGISTICS.md)
-- [World, Visibility, and Relocation](WORLD_AND_RELOCATION.md)
+**Current pool is closed at four standard plus four rare types.** Earlier iron/copper/aluminum/titanium distinctions can live inside the ore-family abstraction. A future expansion could discuss sulfur/phosphate industrial minerals, lithium-bearing battery minerals, or platinum-group catalysts, but none is a current ninth deposit type or a hidden prerequisite. The earlier [provisional catalog](PROVISIONAL_CATALOG.md) remains historical proposal material.
+
+The companion [product proposal](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md) preserves the confirmed product tiers and illustrative material-balanced alternatives. The executable candidate recipes are the JSON definitions, including multi-output refinery transactions. They use no separate waste resource yet. Runtime values and verification must be evaluated together before calling the economy balanced.

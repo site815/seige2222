@@ -77,12 +77,16 @@ bool FSeigeFrontendLandingTest::RunTest(const FString& Parameters)
     W.ClickAction(TEXT("slot:4"));TestEqual(TEXT("Human center cycles to starting AI"),G.ScenarioSlots[4],FString(TEXT("starting")));
     W.ClickAction(TEXT("slot:4"));TestEqual(TEXT("Starting center cycles to developed AI"),G.ScenarioSlots[4],FString(TEXT("developed")));
     W.ClickAction(TEXT("slot:4"));TestEqual(TEXT("Developed center cycles back to human"),G.ScenarioSlots[4],FString(TEXT("player")));
+    G.RoadPlacementActive=true;G.RoadHasStart=true;G.SelectedRoadId=123;
     W.ClickAction(TEXT("start-scenario"));
     if(!TestTrue(TEXT("Scenario initialization succeeds"),G.Ready)){AddError(G.Error);return false;}
+    TestTrue(TEXT("A new scenario clears previous road selection and unfinished placement"),!G.IsRoadToolActive()&&!G.RoadHasStart&&G.SelectedRoadId==0);
     TestEqual(TEXT("Human scenario first enters landing"),G.Screen,FString(TEXT("landing")));
     const double Before=G.Sim.Time;G.Tick(.2f);G.Tick(.2f);
     TestEqual(TEXT("Landing does not advance colony simulation"),G.Sim.Time,Before);
     TestEqual(TEXT("Landing has exactly one reserved central core"),CountCores(G.Sim),1);
+    TestEqual(TEXT("Level-one command center uses the parked shuttle visual"),G.Sim.BuildingDefs[G.Sim.CoreDefinition].Visual,FString(TEXT("shuttle")));
+    TestEqual(TEXT("Core level two retains the expanded command-center visual"),G.Sim.BuildingDefs[TEXT("command_core_2")].Visual,FString(TEXT("core")));
     G.CursorOnWorld=true;G.CursorWorld=FVector2D(G.Sim.WorldHalfSize*2,0);W.Controller->HandlePrimaryClick(900,500);
     TestEqual(TEXT("An invalid landing click does not start time"),G.Screen,FString(TEXT("landing")));
     G.CursorWorld=FVector2D(700,0);W.Controller->HandlePrimaryClick(900,500);
@@ -150,6 +154,7 @@ bool FSeigeFrontendObserverTest::RunTest(const FString& Parameters)
     if(!TestTrue(TEXT("AI observer scenario initializes"),G.Ready)){AddError(G.Error);return false;}
     TestTrue(TEXT("AI-controlled center selects observer mode"),G.Observer);TestEqual(TEXT("Observer skips human landing"),G.Screen,FString(TEXT("playing")));
     TestEqual(TEXT("Only configured occupied neighbors are instantiated"),G.Neighbors.Num(),2);
+    TestTrue(TEXT("Occupied regions use different deterministic generation seeds"),G.Neighbors[0].Sim.GenerationSeed!=G.Sim.GenerationSeed&&G.Neighbors[1].Sim.GenerationSeed!=G.Sim.GenerationSeed&&G.Neighbors[0].Sim.GenerationSeed!=G.Neighbors[1].Sim.GenerationSeed);
     const double CenterBefore=G.Sim.Time;
     TArray<double> NeighborTimes;for(const auto& N:G.Neighbors)NeighborTimes.Add(N.Sim.Time);
     for(int32 I=0;I<12;++I)G.Tick(.2f);
@@ -188,6 +193,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Scenario slot configuration restores"),G.ScenarioSlots[0],FString(TEXT("starting")));
     TestTrue(TEXT("Camera focus, orbit, zoom, speed, pause and objective acknowledgment restore"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Zoom==27000&&G.CameraYaw==224&&G.CameraPitch==67&&G.Speed==5&&G.Paused&&G.WinAcknowledged);
     TSharedPtr<FJsonObject> Metadata;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(MetadataText),Metadata)){AddError(TEXT("Could not read emitted metadata"));return false;}
+    TestEqual(TEXT("Neighborhood saves use strict version-5 metadata"),Metadata->GetNumberField(TEXT("format")),5.);
     const auto Fingerprints=Metadata->GetArrayField(TEXT("neighbor_ai"));
     if(!TestTrue(TEXT("Metadata contains neighbor identities"),Fingerprints.Num()>0))return false;
     Fingerprints[0]->AsObject()->SetStringField(TEXT("ai"),TEXT("corrupted-fingerprint"));
@@ -209,30 +215,68 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
         FString Json;
         return Value&&FJsonSerializer::Serialize(Value.ToSharedRef(),TJsonWriterFactory<>::Create(&Json))&&FFileHelper::SaveStringToFile(Json,*SaveGuard.Filename);
     };
-    for(int32 Case=0;Case<4;++Case)
+    for(int32 Case=0;Case<6;++Case)
     {
         auto Invalid=FreshMetadata();if(!Invalid)return false;
         if(Case==0)Invalid->SetNumberField(TEXT("camera_yaw"),361);
         else if(Case==1)Invalid->SetStringField(TEXT("camera_yaw"),TEXT("invalid"));
         else if(Case==2)Invalid->SetNumberField(TEXT("camera_pitch"),G.MinimumCameraPitch-1);
-        else Invalid->SetNumberField(TEXT("camera_pitch"),G.MaximumCameraPitch+1);
+        else if(Case==3)Invalid->SetNumberField(TEXT("camera_pitch"),G.MaximumCameraPitch+1);
+        else if(Case==4)Invalid->RemoveField(TEXT("camera_yaw"));
+        else Invalid->RemoveField(TEXT("camera_pitch"));
         if(!TestTrue(TEXT("Invalid-camera fixture is written"),WriteMetadata(Invalid)))return false;
         G.LoadGame();
         TestTrue(TEXT("Malformed or out-of-range saved orientation is rejected"),G.Notice.Contains(TEXT("camera orientation is invalid")));
         TestTrue(TEXT("Rejected camera metadata cannot alter the live view or timeline"),G.CameraYaw==224&&G.CameraPitch==67&&G.Zoom==27000&&G.Paused&&G.Speed==5);
         TestEqual(TEXT("Rejected camera metadata leaves simulation state unchanged"),StateText(G.Sim,TEXT("camera-rejected"),*this),CenterBefore);
     }
-    auto Legacy=FreshMetadata();if(!Legacy)return false;
-    Legacy->RemoveField(TEXT("camera_yaw"));Legacy->RemoveField(TEXT("camera_pitch"));Legacy->SetNumberField(TEXT("zoom"),1200);
-    if(!TestTrue(TEXT("Legacy format-2 camera fixture is written"),WriteMetadata(Legacy)))return false;
-    G.CameraYaw=10;G.CameraPitch=30;G.LoadGame();
-    TestTrue(TEXT("Format-2 saves without orbit fields still load"),G.Notice.Contains(TEXT("Scenario restored")));
-    TestTrue(TEXT("Legacy saves use stable default angles instead of the current view"),G.CameraYaw==GetDefault<ASeigeGameMode>()->CameraYaw&&G.CameraPitch==GetDefault<ASeigeGameMode>()->CameraPitch);
-    TestEqual(TEXT("New close perspective zoom survives loading below the old orthographic minimum"),G.Zoom,1200.f);
-    TestEqual(TEXT("Camera migration does not change the saved economy"),StateText(G.Sim,TEXT("camera-migrated"),*this),CenterBefore);
-    Legacy->SetNumberField(TEXT("zoom"),0);
-    if(!TestTrue(TEXT("Below-minimum zoom fixture is written"),WriteMetadata(Legacy)))return false;
-    G.LoadGame();TestEqual(TEXT("Loading enforces the current configured minimum zoom"),G.Zoom,G.MinimumZoom);
+    for(int32 Case=0;Case<8;++Case)
+    {
+        auto Invalid=FreshMetadata();if(!Invalid)return false;
+        if(Case==0)Invalid->SetNumberField(TEXT("format"),4);
+        else if(Case==1)Invalid->SetNumberField(TEXT("speed"),3);
+        else if(Case==2)Invalid->SetNumberField(TEXT("speed"),0);
+        else if(Case==3)Invalid->SetStringField(TEXT("speed"),TEXT("5"));
+        else if(Case==4)Invalid->SetNumberField(TEXT("zoom"),0);
+        else if(Case==5)Invalid->SetNumberField(TEXT("camera_x"),G.Sim.WorldHalfSize*3);
+        else if(Case==6)Invalid->RemoveField(TEXT("speed"));
+        else Invalid->RemoveField(TEXT("camera_x"));
+        if(!TestTrue(TEXT("Invalid strict-format fixture is written"),WriteMetadata(Invalid)))return false;
+        G.LoadGame();
+        TestFalse(TEXT("Legacy or invalid required metadata cannot restore"),G.Notice.Contains(TEXT("Scenario restored")));
+        if(Case==0)TestTrue(TEXT("Older format clearly requests a new scenario"),G.Notice.Contains(TEXT("Start a new scenario")));
+        TestTrue(TEXT("Rejected strict metadata preserves the camera and time controls"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.CameraYaw==224&&G.CameraPitch==67&&G.Zoom==27000&&G.Paused&&G.Speed==5);
+        TestEqual(TEXT("Rejected strict metadata preserves the center"),StateText(G.Sim,TEXT("strict-metadata-rejected"),*this),CenterBefore);
+        for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected strict metadata preserves each neighbor"),StateText(N.Sim,TEXT("strict-neighbor-rejected-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
+    }
+    auto CloseView=FreshMetadata();if(!CloseView)return false;CloseView->SetNumberField(TEXT("zoom"),1200);
+    if(!TestTrue(TEXT("Valid close-view format-5 fixture is written"),WriteMetadata(CloseView)))return false;
+    G.LoadGame();TestTrue(TEXT("Complete format-5 saves restore a valid close camera"),G.Notice.Contains(TEXT("Scenario restored"))&&G.Zoom==1200&&G.CameraYaw==224&&G.CameraPitch==67);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeScenarioPreparationTest,"Seige.Frontend.ScenarioPreparationCancellationAndAtomicCommit",FrontendFlags)
+bool FSeigeScenarioPreparationTest::RunTest(const FString& Parameters)
+{
+    FFrontendWorld W;if(!W.Prepare(*this))return false;auto& G=*W.Game;
+    G.StartScenario();G.ConfirmLanding(FVector2D(700,0));
+    const FString Original=StateText(G.Sim,TEXT("preparation-original"),*this);
+    G.ShowScreen(TEXT("scenario"));G.ScenarioSlots[0]=TEXT("developed");
+    G.BeginScenarioPreparation();
+    TestTrue(TEXT("Explicit preparation immediately returns control with a preparing screen"),G.IsPreparingScenario()&&G.Screen==TEXT("preparing"));
+    G.TickScenarioPreparation(.1);G.TickScenarioPreparation(.1);
+    TestFalse(TEXT("Preparation exposes useful progress status"),G.ScenarioPreparationStatus().IsEmpty());
+    TestTrue(TEXT("Preparation progress stays bounded"),G.ScenarioPreparationProgress()>=0&&G.ScenarioPreparationProgress()<=1);
+    TestEqual(TEXT("Partial developed setup does not publish candidate state"),StateText(G.Sim,TEXT("preparation-in-progress"),*this),Original);
+    G.CancelScenarioPreparation();
+    TestTrue(TEXT("Cancellation returns to the originating configuration screen"),!G.IsPreparingScenario()&&G.Screen==TEXT("scenario"));
+    TestEqual(TEXT("Cancellation leaves the active simulation exactly intact"),StateText(G.Sim,TEXT("preparation-cancelled"),*this),Original);
+    TestTrue(TEXT("Cancellation publishes no partially prepared neighbors"),G.Neighbors.IsEmpty());
+    G.ScenarioSlots[0]=TEXT("starting");G.ScenarioBackgroundBugs=false;G.ScenarioPeriodicAttacks=false;
+    G.BeginScenarioPreparation();
+    for(int I=0;I<100&&G.IsPreparingScenario();++I)G.TickScenarioPreparation(2);
+    TestTrue(TEXT("Completed candidate commits the entire neighborhood together"),!G.IsPreparingScenario()&&G.Screen==TEXT("landing")&&G.Neighbors.Num()==1&&G.Neighbors[0].Index==0);
+    TestTrue(TEXT("Published center and neighbor inherit the captured scenario choices"),!G.Sim.BackgroundBugsEnabled&&!G.Sim.PeriodicAttacksEnabled&&!G.Neighbors[0].Sim.BackgroundBugsEnabled&&!G.Neighbors[0].Sim.PeriodicAttacksEnabled);
     return true;
 }
 
@@ -273,7 +317,7 @@ bool FSeigeScenarioThreatSettingsTest::RunTest(const FString& Parameters)
         if(!FFileHelper::LoadFileToString(LastMetadata,*SaveGuard.Filename))return false;
         G.ReturnToMainMenu();G.ScenarioBackgroundBugs=!Background;G.ScenarioPeriodicAttacks=!Periodic;
         G.LoadGame();
-        TestTrue(TEXT("Load restores scenario choices instead of current menu choices"),G.Notice.Contains(TEXT("Scenario restored"))&&G.ScenarioBackgroundBugs==Background&&G.ScenarioPeriodicAttacks==Periodic);
+        if(!TestTrue(TEXT("Load restores scenario choices instead of current menu choices"),G.Notice.Contains(TEXT("Scenario restored"))&&G.ScenarioBackgroundBugs==Background&&G.ScenarioPeriodicAttacks==Periodic))AddError(TEXT("Threat load rejected: ")+G.Notice);
         TestTrue(TEXT("Saved center preserves the chosen threats"),G.Sim.BackgroundBugsEnabled==Background&&G.Sim.PeriodicAttacksEnabled==Periodic);
         for(const auto& N:G.Neighbors)TestTrue(TEXT("Saved neighbors preserve the chosen threats"),N.Sim.BackgroundBugsEnabled==Background&&N.Sim.PeriodicAttacksEnabled==Periodic);
     }
@@ -288,7 +332,7 @@ bool FSeigeScenarioThreatSettingsTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("Rejected threat metadata cannot mutate the center"),StateText(G.Sim,TEXT("threat-center-after"),*this),CenterBefore);
         for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected threat metadata cannot mutate neighbors"),StateText(N.Sim,TEXT("threat-neighbor-after-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
     };
-    for(int32 Variant=0;Variant<5;++Variant)
+    for(int32 Variant=0;Variant<6;++Variant)
     {
         auto Object=ReadOriginal();if(!Object)return false;
         if(Variant==0)Object->RemoveField(TEXT("background_bugs"));
@@ -296,6 +340,7 @@ bool FSeigeScenarioThreatSettingsTest::RunTest(const FString& Parameters)
         if(Variant==2)Object->SetNumberField(TEXT("periodic_attacks"),1);
         if(Variant==3)Object->SetField(TEXT("periodic_attacks"),MakeShared<FJsonValueNull>());
         if(Variant==4)Object->SetBoolField(TEXT("background_bugs"),false);
+        if(Variant==5){Object->RemoveField(TEXT("background_bugs"));Object->RemoveField(TEXT("periodic_attacks"));}
         if(!WriteJson(Object,SaveGuard.Filename))return false;
         G.LoadGame();
         TestTrue(TEXT("Malformed or inconsistent scenario threat metadata is rejected"),G.Notice.Contains(TEXT("threat settings")));
@@ -310,19 +355,10 @@ bool FSeigeScenarioThreatSettingsTest::RunTest(const FString& Parameters)
     if(!WriteJson(Original,SaveGuard.Filename)||!WriteJson(Neighbor,NeighborFile))return false;
     G.LoadGame();TestTrue(TEXT("A disagreeing child snapshot is rejected atomically"),G.Notice.Contains(TEXT("saved neighbor")));AssertUnchanged();
     if(!FFileHelper::SaveStringToFile(NeighborText,*NeighborFile))return false;
-    // This test owns the new generation. Remove both fields throughout it to exercise
-    // an actual legacy scenario, without altering any user's original save generation.
-    Original->RemoveField(TEXT("background_bugs"));Original->RemoveField(TEXT("periodic_attacks"));
-    if(!WriteJson(Original,SaveGuard.Filename))return false;
-    for(const TCHAR* Name:{TEXT("center.json"),TEXT("sector_0.json"),TEXT("sector_8.json")})
-    {
-        const FString Filename=FPaths::Combine(Directory,Name);FString Raw;TSharedPtr<FJsonObject> Child;
-        if(!FFileHelper::LoadFileToString(Raw,*Filename)||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Child))return false;
-        Child->RemoveField(TEXT("background_bugs"));Child->RemoveField(TEXT("periodic_attacks"));if(!WriteJson(Child,Filename))return false;
-    }
-    G.ScenarioBackgroundBugs=false;G.ScenarioPeriodicAttacks=false;G.LoadGame();
-    TestTrue(TEXT("Compatible legacy scenario restores both threats enabled"),G.Notice.Contains(TEXT("Scenario restored"))&&G.ScenarioBackgroundBugs&&G.ScenarioPeriodicAttacks);
-    TestEqual(TEXT("Legacy threat defaults leave all other center state intact"),StateText(G.Sim,TEXT("threat-center-legacy"),*this),CenterBefore);
+    Neighbor->RemoveField(TEXT("background_bugs"));Neighbor->RemoveField(TEXT("periodic_attacks"));
+    if(!WriteJson(Neighbor,NeighborFile))return false;
+    G.LoadGame();TestFalse(TEXT("A child snapshot missing required threat settings cannot restore"),G.Notice.Contains(TEXT("Scenario restored")));AssertUnchanged();
+    if(!FFileHelper::SaveStringToFile(NeighborText,*NeighborFile))return false;
     return true;
 }
 

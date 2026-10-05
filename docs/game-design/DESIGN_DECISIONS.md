@@ -8,6 +8,10 @@ A cross-system decision register and the corrections that prevent superseded ide
 
 ## Prioritized open decisions
 
+**Latest resource/economy correction, documentation first:** Exactly three unique standard and two unique rare deposits per region, randomized within its inner 75% area, from a fixed four-standard/four-rare pool. Credits are only for external trade, through a level-1–3 port, anchored at 1 credit per 1 kg of gold. Start with zero credits and enough landed material for road/solar/port, then export local raw goods before importing missing standards. Passive and transaction electricity share connected-road grids with battery storage. Organic food is a product/export option, not worker nutrition. [Resource Proposal](RESOURCE_PROPOSAL.md) and [Product Recipes](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md) own exact confirmed lists and clearly marked recipe suggestions; none is implemented merely by appearing here.
+
+**Current v0.8 expansion:** Player-facing robots are workers. Core levels grow through 1×/2×/3× widths while reserving the largest plot; vegetation clears that reservation but grading follows the built body. Solar/factory/tower/wall families have three fixed-footprint levels. A slow selectable core replicator and efficient worker factory use materials/energy; inactive workers occupy physical storage, support configurable colony/port targets, and recycle for parts at 1 kWh when requested, needed or out of space. Construction uses delivered/installed ledgers and travelling crews; roads provide 2×/4×/8× transport. Menu owns general actions; manual launch requires the selected own core. Gameplay starts at 1×; the test route uses 10×. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns details. The expanded format-5 source and combat modules require fresh verification; old checkpoints do not prove acceptance.
+
 The following order is an organizational recommendation for future discussion, not a user-approved development roadmap. The user prefers broad design exploration over premature detailed questionnaires.
 
 | Priority | Decision area | What remains unresolved |
@@ -30,7 +34,7 @@ The following order is an organizational recommendation for future discussion, n
 | 3 | Neighbor mix and remote extraction | Whether to offer abandoned-neighbor setup, random mix and counts, and mechanics of extraction in empty neighbors; one central command center and central zone are established limits |
 | 3 | Setting era | Around 2200 is a possible setting, not a selected date |
 | 3 | Workforce interface | Presentation of required workers and open jobs; visibility of those metrics is established |
-| Deferred | Explicitly postponed topics | Changes to occupied AI slots during an active scenario, fleet caps, detailed morale sources, and human/mixed populations or immigration; formal war and its related diplomacy, sanctions, and coalition ideas are outside current scope |
+| Deferred | Explicitly postponed topics | Changes to occupied AI slots during an active scenario, fleet-cap modifiers, broader morale sources beyond Rex, and human/mixed populations or immigration; formal war and its related diplomacy, sanctions, and coalition ideas are outside current scope. Base fleet capacity is confirmed at 50 points; chassis costs are 1/2/4/8 and command-center levels grant 1/2/3 total shared fleet slots. These fleet rules await implementation. |
 
 Detailed costs, numerical formulas, exact recipes, and tuning should remain visibly provisional while the larger design is explored. An open question is not authorization to fill it with an assumed decision.
 

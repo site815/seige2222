@@ -10,6 +10,8 @@ Nothing in this section is a confirmed resource list, building specification, or
 
 **Scope update:** The current population is robots only. This initial catalog predates that choice. Human-oriented uses and facilities such as food production and housing remain earlier proposals to revisit, not established robotic needs. Materials may still have industrial uses; selecting robots does not finalize or remove resource types or recipes.
 
+**Historical catalog:** The later confirmed four-standard/four-rare pool and exact three-plus-two regional distribution supersede this raw list for current scope. See [Resource Proposal](RESOURCE_PROPOSAL.md), [Product Recipes](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md) and the current-family crosswalk in [Building Proposal](BUILDING_PROPOSAL.md). Organic food is now a confirmed product for Rex and optional export; it does not establish worker nutrition. Earlier facility/material ideas remain here for history, not as extra current requirements.
+
 ### Raw materials
 
 | Proposed class | Material | Proposed uses |

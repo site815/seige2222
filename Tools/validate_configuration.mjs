@@ -51,7 +51,7 @@ export function validateConfiguration(data) {
   const version = (value, label) => { object(value, label); if (value.version !== 1) fail(`${label}.version must be 1`); };
   const unique = (seen, value, label) => { if (seen.has(value)) fail(`Duplicate ${label}: ${value}`); seen.add(value); };
   const buildings = new Map(data.rules.buildings.buildings.map(b => [b.id, b]));
-  const resources = new Set(data.rules.resources.resources.map(r => r.id));
+  const resources = new Map(data.rules.resources.resources.map(r => [r.id,r]));
   const menu = new Set(data.rules.buildings.build_menu);
   const scenario = data.rules.scenario.scenario;
   const policies = data.rules.policies.policies;
@@ -75,6 +75,7 @@ export function validateConfiguration(data) {
   }
   version(graphics, 'Graphics/scene.json');
   number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);
+  if(Math.abs(graphics.world_centimeters_per_unit/100-data.rules.transport.transport.meters_per_world_unit)>1e-9)fail('Graphics and transport physical scales must agree');
   number(graphics.nanite_max_pixels_per_edge, 'Graphics nanite_max_pixels_per_edge', .5, 4);
   number(graphics.nanite_survey_pixels_per_edge, 'Graphics nanite_survey_pixels_per_edge', .5, 4);
   number(graphics.nanite_survey_start_zoom, 'Graphics nanite_survey_start_zoom', 5000, 60000);
@@ -175,10 +176,21 @@ export function validateConfiguration(data) {
   }
   number(ai.decision_interval_seconds, 'AI decision_interval_seconds', policies.fixed_step_seconds, 3600);
   number(ai.max_actions_per_decision, 'AI max_actions_per_decision', 1, 16, true);
+  if (!['independent_tactics_trade_construction', 'shared_action_budget'].includes(ai.decision_scheduling_policy)) fail('Unsupported AI decision_scheduling_policy');
+  const guardService=object(ai.guard_service,'AI guard_service');
+  number(guardService.recharge_below_fraction,'AI guard_service.recharge_below_fraction',1e-8,1);
+  number(guardService.resume_above_fraction,'AI guard_service.resume_above_fraction',guardService.recharge_below_fraction,1);
+  if(guardService.resume_above_fraction<=guardService.recharge_below_fraction)fail('AI guard service resume threshold must exceed recharge threshold');
   number(ai.max_sensors, 'AI max_sensors', 1, 128, true);
   number(ai.developed_setup_action_limit, 'AI developed_setup_action_limit', 1, 512, true);
   if (ai.target_policy !== 'complete_and_staff_in_order') fail('Unsupported AI target_policy');
-  number(ai.developed_setup_seconds, 'AI developed_setup_seconds', ai.decision_interval_seconds, 3600);
+  if (ai.support_recovery_policy !== 'restore_capacity_before_expansion') fail('Unsupported AI support_recovery_policy');
+  const economy=object(ai.economy,'AI economy');
+  if(buildable(economy.solar_definition,'AI solar_definition').role!=='generator'||buildable(economy.trade_definition,'AI trade_definition').role!=='trade')fail('AI bootstrap needs a generator and trading port');
+  number(economy.export_batch,'AI export_batch',1e-8,10000);number(economy.import_batch,'AI import_batch',1e-8,10000);
+  number(economy.recipe_input_buffer_cycles,'AI recipe_input_buffer_cycles',1,100);number(economy.credit_buffer_batches,'AI credit_buffer_batches',0,100);
+  for(const[id,n]of Object.entries(object(economy.reserve_targets,'AI reserve_targets'))){if(!resources.has(id))fail(`Unknown AI reserve target ${id}`);number(n,`AI reserve_targets.${id}`,0,Number.MAX_VALUE);}
+  number(ai.developed_setup_seconds, 'AI developed_setup_seconds', ai.decision_interval_seconds, 172800);
   if (buildable(ai.sensor_definition, 'AI sensor_definition').sensor_range <= 0) fail('AI sensor_definition must provide sensor coverage');
   const placement = object(ai.placement, 'AI placement');
   const extent = scenario.world_half_size;
@@ -204,19 +216,20 @@ export function validateConfiguration(data) {
   let stock = 0;
   for (const [id, amount] of Object.entries(developed.inventory)) {
     if (!resources.has(id)) fail(`Developed inventory references unknown resource: ${id}`);
-    stock += number(amount, `Developed inventory.${id}`, 0, Number.MAX_VALUE);
+    stock += number(amount, `Developed inventory.${id}`, 0, Number.MAX_VALUE)*resources.get(id).litres_per_unit;
   }
-  const deploymentKit = Object.values(scenario.starting_deployment_materials).reduce((sum, amount) => sum + amount, 0);
+  const deploymentKit = Object.entries(scenario.starting_deployment_materials).reduce((sum, [id,amount]) => sum + amount*resources.get(id).litres_per_unit, 0);
   if (stock + deploymentKit > buildings.get(scenario.core_definition).storage_capacity) fail('Developed inventory and deployment kit exceed core capacity');
   // Necessary setup bounds only; geometry, staffing and actual AI behavior require native tests.
   const cost = new Map();
   let setupActions = 0;
   for (const [id, count] of finalCounts) {
+    if(buildings.get(id).role==='extractor')continue; // Native AI selects one locally generated standard source.
     setupActions += count;
     for (const [resource, amount] of Object.entries(buildings.get(id).cost)) cost.set(resource, (cost.get(resource) ?? 0) + amount * count);
   }
   if (setupActions > ai.developed_setup_action_limit) fail('Developed setup action limit cannot establish the requested building targets');
-  for (const [id, amount] of cost) if ((developed.inventory[id] ?? 0) < amount) fail(`Developed seed cannot pay target construction costs for ${id}`);
+  for (const [id, amount] of Object.entries(rules.bootstrap)) if ((developed.inventory[id] ?? 0) < amount) fail(`Developed seed cannot fund its finite energy/trade bootstrap for ${id}`);
 
   const shortcut = (value, label) => {
     const key = text(value, label).toUpperCase();
@@ -235,7 +248,7 @@ export function validateConfiguration(data) {
     for (const [entryIndex, entry] of array(group.entries, `${label}.entries`, 1).entries()) {
       const entryLabel = `${label}.entries[${entryIndex}]`;
       object(entry, entryLabel);
-      buildable(entry.definition, `${entryLabel}.definition`);
+      if(!['road','upgrade_road','wall'].includes(entry.definition)) buildable(entry.definition, `${entryLabel}.definition`);
       unique(assigned, entry.definition, 'UI building entry');
       unique(entryKeys, shortcut(entry.shortcut, `${entryLabel}.shortcut`), `UI shortcut in ${group.id}`);
     }
@@ -262,7 +275,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     const result = validateConfiguration(readConfiguration(path.resolve(process.argv[2] ?? defaultRoot)));
     console.log(`Configuration valid: ${result.version}; ${result.resources} items, ${result.recipes} recipes, ${result.buildings} buildings.`);
-    console.log(`AI: ${result.aiTargets} priorities, ${result.developedStock} developed starting items. Interface: ${result.uiGroups} groups, ${result.uiBuildings} buildings, ${result.summaryResources} summary resources, ${result.credits} credits.`);
+    console.log(`AI: ${result.aiTargets} priorities, ${result.developedStock} developed starting items. Interface: ${result.uiGroups} groups, ${result.uiBuildings} building/tool entries, ${result.summaryResources} summary resources, ${result.credits} credits.`);
     console.log(`Graphics: ${result.natureRoles} nature roles resolve to Content assets; ${result.renderScale} rendered centimeters per simulation unit.`);
   } catch (error) {
     console.error(`CONFIGURATION VALIDATION FAILED: ${error.message}`);

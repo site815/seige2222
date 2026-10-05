@@ -1,9 +1,8 @@
 {
-  "version": "prototype-6.0",
+  "version": "prototype-8.0",
   "policies": {
     "fixed_step_seconds": 0.05,
-    "dispatch_interval": 0.35,
-    "courier_speed": 440,
+    "dispatch_interval": 2,
     "courier_capacity": 8,
     "courier_min_batch": 2,
     "max_couriers": 72,
@@ -16,37 +15,37 @@
     "placement_requires_visibility": 1,
     "population_policy": "fill_open_jobs",
     "workforce_mode": "full_staff",
-    "surplus_policy": "retire_without_refund",
+    "surplus_policy": "store_inactive",
     "population_recipe": "assemble_robot",
-    "robot_retire_seconds": 12,
+    "robot_retire_seconds": 120,
     "minimum_population": 6,
     "population_buffer_robots": 4,
     "upkeep_resource": "components",
-    "upkeep_interval": 10,
-    "upkeep_per_robot": 0.025,
+    "upkeep_interval": 600,
+    "upkeep_per_robot": 0.01,
     "upkeep_buffer_intervals": 4,
     "upkeep_shortage_efficiency": 0.5,
     "repair_resource": "alloy",
     "objective_resource": "components",
     "objective_produced_amount": 12,
-    "objective_survival_seconds": 360,
+    "objective_survival_seconds": 14400,
     "objective_building": "component_works",
     "objective_building_count": 1,
-    "wave_interval": 90,
-    "wave_first_time": 45,
+    "wave_interval": 1800,
+    "wave_first_time": 1800,
     "wave_base_count": 3,
     "wave_per_building": 0.3,
     "wave_per_population": 0.08,
     "wave_escalation_per_wave": 0,
     "wave_max_count": 36,
     "spawn_radius": 4300,
-    "roam_interval": 27,
+    "roam_interval": 240,
     "roam_first_time": 4,
     "roam_count": 1,
     "enemy_health": 45,
-    "enemy_speed": 150,
+    "enemy_speed": 30,
     "enemy_attack_range": 130,
-    "enemy_damage_per_second": 5,
+    "enemy_damage_per_second": 2,
     "enemy_courier_attack_range": 110,
     "event_history_limit": 16,
     "shuttle_capacity": 30,
@@ -69,7 +68,39 @@
     "shuttle_policy": "preloaded_cargo_only",
     "storage_policy": "overflow_only",
     "rule_time_basis": "simulation_seconds",
-    "construction_policy": "reserved_core_physical_delivery",
-    "robot_support_policy": "local_capacity_and_maintenance"
+    "construction_policy": "phased_physical_delivery",
+    "robot_support_policy": "local_capacity_and_maintenance",
+    "construction_stages": [
+      {
+        "name": "Foundations",
+        "end": 0.2
+      },
+      {
+        "name": "Frame and utilities",
+        "end": 0.55
+      },
+      {
+        "name": "Enclosure and equipment",
+        "end": 0.85
+      },
+      {
+        "name": "Commissioning",
+        "end": 1
+      }
+    ],
+    "inactive_worker_resource": "stored_workers",
+    "inactive_worker_litres": 50,
+    "worker_store_seconds": 5,
+    "worker_reactivate_seconds": 5,
+    "worker_disassemble_seconds": 10,
+    "worker_disassembly_kwh": 1,
+    "worker_disassembly_outputs": {
+      "components": 0.5,
+      "circuits": 0.5
+    },
+    "auto_disassemble_parts_shortage": true,
+    "auto_disassemble_storage_full": true,
+    "default_inactive_worker_target": 0,
+    "default_port_worker_reserve_target": 0
   }
 }

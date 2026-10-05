@@ -25,6 +25,12 @@ const FLinearColor Gold(.86f,.80f,.63f),Green(.55f,.79f,.68f),Text(.94f,.92f,.85
 constexpr float TopHeight=80;
 bool Contains(const FSeigeButton& R,float X,float Y) {return X>=R.Position.X&&X<=R.Position.X+R.Size.X&&Y>=R.Position.Y&&Y<=R.Position.Y+R.Size.Y;}
 bool OutcomeModal(const ASeigeGameMode& G) {return !G.Ready||(!G.Observer&&(G.Sim.Escaped||G.Sim.Failed||(G.Sim.Won&&!G.WinAcknowledged)));}
+bool CanIssueCoreCommands(const ASeigeGameMode& G)
+{
+    if(G.Screen!=TEXT("playing")||G.Observer||G.IsRegionMap()||G.DetailedSectorIndex()!=4||OutcomeModal(G)||!G.SelectedBuild.IsEmpty()||G.IsRoadToolActive())return false;
+    const auto* Selected=G.Sim.FindBuilding(G.SelectedId);
+    return Selected&&Selected->DefId==G.Sim.CoreDefinition&&Selected->Health>0;
+}
 FString ResourceName(const FSeigeSimulation& S,const FString& Id) {const auto* R=S.Resources.Find(Id);return R?R->Name:Id;}
 TSharedPtr<FSlateFontMeasure> HudFontMeasure()
 {
@@ -47,7 +53,7 @@ FString FSeigeUiState::HitTest(float SX,float SY) const
     for(int32 I=HitRegions.Num()-1;I>=0;--I)if(Contains(HitRegions[I],SX/Scale,SY/Scale))return HitRegions[I].Action;
     return TEXT("");
 }
-void FSeigeUiState::CloseMenus(){BuildOpen=false;ColonyOpen=false;GroupFocused=false;Category.Empty();HoverPanel.Empty();}
+void FSeigeUiState::CloseMenus(){BuildOpen=false;GroupFocused=false;Category.Empty();HoverPanel.Empty();}
 bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
 {
     FString Json;if(!FFileHelper::LoadFileToString(Json,*FPaths::Combine(Directory,TEXT("ui.json")))){Error=TEXT("Cannot read Interface/ui.json");return false;}
@@ -89,18 +95,37 @@ bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
     }
     Ui.Categories=MoveTemp(Parsed);Ui.Credits=MoveTemp(Credits);Ui.SummaryResources=MoveTemp(Summary);InterfaceLoaded=true;InterfaceAttempted=true;Error.Empty();return true;
 }
-bool ASeigeHUD::BlocksCameraKeys() const{return Ui.BuildOpen||Ui.ColonyOpen;}
+bool ASeigeHUD::BlocksCameraKeys() const{return Ui.BuildOpen;}
 bool ASeigeHUD::IsPointerOverUI() const{float X=0,Y=0;const auto* PC=GetOwningPlayerController();return PC&&PC->GetMousePosition(X,Y)&&!Ui.HitTest(X,Y).IsEmpty();}
 bool ASeigeHUD::HandleShortcut(const FKey& K){auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;return G?ProcessShortcut(K,*G):false;}
 bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
 {
+    if(G.Screen==TEXT("preparing")||G.IsPreparingScenario())
+    {
+        if(Key==EKeys::Escape){Ui.CloseMenus();G.CancelScenarioPreparation();}
+        return true;
+    }
     G.GameSpeeds=Ui.SpeedSteps;
+    if(G.CompanionView&&G.Screen==TEXT("playing"))
+    {
+        if(Key==EKeys::Escape){G.ExitCompanionView();return true;}
+        if(Key==EKeys::F10){G.ToggleGameMenu();return true;}
+        if(Key==EKeys::SpaceBar){G.Paused=!G.Paused;return true;}
+        if(Key==EKeys::F5)G.SaveGame();else if(Key==EKeys::F9)G.LoadGame();
+        return true;
+    }
+    if(G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.Observer&&!OutcomeModal(G)&&G.WallShortcut(Key))return true;
     if(Key==EKeys::F10){Ui.CloseMenus();G.ToggleGameMenu();return true;}
     if(Key==EKeys::Escape||Key==EKeys::RightMouseButton)
     {
+        if(G.FleetOrderActive){G.FleetOrderActive=false;return true;}
+        if(CombatPanelOpen){CombatPanelOpen=false;return true;}
+        if(G.IsRoadToolActive()){G.CancelRoadTool();G.CancelWallTool();return true;}
         if(!G.SelectedBuild.IsEmpty()){G.SelectedBuild.Empty();return true;}
         if(Ui.BuildOpen&&Ui.GroupFocused){Ui.GroupFocused=false;return true;}
-        if(Ui.BuildOpen||Ui.ColonyOpen||!Ui.HoverPanel.IsEmpty()){Ui.CloseMenus();return true;}
+        if(Ui.BuildOpen||!Ui.HoverPanel.IsEmpty()){Ui.CloseMenus();return true;}
+        if(G.SelectedRoadId){G.SelectedRoadId=0;return true;}
+        if(G.SelectedCompanionId){G.SelectedCompanionId=0;return true;}
         if(G.SelectedId){G.SelectedId=0;return true;}
         if(Key==EKeys::RightMouseButton)return G.Screen==TEXT("playing")||G.Screen==TEXT("landing");
         Ui.CloseMenus();
@@ -124,7 +149,7 @@ bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
     {
         if(G.Observer||G.IsRegionMap()||G.DetailedSectorIndex()!=4)return true;
         const bool Open=!Ui.BuildOpen;Ui.CloseMenus();Ui.BuildOpen=Open;
-        if(Open){G.SelectedBuild.Empty();G.SelectedId=0;if(Ui.Categories.Num())Ui.Category=Ui.Categories[0].Id;}
+        if(Open){G.CancelRoadTool();G.CancelWallTool();G.SelectedBuild.Empty();G.SelectedId=0;G.SelectedCompanionId=0;if(Ui.Categories.Num())Ui.Category=Ui.Categories[0].Id;}
         return true;
     }
     if(Ui.BuildOpen)
@@ -135,13 +160,18 @@ bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
             for(const auto& Item:Group->Entries)if(Item.Shortcut==Pressed)return ExecuteAction(TEXT("build:")+Item.Definition,G);
         return true;
     }
-    return Ui.ColonyOpen;
+    return false;
 }
 bool ASeigeHUD::Click(float X,float Y){auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;return G?ProcessClick(X,Y,*G):false;}
 bool ASeigeHUD::ProcessClick(float X,float Y,ASeigeGameMode& G)
 {
     // Canvas belongs to DrawHUD only; input uses the cached viewport hit regions.
     const FString Action=Ui.HitTest(X,Y);
+    if(G.Screen==TEXT("preparing")||G.IsPreparingScenario())
+    {
+        if(Action==TEXT("cancel-preparation"))ExecuteAction(Action,G);
+        return true;
+    }
     if(G.Screen!=TEXT("playing"))
     {
         if(!Action.IsEmpty())
@@ -158,13 +188,21 @@ bool ASeigeHUD::ProcessClick(float X,float Y,ASeigeGameMode& G)
         return true;
     }
     if(!Action.IsEmpty())return ExecuteAction(Action,G);
-    if(Ui.BuildOpen||Ui.ColonyOpen){Ui.CloseMenus();return true;}
+    if(Ui.BuildOpen){Ui.CloseMenus();return true;}
     if(!Ui.HoverPanel.IsEmpty()){Ui.HoverPanel.Empty();return true;}
     return false;
 }
 bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
 {
-    if(A==TEXT("game-menu")){Ui.CloseMenus();G.ToggleGameMenu();return true;}
+    if(G.Screen==TEXT("preparing")||G.IsPreparingScenario())
+    {
+        if(A==TEXT("cancel-preparation")){Ui.CloseMenus();G.CancelScenarioPreparation();}
+        return true;
+    }
+    if(HandleTradeAction(A,G)||HandleCommandAction(A,G)||HandleCombatAction(A,G))return true;
+    if(A==TEXT("focus-rex")){Ui.CloseMenus();G.FocusCompanion();return true;}
+    if(A==TEXT("roam-rex")){Ui.CloseMenus();G.EnterCompanionView(G.SelectedCompanionId?G.SelectedCompanionId:1);return true;}
+    if(A==TEXT("game-menu")){Ui.CloseMenus();G.CancelRoadTool();G.CancelWallTool();G.ToggleGameMenu();return true;}
     if(A==TEXT("resume-game")){Ui.CloseMenus();G.ResumeGameMenu();return true;}
     if(A.StartsWith(TEXT("screen:"))){G.ReturnScreen=G.Screen;Ui.CloseMenus();G.ShowScreen(A.RightChop(7));return true;}
     if(A.StartsWith(TEXT("scenario-threat:"))){G.ToggleScenarioThreat(A.RightChop(16));return true;}
@@ -177,29 +215,32 @@ bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
     if(A==TEXT("main-menu")){Ui.CloseMenus();G.ReturnToMainMenu();return true;}
     if(A==TEXT("back-screen")){Ui.CloseMenus();G.ShowScreen(G.ReturnScreen);return true;}
     if(A==TEXT("exit")){if(auto* PC=GetOwningPlayerController())PC->ConsoleCommand(TEXT("quit"));return true;}
-    if(A==TEXT("region-map")){Ui.CloseMenus();G.SelectedBuild.Empty();G.SelectedId=0;G.Zoom=G.MaximumZoom;G.CameraCenter=FVector::ZeroVector;return true;}
-    if(A.StartsWith(TEXT("focus-sector:"))){const int32 Index=FCString::Atoi(*A.RightChop(13));if(G.Screen!=TEXT("landing")||Index==4){Ui.CloseMenus();G.FocusSector(Index,true);}return true;}
+    if(A==TEXT("region-map")){Ui.CloseMenus();G.CancelRoadTool();G.CancelWallTool();G.SelectedBuild.Empty();G.SelectedId=0;G.SelectedRoadId=0;G.SelectedCompanionId=0;G.Zoom=G.MaximumZoom;G.CameraCenter=FVector::ZeroVector;return true;}
+    if(A.StartsWith(TEXT("focus-sector:"))){const int32 Index=FCString::Atoi(*A.RightChop(13));if(G.Screen!=TEXT("landing")||Index==4){Ui.CloseMenus();G.CancelRoadTool();G.CancelWallTool();G.SelectedRoadId=0;G.SelectedCompanionId=0;G.FocusSector(Index,true);}return true;}
     if(A==TEXT("build-menu"))return ProcessShortcut(EKeys::B,G);
-    if(A==TEXT("colony-menu")){const bool Open=!Ui.ColonyOpen;Ui.CloseMenus();Ui.ColonyOpen=Open;return true;}
     if(A.StartsWith(TEXT("group:"))){Ui.Category=A.RightChop(6);Ui.GroupFocused=true;return true;}
     if(A.StartsWith(TEXT("summary:"))){Ui.HoverPanel=A.RightChop(8);return true;}
     if(A==TEXT("back")){Ui.GroupFocused=false;return true;}if(A==TEXT("close")){Ui.CloseMenus();return true;}
-    if(A==TEXT("deselect")){G.SelectedId=0;G.SelectedBuild.Empty();BuildingInfoSection.Empty();return true;}
+    if(A==TEXT("deselect")){G.SelectedId=0;G.SelectedRoadId=0;G.SelectedCompanionId=0;G.SelectedBuild.Empty();G.CancelRoadTool();G.CancelWallTool();BuildingInfoSection.Empty();return true;}
     if(A.StartsWith(TEXT("info-section:"))){BuildingInfoSection=A.RightChop(13);BuildingInfoPage=0;return true;}
     if(A==TEXT("info-next")){++BuildingInfoPage;return true;}
     if(A==TEXT("info-prev")){BuildingInfoPage=FMath::Max(0,BuildingInfoPage-1);return true;}
     if(A.StartsWith(TEXT("build:")))
     {
         if(G.Observer||G.IsRegionMap()||G.DetailedSectorIndex()!=4)return true;
+        G.SelectedCompanionId=0;
         const FString Id=A.RightChop(6);
-        if(G.Sim.BuildMenu.Contains(Id)){G.SelectedBuild=Id;G.SelectedId=0;Ui.CloseMenus();G.Notice=TEXT("Place ")+G.Sim.BuildingDefs[Id].Name+TEXT(". Right-click or Esc cancels.");}
+        if(Id==TEXT("wall")){Ui.CloseMenus();G.BeginWallPlacement();return true;}
+        if(Id==TEXT("road")){Ui.CloseMenus();G.BeginRoadPlacement();return true;}
+        if(Id==TEXT("upgrade_road")){Ui.CloseMenus();G.BeginRoadUpgrade();return true;}
+        if(G.Sim.BuildMenu.Contains(Id)){G.CancelRoadTool();G.CancelWallTool();G.SelectedRoadId=0;G.SelectedBuild=Id;G.SelectedId=0;Ui.CloseMenus();G.Notice=TEXT("Place ")+G.Sim.BuildingDefs[Id].Name+TEXT(". Right-click or Esc cancels.");}
         return true;
     }
     if(A==TEXT("pause"))G.Paused=!G.Paused;else if(A==TEXT("speed")){G.GameSpeeds=Ui.SpeedSteps;G.CycleGameSpeed();}
     else if(A==TEXT("save")){if(G.Screen!=TEXT("playing")&&(!G.MenuOpen||G.MenuReturnScreen!=TEXT("playing")))return true;LastNotice.Empty();const bool WasPaused=G.Paused;if(G.MenuOpen)G.Paused=G.PauseBeforeMenu;G.SaveGame();if(G.MenuOpen)G.Paused=WasPaused;Ui.CloseMenus();}else if(A==TEXT("load")){LastNotice.Empty();G.LoadGame();Ui.CloseMenus();}
     else if(A==TEXT("reset")){G.ResetColony();Ui.CloseMenus();}else if(A==TEXT("continue"))G.WinAcknowledged=true;
     else if(A==TEXT("toggle")&&!G.Observer&&!G.IsRegionMap()&&G.DetailedSectorIndex()==4)G.Sim.ToggleBuilding(G.SelectedId);
-    else if(A==TEXT("escape")&&!G.Observer){G.Sim.LaunchShuttle();Ui.CloseMenus();G.Notice=TEXT("Shuttle launched with only cargo already aboard.");}
+    else if(A==TEXT("escape")&&CanIssueCoreCommands(G)){G.Sim.LaunchShuttle();Ui.CloseMenus();G.Notice=TEXT("Shuttle launched with only cargo already aboard.");}
     return true;
 }
 void ASeigeHUD::Box(float X,float Y,float W,float H,FLinearColor C){C.A*=DrawOpacity;if(Canvas)DrawRect(C,X*Scale,Y*Scale,W*Scale,H*Scale);}
@@ -263,6 +304,8 @@ void ASeigeHUD::Icon(const FString& Visual,float X,float Y,float S,FLinearColor 
     else if(Visual==TEXT("turret")){L(.22f,.78f,.78f,.78f);L(.3f,.75f,.4f,.45f);L(.7f,.75f,.6f,.45f);L(.3f,.4f,.72f,.4f);L(.72f,.4f,.88f,.22f);L(.45f,.3f,.45f,.52f);}
     else if(Visual==TEXT("extractor")){L(.2f,.8f,.8f,.8f);L(.32f,.8f,.32f,.2f);L(.25f,.2f,.65f,.2f);L(.65f,.2f,.65f,.63f);L(.48f,.55f,.65f,.72f);L(.65f,.72f,.82f,.55f);}
     else if(Visual==TEXT("depot")){L(.2f,.38f,.5f,.2f);L(.5f,.2f,.8f,.38f);L(.2f,.38f,.5f,.55f);L(.8f,.38f,.5f,.55f);L(.2f,.38f,.2f,.7f);L(.8f,.38f,.8f,.7f);L(.2f,.7f,.5f,.88f);L(.8f,.7f,.5f,.88f);L(.5f,.55f,.5f,.88f);}
+    else if(Visual==TEXT("road")){L(.22f,.1f,.22f,.9f);L(.78f,.1f,.78f,.9f);L(.5f,.12f,.5f,.3f);L(.5f,.42f,.5f,.6f);L(.5f,.72f,.5f,.9f);}
+    else if(Visual==TEXT("upgrade_road")){L(.2f,.1f,.2f,.9f);L(.8f,.1f,.8f,.9f);L(.5f,.8f,.5f,.24f);L(.32f,.42f,.5f,.24f);L(.5f,.24f,.68f,.42f);}
     else{L(.15f,.8f,.85f,.8f);L(.15f,.8f,.15f,.48f);L(.15f,.48f,.4f,.33f);L(.4f,.33f,.4f,.48f);L(.4f,.48f,.65f,.33f);L(.65f,.33f,.85f,.48f);L(.85f,.48f,.85f,.8f);L(.67f,.36f,.67f,.13f);L(.8f,.43f,.8f,.13f);}
 }
 void ASeigeHUD::Description(const FSeigeBuildingDef& D,ASeigeGameMode& G,float X,float Y,float W)
@@ -286,6 +329,25 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
     Ui.CloseMenus();Region(TEXT("frontend"),0,0,W,H);
     const bool Navigation=G.Screen==TEXT("main")||G.Screen==TEXT("game-menu");
     Box(0,0,W,H,FLinearColor(.018f,.026f,.028f,Navigation?.25f:.52f));
+    if(G.Screen==TEXT("preparing")||G.IsPreparingScenario())
+    {
+        const float PW=700,PH=400,X=(W-PW)*.5f,Y=(H-PH)*.5f;
+        Frame(X,Y,PW,PH);Box(X,Y,3,PH,Gold);
+        Label(TEXT("YOUR NEXT COLONY"),X+30,Y+25,12,Gold);
+        Label(TEXT("Preparing the neighborhood"),X+30,Y+57,27,Text);
+        float TY=Y+105;
+        Wrapped(TEXT("Developed colonies are building their industry through the same construction, supply and defense rules as your colony."),X+30,TY,PW-60,15,Muted);
+        const double Progress=FMath::Clamp(G.ScenarioPreparationProgress(),0.,1.);
+        Label(TEXT("SIMULATED PREPARATION"),X+30,Y+177,11,Muted);
+        Label(FString::Printf(TEXT("%.0f%%"),Progress*100),X+PW-83,Y+175,14,Gold);
+        Box(X+30,Y+202,PW-60,7,FLinearColor(.18f,.23f,.22f));
+        Box(X+30,Y+202,(PW-60)*Progress,7,Green);
+        TY=Y+229;const auto Lines=WrapLines(G.ScenarioPreparationStatus(),PW-60,14);
+        for(int32 I=0;I<FMath::Min(Lines.Num(),3);++I){Label(Lines[I]+(I==2&&Lines.Num()>3?TEXT(" ..."):TEXT("")),X+30,TY,14,Text);TY+=21;}
+        Label(TEXT("Progress follows the simulation budget; remaining time varies."),X+30,Y+303,12,Muted);
+        Button(TEXT("Cancel preparation   /   Esc"),TEXT("cancel-preparation"),X+30,Y+337,PW-60,39);
+        return true;
+    }
     if(Navigation)
     {
         // Shared triangle edges interpolate alpha continuously, without the
@@ -334,7 +396,7 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
             Item(TEXT("Credits"),TEXT("screen:credits"));Item(TEXT("Exit game"),TEXT("exit"));
             Label(TEXT("MULTIPLAYER / COMING LATER"),X+16,NY+19,11,Muted);
             Label(TEXT("BUILD. SUSTAIN. DEFEND."),W-360,H-127,14,Gold);
-            Label(TEXT("Robot industry in an untamed landscape."),W-360,H-99,14,Text);
+            Label(TEXT("Worker industry in an untamed landscape."),W-360,H-99,14,Text);
             Label(TEXT("Single player / Entirely offline"),W-360,H-73,12,Muted);
         }
         else
@@ -452,6 +514,8 @@ void ASeigeHUD::DrawBuildingInfo(ASeigeGameMode& G,float W,float H)
         Button(TEXT("<"),TEXT("info-prev"),X+18,FY,36,29);Label(FString::Printf(TEXT("%d / %d"),BuildingInfoPage+1,Pages.Num()),X+64,FY+7,12,Muted);Button(TEXT(">"),TEXT("info-next"),X+119,FY,36,29);
     }
     if(B&&D->Role!=TEXT("core")&&!G.Observer&&G.DetailedSectorIndex()==4)Button(B->Enabled?TEXT("Disable building"):TEXT("Enable building"),TEXT("toggle"),X+PW-217,FY,199,29,!B->Enabled);
+    if(CanIssueCoreCommands(G))Button(TEXT("Launch shuttle"),TEXT("escape"),X+PW-217,FY,199,29,false,TEXT("Leave the colony with only the cargo already aboard."));
+    if(CanIssueCoreCommands(G)&&!G.Sim.Companions.Dogs.IsEmpty())Button(TEXT("Find Rex"),TEXT("focus-rex"),X+18,Y+PH+8,154,34,false,TEXT("Select Rex to inspect feeding, morale and first-person roaming."));
 }
 void ASeigeHUD::DrawRegionMap(ASeigeGameMode& G,float W,float H)
 {
@@ -503,10 +567,10 @@ void ASeigeHUD::DrawRegionMap(ASeigeGameMode& G,float W,float H)
         const FString Type=G.ScenarioSlots.IsValidIndex(I)?G.ScenarioSlots[I]:TEXT("empty");
         const FSeigeSimulation* Sector=I==4?&G.Sim:nullptr;for(const auto& N:G.Neighbors)if(N.Index==I){Sector=&N.Sim;break;}
         const FVector2D Offset((I%3-1)*G.Sim.WorldHalfSize*2,(I/3-1)*G.Sim.WorldHalfSize*2);
-        if(Sector&&(G.Observer||I==4))for(const auto& Node:Sector->Nodes)
+        if(const auto* Nodes=G.RegionNodes(I))for(const auto& Node:*Nodes)
         {
-            if(!G.Observer&&G.Screen!=TEXT("landing")&&!Sector->IsVisible(Node.Position))continue;
-            const auto* Resource=Sector->Resources.Find(Node.Resource);if(!Resource)continue;const FVector2D At=Map(Node.Position+Offset);
+            if(!G.IsRegionResourceVisible(I,Node))continue;
+            const auto* Resource=G.Sim.Resources.Find(Node.Resource);if(!Resource)continue;const FVector2D At=Map(Node.Position+Offset);
             Box(At.X-3,At.Y-3,6,6,Resource->Color);Box(At.X-1,At.Y-1,2,2,Ink);
         }
         const FString Name=I==4?TEXT("HOME SECTOR"):FString::Printf(TEXT("SECTOR %02d"),I<4?I+1:I);
@@ -535,13 +599,19 @@ void ASeigeHUD::DrawHUD()
         InterfaceAttempted=true;FString Directory=FPaths::Combine(FPaths::ProjectDir(),TEXT("Interface"));
         if(!FPaths::FileExists(FPaths::Combine(Directory,TEXT("ui.json"))))Directory=FPaths::Combine(FPlatformProcess::BaseDir(),TEXT("Interface"));
         if(!LoadInterface(Directory,InterfaceError))G->Notice=InterfaceError;
-        if(InterfaceLoaded)for(const auto& Group:Ui.Categories)for(const auto& Item:Group.Entries)if(!G->Sim.BuildMenu.Contains(Item.Definition)){InterfaceError=TEXT("Unavailable interface building: ")+Item.Definition;InterfaceLoaded=false;}
+        if(InterfaceLoaded)for(const auto& Group:Ui.Categories)for(const auto& Item:Group.Entries)if(Item.Definition!=TEXT("road")&&Item.Definition!=TEXT("upgrade_road")&&Item.Definition!=TEXT("wall")&&!G->Sim.BuildMenu.Contains(Item.Definition)){InterfaceError=TEXT("Unavailable interface building: ")+Item.Definition;InterfaceLoaded=false;}
         if(InterfaceLoaded)for(const auto& Item:Ui.SummaryResources)if(!G->Sim.Resources.Contains(Item.Resource)){InterfaceError=TEXT("Unavailable summary resource: ")+Item.Resource;InterfaceLoaded=false;}
     }
     if(Version.IsEmpty()){GConfig->GetString(TEXT("/Script/EngineSettings.GeneralProjectSettings"),TEXT("ProjectVersion"),Version,GGameIni);if(Version.IsEmpty())Version=TEXT("unversioned");}
     const float Dt=GetWorld()->GetDeltaSeconds();if(Dt>0)SmoothedFps=SmoothedFps<=0?1.f/Dt:FMath::Lerp(SmoothedFps,1.f/Dt,.08f);
     if(LastNotice!=G->Notice){LastNotice=G->Notice;NoticeVisibleSeconds=0;}
     if(DrawFrontend(*G,W,H))return;
+    if(G->CompanionView)
+    {
+        Ui.CloseMenus();Label(FString::Printf(TEXT("v%s   %.0f FPS"),*Version,SmoothedFps),14,12,14,Green);
+        Frame(W*.5f-265,H-82,530,60);Label(TEXT("REX  /  FIRST PERSON  /  1x"),W*.5f-245,H-67,16,Gold);
+        Label(G->Paused?TEXT("Paused - Space resumes. Esc returns to colony."):TEXT("WASD walk  /  Mouse look  /  Esc return  /  F10 menu"),W*.5f-245,H-42,12,Text);return;
+    }
     const bool RegionMap=G->IsRegionMap();const auto* Viewed=G->ViewedSimulation();const bool Readable=Viewed&&(G->Observer||G->DetailedSectorIndex()==4);const FSeigeSimulation& Local=Readable?*Viewed:G->Sim;const FVector2D SectorOffset=G->DetailedSectorOffset();
     if(RegionMap){Ui.BuildOpen=false;Ui.GroupFocused=false;G->SelectedBuild.Empty();}
     const float MapAlpha=G->RegionMapAlpha();
@@ -584,11 +654,11 @@ void ASeigeHUD::DrawHUD()
         // after it settles. Never hide a badge because greedy placement failed.
         struct FMarker {FVector2D Position;FString Resource,Key;};
         TArray<FMarker> Markers;TArray<FBox2D> Occupied=Reserved;
-        if(RegionMap||!Readable)return;
-        for(const auto& N:Local.Nodes)
+        const auto* Nodes=G->RegionNodes(G->DetailedSectorIndex());if(RegionMap||!Nodes)return;
+        for(const auto& N:*Nodes)
         {
             FVector2D P;
-            if((!Survey&&!G->Observer&&!Local.IsVisible(N.Position))||!PC||!PC->ProjectWorldLocationToScreen(Ground(N.Position+SectorOffset,150),P))continue;
+            if(!G->IsRegionResourceVisible(G->DetailedSectorIndex(),N)||!PC||!PC->ProjectWorldLocationToScreen(Ground(N.Position+SectorOffset,150),P))continue;
             P/=Scale;if(P.X<8||P.X>W-8||P.Y<TopHeight+12||P.Y>H-18)continue;
             P=FVector2D(FMath::RoundToDouble(P.X),FMath::RoundToDouble(P.Y));
             Markers.Add({P,N.Resource,FString::Printf(TEXT("%d:%d"),G->DetailedSectorIndex(),N.Id)});
@@ -659,44 +729,49 @@ void ASeigeHUD::DrawHUD()
     }
     // Floating information strip leaves the landscape visible around every edge.
     Label(TEXT("seige2222"),24,21,21,Text);Label(FString::Printf(TEXT("v%s  /  %.0f FPS"),*Version,SmoothedFps),25,51,12,Muted);
-    const float StripW=900,StripX=(W-StripW)*.5f,StripY=14,StripH=52;
+    const float StripW=900,StripX=(W-StripW)*.5f,StripY=14,StripH=64;
     Frame(StripX,StripY,StripW,StripH);
     auto Summary=[&](const FString& Id,const FString& Heading,const FString& Value,float Offset,float Width,FLinearColor C)
     {
-        const float X=StripX+Offset*(900.f/1040.f);Width*=900.f/1040.f;
-        Label(Heading,X+12,StripY+8,9,Muted);Label(Value,X+12,StripY+27,14,C);
+        const float X=StripX+Offset;
+        const float ValueSize=FMath::Clamp(14.f*(Width-24)/FMath::Max(1.f,float(MeasureLabel(Value,14).X)),10.f,14.f);
+        Label(Heading,X+12,StripY+8,9,Muted);Label(Value,X+12,StripY+27,ValueSize,C);
         Region(TEXT("summary:")+Id,X,StripY,Width,StripH);
-        if(Offset>0)Box(X,StripY+12,1,28,FLinearColor(.23f,.28f,.28f,.7f));
+        if(Offset>0)Box(X,StripY+12,1,StripH-24,FLinearColor(.23f,.28f,.28f,.7f));
     };
-    FString MajorStock;for(const auto& R:Ui.SummaryResources){if(!MajorStock.IsEmpty())MajorStock+=TEXT("   ");MajorStock+=FString::Printf(TEXT("%s %.0f"),*R.Label,Local.TotalStock(R.Resource));}
-    Summary(TEXT("resources"),TEXT("MATERIAL STOCKPILES"),Readable?MajorStock:TEXT("No colony data"),0,300,Text);
-    Summary(TEXT("workforce"),TEXT("ROBOT WORKFORCE"),Readable?FString::Printf(TEXT("%d / %d jobs"),Local.Population,Local.TotalJobs):TEXT("Unavailable"),300,190,Local.TotalJobs>Local.Employed?Gold:Text);
-    Summary(TEXT("logistics"),TEXT("IN TRANSIT"),Readable?FString::Printf(TEXT("%d couriers"),Local.Couriers.Num()):TEXT("Unavailable"),490,150,Text);
-    Summary(TEXT("threats"),TEXT("NEXT ALIEN PULSE"),Readable?(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("%.0f seconds"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Disabled"))):TEXT("Unavailable"),640,210,Gold);
-    Summary(TEXT("objective"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("OBSERVATION"):TEXT("FIRST LANDING"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("Read only"):G->Sim.Won?TEXT("Complete"):TEXT("Objectives"),850,190,Green);
-    const float DockW=666,DockX=(W-DockW)*.5f,DockY=H-75;
+    const auto CompactAmount=[](double Amount){return Amount>=1000000?FString::Printf(TEXT("%.1fM"),Amount/1000000):Amount>=1000?FString::Printf(TEXT("%.1fk"),Amount/1000):FString::Printf(TEXT("%.1f"),Amount);};
+    const auto ColonyEnergy=Readable?Local.Energy.Info(Local):FSeigeEnergyInfo();
+    Summary(TEXT("resources"),TEXT("GALACTIC CREDITS"),Readable?FString::Printf(TEXT("%.4f"),Local.Credits):TEXT("Unavailable"),0,140,Gold);
+    Label(TEXT("Materials on hover"),StripX+12,StripY+46,9,Muted);
+    Summary(TEXT("resources"),TEXT("COLONY ENERGY"),Readable?FString::Printf(TEXT("%s / %s kWh"),*CompactAmount(ColonyEnergy.StoredKWh),*CompactAmount(ColonyEnergy.CapacityKWh)):TEXT("Unavailable"),140,270,ColonyEnergy.PowerFraction<.999?Gold:Green);
+    if(Readable)Label(FString::Printf(TEXT("Gen %s kW / Passive load %s kW"),*CompactAmount(ColonyEnergy.GenerationKW),*CompactAmount(ColonyEnergy.DemandKW)),StripX+152,StripY+46,10,Muted);
+    Summary(TEXT("workforce"),TEXT("WORKFORCE"),Readable?FString::Printf(TEXT("%d / %d jobs"),Local.Population,Local.TotalJobs):TEXT("Unavailable"),410,140,Local.TotalJobs>Local.Employed?Gold:Text);
+    Summary(TEXT("logistics"),TEXT("IN TRANSIT"),Readable?FString::Printf(TEXT("%d couriers"),Local.Couriers.Num()):TEXT("Unavailable"),550,110,Text);
+    Summary(TEXT("threats"),TEXT("NEXT ALIEN PULSE"),Readable?(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("%.0f seconds"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Disabled"))):TEXT("Unavailable"),660,120,Gold);
+    Summary(TEXT("objective"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("OBSERVATION"):TEXT("FIRST LANDING"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("Read only"):G->Sim.Won?TEXT("Complete"):TEXT("Objectives"),780,120,Green);
+    const float DockW=596,DockX=(W-DockW)*.5f,DockY=H-75;
     Frame(DockX,DockY,DockW,60);
     auto DockButton=[&](const FString& Name,const FString& A,const FString& Visual,float X,float Width,bool Active)
     {
         Button(TEXT(""),A,X,DockY+6,Width,48,Active);Icon(Visual,X+8,DockY+17,23,Active?Gold:Text);Label(Name,X+38,DockY+23,13,Active?Gold:Text);
     };
     DockButton(G->Observer||G->DetailedSectorIndex()!=4?TEXT("Observe"):RegionMap?TEXT("Map"):TEXT("Build [B]"),G->Observer||G->DetailedSectorIndex()!=4||RegionMap?TEXT("observer"):TEXT("build-menu"),TEXT("factory"),DockX+6,108,Ui.BuildOpen);
-    DockButton(TEXT("Colony"),TEXT("colony-menu"),TEXT("depot"),DockX+118,98,Ui.ColonyOpen);
-    DockButton(TEXT("Regions"),TEXT("region-map"),TEXT("sensor"),DockX+220,105,RegionMap);
-    Box(DockX+333,DockY+13,1,34,FLinearColor(.23f,.28f,.28f,.7f));
-    Label(FString::Printf(TEXT("%02d:%02d"),int32(G->Sim.Time)/60,int32(G->Sim.Time)%60),DockX+347,DockY+13,19,Text);Label(TEXT("LOCAL TIME"),DockX+348,DockY+39,8,Muted);
-    Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+430,DockY+6,76,48,G->Paused);
-    Button(FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+511,DockY+6,53,48,G->Speed>1);
-    Button(TEXT("Menu"),TEXT("game-menu"),DockX+570,DockY+6,90,48,false,TEXT("Esc / F10 opens the game menu. Space pauses; + / - changes speed."));
+    DockButton(TEXT("Regions"),TEXT("region-map"),TEXT("sensor"),DockX+118,105,RegionMap);
+    Box(DockX+231,DockY+13,1,34,FLinearColor(.23f,.28f,.28f,.7f));
+    Label(FString::Printf(TEXT("%02d:%02d"),int32(G->Sim.Time)/60,int32(G->Sim.Time)%60),DockX+245,DockY+13,19,Text);Label(TEXT("LOCAL TIME"),DockX+246,DockY+39,8,Muted);
+    Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+328,DockY+6,76,48,G->Paused);
+    Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+410,DockY+6,84,48,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
+    Button(TEXT("Menu"),TEXT("game-menu"),DockX+500,DockY+6,90,48,false,TEXT("Esc / F10 opens the game menu. Space pauses; + / - cycles playback speed."));
     if(!Readable)Ui.HoverPanel.Empty();
-    if(Readable&&PreviousHover.StartsWith(TEXT("summary:"))&&!Ui.BuildOpen&&!Ui.ColonyOpen)Ui.HoverPanel=PreviousHover.RightChop(8);else if(!PreviousHover.StartsWith(TEXT("hover-panel:")))Ui.HoverPanel.Empty();
+    if(Readable&&PreviousHover.StartsWith(TEXT("summary:"))&&!Ui.BuildOpen)Ui.HoverPanel=PreviousHover.RightChop(8);else if(!PreviousHover.StartsWith(TEXT("hover-panel:")))Ui.HoverPanel.Empty();
     if(!G->Ready)
     {
         Ui.HitRegions.Reset();Frame(W/2-340,H/2-160,680,320);Label(TEXT("RULE FILE ERROR"),W/2-310,H/2-130,26,Red);float Y=H/2-78;Wrapped(G->Error,W/2-310,Y,610,16,Text);Button(TEXT("Reload corrected rules"),TEXT("reset"),W/2-310,H/2+88,610,42);return;
     }
+    DrawWallPlan(*G,W,H);
     if(Ui.BuildOpen)
     {
-        Ui.HoverPanel.Empty();const float BW=980,BH=294,X=(W-BW)*.5f,Y=DockY-BH-12;
+        Ui.HoverPanel.Empty();const float BW=980,BH=354,X=(W-BW)*.5f,Y=DockY-BH-12;
         Frame(X,Y,BW,BH);Label(TEXT("CONSTRUCTION"),X+20,Y+18,17,Gold);Button(TEXT("Close"),TEXT("close"),X+BW-87,Y+9,69,31);
         if(!InterfaceLoaded){float EY=Y+78;Wrapped(InterfaceError,X+20,EY,BW-40,16,Red);}
         else
@@ -706,45 +781,92 @@ void ASeigeHUD::DrawHUD()
             for(const auto& Group:Ui.Categories){Button(Group.Shortcut+TEXT("  ")+Group.Name,TEXT("group:")+Group.Id,X+20+GI++*TabW,Y+51,TabW-6,39,Ui.Category==Group.Id,Group.Description);}
             if(const auto* Group=Ui.Categories.FindByPredicate([this](const FSeigeMenuGroup& I){return I.Id==Ui.Category;}))
             {
-                int32 EI=0;const float CardW=178,Gap=10;
-                for(const auto& Entry:Group->Entries)if(const auto* D=G->Sim.BuildingDefs.Find(Entry.Definition))
+                int32 EI=0;const float CardW=150,Gap=8;
+                for(const auto& Entry:Group->Entries)
                 {
-                    const float EX=X+20+EI++*(CardW+Gap),EY=Y+104;
-                    Button(TEXT(""),TEXT("build:")+D->Id,EX,EY,CardW,133,false,D->Description);
-                    Icon(D->Visual,EX+14,EY+13,44,D->Color);Label(Entry.Shortcut,EX+CardW-28,EY+17,15,Gold);
-                    float NY=EY+72;Wrapped(D->Name,EX+13,NY,CardW-26,14,Text);Label(FString::Printf(TEXT("%d jobs"),D->Jobs),EX+13,EY+113,11,Muted);
+                    const bool Wall=Entry.Definition==TEXT("wall");
+                    const bool Road=Entry.Definition==TEXT("road"),Upgrade=Entry.Definition==TEXT("upgrade_road");
+                    const auto* D=G->Sim.BuildingDefs.Find(Entry.Definition);
+                    if(!D&&!Road&&!Upgrade&&!Wall)continue;
+                    const float EX=X+20+(EI%6)*(CardW+Gap),EY=Y+104+(EI/6)*108;++EI;
+                    const FString Tip=Wall?TEXT("Plan a contiguous wall; edit joints, flip inside with E, commit with Enter. Materials and builders are required."):Road?TEXT("Choose two endpoints to build a transport road. Workers and materials travel to the site."):Upgrade?TEXT("Upgrade a selected existing road, or choose a road in the world. Road 2x / Road + rail 4x / Road + rail + vacuum 8x."):D->Description;
+                    Button(TEXT(""),TEXT("build:")+Entry.Definition,EX,EY,CardW,101,false,Tip);
+                    Icon(D?D->Visual:Entry.Definition,EX+12,EY+8,28,D?D->Color:Gold);Label(Entry.Shortcut,EX+CardW-25,EY+14,15,Gold);
+                    float NY=EY+43;Wrapped(Wall?TEXT("Wall plan"):Road?TEXT("Road"):Upgrade?TEXT("Upgrade road"):D->Name,EX+10,NY,CardW-20,12,Text);
+                    Label(Wall?TEXT("Plan / commit"):Road?TEXT("2x transport"):Upgrade?TEXT("4x / 8x transport"):FString::Printf(TEXT("%d jobs"),D->Jobs),EX+10,EY+85,10,Muted);
                 }
                 if(PreviousHover.StartsWith(TEXT("build:")))if(const auto* D=G->Sim.BuildingDefs.Find(PreviousHover.RightChop(6)))Description(*D,*G,FMath::Min(X+BW-410,W-430),FMath::Max(90.f,Y-372),410);
             }
-            Label(Ui.GroupFocused?TEXT("Choose a blueprint key. Esc returns to categories."):TEXT("R / I / L / D selects a category. Hover a blueprint for its requirements."),X+20,Y+259,13,Muted);
+            Label(Ui.GroupFocused?TEXT("Choose a blueprint key. Esc returns to categories."):TEXT("R / I / L / D selects a category. Hover a blueprint for its requirements."),X+20,Y+329,13,Muted);
         }
-    }
-    else if(Ui.ColonyOpen)
-    {
-        Ui.HoverPanel.Empty();const float X=DockX+145,Y=DockY-515;Frame(X,Y,330,503);Label(TEXT("COLONY COMMAND"),X+20,Y+19,17,Gold);
-        Button(TEXT("Save colony                  F5"),TEXT("save"),X+12,Y+58,306,43);Button(TEXT("Load colony                  F9"),TEXT("load"),X+12,Y+107,306,43);
-        if(!G->Observer)Button(TEXT("Launch escape shuttle"),TEXT("escape"),X+12,Y+166,306,43);
-        Button(TEXT("Settings"),TEXT("screen:settings"),X+12,Y+215,306,43);Button(TEXT("Credits"),TEXT("screen:credits"),X+12,Y+264,306,43);
-        Button(TEXT("Return to main menu"),TEXT("main-menu"),X+12,Y+313,306,43);Button(TEXT("Exit game"),TEXT("exit"),X+12,Y+362,306,43);
-        float TY=Y+430;Wrapped(TEXT("WASD: pan / Wheel: zoom / Q,E: orbit / Middle drag: orbit + tilt / Home: colony"),X+18,TY,294,13,Muted);
     }
     else if(!Ui.HoverPanel.IsEmpty())
     {
-        float Offset=0;if(Ui.HoverPanel==TEXT("workforce"))Offset=300;else if(Ui.HoverPanel==TEXT("logistics"))Offset=490;else if(Ui.HoverPanel==TEXT("threats"))Offset=640;else if(Ui.HoverPanel==TEXT("objective"))Offset=850;const float X=FMath::Min(StripX+Offset*(900.f/1040.f),W-445);
-        const float Y=90,PW=425,PH=Ui.HoverPanel==TEXT("resources")?356:242;Frame(X,Y,PW,PH);Region(TEXT("hover-panel:")+Ui.HoverPanel,X,Y-13,PW,PH+13);float TY=Y+21;
+        float Offset=0;if(Ui.HoverPanel==TEXT("workforce"))Offset=410;else if(Ui.HoverPanel==TEXT("logistics"))Offset=550;else if(Ui.HoverPanel==TEXT("threats"))Offset=660;else if(Ui.HoverPanel==TEXT("objective"))Offset=780;
+        const float Y=90,PW=Ui.HoverPanel==TEXT("resources")?780:425,PH=Ui.HoverPanel==TEXT("resources")?FMath::Max(442.f,150.f+FMath::DivideAndRoundUp(Local.Resources.Num(),2)*27.f):Ui.HoverPanel==TEXT("workforce")?410:242;
+        const float X=FMath::Min(StripX+Offset,W-PW-20);Frame(X,Y,PW,PH);Region(TEXT("hover-panel:")+Ui.HoverPanel,X,Y-13,PW,PH+13);float TY=Y+21;
         if(Ui.HoverPanel==TEXT("resources"))
         {
-            Label(TEXT("COLONY MATERIALS"),X+18,TY,18,Gold);TY+=39;Label(TEXT("Includes physical cargo in transit"),X+18,TY,12,Muted);TY+=28;TArray<FString> Keys;Local.Resources.GetKeys(Keys);Keys.Sort();
-            for(const FString& Id:Keys){const auto& R=Local.Resources[Id];Box(X+19,TY+4,7,9,R.Color);Label(R.Name,X+37,TY,15,Text);Label(FString::Printf(TEXT("%.1f"),Local.TotalStock(Id)),X+340,TY,15,Text);TY+=26;}
+            Label(TEXT("COLONY ECONOMY & MATERIALS"),X+18,TY,18,Gold);TY+=35;Label(FString::Printf(TEXT("Galactic credits: %.4f  /  physical cargo includes shipments in transit"),Local.Credits),X+18,TY,12,Muted);TY+=30;
+            const auto Grid=Local.Energy.Info(Local);Label(FString::Printf(TEXT("Energy %.1f / %.1f kWh stored  |  %.1f kW generation / %.1f kW passive demand"),Grid.StoredKWh,Grid.CapacityKWh,Grid.GenerationKW,Grid.DemandKW),X+18,TY,12,Green);TY+=32;
+            Label(TEXT("Totals include separate grids. Production, weapons and trade also draw energy per action."),X+18,TY,12,Muted);TY+=22;
+            TArray<FString> Keys;Local.Resources.GetKeys(Keys);Keys.Sort();int32 RI=0;const int32 PerColumn=FMath::DivideAndRoundUp(Keys.Num(),2);
+            for(const FString& Id:Keys){const auto& R=Local.Resources[Id];const float RX=X+18+(RI/PerColumn)*380,RY=TY+(RI%PerColumn)*27;++RI;Box(RX,RY+4,7,9,R.Color);Label(R.Name,RX+18,RY,13,Text);Label(FString::Printf(TEXT("%.1f %s"),Local.TotalStock(Id),*R.Unit),RX+258,RY,13,Text);}
         }
-        else if(Ui.HoverPanel==TEXT("workforce")){Label(TEXT("ROBOT WORKFORCE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.WorkforceStatus(),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Robots fill jobs automatically. The core supports your first workers; charging and maintenance hubs [B L C] support expansion. Keep components supplied for efficient operation."),X+18,TY,PW-36,14,Muted);}
-        else if(Ui.HoverPanel==TEXT("logistics")){Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Factories consume locally delivered stock. Construction reserves core materials, then couriers carry them to the site. Robots assemble buildings once supplies arrive."),X+18,TY,PW-36,14,Muted);}
+        else if(Ui.HoverPanel==TEXT("workforce")){Label(TEXT("WORKFORCE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.WorkforceStatus(),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Workers fill jobs automatically. The core supports your first workers; charging and maintenance hubs [B L C] support expansion. Keep components supplied for efficient operation."),X+18,TY,PW-36,14,Muted);TY+=14;DrawWorkforceControls(*G,X+18,TY,PW-36);}
+        else if(Ui.HoverPanel==TEXT("logistics")){Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Factories consume locally delivered stock. Construction reserves core materials, then couriers carry them to the site. Workers assemble buildings once supplies arrive."),X+18,TY,PW-36,14,Muted);}
         else if(Ui.HoverPanel==TEXT("threats")){Label(TEXT("SECTOR PRESSURE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Pulse %d / Next pulse in %.0f seconds"),Local.Wave,FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Periodic attacks: disabled for this scenario.")),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(Local.BackgroundBugsEnabled?TEXT("Background bugs: enabled. Roaming bugs can arrive between invasion pulses."):TEXT("Background bugs: disabled for this scenario."),X+18,TY,PW-36,14,Muted);TY+=12;Wrapped(TEXT("Sensors reveal live contacts; defenses require staffing. Repairs consume local materials."),X+18,TY,PW-36,14,Muted);}
         else{Label(TEXT("FIRST LANDING OBJECTIVES"),X+18,TY,18,Gold);TY+=43;TArray<FString> Goals;Local.ObjectiveText().ParseIntoArray(Goals,TEXT(" | "),true);for(const FString& Goal:Goals){Wrapped(Goal,X+18,TY,PW-36,16,Text);TY+=7;}}
     }
-    if(!Ui.BuildOpen&&!Ui.ColonyOpen&&Ui.HoverPanel.IsEmpty())
+    if(!Ui.BuildOpen&&Ui.HoverPanel.IsEmpty())
     {
+        if(!RegionMap&&G->SelectedCompanionId)if(const auto* Dog=G->Sim.Companions.Find(G->SelectedCompanionId))
+        {
+            const float PW=416,X=W-PW-24,Y=102;Frame(X,Y,PW,360);Label(TEXT("REX"),X+20,Y+23,23,Gold);Button(TEXT("x"),TEXT("deselect"),X+PW-39,Y+9,29,29);
+            float TY=Y+74;Wrapped(TEXT("Golden retriever / colony companion"),X+20,TY,PW-40,16,Text);TY+=18;
+            Wrapped(Dog->FedUntil>G->Sim.Time?TEXT("Fed / morale benefit active"):TEXT("Hungry / needs nearby organic food"),X+20,TY,PW-40,15,Dog->FedUntil>G->Sim.Time?Green:Gold);TY+=12;
+            Wrapped(FString::Printf(TEXT("Meals: %.2f kg organic food every %.0f minutes. Nearby workers gain %.0f%% efficiency while Rex is fed."),G->Sim.Companions.FoodPerMealKg,G->Sim.Companions.MealIntervalSeconds/60,G->Sim.Companions.MoraleBonus*100),X+20,TY,PW-40,14,Muted);
+            TY+=12;Wrapped(TEXT("Roam through the world at walking pace. First-person mode sets playback to 1x."),X+20,TY,PW-40,14,Text);
+            Button(TEXT("Roam as Rex / 1x"),TEXT("roam-rex"),X+20,Y+298,PW-40,42,false,TEXT("WASD walks; mouse looks; Esc returns to the colony camera."));
+        }
+        if(!RegionMap&&Readable&&G->SelectedRoadId)if(const auto* Road=Local.FindRoad(G->SelectedRoadId))
+        {
+            const auto* Tier=Local.TransportTiers.Find(Road->Tier);
+            const auto* Target=Local.TransportTiers.Find(Road->TargetTier);
+            const auto* Next=Tier?Local.TransportTiers.Find(Tier->NextTier):nullptr;
+            const bool Own=!G->Observer&&G->DetailedSectorIndex()==4;
+            const float PW=416,X=W-PW-24,Y=102;Frame(X,Y,PW,430);
+            Icon(TEXT("road"),X+18,Y+20,37,Gold);Label(TEXT("TRANSPORT ROUTE"),X+69,Y+24,19,Gold);
+            Button(TEXT("x"),TEXT("deselect"),X+PW-39,Y+9,29,29);
+            float TY=Y+87;Wrapped(Tier?FString::Printf(TEXT("%s / %.0fx transport"),*Tier->Name,Tier->SpeedMultiplier):TEXT("Road construction"),X+18,TY,PW-36,18,Text);
+            TY+=12;Wrapped(FString::Printf(TEXT("Length %.1f m"),FVector2D::Distance(Road->A,Road->B)*G->RenderScale/100.),X+18,TY,PW-36,14,Muted);
+            if(Road->IsConstructing)
+            {
+                TY+=14;Wrapped(FString::Printf(TEXT("Building %s / %.0f%%"),Target?*Target->Name:TEXT("road"),Road->ConstructionProgress*100),X+18,TY,PW-36,15,Green);
+                Wrapped(FString::Printf(TEXT("%d workers assigned / %d on site"),Road->Builders,Road->BuildersOnSite),X+18,TY,PW-36,14,Muted);
+                Wrapped(TEXT("Material delivery and on-site work complete the route automatically."),X+18,TY,PW-36,14,Muted);
+            }
+            else if(Next)
+            {
+                TY+=14;Wrapped(FString::Printf(TEXT("Next: %s / %.0fx transport"),*Next->Name,Next->SpeedMultiplier),X+18,TY,PW-36,15,Green);
+                const auto Cost=Local.RoadCost(Road->A,Road->B,Next->Id);TArray<FString> Keys,Parts;Cost.GetKeys(Keys);Keys.Sort();
+                for(const auto& Id:Keys)Parts.Add(FString::Printf(TEXT("%.0f %s"),Cost[Id],*ResourceName(Local,Id)));
+                Wrapped(TEXT("Upgrade materials: ")+FString::Join(Parts,TEXT(" / ")),X+18,TY,PW-36,14,Text);
+                FString Why;const bool Valid=Own&&Local.CanUpgradeRoad(Road->Id,Why);
+                if(Own&&!Valid)Wrapped(Why,X+18,TY,PW-36,14,Muted);
+                if(Own)Button(TEXT("Upgrade road"),TEXT("build:upgrade_road"),X+18,Y+369,PW-36,42,Valid,TEXT("Materials and workers must reach this existing segment."));
+            }
+            else {TY+=14;Wrapped(TEXT("Highest transport tier reached."),X+18,TY,PW-36,14,Muted);}
+            if(!Own)Label(TEXT("READ ONLY"),X+18,Y+386,12,Muted);
+        }
         if(!RegionMap&&Readable&&(Local.FindBuilding(G->SelectedId)||!G->SelectedBuild.IsEmpty()))DrawBuildingInfo(*G,W,H);
+        if(!RegionMap&&Readable&&!G->CompanionView){DrawTradeInfo(*G,W,H);DrawCommandInfo(*G,W,H);DrawCombatInfo(*G,W,H);}
+        if(!NeighborhoodOverview&&G->IsRoadToolActive())
+        {
+            const float PW=500,PH=112,X=(W-PW)*.5f,Y=DockY-PH-12;Frame(X,Y,PW,PH);
+            Label(G->RoadUpgradeActive?TEXT("UPGRADE ROAD"):TEXT("ROAD CONSTRUCTION"),X+18,Y+18,18,Gold);
+            float TY=Y+53;Wrapped(G->RoadUpgradeActive?TEXT("Click an existing road to upgrade it. Right click or Esc cancels."):G->RoadHasStart?TEXT("Click the second endpoint. Right click or Esc cancels."):TEXT("Click the first endpoint. Right click or Esc cancels."),X+18,TY,PW-36,14,Text);
+        }
         if(!NeighborhoodOverview&&!G->SelectedBuild.IsEmpty())if(const auto* D=G->Sim.BuildingDefs.Find(G->SelectedBuild))
         {
             const float PW=410,PH=136,X=(W-PW)*.5f,Y=DockY-PH-12;Frame(X,Y,PW,PH);Icon(D->Visual,X+16,Y+17,38,D->Color);Label(D->Name,X+69,Y+20,19,Gold);

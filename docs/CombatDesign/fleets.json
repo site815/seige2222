@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "confirmed_design_not_runtime",
+  "base_capacity_points": 50,
+  "chassis_points": {"small": 1, "medium": 2, "large": 4, "behemoth": 8},
+  "command_center_fleet_slots": {"1": 1, "2": 2, "3": 3},
+  "roles_share_slots": true,
+  "assignments": ["defense", "escort", "privateering"],
+  "capacity_modifiers": {"ai_control_building": null},
+  "level_1_command_center": "parked_orbital_shuttle",
+  "level_1_carried_force_slots": 1,
+  "launch_recovers_deployed_forces": false,
+  "embarkation_policy": null,
+  "player_control": "fleet_orders_only",
+  "individual_combat_micro": false
+}

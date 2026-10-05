@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "confirmed_design_not_runtime",
+  "chassis": [
+    {"id": "wheeled_small", "family": "wheeled", "size": "small", "wheels": null, "fleet_points": 1, "hardpoints": null, "storage_litres": null},
+    {"id": "wheeled_medium", "family": "wheeled", "size": "medium", "wheels": 6, "fleet_points": 2, "hardpoints": null, "storage_litres": null},
+    {"id": "wheeled_large", "family": "wheeled", "size": "large", "wheels": 8, "fleet_points": 4, "hardpoints": null, "storage_litres": null},
+    {"id": "wheeled_behemoth", "family": "wheeled", "size": "behemoth", "wheels": 12, "fleet_points": 8, "hardpoints": null, "storage_litres": null},
+    {"id": "tracked_small", "family": "tracked", "size": "small", "fleet_points": 1, "hardpoints": null, "storage_litres": null},
+    {"id": "tracked_medium", "family": "tracked", "size": "medium", "fleet_points": 2, "hardpoints": null, "storage_litres": null},
+    {"id": "tracked_large", "family": "tracked", "size": "large", "fleet_points": 4, "hardpoints": null, "storage_litres": null},
+    {"id": "tracked_behemoth", "family": "tracked", "size": "behemoth", "fleet_points": 8, "hardpoints": null, "storage_litres": null},
+    {"id": "mech_small", "family": "mech", "size": "small", "legs": null, "fleet_points": 1, "hardpoints": null, "storage_litres": null},
+    {"id": "mech_medium", "family": "mech", "size": "medium", "legs": null, "fleet_points": 2, "hardpoints": null, "storage_litres": null},
+    {"id": "mech_large", "family": "mech", "size": "large", "legs": 4, "fleet_points": 4, "hardpoints": null, "storage_litres": null},
+    {"id": "mech_behemoth", "family": "mech", "size": "behemoth", "legs": 8, "fleet_points": 8, "hardpoints": null, "storage_litres": null}
+  ],
+  "mobility": {
+    "wheeled": {"preferred": ["road", "easy_terrain"], "rough_terrain": "very_slow_or_blocked"},
+    "tracked": {"terrain": "almost_everywhere", "speed": "very_slow", "damages_infrastructure": true},
+    "mech": {"terrain": "all_traversable_terrain", "speed": "faster_than_tracked", "durability": "slightly_weaker_than_tracked", "urban_access": "better"}
+  }
+}

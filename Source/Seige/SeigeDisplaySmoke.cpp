@@ -19,7 +19,7 @@ void ASeigeGameMode::RunDisplaySmoke()
     if(TestOwner.Get()!=this)
     {
         TestOwner=this;Stage=0;Failures=0;Results.Reset();
-        IFileManager::Get().MakeDirectory(*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v07")),true);
+        IFileManager::Get().MakeDirectory(*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v08")),true);
     }
     // A requested screenshot is serviced after Tick. Never resize its source
     // backbuffer in the same frame (D3D12 readback would use the old extent).
@@ -43,7 +43,7 @@ void ASeigeGameMode::RunDisplaySmoke()
         Row->SetNumberField(TEXT("antialiasing_method"),Antialiasing?Antialiasing->GetInt():-1);
         Row->SetNumberField(TEXT("expected_antialiasing_method"),ExpectedAntialiasing);
         Results.Add(MakeShared<FJsonValueObject>(Row));
-        FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v07/display_")+FString(Name)+TEXT(".png")),true,false);
+        FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v08/display_")+FString(Name)+TEXT(".png")),true,false);
         UE_LOG(LogTemp,Display,TEXT("DISPLAY_SMOKE %s %dx%d mode=%d antialiasing=%d expected=%d valid=%d"),Name,Actual.X,Actual.Y,static_cast<int32>(Settings->GetFullscreenMode()),Antialiasing?Antialiasing->GetInt():-1,ExpectedAntialiasing,Valid?1:0);
     };
     switch(Stage++)

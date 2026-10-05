@@ -1,5 +1,9 @@
 # SEIGE — Original Prototype Asset Register
 
+The v0.8 Rex companion is an original authored interpretation guided by the user's private photographs: Blender mesh, rig, animation and procedural surface work, plus an original generated coat-detail bitmap. No photograph pixels are copied into the coat map. The photographs are not repository assets and must not be embedded or redistributed. See the [Rex asset record](CompanionDog/README.md) for provenance and the [companion design](../docs/game-design/COMPANIONS_AND_REX.md) for behavior and pending likeness/runtime acceptance. These original assets follow the project's licensing decisions; the private references are not assigned a public license.
+
+The refined Rex source has **119,651 triangles and 24 bones**. Current FBX round-trip checks pass, and [Unreal reimport](CompanionDog/import_report.json) verifies three skeletal LODs, both animation clips and ten material slots including the brown iris material. **Runtime appearance and animation review remain pending**.
+
 The v0.5 original shuttle, automated robot-service facility, and construction materials are documented in [Construction/README.md](Construction/README.md).
 
 The v0.4 background assets are documented separately in [EnvironmentV04/ATTRIBUTION.md](EnvironmentV04/ATTRIBUTION.md): a licensed full-size mature tree, photographic grass clump, and meadow/forest PBR material. This original prototype register remains historical provenance.

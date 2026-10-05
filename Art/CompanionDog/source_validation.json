@@ -1,0 +1,38 @@
+{
+  "fbx_roundtrip_mesh": "SK_CompanionDog",
+  "bones": 24,
+  "bone_names_match": true,
+  "unweighted_or_invalid_vertices": 0,
+  "max_influences": 4,
+  "vertex_colors": 1,
+  "used_materials": [
+    "DM_Coat",
+    "DM_Collar",
+    "DM_CollarEdge",
+    "DM_Eye",
+    "DM_Iris",
+    "DM_Metal",
+    "DM_Mouth",
+    "DM_Nose",
+    "DM_Teeth",
+    "DM_Tongue"
+  ],
+  "export_hashes_match": true,
+  "clip_files_present": true,
+  "animations": {
+    "A_DogIdle": {
+      "duration_seconds": 3.0,
+      "loop_matrix_max_error": 0.00345577385451179,
+      "bones": 24
+    },
+    "A_DogWalk": {
+      "duration_seconds": 0.43333333333333335,
+      "loop_matrix_max_error": 0.0,
+      "bones": 24
+    }
+  },
+  "walk_authored_ik_max_error_cm": 1.3248867024850658e-05,
+  "source_triangles": 118331,
+  "source_cosmetic_revision": "Rex likeness revision4: broader shorter cream muzzle, smaller recessed almond eyes with fitted lids, fuller panting jowls and chin, leaner chest, shaped toes and redistributed chest/ear/leg feathering; original geometry and retained planted-foot walk",
+  "unreal_import_verified": false
+}

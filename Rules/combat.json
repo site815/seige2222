@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "balance_status": "Provisional local combat balance and finite starter vehicle manifest",
+  "fleet_capacity": 50,
+  "maximum_vehicles": 150,
+  "maximum_projectiles": 2048,
+  "maximum_queue": 8,
+  "service_meters": 20,
+  "charge_kw": 40,
+  "ammo_buffer_shots": 16,
+  "enemy_radius_meters": 1.2,
+  "shield_regen_hp_s": 2,
+  "shield_regen_kwh_hp": 0.002,
+  "shield_delay_seconds": 10,
+  "formation_spacing_meters": 5,
+  "rough_grade": 0.08,
+  "road_speed_multiplier": 1.25,
+  "bug_range_meters": 80,
+  "bug_fire_interval": 5,
+  "bug_ranged_fraction": 0.25,
+  "bug_weapon": "bug_plasma",
+  "building_platforms": {
+    "command_core": {
+      "mount_points": 64,
+      "max_weapon_mass_kg": 128000,
+      "shield_hp": 500,
+      "armor_hp": 600,
+      "loadout": [
+        "laser_large",
+        "laser_large",
+        "laser_large",
+        "laser_large"
+      ]
+    },
+    "turret": {
+      "mount_points": 1,
+      "max_weapon_mass_kg": 500,
+      "shield_hp": 50,
+      "armor_hp": 100,
+      "loadout": [
+        "laser_small"
+      ]
+    },
+    "kinetic_tower": {
+      "mount_points": 1,
+      "max_weapon_mass_kg": 500,
+      "shield_hp": 50,
+      "armor_hp": 100,
+      "loadout": [
+        "kinetic_small"
+      ]
+    },
+    "missile_tower": {
+      "mount_points": 1,
+      "max_weapon_mass_kg": 500,
+      "shield_hp": 50,
+      "armor_hp": 100,
+      "loadout": [
+        "missile_small"
+      ]
+    },
+    "plasma_tower": {
+      "mount_points": 1,
+      "max_weapon_mass_kg": 500,
+      "shield_hp": 50,
+      "armor_hp": 100,
+      "loadout": [
+        "plasma_small"
+      ]
+    },
+    "command_core_2": {
+      "mount_points": 64,
+      "max_weapon_mass_kg": 128000,
+      "shield_hp": 1000,
+      "armor_hp": 1200,
+      "loadout": [
+        "laser_large",
+        "laser_large",
+        "laser_large",
+        "laser_large"
+      ]
+    },
+    "turret_2": {
+      "mount_points": 4,
+      "max_weapon_mass_kg": 4000,
+      "shield_hp": 100,
+      "armor_hp": 200,
+      "loadout": [
+        "laser_medium"
+      ]
+    },
+    "kinetic_tower_2": {
+      "mount_points": 4,
+      "max_weapon_mass_kg": 4000,
+      "shield_hp": 100,
+      "armor_hp": 200,
+      "loadout": [
+        "kinetic_medium"
+      ]
+    },
+    "missile_tower_2": {
+      "mount_points": 4,
+      "max_weapon_mass_kg": 4000,
+      "shield_hp": 100,
+      "armor_hp": 200,
+      "loadout": [
+        "missile_medium"
+      ]
+    },
+    "plasma_tower_2": {
+      "mount_points": 4,
+      "max_weapon_mass_kg": 4000,
+      "shield_hp": 100,
+      "armor_hp": 200,
+      "loadout": [
+        "plasma_medium"
+      ]
+    },
+    "command_core_3": {
+      "mount_points": 64,
+      "max_weapon_mass_kg": 128000,
+      "shield_hp": 1500,
+      "armor_hp": 1800,
+      "loadout": [
+        "laser_large",
+        "laser_large",
+        "laser_large",
+        "laser_large"
+      ]
+    },
+    "turret_3": {
+      "mount_points": 16,
+      "max_weapon_mass_kg": 32000,
+      "shield_hp": 150,
+      "armor_hp": 300,
+      "loadout": [
+        "laser_large"
+      ]
+    },
+    "kinetic_tower_3": {
+      "mount_points": 16,
+      "max_weapon_mass_kg": 32000,
+      "shield_hp": 150,
+      "armor_hp": 300,
+      "loadout": [
+        "kinetic_large"
+      ]
+    },
+    "missile_tower_3": {
+      "mount_points": 16,
+      "max_weapon_mass_kg": 32000,
+      "shield_hp": 150,
+      "armor_hp": 300,
+      "loadout": [
+        "missile_large"
+      ]
+    },
+    "plasma_tower_3": {
+      "mount_points": 16,
+      "max_weapon_mass_kg": 32000,
+      "shield_hp": 150,
+      "armor_hp": 300,
+      "loadout": [
+        "plasma_large"
+      ]
+    }
+  },
+  "core_fleet_limits": {
+    "command_core": 1,
+    "command_core_2": 2,
+    "command_core_3": 3
+  },
+  "factories": {
+    "command_core": {
+      "family": "all",
+      "maximum_tier": 4,
+      "speed_multiplier": 0.25
+    },
+    "vehicle_factory": {
+      "family": "wheeled",
+      "maximum_tier": 2,
+      "speed_multiplier": 1.0
+    },
+    "tank_factory": {
+      "family": "tracked",
+      "maximum_tier": 2,
+      "speed_multiplier": 1.0
+    },
+    "mech_factory": {
+      "family": "mech",
+      "maximum_tier": 2,
+      "speed_multiplier": 1.0
+    },
+    "command_core_2": {
+      "family": "all",
+      "maximum_tier": 4,
+      "speed_multiplier": 0.5
+    },
+    "vehicle_factory_2": {
+      "family": "wheeled",
+      "maximum_tier": 3,
+      "speed_multiplier": 1.25
+    },
+    "tank_factory_2": {
+      "family": "tracked",
+      "maximum_tier": 3,
+      "speed_multiplier": 1.25
+    },
+    "mech_factory_2": {
+      "family": "mech",
+      "maximum_tier": 3,
+      "speed_multiplier": 1.25
+    },
+    "command_core_3": {
+      "family": "all",
+      "maximum_tier": 4,
+      "speed_multiplier": 0.75
+    },
+    "vehicle_factory_3": {
+      "family": "wheeled",
+      "maximum_tier": 4,
+      "speed_multiplier": 1.5
+    },
+    "tank_factory_3": {
+      "family": "tracked",
+      "maximum_tier": 4,
+      "speed_multiplier": 1.5
+    },
+    "mech_factory_3": {
+      "family": "mech",
+      "maximum_tier": 4,
+      "speed_multiplier": 1.5
+    }
+  },
+  "initial_vehicles": [
+    {
+      "chassis": "wheeled_small",
+      "loadout": [
+        "laser_small"
+      ],
+      "battery_kwh": 20
+    },
+    {
+      "chassis": "wheeled_small",
+      "loadout": [
+        "laser_small"
+      ],
+      "battery_kwh": 20
+    }
+  ],
+  "loot_range_meters": 12,
+  "loot_kg_s": 10,
+  "loot_priority": [
+    "tier_desc",
+    "owned_quantity_asc",
+    "resource_id_asc"
+  ],
+  "refit_energy_fraction": 0.1,
+  "damage_profiles": {
+    "energy": {
+      "shield_multiplier": 0.65,
+      "armor_multiplier": 1.25
+    },
+    "kinetic": {
+      "shield_multiplier": 1.5,
+      "armor_multiplier": 0.65
+    },
+    "missile": {
+      "shield_multiplier": 1.1,
+      "armor_multiplier": 1
+    },
+    "plasma": {
+      "shield_multiplier": 0.5,
+      "armor_multiplier": 1.8
+    }
+  }
+}

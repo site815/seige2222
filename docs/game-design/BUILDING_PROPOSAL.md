@@ -2,84 +2,106 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-**Assistant proposal for discussion.** This is a candidate building catalog for a robotic colony. Established functions are identified separately from proposed names, facilities, recipes, and numerical values. The [first playable scope](FIRST_PLAYABLE_SCOPE.md) records the smaller implementation being developed.
+**Current requirements and historical assistant proposals.** The latest confirmed expansion below supersedes contradictory older candidate rows. Exact rates, bills, capacities and dimensions beyond the user's specified relationships remain provisional in [buildings.json](../../Rules/buildings.json). The [construction document](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns current implementation contracts and verification boundaries.
 
-## v0.6 presentation metadata
+## Confirmed tiered catalog expansion
 
-The current source adds explicit indoor/outdoor inventory location and worker-activity presentation to each implemented building. Construction sites show physically delivered stock outside the footprint, aggregate builders and a rising structure. Completed extraction/assembly workplaces show existing assigned workers at exterior stations; their tools stop when real operating conditions fail. This does not add population, individual pathfinding or new production rates. Bulk materials, ingots and crates use separate resource metadata. The v0.6 editor compiled; 34 native tests and the 79-stage editor route passed. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) tracks evidence.
+| Family | Levels and capability |
+| --- | --- |
+| Command core | Parked shuttle at level 1; levels 2/3 double/triple body width. All reserve the level-3 plot. Fusion power, storage, four large lasers and a slow selectable universal replicator, including workers and combat production. |
+| Solar array | Levels 1–3, unchanged footprint, increasing externally configured output. |
+| Worker factory | Fast worker assembly with lower process electricity than core replication; physical inactive-worker berths. |
+| Wheeled / tracked / mech factories | Separate families, levels 1–3 at fixed family footprints. Paid, timed manufacture uses combat-defined size access and throughput. |
+| Laser / kinetic / missile / plasma towers | Four separate families, levels 1–3 at fixed family footprints; hardpoints and loadouts are combat data. |
+| Ammunition works | Selectable kinetic-shell or missile manufacture, with physical kilogram cargo. |
+| Trading port | Levels 1–3, physical import/export including whole inactive workers and a configurable worker reserve target. |
+| Wall segments | Three levels, physical obstruction and construction; a dedicated polyline tool rather than individual catalog placement. |
 
-## Current v0.5 implementation alongside this proposal
+Vegetation clears across each reserved largest-upgrade plot. Foundations and terrain grading follow the actual built body, leaving natural relief in the future expansion yard. Source-level upgrade bills are additional costs; the next definition supplies completion time and staffing. Upper levels are upgrades, not separate starting blueprints.
 
-The broader catalog below remains proposed. The current user requirement adds physically supplied worker construction, an initial shuttle-deployed command core and a robot charging/maintenance facility. Source implements these with external construction costs, durations, builder counts and support capacities. The `robot_service_bay` is in Logistics with the B, L, C shortcut, one operating job and local component upkeep. Capacity is usable only after construction and staffing. It is an abstract automatic charging/service system; no battery-meter or kW-grid model is implied.
+The catalog currently contains 59 definitions and 35 ordinary blueprints. The interface adds Road, Upgrade road and Wall as three custom tools. These are authored data and integration work, not proof of completed runtime or package acceptance. The earlier v0.8 resource/Rex test checkpoint does not verify this expansion.
 
-See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for the fourteen implemented definitions and [Rules and Simulation Architecture](RULES_AND_SIMULATION_ARCHITECTURE.md) for reservations, delivery, construction and save-state contracts. Other proposed buildings and exact full-game balance are not automatically approved by this prototype.
+## Latest economy direction
+
+**Confirmed functions:** The finite landed material kit supports a road, solar generation and a level-one trading port with zero starting credits. The external trading port upgrades through levels 1–3; connected road networks share electricity and battery storage. Footprints, capacities, costs and power values are authored in the current external rules as provisional balance. [Resource Proposal](RESOURCE_PROPOSAL.md) and [Product Recipes](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md) supersede the earlier four-material starter assumptions. Every building dossier reports workers used/capacity, storage used/capacity and weapons/statistics, plus stored charge/capacity where batteries exist. These systems have source implementations; final expanded v0.8 runtime and package acceptance remains pending.
+
+## Historical v0.6 presentation metadata
+
+The v0.6 source added explicit indoor/outdoor inventory location and worker-activity presentation to each implemented building. Construction sites show physically delivered stock outside the footprint, aggregate builders and a rising structure. Completed extraction/assembly workplaces show existing assigned workers at exterior stations; their tools stop when real operating conditions fail. This does not add population, individual pathfinding or new production rates. Bulk materials, ingots and crates use separate resource metadata. The v0.6 editor compiled; 34 native tests and the 79-stage editor route passed. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) tracks evidence.
+
+## Superseded v0.5 service model
+
+The v0.5 prototype introduced supplied construction, shuttle deployment and a worker charging/maintenance facility before a shared electricity model existed. Its abstract service-only model and fourteen-definition catalog are historical. The current worker service bay remains in Logistics, with staffing and local upkeep; the later shared road grid and batteries now govern its electrical operation. The earlier absence of a power model is not a current design exemption.
+
+See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for version-specific evidence and [Rules and Simulation Architecture](RULES_AND_SIMULATION_ARCHITECTURE.md) for current reservations, delivery, construction and save-state contracts.
 
 ## Organization
 
-**Confirmed broad direction:** Buildings need at least resource-related, logistics, and defense categories. Resource-related buildings include gathering and storage; logistics includes movement, trade, storage, and possible robot charging or repair facilities. Storage overlaps categories. Resource and logistics buildings may have secondary defensive capabilities.
+**Confirmed broad direction:** Buildings need at least resource-related, logistics, and defense categories. The current interface separates resource work into Extraction and Production, alongside Logistics and Defense. Logistics includes movement, trade, storage, power and worker charging/service. Storage overlaps functions, and resource or logistics buildings may have secondary defensive capabilities.
 
-**Proposed organization:** Give a building one primary category and secondary functional tags. This makes construction menus readable without forcing each building to have only one role. The core can remain a central special entry because it combines multiple functions. Neither this menu arrangement nor the assignments below are settled gameplay rules.
+**Remaining organization proposal:** Secondary functional tags could supplement the current primary categories. The core combines several capabilities and is selected directly for its commands. Tags are an optional presentation proposal; current catalog entries and shortcuts are defined in [ui.json](../../Interface/ui.json).
 
-| Primary category | Candidate functions | Examples of secondary tags |
+| Primary category | Current functions | Possible secondary tags |
 | --- | --- | --- |
-| Resource-related | Extraction, processing, component manufacture, and industrial storage | Storage, power, service, sensor, defensive |
-| Logistics | Local transport, transfer storage, external trade, fleet support, and possible robot service | Storage, repair, charging, manufacturing, defensive |
+| Extraction | Deposit resource gathering | Storage, power, logistics access |
+| Production | Processing and component manufacture | Storage, power, service, defensive |
+| Logistics | Local transport, storage, power, external trade, fleet support, and worker service | Storage, repair, charging, manufacturing, defensive |
 | Defense | Fixed protection, perimeter control, and protective infrastructure | Sensor, storage, logistics access |
 
-Tags describe capabilities; they do not automatically add weapons, power generation, repairs, or other functions. Storage's exact ownership and routing rules still need design.
+Tags would describe existing capabilities; they would not automatically add weapons, generation or repairs. The prototype already uses local inventories and physical deliveries. Additional transfer-hub types and broader allocation policies remain future design work.
 
 ## Established constraints
 
 - One central command center and central zone per player. The core houses central command and the shuttle and moves with relocation. Remote extraction, including risky extensions into empty neighboring sectors, does not establish another core.
-- The core automatically produces robots to fill jobs and reduces population when demand falls. Production has a maximum rate and input requirements. **Core-exclusive robot production remains provisional**, separately from the confirmed one-core limit.
+- The core's slow universal replicator and a dedicated faster worker factory can both assemble workers from materials and electricity. They share one colony workforce. Surplus workers become physical inactive cargo; configurable reserve targets govern production, reactivation and recycling. Core-exclusive worker production and unconditional deletion of surplus workers are superseded ideas.
 - Constructed buildings staff and operate automatically when inputs and labor are sufficient. The player can turn a building off and see demand or unfilled jobs. Repairs and hauling are automatic.
 - Resource output is rate-limited. Additional population alone does not bypass extraction ceilings.
-- The core and most major buildings should upgrade, with economic, administrative, and defensive benefits. Exact upgrade paths are open.
+- The selected tiered families above have authored level 1–3 upgrade paths. Numerical benefits, costs and additional future families remain provisional.
 - Manufactured goods remain physical cargo in the full design. Building placement does not authorize free transfers between distant inventories.
 
-## Practical starter lineup — proposal
+## Current starter functions
 
-Use a small group of reusable functions to test the four-material industrial proposal. These names are design suggestions, not a promise that every entry is already present in the executable. See [Resource Proposal](RESOURCE_PROPOSAL.md) for the proposed iron, copper, silica, and carbon starter base.
+The older starter proposal assumed all four industrial materials could be obtained locally. That assumption is superseded: each region contains three distinct standard and two distinct rare deposits selected from the confirmed four-plus-four pool. Finite landed supplies, core replication and external trade must bridge missing local inputs. The following functions are present in the current catalog; their balance and complete bootstrap still require final expanded-version acceptance.
 
-| Candidate building/function | Suggested category | Purpose in the starter loop | Boundary or unresolved detail |
+| Building/function | Category | Purpose in the starter loop | Current boundary |
 | --- | --- | --- | --- |
-| Command core | Central | Starting defense, colony inventory access, robot manufacture, and workforce information | Do not assume unlimited stocks, free repairs, a selected energy source, or a complete shuttle system. |
-| Resource extractor | Resource-related | Acquire the starter materials from world sources | Reusing a common extractor design for multiple deposits is a proposal. Site compatibility and rate limits belong in data. |
-| Materials processor | Resource-related | Make structural material, conductors, and other selected processed inputs | Combining early refining functions reduces the number of prerequisites to test; material-specific facilities can follow later. |
-| Electronics works | Resource-related | Produce the selected basic control-circuit path | The four-material starter alternative avoids requiring biomass or rare materials for initial electronics; recipes are fictional abstractions. |
-| Machine works | Resource-related | Turn processed materials and circuits into actuators, parts, and equipment | Exact division of recipes between this facility and the processor remains adjustable. |
-| Logistics depot | Logistics; storage | Organize storage and automatic physical deliveries | Carrier production, staffing, service radius, and route selection remain open; no manual hauling orders are required. |
-| Defensive emplacement | Defense | Extend automatically executed defense beyond the starting core | Range, damage, target selection, operating costs, and construction costs need prototype values, not final balance. |
-| Sensor installation | Defense or logistics; sensor | Make the cost and vulnerability of remote coverage visible | Its menu category is proposed. A tower is not automatically an additional manufacturing facility, and full sensor theft remains later work. |
+| Command core | Central | Starting defense, fusion generation, storage, selectable replication and worker information | A parked shuttle at level 1; finite materials, process time and electricity govern manufacture. |
+| Resource extractor | Resource-related | Gather an available deposit for local use or sale | Resource compatibility and fixed extraction ceilings are external data; no extra deposit is guaranteed. |
+| Solar array and road connection | Logistics | Establish a shared generating network | Electricity follows completed connected roads; batteries store charge rather than create it. |
+| Trading port | Logistics | Sell available goods, then import missing inputs | Credits start at zero. Orders use physical cargo, timed shipments and paid imports. |
+| Materials, electronics and mechanical works | Resource-related | Make alloys, conductors, glass, circuits and parts | Authored recipes are provisional balance; local input stocks and energy are required. |
+| Worker service bay and worker factory | Logistics | Support the active workforce and expand worker assembly | Service and manufacture are distinct functions; the factory assembles into the same workforce and inactive-worker inventory. |
+| Logistics depot | Logistics; storage | Hold goods for automatic physical delivery | Stored volume and courier mass constrain transfers; no manual hauling orders are required. |
+| Defensive tower and sensor | Defense | Extend protection and paid sensor coverage | Four tiered weapon families are confirmed. Damage, ranges, upkeep and bills remain editable prototype balance; full sensor theft remains future work. |
 
-**Starter viability recommendation:** Existing robots and finite starting stock should support the first extraction, processing, and delivery chain. Do not make the first machine works require a component obtainable only from that same unfinished machine works. Whether this is solved by carried components, built-in core functions, or another bootstrap is a prototype decision to record explicitly.
+**Starter viability requirement:** Existing workers and finite landed stock must support extraction, a paid road/solar/trade bootstrap and subsequent replacement production. The starting kit and core replicator are selected mechanisms, not open alternatives. No first required facility may depend exclusively on output from that same unfinished facility. A missing local standard material must be obtainable through exports and paid imports without free credits or shared inventories.
 
-Charging stations, a standalone power plant, robot accommodation, a trade terminal, and a fleet yard need not all appear in the first experiment. Add them when their underlying system creates a useful player choice. Automatic repair alone does not prove that a dedicated repair building is necessary.
+Worker service, power, trade and combat factories are now confirmed catalog functions. This does not require constructing every family at the start. Human housing and a separate dedicated repair hub remain unselected; automatic repair alone does not establish another building type.
 
 ## Adapting all 16 earlier building functions
 
-This preserves the original catalog's ideas while distinguishing deferred human functions from robot-appropriate proposals. The mapping does not approve sixteen separate buildings.
+This historical crosswalk preserves the original sixteen ideas while stating their current treatment. It supersedes the old table's suggestions that power, charging, trade, dedicated worker production or individual weapon families were undecided. It does not add sixteen extra blueprints beyond the current catalog.
 
-| Earlier proposed function | Suggested treatment | Status and purpose |
+| Earlier proposed function | Current treatment | Status and purpose |
 | --- | --- | --- |
-| Core | Retain the central core | Central command, shuttle location, defense, and job-driven population adjustment are established; individual processes remain open. |
+| Core | Tiered command core | Confirmed shuttle, fusion power, storage, four large lasers and slow universal replication; exact rates and bills remain provisional. |
 | Habitat | Reconsider as a robot service or social space, or omit | Human housing is deferred. Robot accommodation and its satisfaction effects are not selected. |
-| Waterworks | Industrial water extraction/processing | Candidate resource-related facility for fluids, cooling, or chemicals; robots do not acquire a drinking-water need by implication. |
-| Cultivation | Industrial biomass cultivation | Candidate resource-related facility for polymer, lubricant, or fuel feedstock; human food production stays deferred. |
-| Mine / extractor | Generic or resource-specific extractors | Extraction is established; exact structures and deposit rules remain proposed. |
-| Refinery | Starter materials processor, later specialist refining | Candidate place for base materials and resource-specific processing. |
-| Chemical plant | Later chemical works | Candidate branch for polymers, fuels, fluids, and catalysts; no exact chemistry or consumption recipe is approved. |
-| Power plant | Later standalone generation, if adopted | Power infrastructure and charging need a coherent design before this becomes mandatory. The proposed starter core generator is not a confirmed final system. |
-| Machine works | Starter mechanical manufacturing | Candidate shared input source for robots, logistics, repair, and defense. |
-| Electronics facility | Starter electronics works and possible later variants | Candidate circuits and sensor production; the core's possible unique lithography capability does not settle this facility's detailed processes. |
-| Advanced assembly | Later higher-order equipment assembly | Candidate combination of manufactured inputs. It does not establish a second producer of population. |
-| Depot / logistics | Local depots and possible transfer hubs | Automatic physical hauling and storage are established; distinct hub types and exact allocation rules remain proposals. |
-| Trade terminal | Later external trade access | Trade is established direction; terminal behavior, prices, contracts, and shipment handling remain open. |
-| Fleet yard | Later ground-vehicle/mech manufacture and servicing | Fleets use land vehicles and mechs. Recipes, repair location, outfitting, and relation to robot population remain open. |
-| Defensive emplacement | Starter fixed defense and later specialist forms | Fixed defense is established; individual weapon families and upgrades remain proposed. |
-| Barriers / gates | Later perimeter structures | Candidate protection and access control; path blocking, breaching, and vehicle passage need design. |
+| Waterworks | Water extractor | Current standard-resource extraction; water has industrial uses and does not imply worker drinking needs. |
+| Cultivation | Biomass extraction and food manufacture | Biomass is currently a deposit resource. Organic food feeds Rex and can be exported; workers do not eat it. Cultivation as a separate renewable source remains a proposal. |
+| Mine / extractor | Resource-specific extractors | Current catalog functions use the confirmed three-standard/two-rare regional deposits; rates and bills remain provisional. |
+| Refinery | Material processing facilities | Current alloys, conductors and glass chains; quantities and facility balance remain provisional. |
+| Chemical plant | Fuel/plastics processing | Current product chains include fuel and plastic pellets, with physical multi-output recipes. Additional chemistry remains proposed. |
+| Power plant | Core fusion, tiered solar, fuel generation and batteries | Confirmed shared road-grid operation. Authored output, fuel, idle demand and storage values remain editable balance. |
+| Machine works | Component manufacture | Current input source for workers, logistics, repairs and defense; no free remote inventory access. |
+| Electronics facility | Circuits and AI-chip manufacture | Current product branches with authored recipes; additional specialist processes remain future design. |
+| Advanced assembly | Worker factory and higher-order manufacture | Dedicated faster worker assembly is confirmed alongside the core's slow replicator. Both feed one workforce; advanced products have separate recipes. |
+| Depot / logistics | Local storage and automatic deliveries | Implemented local inventory and courier rules; additional transfer-hub types remain proposals. |
+| Trade terminal | Level 1–3 trading port | Current timed import/export, credits, physical goods and whole-worker trade; prices and shipment timing remain provisional. |
+| Fleet yard | Wheeled, tracked and mech factory families | Current level 1–3 manufacture and outfitting, physical bills and separate combat vehicle state; these do not create colony workers. |
+| Defensive emplacement | Laser, kinetic, missile and plasma towers | Confirmed level 1–3 families with hardpoint/loadout data; exact combat balance remains provisional. |
+| Barriers / gates | Level 1–3 wall segments | Walls are confirmed physical obstacles with paid construction and upgrades. Gates and additional access-control behavior remain future work. |
 
-Possible logistics additions include charging and repair facilities; distributed sensors also need installation and upkeep. These are capabilities to evaluate, not mandatory extra buildings. Sensor components could be made by existing electronics and assembly functions.
+The worker charging/service bay and distributed sensors are current functions with operating requirements. A separate repair hub and additional sensor-component facilities are optional future proposals, not prerequisites added by this historical crosswalk.
 
 ## What belongs in editable building definitions
 

@@ -2,7 +2,29 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-Interface direction and the boundary between player decisions and automatic simulation. The floating-bottom construction layout supersedes the earlier top-only requirement. The verified v0.7 package adds independent scenario threat controls. It passed **38 clean native tests**, the **79-stage Shipping interaction route with zero failures and exit 0**, and **four actual Shipping display states with zero failures**. See the [v0.7 verification record](../verification/v0.7.0.json). Historically, the v0.6 menu, display, and speed revision passed 34 clean native tests, 79 Shipping interaction stages, and four Shipping display states. The earlier v0.5 Shipping route completed 63 stages with zero failures, including construction, camera, terrain selection and building information. Automated checks do not establish exhaustive human usability.
+Current v0.8 interface behavior is implemented in source and awaits final native and **117-stage Shipping** acceptance. The floating-bottom construction layout supersedes the earlier top-only requirement. Earlier release evidence below is historical: v0.7 passed 38 clean native tests, 79 Shipping interaction stages and four display states; see its [verification record](../verification/v0.7.0.json). Those results do not verify the expanded worker, wall, trade, companion and combat controls.
+
+## Current v0.8 command and transport revision
+
+**Confirmed direction, implemented in source; release verification pending:** The population is labelled **workers** throughout the player interface. It remains robotic; stable IDs are unchanged. The bottom dock contains Build, Regions, time controls and Menu. The separate Colony button/menu is removed. Save/load, settings, credits, main menu and exit live in the game menu. **Launch shuttle** is confined to the selected live own command core's building dossier; observer, neighbor, missing/stale selection, other buildings and active placement tools cannot issue it.
+
+**B, L, R** starts Road construction; **B, L, U** upgrades a selected existing road or enters road targeting. Road / Road + rail / Road + rail + vacuum give 2× / 4× / 8× transport speed. The selected-road panel uses simulation data for tier names, speed, length, next-tier material requirements, progress and assigned/on-site workers. Placement, targeting and selection cancel before Escape opens Menu; F10 opens Menu directly and cancels active placement. Starting a new scenario clears road state.
+
+The speed button and plus/minus now cycle **Paused, 1×, 5×, 10×**, with wraparound in either direction. Space resumes the previous nonzero speed, and the stopped label is **Paused**. New scenarios begin at 1×; the automated construction/economy route selects 10× to test normal timed operations. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns the mechanics; historical verification below does not verify this revision.
+
+**Economy and companion integration, release verification pending:** The construction catalog contains extraction, production, logistics and defense groups, with pagination for the expanded catalog. A selected own trading port exposes its Galactic-credit balance, resource picker, shipment quantity, import/export quote, validation reason, shipment progress and next-level upgrade. Bulk quantities use kg/L; stored workers use whole counts. Each port has a separate worker export-stock target. Goods remain local cargo; import orders reserve credits and exports settle after their physical shipment. Storage displays litres, shipment capacity kilograms and batteries kWh. The current price anchor is the value of one kilogram of gold per Galactic credit, not a redeemable gold inventory.
+
+The floating top strip puts **Galactic credits** first, followed by **Colony energy**: stored/capacity in kWh and generation/passive load in kW. Credits retain four decimal places for small transactions. Energy totals include all of the viewed colony's separate grids; they do not imply a shared connection. Production, weapon shots and trade additionally draw energy per action, outside the displayed passive load. Hover either economy readout for the full materials list and precise energy totals; a building's Power tab describes its own grid. Workforce, couriers, alien-pulse timing and objectives retain their separate readouts and hover panels. Neighbor information remains unavailable without the existing ownership/observer permission. This layout awaits rendered verification.
+
+The selected own core exposes selectable replication and the colony's spare-worker target. The workforce summary also provides target adjustment and **Disassemble surplus for parts**. Recycling uses eligible stored bodies and configured energy (1 kWh by default), preserving active jobs and protected reserves. Target changes request production; they do not create workers or materials immediately.
+
+**B, L, W** opens a wall plan. Click to add, select or move joints, or insert a point on an edge. **E** flips inside/outside, **Backspace** removes the latest joint, **Delete** removes the selected planning joint and **Enter** submits ordinary paid construction. Escape/right click cancels the uncommitted preview. Delete is not a general completed-building demolition command.
+
+Selected own combat-capable buildings expose **Fleets / chassis / hardpoints**, including maximum-level towers and factories. **Request materials/parts** sets a local delivery plan; **Assemble vehicle/Install outfit** pays actual stock and energy. Fleet-level movement, defense, escort, aggression and privateering remain separate from building ownership controls. **Board shuttle** requires all surviving fleet vehicles already at the command service port; it does not issue a return route or teleport them. Escape closes fleet targeting or its panel before opening Menu. Observer mode cannot issue these orders.
+
+The chassis tab applies the selected factory's family and level limits. Its draft remains a request until paid assembly begins; completed vehicles need charging and fleet assignment. The hardpoint tab switches between a selected building and vehicle. A vehicle's **Request parts** uses the selected own factory, so installation requires the vehicle to reach that service location. Local **Escort** follows courier traffic for a selected home building; **Privateer neighbor** requires viewing an occupied neighboring sector. [Fleet command](FLEETS_AND_LOGISTICS.md) records the current mission boundaries.
+
+Select the own command core and choose **Find Rex**, then select **Roam as Rex**. The named companion eats organic food and supplies a local morale bonus under [companions.json](../../Rules/companions.json). In Rex's first-person view, **WASD** walks and the mouse looks; playback is constrained to **1×**. **Escape** restores the colony camera. This is an optional companion view, not worker micromanagement. Menus and pause remain available; loading or starting a scenario exits companion control before replacing the simulation. [Companions and Rex](COMPANIONS_AND_REX.md) owns feeding, morale, save/evacuation behavior and pending visual acceptance.
 
 ## Interface references
 
@@ -20,8 +42,9 @@ The user wants to improve on aspects of Manor Lords using the perceived polish o
 - Represent construction choices with icons and reveal their building names on hover.
 - Organize construction logically and provide understandable keyboard shortcuts. Exact category and item keys are implementation choices until verified in play.
 - Show every building's weapon damage, reload, DPS, resource information, power, and other relevant statistics, including zero usage and unarmed buildings.
+- Every building dossier shows workers used/capacity and physical storage used/capacity; buildings with batteries additionally show stored energy/capacity. Battery capability must not be implied for buildings without it. Grid supply, passive draw and transaction energy are distinct from worker-support capacity.
 
-**Implementation guidance:** Keep the resource-related, logistics, and defense building categories recognizable; a more detailed industrial group can help organize production without changing building capabilities. A sectioned building panel may separate Overview, Weapons, Power, Production, Resources, and Maintenance. All sections must remain accessible, with pagination where necessary. Use the shared simulation information rather than copying numeric rules into the HUD. Explicitly explain that current power values are zero because the prototype has no separate grid. The interface should let the player understand a blocked action without reading source files.
+**Implementation guidance:** Keep the resource-related, logistics, and defense building categories recognizable; a more detailed industrial group can help organize production without changing building capabilities. A sectioned building panel separates Overview, Weapons, Power, Production, Resources, and Maintenance. All sections remain accessible, with pagination where necessary. Use the shared simulation information rather than copying numeric rules into the HUD. The road-connected grid supplies real operating power; disconnected or short-supplied buildings must explain their blocked operation.
 
 Hover and keyboard behavior must preserve ordinary world controls. Interface clicks must not place a building behind a menu or dialog, and menu shortcuts must not simultaneously move the camera. Input handling must work between rendering passes; drawing state cannot be required to process a click.
 
@@ -45,7 +68,7 @@ The floating gameplay dock and landing survey expose a direct **Menu** button. *
 
 The game menu offers Resume, Save colony, Load colony, Settings, Credits, Return to main menu, and Exit game. Saving is unavailable before landing. Opening the game menu pauses both the local colony and its independently simulated neighbors. Closing it restores the earlier paused/running state and selected speed. Its Settings and Credits pages retain that pause. Saving from the game menu records the pause state from before the menu opened; loading restores the saved state and closes the menu.
 
-Main menu, scenario setup, and human landing survey also suspend the local simulation. Construction and Colony overlays continue to run time. These are local prototype controls; they do not define time control on a persistent server.
+Main menu, scenario setup, and human landing survey also suspend the local simulation. The construction overlay continues to run time; the separate Colony overlay has been removed. These are local prototype controls; they do not define time control on a persistent server.
 
 ## Display and local speed — v0.6
 
@@ -56,7 +79,7 @@ Main menu, scenario setup, and human landing survey also suspend the local simul
 - **3D render resolution** is independent of window/display resolution. It defaults to 100%, has 50–100% controls in ten-percentage-point steps, and shows the effective width and height in pixels. Menus and text remain at full display resolution.
 - **Medium** is the sole graphics quality label. It is a custom, externally configured preset in `Graphics/scene.json`, with selected lighting, landscape, texture, and antialiasing settings. It is not an exposed choice among Unreal's generic Low/High/Epic presets. Applying a display or render-resolution change preserves this custom profile.
 - **v0.7 antialiasing:** The current Medium preset uses TAA at 100% render resolution and TSR below 100%. Changing render resolution selects the corresponding method automatically. Shadows remain at the custom profile's level 2; no additional quality selector is introduced. Native regression covers 100% → 75% → 100% and preserves explicit diagnostic overrides. Actual Shipping display checks passed native borderless, windowed 100%, windowed 75%, and restored native borderless, with engine AA methods **2 / 2 / 4 / 2** (TAA / TAA / TSR / TAA) and zero failures; see the [verification record](../verification/v0.7.0.json).
-- Local playback speeds are **1×, 5×, and 10×**. The speed button and **+** cycle forward; **−** cycles backward. Main-keyboard and numeric-keypad variants work. **Space** pauses/resumes without changing the selected speed. The supported list is stored in `Interface/ui.json`; legacy saved 3× playback migrates to 5×.
+- Current local playback cycles **Paused, 1×, 5×, 10×**. The speed button and **+** cycle forward; **−** cycles backward with wraparound. Main-keyboard and numeric-keypad variants work. **Space** resumes the previous nonzero speed. The nonzero list is stored in `Interface/ui.json`; v0.8 format-5 saves reject unsupported 3× playback rather than migrating it. Rex's first-person roaming locks playback to 1×.
 
 Normal display preferences persist locally. Automated `-UiSmoke`, `-GraphicsBenchmark`, and `-ForceRes` runs leave the player's display preferences untouched and retain their explicitly requested capture size. The separate `-DisplaySmoke -NoSaveDisplay` route applies actual borderless/windowed and render-resolution changes, but the `NoSaveDisplay` guard suppresses preference saves and display config writes. It is a verification path, not a player-facing option.
 
@@ -76,9 +99,15 @@ The custom Medium shadow quality remained active in every state. High-DPI game m
 | Menu button / F10 | Open or close the game menu |
 | Escape | Cancel/backtrack local UI first, then toggle the game menu |
 | Space | Pause/resume local simulation |
-| + / − | Cycle 1×, 5×, and 10× forward/backward |
+| + / − | Cycle Paused, 1×, 5×, 10× forward/backward with wraparound |
 | F5 / F9 | Save/load a running colony; also available through the game menu |
 | B | Open construction; category and blueprint shortcuts follow |
+| B, L, R / B, L, U | Road construction / existing-road upgrade |
+| Selected own command core | Production, spare-worker target, Find Rex and manual Launch shuttle |
+| Workforce summary | Spare-worker target and disassemble eligible stored surplus |
+| Selected trading port | Import/export and independent worker export-stock target |
+| B, L, W | Edit a wall plan; E flips inside, Enter commits, Backspace/Delete edit joints |
+| Selected own combat platform/factory | Fleet, chassis and hardpoint controls; request parts before paid assembly/refit |
 | WASD / arrows | Pan relative to camera yaw |
 | Q / E; middle drag | Rotate; rotate and tilt |
 | Wheel / Home | Zoom; return to the command core view |
@@ -124,9 +153,9 @@ The implemented v0.4 building dossier explains supported construction, productio
 - During an engagement, combat executes automatically; individual units cannot be micromanaged.
 - Fleet aggressiveness can be configured for autonomous behavior, including behavior left in place while the player is offline.
 
-**Illustrative aggression choices:** Actively seek engagements, take a middle approach, or fight only when necessary. Exact names, number of settings, target criteria, and actions are not yet defined.
+**Current prototype aggression choices:** Passive, defensive and aggressive. Passive units can receive movement orders but hold fire; defensive guards engage nearby known threats and may reposition for a clear shot; aggressive units can pursue known contacts. Exact targeting and long-term balance remain provisional.
 
-**Open:** How mission orders and direct fleet movement interact, what fleet-level changes can be made during combat, retreat and disengagement, order persistence, and presentation of the risks associated with different aggression settings.
+**Current boundary and open design:** An explicit group order replaces the fleet's previous mission, and local saves retain orders, routes, ownership and cargo. More developed retreat/disengagement behavior, persistent multiplayer orders and the presentation of mission risks remain open.
 
 ## Information boundaries
 

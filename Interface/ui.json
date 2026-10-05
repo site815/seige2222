@@ -5,7 +5,11 @@
     "eyebrow": "FIRST LANDING",
     "tagline": "A foothold in the wilderness."
   },
-  "simulation_speeds": [1, 5, 10],
+  "simulation_speeds": [
+    1,
+    5,
+    10
+  ],
   "summary_resources": [
     {
       "resource": "alloy",
@@ -23,11 +27,11 @@
   "credits": [
     {
       "heading": "Design & development",
-      "text": "seige2222 is an independently developed robot-colony simulation. Game concept and creative direction: site815. Project implementation and original procedural art developed with Codex."
+      "text": "seige2222 is an independently developed worker-colony simulation. Game concept and creative direction: site815. Project implementation and original procedural art developed with Codex."
     },
     {
       "heading": "Engine & creation tools",
-      "text": "Built with Unreal Engine by Epic Games. Original industrial structures, robots and aliens created with Blender. Licensed nature models prepared in Blender. Unreal Engine and Blender are trademarks of their respective owners."
+      "text": "Built with Unreal Engine by Epic Games. Original industrial structures, workers and aliens created with Blender. Licensed nature models prepared in Blender. Unreal Engine and Blender are trademarks of their respective owners."
     },
     {
       "heading": "Nature and surfaces / Poly Haven / CC0 1.0",
@@ -45,17 +49,17 @@
   "build_groups": [
     {
       "id": "extraction",
-      "name": "Resource extraction",
+      "name": "Extraction",
       "shortcut": "R",
-      "description": "Harvest the deposits in your sector. Each extractor needs its matching deposit.",
+      "description": "Each region contains three standard and two rare deposits. Extract only where the matching deposit exists.",
       "entries": [
         {
-          "definition": "extract_iron_ore",
-          "shortcut": "I"
+          "definition": "extract_water",
+          "shortcut": "W"
         },
         {
-          "definition": "extract_copper_ore",
-          "shortcut": "C"
+          "definition": "extract_iron_ore",
+          "shortcut": "M"
         },
         {
           "definition": "extract_silica",
@@ -64,14 +68,30 @@
         {
           "definition": "extract_carbon",
           "shortcut": "K"
+        },
+        {
+          "definition": "extract_copper_ore",
+          "shortcut": "R"
+        },
+        {
+          "definition": "extract_radioactive_ore",
+          "shortcut": "U"
+        },
+        {
+          "definition": "extract_crystalline",
+          "shortcut": "C"
+        },
+        {
+          "definition": "extract_hydrocarbons",
+          "shortcut": "H"
         }
       ]
     },
     {
       "id": "production",
-      "name": "Resource production",
+      "name": "Production",
       "shortcut": "I",
-      "description": "Turn raw materials into alloys, electronics and robot components. Inputs arrive by courier.",
+      "description": "Physical ingredients and electricity are consumed per transaction; some recipes produce multiple goods.",
       "entries": [
         {
           "definition": "alloy_refinery",
@@ -83,7 +103,19 @@
         },
         {
           "definition": "substrate_works",
-          "shortcut": "S"
+          "shortcut": "G"
+        },
+        {
+          "definition": "biofuel_refinery",
+          "shortcut": "F"
+        },
+        {
+          "definition": "fuel_refinery",
+          "shortcut": "H"
+        },
+        {
+          "definition": "food_producer",
+          "shortcut": "O"
         },
         {
           "definition": "circuit_works",
@@ -92,6 +124,22 @@
         {
           "definition": "component_works",
           "shortcut": "R"
+        },
+        {
+          "definition": "battery_works",
+          "shortcut": "T"
+        },
+        {
+          "definition": "ai_chip_works",
+          "shortcut": "I"
+        },
+        {
+          "definition": "fusion_reactor_works",
+          "shortcut": "V"
+        },
+        {
+          "definition": "ammunition_works",
+          "shortcut": "M"
         }
       ]
     },
@@ -99,8 +147,16 @@
       "id": "logistics",
       "name": "Logistics",
       "shortcut": "L",
-      "description": "Charge and maintain robots, extend sensors, and move or store physical goods.",
+      "description": "Road grids, cargo, workers and trade. Wall: click joints, E flips inside/outside, Enter commits, Backspace undoes; Delete removes a selected segment.",
       "entries": [
+        {
+          "definition": "road",
+          "shortcut": "R"
+        },
+        {
+          "definition": "upgrade_road",
+          "shortcut": "U"
+        },
         {
           "definition": "sensor",
           "shortcut": "S"
@@ -112,6 +168,30 @@
         {
           "definition": "robot_service_bay",
           "shortcut": "C"
+        },
+        {
+          "definition": "solar_array",
+          "shortcut": "P"
+        },
+        {
+          "definition": "battery_bank",
+          "shortcut": "E"
+        },
+        {
+          "definition": "trading_port",
+          "shortcut": "T"
+        },
+        {
+          "definition": "fuel_generator",
+          "shortcut": "G"
+        },
+        {
+          "definition": "worker_factory",
+          "shortcut": "F"
+        },
+        {
+          "definition": "wall",
+          "shortcut": "W"
         }
       ]
     },
@@ -119,11 +199,35 @@
       "id": "defense",
       "name": "Defense",
       "shortcut": "D",
-      "description": "Automatic defenses protect buildings and exposed transport routes.",
+      "description": "Automatic laser, kinetic, missile and plasma defenses; configurable wheeled, tracked and mech production.",
       "entries": [
         {
           "definition": "turret",
           "shortcut": "T"
+        },
+        {
+          "definition": "kinetic_tower",
+          "shortcut": "K"
+        },
+        {
+          "definition": "missile_tower",
+          "shortcut": "M"
+        },
+        {
+          "definition": "plasma_tower",
+          "shortcut": "P"
+        },
+        {
+          "definition": "vehicle_factory",
+          "shortcut": "V"
+        },
+        {
+          "definition": "tank_factory",
+          "shortcut": "G"
+        },
+        {
+          "definition": "mech_factory",
+          "shortcut": "H"
         }
       ]
     }

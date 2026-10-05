@@ -1,0 +1,198 @@
+{
+  "asset": "SK_CompanionDog",
+  "source": "Original authored geometry, rig, animation and generated coat texture guided by private reference photographs; photographs are not included or sampled into textures",
+  "forward_axis": "+X",
+  "up_axis": "+Z",
+  "units": "centimeters",
+  "root_motion": false,
+  "reference_pose_bounds_cm": {
+    "min": [
+      -106.06922149658203,
+      -19.194599151611328,
+      0.3547893166542053
+    ],
+    "max": [
+      77.39978790283203,
+      18.8996639251709,
+      86.56334686279297
+    ]
+  },
+  "triangles": 118331,
+  "vertices": 152888,
+  "bones": [
+    "root",
+    "pelvis",
+    "spine",
+    "neck",
+    "head",
+    "jaw",
+    "fore_upper_R",
+    "fore_lower_R",
+    "fore_paw_R",
+    "hind_upper_R",
+    "hind_lower_R",
+    "hind_paw_R",
+    "ear_R",
+    "fore_upper_L",
+    "fore_lower_L",
+    "fore_paw_L",
+    "hind_upper_L",
+    "hind_lower_L",
+    "hind_paw_L",
+    "ear_L",
+    "tail_1",
+    "tail_2",
+    "tail_3",
+    "tail_4"
+  ],
+  "materials": {
+    "DM_Coat": {
+      "color": [
+        0.48,
+        0.285,
+        0.125,
+        1
+      ],
+      "roughness": 0.79,
+      "metallic": 0
+    },
+    "DM_Mouth": {
+      "color": [
+        0.018,
+        0.009,
+        0.012,
+        1
+      ],
+      "roughness": 0.5,
+      "metallic": 0
+    },
+    "DM_Teeth": {
+      "color": [
+        0.74,
+        0.7,
+        0.56,
+        1
+      ],
+      "roughness": 0.31,
+      "metallic": 0
+    },
+    "DM_Tongue": {
+      "color": [
+        0.38,
+        0.11,
+        0.14,
+        1
+      ],
+      "roughness": 0.48,
+      "metallic": 0
+    },
+    "DM_Nose": {
+      "color": [
+        0.009,
+        0.008,
+        0.007,
+        1
+      ],
+      "roughness": 0.44,
+      "metallic": 0
+    },
+    "DM_Eye": {
+      "color": [
+        0.022,
+        0.009,
+        0.003,
+        1
+      ],
+      "roughness": 0.34,
+      "metallic": 0
+    },
+    "DM_Collar": {
+      "color": [
+        0.025,
+        0.29,
+        0.265,
+        1
+      ],
+      "roughness": 0.75,
+      "metallic": 0
+    },
+    "DM_CollarEdge": {
+      "color": [
+        0.012,
+        0.022,
+        0.028,
+        1
+      ],
+      "roughness": 0.67,
+      "metallic": 0
+    },
+    "DM_Metal": {
+      "color": [
+        0.56,
+        0.6,
+        0.58,
+        1
+      ],
+      "roughness": 0.26,
+      "metallic": 0.85
+    },
+    "DM_Iris": {
+      "color": [
+        0.048,
+        0.018,
+        0.006,
+        1
+      ],
+      "roughness": 0.3,
+      "metallic": 0
+    }
+  },
+  "used_materials": [
+    "DM_Coat",
+    "DM_Collar",
+    "DM_CollarEdge",
+    "DM_Eye",
+    "DM_Iris",
+    "DM_Metal",
+    "DM_Mouth",
+    "DM_Nose",
+    "DM_Teeth",
+    "DM_Tongue"
+  ],
+  "coat_texture_provenance": {
+    "file": "Textures/T_Dog_CoatDetail.png",
+    "method": "OpenAI imagegen, text-to-image; no reference-image inputs",
+    "prompt_record": "TEXTURE_PROVENANCE.md",
+    "reference_photo_pixels_used": false
+  },
+  "animations": {
+    "A_DogIdle": {
+      "duration_seconds": 3,
+      "fps": 30,
+      "loop": true
+    },
+    "A_DogWalk": {
+      "duration_seconds": 0.43333333333333335,
+      "fps": 30,
+      "loop": true,
+      "stride_meters": 0.6018518518518519,
+      "reference_speed_m_s": 1.3888888888888888,
+      "reference_speed_cm_s": 138.88888888888889,
+      "stance_fraction": 0.6,
+      "phase_source": "distance_walked_meters / stride_meters",
+      "max_ik_target_error_cm": 1.3248867024850658e-05
+    }
+  },
+  "coat_vertex_attribute": "CoatColor",
+  "max_bone_influences": 4,
+  "dog_name": "Rex",
+  "name_on_tag": true,
+  "cosmetic_revision": "Rex likeness revision4: broader shorter cream muzzle, smaller recessed almond eyes with fitted lids, fuller panting jowls and chin, leaner chest, shaped toes and redistributed chest/ear/leg feathering; original geometry and retained planted-foot walk",
+  "exports": {
+    "A_DogIdle.fbx": "635affed0b9ef21dfe20546f6eecd21ff76456890c66d6f885382be0184fdf8c",
+    "A_DogWalk.fbx": "cf9607a81ad9e147e64b2946e206fbeef310feebe515c217ce54dbf3ce08a5ae",
+    "SK_CompanionDog.fbx": "ee3968017862323b9a6c8d9484383490f61d8897160bd5c4cc5bf2577e3f75d4"
+  },
+  "unreal_import_pending": false,
+  "runtime_review_pending": true
+}

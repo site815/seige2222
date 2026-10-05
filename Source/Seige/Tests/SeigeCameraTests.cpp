@@ -1,5 +1,9 @@
 #include "SeigeGameMode.h"
+#include "SeigeSceneryContact.h"
+#include "SeigeSceneryPlacement.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"
 #include "Tests/AutomationCommon.h"
@@ -26,6 +30,87 @@ struct FCameraWorld : FTestWorldWrapper
         Game->RebuildTerrainHeights();return true;
     }
 };
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSwardPlacementTest,"Seige.Camera.SwardPlacementCoverage",CameraFlags)
+bool FSeigeSwardPlacementTest::RunTest(const FString& Parameters)
+{
+    for(const int32 Count:{1,2,7,65,66,101,4320})
+    {
+        FRandomStream A(72222),B(72222);TArray<FVector2D> Points;Points.Reserve(Count);
+        for(int32 I=0;I<Count;++I)
+        {
+            const FVector2D JitterA(A.FRand(),A.FRand()),JitterB(B.FRand(),B.FRand());
+            const FVector2D P=SeigeSwardCandidate(I,Count,JitterA);
+            TestTrue(TEXT("Stable cell seed gives identical near/proxy candidate positions"),P.Equals(SeigeSwardCandidate(I,Count,JitterB),.0000001));
+            TestTrue(TEXT("Every candidate stays in its own streamed cell"),P.X>=0&&P.X<1&&P.Y>=0&&P.Y<1);
+            Points.Add(P);
+        }
+        TestEqual(TEXT("Non-square counts retain every requested candidate"),Points.Num(),Count);
+        if(Count!=4320)continue;
+        // At the shipped 54m cell size, probe empty-space radius independently
+        // of the stratum index calculation. This catches clustered/empty strips
+        // without asserting the exact decorative positions or increasing count.
+        double LargestHole=0;
+        for(int32 Y=0;Y<64;++Y)for(int32 X=0;X<64;++X)
+        {
+            const FVector2D Probe((X+.5)/64.,(Y+.5)/64.);double Nearest=DBL_MAX;
+            for(const FVector2D P:Points)Nearest=FMath::Min(Nearest,(P-Probe).SquaredLength());
+            LargestHole=FMath::Max(LargestHole,FMath::Sqrt(Nearest)*54.);
+        }
+        TestTrue(TEXT("Fully vegetated meadow has no candidate-free radius greater than one meter"),LargestHole<1.);
+        AddInfo(FString::Printf(TEXT("Same-count stratified sward: 4320 candidates/54m cell; largest sampled empty radius %.3f m"),LargestHole));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSwardContactTest,"Seige.Camera.SwardRootContact",CameraFlags)
+bool FSeigeSwardContactTest::RunTest(const FString& Parameters)
+{
+    FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    auto* Mesh=LoadObject<UStaticMesh>(nullptr,TEXT("/Game/Art/NatureV04/SM_MeadowSwardA.SM_MeadowSwardA"));
+    if(!TestNotNull(TEXT("Contact regression uses the shipped near sward bounds"),Mesh))return false;
+    const FBox Bounds=Mesh->GetBoundingBox();
+    TestTrue(TEXT("Authored roots, rather than canopy center, are at ground zero"),FMath::Abs(Bounds.Min.Z)<.01);
+    const auto Plane=[](FVector2D P){return P.X*.4-P.Y*.2;};
+    const FVector2D FlatPoint(170,250);const FVector Normal=FVector(-.4,.2,1).GetSafeNormal();
+    const FTransform Planar(FRotationMatrix::MakeFromZX(Normal,FRotator(0,71,0).Vector()).ToQuat(),
+        FVector(FlatPoint,Plane(FlatPoint)),FVector(1.3));
+    TestTrue(TEXT("A sloped planar surface receives no blanket grass lift"),FitSeigeSceneryRootPlane(Planar,Bounds,Plane).Equals(Planar,.00001));
+    // A translated nonzero authored root height must also be respected.
+    FBox OffsetBounds=Bounds;OffsetBounds.Min.Z-=8;OffsetBounds.Max.Z-=8;
+    const FTransform OffsetSource(FQuat::Identity,FVector(0,0,8),FVector::OneVector);
+    TestTrue(TEXT("Contact uses actual source root height, not an assumed origin"),
+        FitSeigeSceneryRootPlane(OffsetSource,OffsetBounds,[](FVector2D){return 0.;}).Equals(OffsetSource,.00001));
+    double WorstOriginalPenetration=0,WorstCorrection=0;
+    for(int32 I=0;I<80;++I)
+    {
+        // Cross the real cached triangle joins in the inspected sloped meadow.
+        const FVector2D P(1250+(I%10)*71.3,180+(I/10)*91.7);
+        const double GroundBefore=G.GroundHeight(P);
+        const double DX=G.GroundHeight(P+FVector2D(12,0))-G.GroundHeight(P-FVector2D(12,0));
+        const double DY=G.GroundHeight(P+FVector2D(0,12))-G.GroundHeight(P-FVector2D(0,12));
+        const FTransform Original(FRotationMatrix::MakeFromZX(FVector(-DX,-DY,24).GetSafeNormal(),FRotator(0,I*43.7,0).Vector()).ToQuat(),
+            G.RenderPosition(P),FVector(1.3));
+        const auto Height=[&](FVector2D WorldPoint){return G.GroundHeight(WorldPoint/G.RenderScale)*G.RenderScale;};
+        const FTransform Fitted=FitSeigeSceneryRootPlane(Original,Bounds,Height);
+        TestTrue(TEXT("Correction is deterministic"),Fitted.Equals(FitSeigeSceneryRootPlane(Original,Bounds,Height),.000001));
+        TestTrue(TEXT("Sward XY position and density remain unchanged"),FVector2D(Fitted.GetLocation()).Equals(FVector2D(Original.GetLocation()),.000001));
+        TestTrue(TEXT("Sward size and orientation remain unchanged"),Fitted.GetRotation().Equals(Original.GetRotation(),.000001)&&Fitted.GetScale3D().Equals(Original.GetScale3D(),.000001));
+        TestEqual(TEXT("Grass fitting never changes authoritative terrain"),G.GroundHeight(P),GroundBefore);
+        WorstCorrection=FMath::Max(WorstCorrection,Fitted.GetLocation().Z-Original.GetLocation().Z);
+        for(int32 Y=0;Y<3;++Y)for(int32 X=0;X<3;++X)
+        {
+            const FVector Root(FMath::Lerp(Bounds.Min.X,Bounds.Max.X,double(X)*.5),FMath::Lerp(Bounds.Min.Y,Bounds.Max.Y,double(Y)*.5),Bounds.Min.Z);
+            const FVector Before=Original.TransformPosition(Root),After=Fitted.TransformPosition(Root);
+            WorstOriginalPenetration=FMath::Max(WorstOriginalPenetration,Height(FVector2D(Before))-Before.Z);
+            TestTrue(TEXT("Root support samples no longer cut below the rendered triangles"),After.Z+.00001>=Height(FVector2D(After)));
+        }
+    }
+    TestTrue(TEXT("The fixture actually reproduces buried roots before correction"),WorstOriginalPenetration>.1);
+    TestTrue(TEXT("Correction is exactly the observed penetration, not a global height allowance"),FMath::IsNearlyEqual(WorstCorrection,WorstOriginalPenetration,.00001));
+    AddInfo(FString::Printf(TEXT("Sward sampled root penetration corrected: maximum %.3f cm across 80 real terrain placements"),WorstOriginalPenetration));
+    return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeBoundedGroundRayTest,"Seige.Camera.BoundedTerrainRay",CameraFlags)
@@ -239,15 +324,26 @@ bool FSeigeCompactBuildingPadTest::RunTest(const FString& Parameters)
     if(!G.Sim.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-713,319),G.Error))
     {AddError(G.Error);return false;}
     const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
+    auto PadOuter=[&](const FSeigeBuildingDef& D)
+    {
+        const double Reserved=D.Footprint;
+        return FMath::Max(Reserved*G.CorePadOuterRatio,FMath::Max(Reserved*G.CorePadInnerRatio,Reserved+Step)+Step);
+    };
     TArray<FVector2D> Outside,DepositSamples;
     for(const auto& B:G.Sim.Buildings)if(const auto* D=G.Sim.Definition(B))
     {
         // Two cells beyond the compact analytical influence also exclude any
         // interpolation triangle that touches a modified foundation vertex.
-        const double Radius=D->Footprint*G.CorePadOuterRatio+2*Step;
+        const double Radius=PadOuter(*D)+2*Step;
         for(double X:{-1.,0.,1.})for(double Y:{-1.,0.,1.})if(X!=0||Y!=0)
-            Outside.Add(B.Position+FVector2D(X,Y)*Radius);
+        {
+            const FVector2D P=B.Position+FVector2D(X,Y)*Radius;bool Clear=true;
+            for(const auto& Other:G.Sim.Buildings)if(const auto* Definition=G.Sim.Definition(Other))
+            {const FVector2D Delta=P-Other.Position;if(FMath::Max(FMath::Abs(Delta.X),FMath::Abs(Delta.Y))<PadOuter(*Definition)+Step*1.5){Clear=false;break;}}
+            if(Clear)Outside.Add(P);
+        }
     }
+    TestTrue(TEXT("Natural-height comparison samples lie outside every built foundation's influence"),!Outside.IsEmpty());
     for(const auto& N:G.Sim.Nodes)
     {
         DepositSamples.Add(N.Position);
@@ -270,7 +366,7 @@ bool FSeigeCompactBuildingPadTest::RunTest(const FString& Parameters)
         for(double X:{-1.,0.,1.})for(double Y:{-1.,0.,1.})
         {
             const FVector2D P=B.Position+FVector2D(X,Y)*D->Footprint;
-            TestTrue(*FString::Printf(TEXT("%s cached foundation is level at footprint (%g,%g)"),*B.DefId,X,Y),
+            TestTrue(*FString::Printf(TEXT("%s cached foundation is level across its built footprint (%g,%g)"),*B.DefId,X,Y),
                 FMath::Abs(G.GroundHeight(P)-Level)<.001);
             FVector Hit;
             if(TestTrue(TEXT("Building foundation remains pickable on the rendered surface"),
@@ -295,7 +391,7 @@ bool FSeigeIncrementalSectorSeamTest::RunTest(const FString& Parameters)
     // pad is much smaller than the coarse edge segment influenced by its height.
     // At Y=0 the natural height terms almost cancel the X slope; one coarse step
     // north produces a substantial changed vertex instead of a submillimeter case.
-    if(!G.Sim.SetInitialCorePosition(FVector2D(Half-500,EdgeY),G.Error))
+    if(!G.Sim.SetInitialCorePosition(FVector2D(Half-2000,EdgeY),G.Error))
     {AddError(G.Error);return false;}
     G.RebuildTerrainHeights();
     TArray<FVector2D> Samples;
@@ -305,7 +401,7 @@ bool FSeigeIncrementalSectorSeamTest::RunTest(const FString& Parameters)
     TArray<double> Natural;
     for(const auto& P:Samples)Natural.Add(G.GroundHeight(P));
     G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
-    if(!G.Sim.PlaceBuilding(TEXT("sensor"),FVector2D(Half-100,EdgeY),G.Error))
+    if(!G.Sim.PlaceBuilding(TEXT("sensor"),FVector2D(Half-130,EdgeY),G.Error))
     {AddError(G.Error);return false;}
     const int32 SensorId=G.Sim.Buildings.Last().Id;
     G.RefreshBuildingPads();
@@ -335,6 +431,109 @@ bool FSeigeIncrementalSectorSeamTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Incremental foundation removal equals a complete rebuild at the seam"),FMath::Abs(Removed[I]-G.GroundHeight(Samples[I]))<.001);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRoadTerrainTest,"Seige.Camera.RoadGradeAndSeams",CameraFlags)
+bool FSeigeRoadTerrainTest::RunTest(const FString& Parameters)
+{
+    FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    const double Half=G.Sim.WorldHalfSize,CoarseStep=Half*2/128,Step=Half*2/G.DetailedTerrainResolution,Epsilon=.001;
+    if(!G.Sim.SetInitialCorePosition(FVector2D(Half-2000,CoarseStep),G.Error)){AddError(G.Error);return false;}
+    G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
+    G.RebuildTerrainHeights();
+    const FVector2D Center(Half-30,CoarseStep),A=Center-FVector2D(0,600),B=Center+FVector2D(0,600);
+    const double Width=G.Sim.TransportTiers[TEXT("road")].WidthMeters*.5/G.Sim.MetersPerWorldUnit();
+    TArray<FVector2D> Samples={Center,Center+FVector2D(-Width,0),Center+FVector2D(Width,0)};
+    for(double Y:{-CoarseStep*.5,0.,CoarseStep*.5})for(double X:{-Epsilon,0.,Epsilon})Samples.Add(FVector2D(Half+X,CoarseStep+Y));
+    const FVector2D Outside=Center-FVector2D(Width+Step*4,0);Samples.Add(Outside);
+    TArray<double> Natural;for(const auto& P:Samples)Natural.Add(G.GroundHeight(P));
+    // Use the normal finite-cost placement path. The road lies inside the home
+    // boundary but its compact grade reaches the shared coarse/fine edge.
+    if(!G.Sim.PlaceRoad(A,B,G.Error)){AddError(G.Error);return false;}
+    G.RefreshTransportScenery();
+    TArray<double> Graded;double Change=0;
+    for(int32 I=0;I<Samples.Num();++I)
+    {
+        Graded.Add(G.GroundHeight(Samples[I]));Change=FMath::Max(Change,FMath::Abs(Graded[I]-Natural[I]));
+        FVector Hit;
+        if(TestTrue(TEXT("Graded road remains pickable"),G.TraceGroundRay(G.RenderPosition(Samples[I])+FVector(0,0,6000),FVector(0,0,-1),Hit)))
+            TestTrue(TEXT("Road picking follows the same cached surface as the rendered strip"),Hit.Equals(G.RenderPosition(Samples[I]),.02));
+    }
+    TestTrue(TEXT("Road grading changes actual terrain rather than only its visual overlay"),Change>.01);
+    TestTrue(TEXT("The configured full road width is level across a grid-aligned cross section"),FMath::Abs(Graded[1]-Graded[2])<.001);
+    for(int32 I=3;I<12;I+=3)TestTrue(TEXT("A road near the sector boundary preserves the shared height seam"),FMath::Abs(Graded[I]-Graded[I+2])<.01);
+    TestTrue(TEXT("Natural terrain resumes beyond the compact corridor grade"),FMath::Abs(Graded.Last()-Natural.Last())<.001);
+    G.RebuildTerrainHeights();
+    for(int32 I=0;I<Samples.Num();++I)TestTrue(TEXT("Incremental road grading equals a complete cache rebuild"),FMath::Abs(Graded[I]-G.GroundHeight(Samples[I]))<.001);
+    G.Sim.Roads.Reset();G.RefreshTransportScenery();
+    for(int32 I=0;I<Samples.Num();++I)TestTrue(TEXT("Removing a road restores its former cached surface, including the shared boundary"),FMath::Abs(Natural[I]-G.GroundHeight(Samples[I]))<.001);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRoadTerrainPrivacyTest,"Seige.Camera.RoadTerrainPrivacy",CameraFlags)
+bool FSeigeRoadTerrainPrivacyTest::RunTest(const FString& Parameters)
+{
+    FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    const double Half=G.Sim.WorldHalfSize;const FVector2D Offset(Half*2,0);
+    FSeigeNeighbor Neighbor;Neighbor.Index=5;Neighbor.Offset=Offset;Neighbor.Type=TEXT("starting");
+    if(!Neighbor.Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),G.Error)){AddError(G.Error);return false;}
+    G.Neighbors.Add(MoveTemp(Neighbor));
+    // Isolated visibility fixture: two live home sensors reveal the endpoints
+    // across the boundary while the middle of the neighboring route stays dark.
+    G.Sim.BuildingDefs[TEXT("sensor")].SensorRange=600;
+    for(double Y:{-1600.,1600.})
+    {
+        FSeigeBuilding Sensor;Sensor.Id=100+G.Sim.Buildings.Num();Sensor.DefId=TEXT("sensor");
+        Sensor.Position=FVector2D(Half-100,Y);Sensor.Health=G.Sim.BuildingDefs[TEXT("sensor")].Health;
+        Sensor.Workers=G.Sim.BuildingDefs[TEXT("sensor")].Jobs;G.Sim.Buildings.Add(Sensor);
+        FSeigeBuilding Solar;Solar.Id=Sensor.Id+1000;Solar.DefId=TEXT("solar_array");Solar.Position=Sensor.Position-FVector2D(1000,0);Solar.Health=G.Sim.BuildingDefs[Solar.DefId].Health;G.Sim.Buildings.Add(Solar);
+        FSeigeTransportSegment Wire;Wire.Id=Sensor.Id+2000;Wire.A=G.Sim.BuildingAccessPoint(Solar);Wire.B=G.Sim.BuildingAccessPoint(Sensor);Wire.Tier=TEXT("road");Wire.IsConstructing=false;Wire.ConstructionProgress=1;G.Sim.Roads.Add(Wire);
+    }
+    G.Sim.Energy.Invalidate();G.Sim.Energy.Tick(G.Sim,0);
+    G.FocusSector(5);G.RebuildTerrainHeights();
+    FSeigeTransportSegment Road;Road.Id=200;Road.A=FVector2D(-Half+100,-1600);Road.B=FVector2D(-Half+100,1600);
+    Road.Tier=TEXT("road");Road.IsConstructing=false;Road.ConstructionProgress=1;
+    const FVector2D A=Road.A+Offset,B=Road.B+Offset,Middle=(A+B)*.5;
+    TestTrue(TEXT("Neighbor-road fixture endpoints are both visible"),G.Sim.IsVisible(A)&&G.Sim.IsVisible(B));
+    TestFalse(TEXT("Neighbor-road fixture has a hidden middle"),G.Sim.IsVisible(Middle));
+    TArray<FVector2D> Samples;
+    for(double T:{0.,.1,.25,.5,.75,.9,1.})for(double X:{-25.,0.,25.})Samples.Add(FMath::Lerp(A,B,T)+FVector2D(X,0));
+    TArray<double> Natural;for(const auto& P:Samples)Natural.Add(G.GroundHeight(P));
+    G.Neighbors[0].Sim.Roads.Add(Road);G.RefreshTransportScenery();
+    for(int32 I=0;I<Samples.Num();++I)TestTrue(TEXT("Visible endpoints cannot reveal grading through a hidden road middle"),FMath::Abs(Natural[I]-G.GroundHeight(Samples[I]))<.001);
+    G.Observer=true;G.RebuildTerrainHeights();double ObserverChange=0;
+    for(int32 I=0;I<Samples.Num();++I)ObserverChange=FMath::Max(ObserverChange,FMath::Abs(Natural[I]-G.GroundHeight(Samples[I])));
+    TestTrue(TEXT("An observer sees the real road grade, proving the hidden-route comparison has an effect to suppress"),ObserverChange>.01);
+    G.Observer=false;G.RefreshTransportScenery();
+    for(int32 I=0;I<Samples.Num();++I)TestTrue(TEXT("Leaving observer visibility removes the entire unknown road grade"),FMath::Abs(Natural[I]-G.GroundHeight(Samples[I]))<.001);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeTransportClearanceTest,"Seige.Camera.TransportSceneryClearance",CameraFlags)
+bool FSeigeTransportClearanceTest::RunTest(const FString& Parameters)
+{
+    FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    auto* Mesh=LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Cube.Cube"));
+    if(!TestNotNull(TEXT("Clearance fixture can load an engine mesh"),Mesh))return false;
+    auto* Actor=World.GetTestWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(Actor);
+    Actor->SetRootComponent(Root);Root->RegisterComponent();G.GroundCover=Actor;
+    auto* Instances=NewObject<UInstancedStaticMeshComponent>(Actor);Instances->SetStaticMesh(Mesh);
+    Instances->SetupAttachment(Root);Instances->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Instances->RegisterComponent();Actor->AddInstanceComponent(Instances);
+    const FVector2D Center(6000,4000);const double HalfWidth=G.Sim.TransportTiers[TEXT("road")].WidthMeters*.5/G.Sim.MetersPerWorldUnit();
+    auto Add=[&](FVector2D P,FVector Scale=FVector(1,1,1))
+    {Instances->AddInstance(FTransform(FQuat::Identity,G.RenderPosition(P),Scale),true);};
+    Add(Center);Add(Center+FVector2D(0,HalfWidth+4));
+    const FVector2D Kept=Center+FVector2D(0,HalfWidth+80);Add(Kept);
+    // The second pivot is outside the road, but the actual mesh overlaps it.
+    // Both resident detailed plants and proxies use the same transformed bounds.
+    FSeigeTransportSegment Road;Road.Id=300;Road.A=Center-FVector2D(300,0);Road.B=Center+FVector2D(300,0);Road.TargetTier=TEXT("road");
+    G.Sim.Roads.Add(Road);G.RefreshTransportScenery();
+    TestEqual(TEXT("Road construction removes overlapping geometry, including an outside pivot"),Instances->GetInstanceCount(),1);
+    FTransform Retained;
+    if(Instances->GetInstanceTransform(0,Retained,true))TestTrue(TEXT("A nearby nonoverlapping plant is retained"),FVector2D(Retained.GetLocation()/G.RenderScale).Equals(Kept,.001));
+    G.RefreshTransportScenery();TestEqual(TEXT("Repeated corridor refresh is idempotent"),Instances->GetInstanceCount(),1);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRegionAndOrbitTest,"Seige.Camera.RegionFocusAndOrbit",CameraFlags)
 bool FSeigeRegionAndOrbitTest::RunTest(const FString& Parameters)
 {

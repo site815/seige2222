@@ -1,5 +1,5 @@
 {
-  "version": "prototype-6.0",
+  "version": "prototype-8.0",
   "scenario": {
     "title": "seige2222 - First Landing",
     "core_definition": "command_core",
@@ -10,193 +10,34 @@
     "starting_inventory": {
       "alloy": 420,
       "circuits": 110,
-      "components": 50
+      "components": 50,
+      "organic_food": 10
     },
     "core_position": [
       0,
       0
     ],
-    "deposits": [
-      {
-        "resource": "iron_ore",
-        "position": [
-          -1800,
-          800
-        ]
-      },
-      {
-        "resource": "copper_ore",
-        "position": [
-          -1100,
-          1650
-        ]
-      },
-      {
-        "resource": "silica",
-        "position": [
-          1500,
-          -1550
-        ]
-      },
-      {
-        "resource": "carbon",
-        "position": [
-          -1700,
-          -1300
-        ]
-      },
-      {
-        "resource": "iron_ore",
-        "position": [
-          -17200,
-          14200
-        ]
-      },
-      {
-        "resource": "iron_ore",
-        "position": [
-          -19200,
-          15800
-        ]
-      },
-      {
-        "resource": "copper_ore",
-        "position": [
-          -15500,
-          13100
-        ]
-      },
-      {
-        "resource": "copper_ore",
-        "position": [
-          -14300,
-          11900
-        ]
-      },
-      {
-        "resource": "carbon",
-        "position": [
-          -21600,
-          3800
-        ]
-      },
-      {
-        "resource": "carbon",
-        "position": [
-          -23000,
-          1900
-        ]
-      },
-      {
-        "resource": "silica",
-        "position": [
-          -12500,
-          4200
-        ]
-      },
-      {
-        "resource": "silica",
-        "position": [
-          -9100,
-          1400
-        ]
-      },
-      {
-        "resource": "iron_ore",
-        "position": [
-          13800,
-          17800
-        ]
-      },
-      {
-        "resource": "copper_ore",
-        "position": [
-          15600,
-          16100
-        ]
-      },
-      {
-        "resource": "silica",
-        "position": [
-          19800,
-          9800
-        ]
-      },
-      {
-        "resource": "carbon",
-        "position": [
-          11600,
-          13500
-        ]
-      },
-      {
-        "resource": "silica",
-        "position": [
-          16200,
-          -14600
-        ]
-      },
-      {
-        "resource": "silica",
-        "position": [
-          19000,
-          -15800
-        ]
-      },
-      {
-        "resource": "iron_ore",
-        "position": [
-          12600,
-          -20900
-        ]
-      },
-      {
-        "resource": "copper_ore",
-        "position": [
-          10800,
-          -19800
-        ]
-      },
-      {
-        "resource": "carbon",
-        "position": [
-          16300,
-          -22600
-        ]
-      },
-      {
-        "resource": "carbon",
-        "position": [
-          -13800,
-          -18300
-        ]
-      },
-      {
-        "resource": "iron_ore",
-        "position": [
-          -17100,
-          -23100
-        ]
-      },
-      {
-        "resource": "copper_ore",
-        "position": [
-          -19100,
-          -21700
-        ]
-      },
-      {
-        "resource": "silica",
-        "position": [
-          -11300,
-          -14800
-        ]
-      }
-    ],
     "starting_deployment_materials": {
       "alloy": 12,
       "circuits": 6,
       "components": 2
-    }
+    },
+    "starting_credits": 0,
+    "resource_generation": {
+      "standard_count": 3,
+      "rare_count": 2,
+      "inner_area_fraction": 0.75,
+      "minimum_separation_half_size_fraction": 0.12
+    },
+    "bootstrap": {
+      "building_definitions": [
+        "solar_array",
+        "trading_port",
+        "robot_service_bay"
+      ],
+      "road_length_meters": 500,
+      "extractor_count": 1
+    },
+    "quantity_note": "Starting stock is a finite carried landing kit. It covers a road-connected solar array, level-1 trading port and a local extractor before any export income; it does not grant credits."
   }
 }

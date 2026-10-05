@@ -23,8 +23,8 @@ TArray<FSeigeWorksiteBounds> KnownBuildingBounds(const ASeigeGameMode& G,const F
         {
             if(B.Health<=0||(&Colony==&OwnerColony&&B.Id==OwnerId))continue;
             const FVector2D P=B.Position+Offset;
-            if(!G.Observer&&!Home&&!G.Sim.IsVisible(P))continue;
-            if(const auto* D=Colony.Definition(B))Result.Add({P,D->Footprint});
+            if(!G.Observer&&!Home&&!G.IsWorldVisible(P))continue;
+            if(const auto* D=Colony.Definition(B))Result.Add({P,D->ReservedFootprint});
         }
     };
     Add(G.Sim,FVector2D::ZeroVector,true);for(const auto& N:G.Neighbors)Add(N.Sim,N.Offset,false);
@@ -106,7 +106,7 @@ void ASeigeGameMode::SyncInventoryVisuals(const FSeigeSimulation& Colony,const F
         const double Amount=Building.Inventory.FindRef(Id);if(Amount<=UE_DOUBLE_SMALL_NUMBER)continue;
         FVector2D P;
         if(!SeigeFindExteriorPosition(WorldPosition,Definition.Footprint,Slot++,Clearance,Occupied,P))continue;
-        if(!Observer&&DetailedSectorIndex()!=4&&!Sim.IsVisible(P))continue;
+        if(!Observer&&DetailedSectorIndex()!=4&&!IsWorldVisible(P))continue;
         Occupied.Add({P,Clearance});
         SyncStockpile(Colony.Resources[Id],Amount,P,Key+TEXT("_inventory_")+Id,Live);
     }
@@ -139,16 +139,18 @@ void ASeigeGameMode::SyncWorkerVisuals(const FSeigeSimulation& Colony,const FSei
             if(Low.X<Area.Position.X+Area.HalfWidth&&High.X>Area.Position.X-Area.HalfWidth&&Low.Y<Area.Position.Y+Area.HalfWidth&&High.Y>Area.Position.Y-Area.HalfWidth){Tools=Station;break;}
         }
         Occupied.Add({Station,Clearance});
-        const double Phase=FMath::Fmod(Time+I*2.7+Building.Id*.31,12.)/12.;
+        const double Trip=FVector2D::Distance(Station,Tools)/FMath::Max(Colony.WalkingSpeed(),.001);
+        const double Cycle=Trip*2+8.;
+        const double Phase=FMath::Fmod(Time+I*2.7+Building.Id*.31,Cycle);
         double Travel=0;
-        if(Active&&Phase<.18)Travel=Ease(Phase/.18);
-        else if(Active&&Phase<.30)Travel=1;
-        else if(Active&&Phase<.48)Travel=1-Ease((Phase-.30)/.18);
+        if(Active&&Trip>0&&Phase<Trip)Travel=Phase/Trip;
+        else if(Active&&Phase<Trip+2)Travel=1;
+        else if(Active&&Trip>0&&Phase<2*Trip+2)Travel=1-(Phase-Trip-2)/Trip;
         const FVector2D Position=FMath::Lerp(Station,Tools,Travel);
-        if(!Observer&&DetailedSectorIndex()!=4&&!Sim.IsVisible(Position))continue;
+        if(!Observer&&DetailedSectorIndex()!=4&&!IsWorldVisible(Position))continue;
         const FString WorkerKey=Key+FString::Printf(TEXT("_operator_%d"),I);Live.Add(WorkerKey);
         auto* Worker=Visual(WorkerKey,TEXT("Robot"),RenderPosition(Position,3),WorkAmber,95);
-        const FVector2D Facing=Travel>.01?(Phase<.30?Tools-Station:Station-Tools):WorldPosition-Position;
+        const FVector2D Facing=Travel>.01?(Phase<Trip+2?Tools-Station:Station-Tools):WorldPosition-Position;
         Worker->SetActorRotation(FVector(Facing,0).Rotation());
         if(!Worker->ActorHasTag(TEXT("OperatorTool")))
         {
@@ -158,7 +160,7 @@ void ASeigeGameMode::SyncWorkerVisuals(const FSeigeSimulation& Colony,const FSei
         }
         TArray<UStaticMeshComponent*> Parts;Worker->GetComponents(Parts);
         for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("OperatorTool")))
-            Part->SetRelativeRotation(FRotator(Active&&Phase>=.48?FMath::Sin(Time*(Extraction?7:3)+I)*18:0,0,0));
+            Part->SetRelativeRotation(FRotator(Active&&Phase>=2*Trip+2?FMath::Sin(Time*(Extraction?7:3)+I)*18:0,0,0));
         // Tool stations represent the existing assigned workers and their tools;
         // material transfer remains exclusively the simulation's cargo couriers.
         const FString BenchKey=Key+FString::Printf(TEXT("_workbench_%d"),I);Live.Add(BenchKey);

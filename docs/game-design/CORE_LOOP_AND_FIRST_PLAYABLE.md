@@ -6,6 +6,8 @@ Working design document. The opening, current robotic population scope, and main
 
 The user has now authorized implementation. [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) records the concrete Unreal prototype subset and its deviations; this document continues to describe the broader intended colony loop.
 
+**Current v0.8 implementation direction:** The robotic population is called **workers** in the interface. Construction uses physical deliveries, travelling aggregate crews and staged installation; local road/rail/vacuum tiers improve transport. The initial command structure occupies one ninth of its reserved future plot. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns these rules and their external data; the broader open choices below remain separate. Runtime/package verification is not implied.
+
 ## Starting colony
 
 **Confirmed direction:** The player starts with a command center and some robotic workers. The exact worker count and starting supplies remain open.
@@ -20,11 +22,11 @@ Only one central command center and central zone may be maintained at a time. Th
 
 **Confirmed direction:** New population is produced as robots. Growth is constrained by a maximum robot-production rate and by resource production at defined rates per time unit.
 
-The core automatically produces robots to fill open jobs and automatically reduces population when job demand falls. The population-reduction mechanism and response rates remain open.
+Workers automatically fill open jobs. Surplus workers occupy physical inactive storage, with optional colony/trading-port reserve targets. Surplus disassembly is automatic for parts shortages or full storage and can be requested manually; each disassembly costs 1 kWh and returns configured parts.
 
-**Provisional direction:** New robots can only be produced at the command core, possibly because it contains a unique advanced manufacturing capability. A high-end lithography plant is an illustrative explanation, not a selected prerequisite.
+**Confirmed correction:** The core has a slow selectable universal replicator; a separate worker factory assembles workers faster with less electricity. Both use real material inputs and energy. The old core-only/lithography explanation is superseded.
 
-**Open:** Robot needs, job-allocation and demand-counting rules, production inputs, exact rates, population-reduction mechanics, and how workers relate to the broader robotic population. Staffing, building operation, and population adjustment are automatic. See [Population, Necessities, and Morale](POPULATION_AND_MORALE.md).
+**Open balance:** Exact production and response rates, capacity, body mass/volume, parts returns and broader worker needs. Staffing remains automatic. [Population, Necessities, and Morale](POPULATION_AND_MORALE.md) and [the v0.8 construction contract](CONSTRUCTION_AND_TRANSPORT_0_8.md) distinguish these choices from confirmed storage/replication mechanics.
 
 ## Core decisions and pressures
 

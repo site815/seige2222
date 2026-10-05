@@ -1,5 +1,11 @@
 * text=auto
 *.json text eol=lf
+# Save compatibility fingerprints authored gameplay files byte-for-byte.
+# Preserve these external definitions exactly across repository checkouts.
+Rules/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+AIFILES/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+Interface/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+Graphics/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 *.uasset binary
 *.umap binary
 *.blend binary
@@ -9,3 +15,5 @@ Content/Art/NatureV04/SM_JacarandaA.uasset filter=lfs diff=lfs merge=lfs -text
 Art/EnvironmentV04/Source/*.blend filter=lfs diff=lfs merge=lfs -text
 Content/Art/NatureV07/SM_JacarandaNearV07.uasset filter=lfs diff=lfs merge=lfs -text
 Art/EnvironmentV07/Source/SM_JacarandaNearV07.blend filter=lfs diff=lfs merge=lfs -text
+Content/Art/CompanionDog/SK_CompanionDog.uasset filter=lfs diff=lfs merge=lfs -text
+Art/CompanionDog/Source/CompanionDog.blend filter=lfs diff=lfs merge=lfs -text

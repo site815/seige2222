@@ -1,244 +1,71 @@
 # seige2222 — Development and verification
 
-Updated: **2026-10-05** (Asia/Seoul). Engine: Unreal Engine 5.8.3. Platform: Windows x64.
+Updated: **2026-10-06** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
 
-## v0.7.0 scenery, performance and scenario controls
+## Locally verified v0.8.0 prototype
 
-The v0.7 source adds independent **Background bugs** and **Periodic attacks** switches to scenario setup. Both default on and apply to the player and every AI colony before developed-start preparation. Saves retain the switches; legacy v0.6 snapshots without them load as on/on. The unchanged `prototype-6.0` Rules fingerprint preserves v0.6 compatibility. Partial, invalid or inconsistent flags reject the entire load without replacing the current scenario.
+**Local verification is complete.** Version 0.8 combines the resource/energy/trade economy, physical construction and Rex with tiered facilities, worker replication and storage, walls, configurable vehicles and fleets. The launcher now opens v0.8.0; v0.7.0 remains available. [The machine-readable record](verification/v0.8.0.json) identifies the executable and scope of each check. Known terrain artifacts, stylized Rex artwork and native-resolution performance limits remain.
 
-The environment uses brighter sunlight and sky fill, more colorful photographic terrain, simpler distant foliage and the provider's authored lower-detail nearby broadleaf tree. All nine sectors retain the same deterministic tree placements across focus changes. Grass streams under a soft per-frame budget in spatially grouped instances; this removes the global batch updates that made rotation particularly expensive in the first candidate. Native rendering uses TAA; reduced rendering percentages retain TSR. The user-facing quality choice remains **Medium**, with render resolution separate.
+Current saves use **format 5** and matching `prototype-8.0` Rules/AI fingerprints. Prior saves are intentionally incompatible. The gameplay package completed **117 Shipping stages with zero failures and exit 0**, with **828 endpoint samples all zero TCP/UDP**. Native reconciliation now contains **84 unique clean results**, including final terrain/placement and configurable-budget checks. The 117-stage executable predates the final rendering and configurable-validation changes. The final package passed its boot/offline check and all four display states, and completed isolated static/orbit measurements. At **3840×1600, Medium, 100% rendering**, view means range from **30.5 to 48.9 FPS**, so this prototype does not sustain 60 FPS.
 
-These changes reduce scenery disappearance and camera cost; they do not establish zero popping or Manor Lords quality. Visible detail changes and softness remain possible. Switching the detailed sector still rebuilds terrain/forest and refills nearby grass, so a transition hitch remains outside the fixed-focus orbit measurements. See the [v0.7 graphics record](game-design/GRAPHICS_PERFORMANCE_0_7.md) and [asset provenance](../Art/EnvironmentV07/README.md).
+### Implemented scope
 
-**v0.7.0 is built and verified in `Builds/v0.7.0/Windows`; `Play-seige2222.cmd` selects it.** Compatible v0.6 saves remain supported.
+- **Resources and trade:** Every region, including empty ones, has seeded **3 standard + 2 rare** distinct deposits from the confirmed four-plus-four pool. Positions lie within a centered square covering 75% of region area. Empty regions have no colony entities. Cargo tracks mass and volume; credits begin at zero and arise only through timed external trade. Ports upgrade through three levels; AI uses the same paid bootstrap and missing-resource imports.
+- **Power and production:** Completed road networks connect generation, loads and shared batteries. Passive use accrues over simulation time; material batches escrow actual local inputs and transaction energy. Multi-output recipes preserve their complete bill. Rates, prices, quantities and capacities remain editable provisional balance.
+- **Construction and plot reservation:** Couriers deliver real stock; aggregate crews walk to sites and install materials through timed phases. The core retains explicit deployment sensing/defense. Level one is the parked shuttle, with 240 logical-unit half-width; levels two/three use 480/720. All reserve the largest 720-unit plot. Vegetation clears the **reserved** plot; grading, foundations and foundation dirt follow the **built** footprint. Upgrades require additional materials and work.
+- **Workers:** The selected core offers slow universal replication, including workers. A dedicated factory assembles workers faster with lower energy use. Surplus workers are counted physical cargo, with colony production targets, port export targets, automatic recycling and manual disassembly. The owned stored-worker count includes transit and export escrow; it does not mean every body is locally available for reactivation. The colony target protects a reserve, while the port target supplies export stock. Default disassembly energy is 1 kWh and remains a positive editable setting. Required active workers, committed cargo and protected reserves are not free recycling stock.
+- **Transport and walls:** Paid road/rail/vacuum tiers provide powered 2×/4×/8× movement. Roads have durability, tracked wear and local material/energy repair rules. Editable wall joints create ordinary construction sites with a chosen inside/outside; walls remain physical obstacles without power. The planner is a prototype local routing model, not a full traffic or civil-engineering simulation.
+- **Combat and fleets:** Separate live weapon, chassis and combat catalogs define four weapon families, shield/armor interactions and twelve chassis. Fleet capacity starts at 50 points with 1/2/4/8 chassis costs; core levels share 1/2/3 total fleet slots across roles. Factories and platforms request local materials before paid assembly/refit. Defensive/escort fleets reposition around friendly obstructions for a clear shot within existing sensor, range and leash limits; passive fleets do not pursue. The world bridge implements privateer transit, encounters, physical loot and return. Shuttle boarding requires the fleet at the service port; only actually embarked vehicles evacuate.
+- **Controls and companion:** New scenarios start at **1×**, with a Paused/1×/5×/10× speed ring and Space restoring the previous nonzero speed. General actions use Menu; manual escape requires the selected own core. Rex consumes nearby organic food, grants capped local morale and walks autonomously or under optional 1× first-person control. Saves preserve his state and the colony camera. The HUD now exposes Galactic credits, stored/capacity energy in kWh, and generation/passive demand in kW. These readouts are included in the completed gameplay checkpoint.
 
-| v0.7 check | Result |
-| --- | --- |
-| Native automation | **38 clean passes; zero warnings, failures or unrun tests** |
-| Definitions | Configuration validation and **32 negative Rules cases** passed; all nine staged JSON hashes match source |
-| Shipping package and interaction route | **Build exit 0; 79 stages, zero failures, game exit 0**; 874 courier-motion frames between fixed simulation ticks |
-| Offline observation | **86 process-tree samples, zero TCP/UDP endpoints**; bounded endpoint observation, not packet capture |
-| Actual display route | **Four states, zero failures**: 3840×1600 borderless, 1280×720 windowed, 75% rendering, restored native; AA methods 2/2/4/2 confirm TAA/TSR selection |
+The catalog contains **22 cargo types, 14 recipes and 59 building definitions**: 35 ordinary blueprints plus three custom road/wall UI tools. Storage is explicitly large enough for the full permitted chassis/weapon bill and local buffers. The maximum current chassis requires 128 kWh per assembly; a charged 100 kWh bank plus the level-one core's 30 kWh capacity can meet that transaction. Neither increased capacity nor a material-request plan awards resources or energy.
 
-The [verification record](verification/v0.7.0.json) retains executable and external-definition hashes. [Scenario controls](../Art/Previews/v07_scenario.png), [main menu](../Art/Previews/v07_main.png) and [display results](../Art/EnvironmentV07/display-shipping.json) come from the Shipping package. Full generated logs and binaries remain local. Interaction-route FPS is not a benchmark.
+### Verification matrix
 
-Final Shipping measurements on the RTX 4070 Ti SUPER / Ryzen 7 9800X3D, at 100% rendering:
-
-| View | v0.6 native static FPS | v0.7 native static FPS | v0.7 native orbit FPS | v0.7 1600×900 static FPS |
-| --- | ---: | ---: | ---: | ---: |
-| Colony | 26.96 | 46.23 | 46.85 | 153.74 |
-| Meadow | 20.11 | 31.84 | 42.19 | 103.30 |
-| Ground | 20.25 | 30.35 | 32.95 | 102.86 |
-| Hills | 23.78 | 36.81 | 36.40 | 94.18 |
-| Boundary | 35.06 | 43.98 | 41.49 | 107.25 |
-
-Native means **3840×1600**. Each view waits for initial scenery, settles for four seconds and samples at least five seconds. Orbit adds one complete yaw turn with modest pitch variation, including ongoing camera-driven streaming; it does not cross sectors. The simulation is paused with empty neighbors. These are one-run mean FPS values, not minimum FPS or busy-colony stress results. The old static route began warmup directly after synchronous setup. The full v0.7 comparison changes foliage, shaders, lighting and quality settings together, so it is not an equal-quality or single-optimization claim.
-
-[Native static](../Art/EnvironmentV07/benchmark-shipping-native.json), [native orbit](../Art/EnvironmentV07/benchmark-shipping-orbit-native.json), and [1600×900 static](../Art/EnvironmentV07/benchmark-shipping-medium.json) reports retain frame-time distributions, hardware and settings. Native orbit p95 ranges from 24.33 to 37.27 ms. **Native ultrawide still does not sustain 60 FPS.** The 1600×900 boundary view regressed from v0.6's 145.45 to 107.25 FPS; denser neighboring scenery and other concurrent changes mean gains are not universal. [Colony](../Art/Previews/v07_colony.png) and [ground](../Art/Previews/v07_ground.png) show the actual Shipping rendering. Distant silhouettes, aerial ground variation and temporal foliage quality still fall short of the reference target.
-
-## Historical v0.6.0 local delivery verified
-
-**The v0.6.0 Windows Shipping package is built and verified in `Builds/v0.6.0/Windows`; `Play-seige2222.cmd` selects it. Start a new scenario using `prototype-6.0`.** All 34 native tests passed cleanly. The packaged interaction route passed 79 stages with zero failures and exit 0; the separate actual-display route passed four states with zero failures. This is a functional release, with native-resolution performance and reference-quality visuals still unfinished.
-
-The camera now surveys the complete home sector before the grid map blends in. Wheel zoom and map-entry/sector-selection zoom ease over rendered frames. Native borderless is the default display mode; window sizes and independent 50–100% rendering resolution are selectable, with one **Medium** quality profile. Windows high-DPI support prevents the 3840×1600 monitor being treated as a 1920×800 virtual desktop. There is no exclusive-fullscreen mode. A direct HUD **Menu**, Escape and F10 open the paused game menu; Resume restores the preceding pause state. Runtime font rendering and a cleaner main-menu composition replace enlarged bitmap text. Local speeds are **1×, 5×, 10×**, cycled with +/−; Space toggles pause.
-
-The graphics pass reduces atmospheric haze and bloom, restores anisotropic grass color filtering, and tunes temporal reconstruction and Nanite detail while retaining foliage density. Source assets and licenses remain documented. Static review shows clearer terrain and text, but does not establish elimination of moving grass shimmer or Manor Lords quality parity. See [Graphics Performance 0.6](game-design/GRAPHICS_PERFORMANCE_0_6.md) for Epic references, local engine-source findings and measured tradeoffs.
-
-Couriers show their actual cargo and visible exterior loading stops. Representative workers fetch tools and work around buildings when staffing, supplies and operating conditions allow it. Outdoor inventory uses raw piles, ingots and crates; indoor inventory stays inside. Construction retains real reservation and physical delivery before worker assembly; delivered visual stacks shrink as material is installed. Courier/bug movement and construction interpolate every rendered frame between authoritative 20 Hz simulation ticks. This does not change transport speed, production rates, AI rules or building costs, and it does not introduce independent pathfinding for every robot.
-
-| v0.6 check | Recorded result | Evidence and boundary |
+| Check | Result | Scope |
 | --- | --- | --- |
-| Full native automation | **34 clean passed; 0 warnings, failed or unrun** | `Saved/Automation/v06-final/index.json`; includes camera survey/easing, menu pause/save, 1/5/10 shortcuts, interpolation by entity ID, exterior work/stock placement and operating gates. |
-| External definitions | Configuration and **32 negative Rules cases** passed | Rules, AI, Interface and Graphics validation. All nine packaged JSON files match source SHA-256 hashes. |
-| Shipping package and interaction | **Exit 0; 79 stages, 0 failures** | `Saved/package-v06.log`, `Saved/packaged-v0.6.0-UiSmoke-verification.json`; representative 1× courier movement changed on 831 frames between fixed ticks. This is functional evidence, not a human motion-quality or FPS guarantee. |
-| Packaged network observation | **84 samples; all 0 TCP/UDP endpoints** | Launched game process tree during the interaction route; bounded endpoint observation, not packet capture or every possible run. |
-| Actual display changes | **4 states, 0 failures** | [Retained Shipping report](../Art/EnvironmentV06/display-shipping.json): native 3840×1600 borderless, 1280×720 windowed, windowed at 75% rendering, then restored native/100%; Medium retained. No saved display preferences overwritten. |
-| Runtime visual review | Menu, settings, survey, construction, stockyards and grass inspected | [Main menu](../Art/Previews/v06_main.png), [settings](../Art/Previews/v06_settings.png), [survey](../Art/Previews/v06_sector_survey.png), [construction](../Art/Previews/v06_construction.png), [stockyards](../Art/Previews/v06_stockyards.png), [ground](../Art/Previews/v06_ground.png). Captures are from the 1600×900 interaction route; display assertions come from the separate actual-window test. |
+| External definitions | Rules **79 negative cases**, combat/configuration, and AI **2 valid / 4 invalid cases** passed | Definition checks are separate from gameplay evidence |
+| Native gameplay and UI | **84 unique clean latest results**, zero failures/warnings/unrun | Combined full and focused reports; overlapping totals are not added |
+| Rendered interaction | **117 stages, zero failures, exit 0** | Earlier A081430D executable, before final rendering and configurable-validation changes |
+| Paid bootstrap and controls | Road grids, raw export, missing-standard import, worker/port targets, wall preview/cancel, chassis/module material requests and Rex controls passed | Finite stock and ordinary construction; not proof of every seed |
+| Final Shipping package | **BuildCookRun 40.41 s, exit 0**; **17/17** authoritative JSON files match staging | Final executable 784B4CFA; launcher now selects v0.8.0 |
+| Final boot and display | Ready, exit 0; **8 zero-endpoint samples**; **4/4** display states passed | Short boot plus bounded endpoint observations, separate from the earlier full route |
+| Final graphics | Native static/orbit benchmarks completed; **30.5–48.9 mean FPS** across views | GPU-bound samples; residual soil patterns, bare grass patches and stylized Rex remain |
+| Publication tracking | Git history and delivery message | Kept separate from this local verification record |
 
-Final Shipping timings on the RTX 4070 Ti SUPER / Ryzen 7 9800X3D, the same Medium profile at 100% rendering, one run per resolution:
+The test route runs ordinary construction/economy at **10×**, with a separate 1× walking probe and short paused UI checks. It does not grant stock, finish sites, or rewrite rule timing. Expanded-route assertions retain their stage number and explanation in JSON; the verification wrapper rejects failed assertions even when the game process exits 0.
 
-| View | 3840×1600 mean FPS | 1600×900 mean FPS |
-| --- | ---: | ---: |
-| Colony | 26.96 | 107.17 |
-| Meadow | 20.11 | 80.06 |
-| Ground | 20.25 | 79.55 |
-| Hills | 23.78 | 80.89 |
-| Boundary | 35.06 | 145.45 |
+The current matrix contains **84 unique clean native results**, selected by latest result per full test name. The final **23-test terrain/combat** and **17-test placement** runs overlap earlier results; they add configurable hardpoint/fleet-budget and sward-placement coverage without inflating the unique count. All **ten AI tests** and the **21-test controls run** remain clean. The failed neighbor seed reached **20/20 targets at 53,920 seconds**, within its **64,800-second** limit. This is combined evidence, not a single final full-suite invocation. Exact report hashes, superseded failures and per-test provenance remain in JSON.
 
-Each view has at least four seconds of warmup followed by five seconds of complete frame intervals in a paused fresh colony with empty neighbors. These are fixed-view graphics measurements, not minimum FPS or a busy-colony simulation benchmark. [Native report](../Art/EnvironmentV06/benchmark-shipping-native.json) and [1600×900 report](../Art/EnvironmentV06/benchmark-shipping-medium.json) retain settings, mean frame time and p95. Lower render resolution is available without changing HUD resolution; **native ultrawide remains slow**. The earlier editor profile experiments observed 25–40% gains at native resolution, but changed multiple settings and do not establish equal-quality gains against v0.5.
+The final frozen candidate completed **BuildCookRun in 40.41 s, exit 0** (`Saved/package-v08-final.log`). Its Shipping executable is **166,759,936 bytes**, SHA-256 `784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877`. It passed four actual display states: **3840×1600 borderless**, **1280×720 windowed**, **75% rendering**, and restored borderless, with AA modes **2/2/4/2**. Its boot check reached ready at 15 simulation seconds and exited 0, with **8** live process-tree samples showing zero TCP/UDP endpoints. Both isolated native-resolution static/orbit benchmarks completed; [their timing table and scope](game-design/GRAPHICS_PERFORMANCE_0_8.md) document the GPU limit.
 
-The [v0.6 verification record](verification/v0.6.0.json) retains executable/definition hashes and test counts. Full generated logs and local binaries remain outside Git. No separate Shipping save/load roundtrip or occupied-service-bay acceptance test is claimed; native tests cover persistence. Exterior worker/tool and material counts are representative, and crowded stockyards are not a global collision/pathfinding system. Construction refunds, full morale/revolt, fleets, cross-colony logistics and persistent multiplayer remain later work.
+The successful **117-stage gameplay run belongs to the earlier A081430D executable**, built in 25.03 s before the final rendering and configurable-validation edits. The final package independently matches **all 17 authoritative source/staged JSON hashes** in `Saved/staged-v08-final-hashes.json`. Its affected native tests and display/boot/benchmark evidence are separate; the old gameplay result is not relabeled with the new hash.
 
-## Historical v0.5.0 local delivery verified
+The completed `Saved/packaged-v0.8.0-UiSmoke-verification.json` records **117/117 stages, zero failures, exit 0**, **790** courier-motion frames between simulation ticks, and measured worker movement of **5 km/h**. All **828** process-tree endpoint observations were zero TCP/UDP; this bounded check is not packet capture. Actual construction, powered transport, worker/port targets, walls, material requests, Rex controls and command-hull selection were exercised. The earlier 18-failure candidate remains separately preserved: one selection failure and 17 consequences of failed Developed preparation. Those historical failures are not current results.
 
-**The v0.5.0 Windows Shipping package was built and verified in `Builds/v0.5.0/Windows`; the launcher selected it for that release. All 29 native tests passed: 28 clean successes, one success with editor background HTTP warnings, zero failed or unrun. The packaged interaction route passed all 63 stages with zero failures and exit 0.** Local verification does not claim final visual acceptance or reference-game parity. Historical v0.4 evidence follows below.
+[`.gitattributes`](../.gitattributes) now preserves authoritative runtime JSON bytes with `-text`, because save compatibility fingerprints hash the raw files. Release staging compared raw file blob IDs with indexed blob IDs after renormalization: **all 17 matched**, without changing runtime JSON bytes or the packaged executable hash. The final comparison in `Saved/indexed-v08-final-hashes.json` again matched **17/17**, as does the final source/staged SHA-256 manifest. This preserves the current policy fingerprint across checkout and staging without adding gameplay behavior.
 
-Construction now reserves uncommitted core stock at order time without consuming it immediately. Tagged couriers deliver the complete bill to a site's separate inventory, then assigned robot builders perform timed work. Completion consumes those materials into the structure. Until then, the site does not produce, repair, sense or fire. Site progress, deliveries in transit, pauses and maintenance state survive save/load; invalid snapshots are validated separately before replacing live state.
+Developed scenarios now prepare in bounded frames with progress and cancellation, preserving the prior scenario until all chosen sectors succeed. The same fixed-step history runs in synchronous native tests. Preparation can still take minutes; no cached or fabricated completed colony bypasses construction. The rendered route waits for this preparation separately from its subsequent 10× gameplay.
 
-The initial core is a real six-second deployment using six starting robots and a separate shuttle-carried kit. Its operating supplies and preloaded escape cargo are distinct from that kit. The original shuttle descends during deployment and remains docked afterward. On core loss or ejection, only cargo already aboard is retained; cross-server relocation remains outside this slice. The placement ghost, scaffold, delivered stacks, aggregate builders and progressive building reveal visualize simulation state without creating a unit-micromanagement system.
+Starting-colony acceptance checks the authored milestone, survival, paid development and recovery; it does not require every optional structure simultaneously complete after attacks. Developed preparation retains the stricter full-target readiness requirement. Earlier fixture passes did not cover the neighbor seed later exposed by Shipping.
 
-A staffed robot service bay supplies sixteen support berths in addition to the core's eight. It has one operating job, requires physical construction, and consumes maintenance components from its own delivered stock. Robot manufacture follows open jobs, assembly supplies and available support capacity; unsupported or poorly maintained population lowers efficiency. The external staffing order is core, service, defense, sensor, then other industry/storage, applied to construction and operation. Power remains explicitly zero kW: charging is an abstract service-capacity model, not a simulated electrical grid or per-robot battery system.
+### Assets and graphics evidence
 
-AI follows the same construction and support rules. Its data-defined plan completes and staffs earlier targets before expanding. Developed starts actually run a finite supplied colony through normal delivery, workforce, maintenance, production and threats rather than granting completed structures. Rules are now `prototype-5.0`, simulation saves use format 2, and exact Rules/AI fingerprints reject older saves. **Start a new v0.5 scenario.**
+Terrain and canopy imports completed cleanly: [surface import](../Art/EnvironmentV08/surface_import_report.json) and [canopy import](../Art/EnvironmentV08/Canopies/canopy_import_report.json). The terrain graph includes one shared **22 m** macro photograph sample in addition to the retained per-layer samples. The canopy variants preserve bounds and use slightly fewer source triangles. Current vegetation clearing follows the reserved expansion plot; ground grading follows the built plot. The retained forest-fade material is imported and included in the final Shipping benchmarks. Residual soil patterns remain a documented visual limit. Its near-to-far photographic transition adds no geometry, density reduction, opacity mask or dither.
 
-The graphics source adds the same terrain material to coarse neighboring grids and sparse deterministic background woodland, preserving continuous scenery without exposing hidden colony structures. Focused terrain, real relief and nearby grass density remain. Grass shadow distance, indirect-lighting contribution and Nanite geometry target are externally configurable. The forest-floor material fades high-frequency detail with distance. The final matched Shipping comparison at Epic quality and native 1600×900 measured 5.14–15.10% higher mean FPS with the selected Nanite geometry target: 38.80–70.32 FPS across five views on the RTX 4070 Ti SUPER. This is one controlled pair within v0.5, not a whole-game or v0.4 comparison; Manor Lords visual parity remains unmet. See [Graphics Performance 0.5](game-design/GRAPHICS_PERFORMANCE_0_5.md) and the [original construction asset record](../Art/Construction/README.md).
+The refined **Rex r4** asset has imported with **118,331 source triangles, 24 bones, three LODs, ten material slots, and idle/walk clips**, including the brown-iris material. The [current import report](../Art/CompanionDog/import_report.json) verifies this revision; runtime review accepts it as a stylized prototype interpretation, with remaining likeness and contact limits. Distance-driven animation uses the external stride value. [His asset record](../Art/CompanionDog/README.md) and [texture provenance](../Art/CompanionDog/TEXTURE_PROVENANCE.md) describe original authored geometry and generated artwork guided by private reference photos; no photo pixels are embedded. Import checks do not establish photographic likeness or correct runtime foot contact.
 
-| v0.5 check | Recorded result | Evidence and boundary |
-| --- | --- | --- |
-| Full native automation | **29 passed: 28 clean + 1 with warnings; 0 failed, 0 unrun** | `Saved/Automation/v05-final/index.json`; simulation, construction/services, AI, saves, terrain/camera/privacy, frontend and real controller/HUD routing. |
-| Native warning | Unreal editor background HTTP retry/failure to `google.com/generate_204` | Recorded during `Seige.AI.StartingAndDevelopedColonies`, which passed with zero errors. It does not establish the network behavior of a v0.5 Shipping build. |
-| Construction and service coverage | Physical reservation/delivery/completion, local upkeep and support limits passed | Native tests include deterministic mid-construction continuation and invalid-save rejection; they do not establish every production layout's viability. |
-| First-playable viability | **12 newly manufactured components at 435 simulation seconds** | Normal-action objective test, without inventory grants or instant-construction bypasses; verifies one finite winning strategy, not indefinite sustainability. |
-| Starting/developed AI | Native production and preparation checks passed | Starting AI manufactured 35 components by the configured 600-second preparation budget; deterministic save continuation passed. |
-| External definitions | Configuration validation and **29 negative Rules cases** passed | Fourteen building definitions, including thirteen buildable entries, with construction/service policies and separate AI/UI/Graphics files. |
-| Shipping build and packaged interaction | **Exit 0; 63 stages, 0 failures** | `Saved/package-v05.log` and `Saved/packaged-v0.5.0-UiSmoke-verification.json`; final process exited successfully. |
-| Packaged network observation | **73 samples; all 0 TCP / 0 UDP endpoints** | Same verification JSON, sampling the launched process tree. This is bounded endpoint observation, not packet capture or proof for every possible run. |
-| Loose definition staging | **All nine JSON files match source byte hashes** | Five Rules files, two AIFILES definitions, Interface and Graphics checked against `Builds/v0.5.0/Windows/seige2222/Binaries/Win64`. |
-| Source repository | **main branch** | Repository: [site815/seige2222](https://github.com/site815/seige2222). Local binaries, caches and generated logs remain excluded from Git. |
+The earlier five-view graphics run used **1600×900, Medium, 100% render resolution and 10× simulation**: `Saved/GraphicsBenchmark-v08-surface-canopy.json`, with captures in `Saved/Screenshots/Benchmark/v08-surface-canopy`. Each view waited for initial scenery, settled for four seconds and sampled at least five seconds. It is not the final native-resolution Shipping result or a crowded-colony stress test. See the [v0.8 graphics record](game-design/GRAPHICS_PERFORMANCE_0_8.md).
 
-The retained [v0.5 verification record](verification/v0.5.0.json) contains test counts, packaged executable and definition hashes, hardware, and benchmark report paths. Full generated logs remain local.
+**No Manor Lords parity or sustained frame-rate claim is made.** Settled runtime review confirmed bare grass strips on slopes and faint repeated soil patterns. The final native contact/placement checks pass. Same-count stratified placement visibly reduces long gaps in the matched ground view, but bare patches remain. The higher-cost soil experiment was rejected; retained forest fading still leaves some patterned soil. The final isolated benchmarks quantify the current cost; they do not establish crowded-colony or long-session performance. Foliage transitions, distant detail, animation contact and camera transitions remain polish targets. Persistent networking, player extraction across regions, a general inter-colony trading economy and full relocation/scavenging remain beyond this candidate. Current privateering source does not imply those separate systems are complete.
 
-Retained **v0.5 Shipping captures**: [shuttle deployment](../Art/Previews/v05_shuttle.png), [construction](../Art/Previews/v05_construction.png), [completed service bay](../Art/Previews/v05_service.png), [sector boundary](../Art/Previews/v05_boundary.png), and [meadow](../Art/Previews/v05_meadow.png). The meadow image comes from the matched Epic/100% Shipping benchmark; the other four come from the packaged interaction route. Runtime inspection checked PBR preservation on the core, visible builders, shuttle docking, scaffold and completed structures. The service bay in the capture had `supported_here=0`, so its empty appearance was expected; the occupied-bay visual state was not verified. The final controlled Epic/100% benchmark is separate from these screenshots and is recorded in [Graphics Performance 0.5](game-design/GRAPHICS_PERFORMANCE_0_5.md). The smoke's instantaneous FPS is not a benchmark result.
+## Historical verified v0.7.0
 
-No separate v0.5 packaged save/load roundtrip is claimed. Native tests cover simulation construction state and neighborhood persistence. Construction cancellation/refunds, individual builder pathfinding, per-robot batteries, full morale/revolt, controllable fleets, cross-colony trade/raiding and persistent multiplayer remain outside the implementation. The v0.4 appearance and performance limitations below remain historical evidence, not current benchmark results.
+The retained package passed **38 clean native tests**, **79 Shipping interaction stages with zero failures and exit 0**, and **four actual display states**. All nine staged JSON hashes matched; 86 process-tree samples recorded zero TCP/UDP endpoints. It added independent background-bug/invasion switches, streamed scenery, TAA at full resolution and TSR below full resolution. It used the older `prototype-6.0` economy and compatible v0.6 saves.
 
-## Historical v0.4.0 local delivery verified
+Native 3840×1600 performance did not sustain 60 FPS, and sector-change hitches/detail transitions remained. The [v0.7 verification record](verification/v0.7.0.json) and [graphics report](game-design/GRAPHICS_PERFORMANCE_0_7.md) retain exact test conditions, timing distributions and captures. Longer v0.2–v0.7 narratives are preserved in the [historical archive](DEVELOPMENT_HISTORY_0_2_TO_0_7.md), separate from current behavior.
 
-**The v0.4.0 Windows Shipping package was built and verified in `Builds/v0.4.0/Windows`; the launcher selected it for that release. Native tests passed 27 cases, and the packaged route passed all 53 stages with exit 0.** The native result comprises 26 clean successes and one success with editor background HTTP warnings, not a gameplay assertion failure. No Manor Lords visual parity or final user acceptance is claimed.
-
-The interface has resource overlays with alerts beneath, floating bottom construction, captured middle-button orbit, a cartographic region view, focused-sector detail, and complete building dossiers. Armed/unarmed and zero-power states are explicit. Rules `prototype-4.0` execute weapon shots/reloads and preserve cooldown state; **start a new scenario**, because prior-rule saves are intentionally incompatible. These prototype choices do not finalize the full game or add persistent multiplayer.
-
-On **2026-10-05**, the installed Manor Lords game's latest Autosave was loaded, paused for wide/close-ground/map inspection, and exited without saving. The user rejected the preceding flat-ground/texture pass. The resulting terrain uses a focused 1024-subdivision grid at approximately 3.52 m spacing, rolling/ridge relief, compact foundations, natural unbuilt deposits, continuous grass/soil variation, and cloud lighting. The 8–80° orbit lowers smoothly near the 120 minimum zoom while preserving the chosen angle; minimum camera ground clearance is 160 cm.
-
-Final grass patches retain their bounds and add **920 low Bermuda tufts beneath the taller swards; each of the two meshes has 77,572 source triangles**. Runtime scale is 1.0–1.3, with bounds-aware foundation clearance, 500–900 m culling, and 9×9 streamed cells using 350,000 candidates. The imported 8 m photographic material layer adds desaturated tonal variation, normals, and roughness without geometric displacement. Measured filtered luminance informed a center of 0.25 and contrast 4, retaining the 0.86–1.14 multiplier clamp. See the [grass import report](../Art/EnvironmentV04/meadow_import_report.json), [grass calibration](../Art/EnvironmentV04/meadow_calibration_report.json), and [terrain report](../Art/EnvironmentV04/terrain_import_report.json).
-
-| v0.4 check | Recorded result | Evidence and boundary |
-| --- | --- | --- |
-| Native automation | **27 passed: 26 clean + 1 with warnings; 0 failed, 0 unrun** | `Saved/Automation/v04-verified/index.json`; includes uphill/horizontal terrain picking, incremental sector-edge seams, compact pads, privacy, camera, UI, simulation, AI, and persistence. |
-| Native warning | Editor background request/retry to `google.com/generate_204` failed | `Saved/native-v04-verified.log`; warning messages were captured during HiddenNeighborTerrain, which passed. This is distinct from a gameplay failure; Shipping network observations are recorded separately below. |
-| Final rendered route | **53 stages, 0 failures** | `Saved/render-v04-delivery.log` and `Saved/PresentationSmoke.json`; final observer snapshot reports 47.2 FPS. |
-| External definitions | Configuration validation passed | Rules, AI, Interface, and ten nature roles resolve; 22 deliberately invalid Rules cases are rejected. |
-| Shipping build and packaged interaction | **Exit 0; 53 stages, 0 failures** | `Saved/package-v04.log`, `Saved/packaged-v0.4.0-UiSmoke-verification.json`; final packaged snapshot 48.83 FPS. |
-| Packaged network observation | **45 samples; all 0 TCP / 0 UDP endpoints** | Same verification JSON, sampling the launched process tree. This is bounded endpoint observation, not packet capture or proof for every possible run. |
-| Loose definition staging | **10 files matched source hashes** | `Saved/staged-v04-files.json`; Rules, AIFILES, Interface, and Graphics. |
-
-Close and middle-distance captures are materially fuller, with real hills. Distant ground remains smooth/olive and the forest remains visually uniform; the result is still below the Manor Lords reference. Retained **Shipping captures**: [colony](../Art/Previews/v04_gameplay.png), [meadow](../Art/Previews/v04_meadow.png), [terrain](../Art/Previews/v04_terrain.png), [regional map](../Art/Previews/v04_regions.png), and [weapons dossier](../Art/Previews/v04_weapons.png).
-
-| Editor-view snapshot | Earlier capture FPS | Final editor capture FPS |
-| --- | --- | --- |
-| Play | 51 | 47 |
-| Middle meadow | 45 | 34 |
-| Ground | 44 | 33 |
-| Hills | 50 | 48 |
-
-These instantaneous readings illustrate the cost of denser cover in the observed views. They are not averages, controlled comparisons, hardware benchmarks, or a minimum-FPS guarantee.
-
-Known retained limitation: circular simulation spacing can allow diagonally placed square foundations to overlap at their corners. Building-art/footprint alignment remains deferred. Incremental terrain changes preserve shared sector edges and hidden-neighbor information boundaries, with native coverage.
-
-Earlier v0.4 history is retained in logs: the 41-stage action route passed but weapons/unarmed/regional-AI captures were mistimed; the later 53-stage terrain and calibrated routes corrected them. Passing those paths did not make the rejected earlier art acceptable. The [v0.4 milestone](game-design/GRAPHICS_MILESTONE_0_4.md) records current scope and remaining release work.
-
-## Historical v0.3.0 delivery status
-
-**The v0.3.0 Windows Shipping package is built and verified.** Nineteen native tests passed cleanly, and the packaged interaction route completed 28 stages with zero failures and exit code 0. The historical package is in `Builds/v0.3.0/Windows`; the launcher selected it for that release. The source repository is [site815/seige2222](https://github.com/site815/seige2222); local versioned binaries are excluded from Git. The v0.2 record below is historical evidence for that version.
-
-## Implemented v0.3 presentation
-
-The camera uses perspective projection with orbit yaw/pitch and terrain clearance. Q/E rotate it; middle-mouse drag rotates and tilts; WASD/arrows pan relative to its direction. The wheel zooms and Home returns to the colony view. Construction/menu shortcuts take priority over camera movement. `Graphics/scene.json` owns physical scale, FOV, starting angles, zoom limits, forest density, and nature-asset references.
-
-The default conversion is **six rendered centimeters per logical simulation unit**. Each sector retains its 60,000-unit logical side and renders at **3.6×3.6 km**; the 3×3 neighborhood renders at **10.8×10.8 km**. This presentation mapping does not alter deposit coordinates, logical movement times, costs, production, jobs, combat, or AI behavior. Imported nature uses physical centimeter dimensions independently of that conversion.
-
-The environment uses licensed CC0 Poly Haven fir/broadleaf trees, ferns, and mossy rocks. Current configuration selects seven of eight prepared nature meshes plus the original grass-blade mesh. Trees/rocks use Nanite; trees preserve surface area, and leaves use masked two-sided foliage materials. Fir C now retains its full 505,494-triangle source LOD0. Foliage-only texture sampling uses alpha mip bias −2 and color bias −1; there is no global mip override. The ground blends grass/meadow surfaces at two texture frequencies, with clustered rocks. Charlotte Baglioni's Leafy Grass supplies additional color, normal, roughness, and ambient-occlusion maps. [Third-party attribution](../Art/THIRD_PARTY_ASSETS.md) and the [nature register](../Art/Nature/ATTRIBUTION.md) retain creators, sources, hashes, and preparation details.
-
-Six original Blender buildings occupy the existing `/Game/Art/SM_*` paths. The command campus now has a smooth 48-sided curved roof with radial standing seams, flange joints, and fixings. Its 71,656 source triangles bring the set to **215,700 triangles**. The factory, extractor, depot, sensor, and turret retain differentiated industrial forms. Each building has three imported LODs; the set uses nine original 1K PBR maps and eleven material instances. The [Blender source](../Art/Source/Seige_Industry_Architecture.blend), [generator](../Tools/create_industry_assets.py), and [importer](../Tools/import_industry_assets.py) remain editable. Robot/bug art is retained; no new character animation was added.
-
-Scenario save format 2 accepts optional yaw/pitch fields. Older format-2 saves without those fields receive stable default angles; invalid orientations are rejected before state changes. Rule/AI fingerprints govern simulation compatibility. This behavior has native test coverage; a separate packaged save/load roundtrip was not run for v0.3.
-
-## v0.3 verification
-
-| Check | Recorded result | Evidence and boundary |
-| --- | --- | --- |
-| Editor and Shipping compilation/package | Passed, package exit 0 | `Saved/build-v03-editor.log`, `Saved/package-v03.log`; standalone output in `Builds/v0.3.0/Windows`. |
-| Native automation | **19 passed, 0 failed, 0 test warnings** | `Saved/Automation/v03-final/index.json`: six simulation, four AI, three interaction, three frontend, and three camera tests. The delivered v0.3 source did not change after this run; v0.4 is separate work. |
-| Editor rendered interaction | **28 stages, 0 failures** | `Saved/render-v03-second.log`; perspective landing, construction, selection, rotated views, and low-angle building selection. The first run's 11 failures remain in `Saved/render-v03-first.log` as diagnosis history. |
-| Packaged rendered interaction | **28 stages, 0 failures, exit 0** | `Saved/packaged-v0.3.0-UiSmoke-verification.json`; final observer scenario has two AI neighbors and seventeen center buildings. |
-| Packaged network observation | **18 samples, each 0 TCP / 0 UDP endpoints** | Same verification JSON, sampling the launched process tree during the smoke route. This bounded observation is not a packet capture or a guarantee about every possible execution. |
-| Loose definition staging | **10 files matched source hashes** | `Saved/staged-v03-files.json`; five Rules JSON files, two AI JSON files plus AI README, Interface, and Graphics. |
-| Industrial assets | Import passed with 0 errors / 0 warnings | [Report](../Art/industry_import_report.json), `Saved/industry-core-refinement-import.log`; core physical bounds and ground pivot retained, correct active materials, three LODs. |
-| Nature and ground | Imported and present in final package | [Nature report](../Art/Nature/import_report.json), [ground report](../Art/ground_v03_import_report.json), and final rendered captures. |
-| Source and binary distribution | Separate | [site815/seige2222](https://github.com/site815/seige2222) is the source repository; versioned packages and generated verification logs remain local and are excluded from Git. |
-
-The native normal-action colony strategy completed at 360 simulation seconds with twenty-two newly manufactured components. It proves one viable strategy, not indefinite sustainability or every AI scenario. Native tests also cover simulation save continuation, neighborhood state, camera-format compatibility, and rejection of invalid data. The packaged smoke exercises real controller/menu and screen-to-world routes, but does not constitute a complete human play-through or a packaged save/load test.
-
-`Tools/validate_configuration.mjs` checks Rules, AIFILES, Interface, and Graphics. Focused invalid variants cover versions, references, bounds, shortcuts, vegetation counts, and zoom ordering. A controlled packaged balance edit was verified for v0.2; v0.3 verified identical staging and successful loading, without repeating that edit experiment.
-
-Unreal Editor made a `google.com/generate_204` probe during the first native run; the final native report is clean. Editor services and development downloads are separate from the Shipping process-tree observations above.
-
-## Visual quality and remaining scope
-
-Retained game captures show the [colony](../Art/Previews/v03_gameplay.png), [close-up](../Art/Previews/v03_closeup.png), and [neighborhood](../Art/Previews/v03_neighborhood.png). Separate [command-hub](../Art/Previews/industry_command_closeup.png) and [factory](../Art/Previews/industry_factory_closeup.png) previews are Blender renders. Instantaneous on-screen FPS is not a hardware benchmark.
-
-This milestone does **not** match Manor Lords' finished visual quality. Distant canopy thinning, visible terrain repetition, and region-level presentation remain polish work. Neither passing interaction tests nor licensed detailed assets establish that all art is finished.
-
-This pass adds no networking, controllable fleets, privateering, cross-sector economy/travel, full robot needs or revolt, abandoned-region scavenging, or shuttle loading/relocation. Neighbor colonies remain independent simulations; Multiplayer remains Coming soon. See [Graphics Milestone 0.3](game-design/GRAPHICS_MILESTONE_0_3.md) and [First Playable Scope](game-design/FIRST_PLAYABLE_SCOPE.md) for boundaries.
-
-## Historical v0.2.0 record — 2026-10-04
-
-Everything in the following sections describes the verified v0.2 revision. Its map scale, fixed orthographic camera, older art, packaging, and network observations must not be read as current v0.3 validation.
-
-### v0.2 implementation
-
-The single-player prototype now starts at a main menu. Scenario setup configures a human or AI center and eight empty, starting-AI, or developed-AI neighbors. A human scenario pauses the whole world until the command center is placed. An AI center enables observation, with the same colony rules and no player construction orders.
-
-Each sector is 600×600 meters: six times the original side length and thirty-six times its area. The full 3×3 neighborhood is 1.8 kilometers across. The resource template contains twenty-five irregularly clustered deposits, including distant groups. Terrain is Earth-like, with photographic CC0 surfaces, original detailed futuristic buildings, and Blender vegetation. Individual neighboring sectors currently reuse the deposit template; the landscape varies across the larger world.
-
-The interface has version/FPS at the upper left, top-bar menus and major summaries, hover details, and a floating B-key construction catalog. There is no permanent lower construction bar. Settings cover graphics quality and display mode. Credits are maintained in the external interface definition.
-
-The simulation retains automatic jobs, manufactured robot population, local production, physical cargo, repairs, sensors, roaming bugs and scaled invasions, a first-playable objective, and emergency escape. Scenario save/load now includes all colonies, AI configuration fingerprints, time controls, and camera position. AI definitions live in `AIFILES`; content and balance live in `Rules`; menus, shortcuts, summaries, and credits live in `Interface`.
-
-### v0.2 crash and presentation fixes
-
-The reported left-click crashes were traced to `ASeigeHUD::Click` reading the transient Unreal drawing canvas during controller input. Input now uses cached hit rectangles and viewport dimensions. The regression test calls the real controller/HUD path with a null canvas, including world selection and construction.
-
-Expanding the orthographic clipping range exposed an Unreal camera-origin correction that placed foliage outside its distance-culling range. The project now disables that correction for its explicit orthographic planes. Trees use authored canopy-preserving detail levels and remain visible at regional zoom; small ground details may still cull. The runtime sun is explicitly movable, and Lumen mesh-distance-field generation is enabled. Runtime screenshots are checked separately from Blender asset previews.
-
-### v0.2 recorded verification
-
-- The revised editor target compiled with the installed Visual Studio 2026 toolchain. UBT reports that this compiler family is newer than Epic's preferred version; no engine-source changes were required.
-- All sixteen native tests passed with zero test failures or warnings: six simulation, four AI, three interaction, and three frontend tests. Report: `Saved/Automation/v02-final/index.json`.
-- A normal-action strategy covering three resource approaches with sensors and turrets completed the objective at 360 simulation seconds with twenty-two manufactured components and no building losses. No stock or health edits were used in that strategy test. This validates one viable strategy, not indefinite balance.
-- Starting AI manufactured components by 300 simulation seconds. Tests also covered the developed preset, rejected invalid AI files, relocated-core threat spawning, and deterministic AI save continuation.
-- Frontend tests covered default empty neighbors, mode cycling, paused landing, rejected and accepted landing clicks, observer input restrictions, settings pause/return, exact center-and-neighbor save restoration, and rejection of corrupt scenario metadata without changing the running state.
-- The rules validator passed the current rule set and fifteen deliberately invalid variants. The combined configuration validator also checks AI and interface references; five focused invalid-reference/key/timing mutations were rejected.
-- The rendered `-UiSmoke` route completed twenty-three stages with zero assertions: main menu, setup, landing, real controller construction clicks, construction shortcuts, neighborhood overview, credits, and AI observation. It saves screenshots and a `PresentationSmoke.json` report without touching player saves. Native input-route coverage and programmatic rendered interaction are not a claim of a complete human mouse-driven play-through.
-- Art import verified fourteen revised building/environment meshes, twelve PBR textures, five material masters, bounds, pivots, and material slots. Original robot and bug models remain in use. Texture source URLs, creators, licenses, and hashes are recorded in [third-party attribution](../Art/THIRD_PARTY_ASSETS.md).
-
-### v0.2 packaged release checks
-
-The offline Win64 Shipping package built successfully in `Builds/v0.2.0/Windows`. The root launcher selected this version at the time of the v0.2 checks. The packaged controller-driven check completed all twenty-three stages with zero failures, including the human landing/build path and an observer scenario with two AI neighbors. Cooked screenshots verified the main menu, top bar, build catalog, neighborhood labels, credited assets, and rendered forest/industry.
-
-All nine loose files staged from `Rules`, `AIFILES`, and `Interface` matched their source hashes. A controlled edit to the packaged scenario changed starting population from six to eight without recompiling. After fifteen simulation seconds the report showed seven robots, reflecting the normal automatic retirement interval. The exact original rule bytes were restored and their hash rechecked. This verifies numerical definition loading in the executable; new simulation mechanisms still need code.
-
-Local evidence: `Saved/package-v02-final.log`, `Saved/packaged-UiSmoke-verification.json`, and `Saved/packaged-PrototypeSmoke-verification.json`. Packaged screenshots and runtime reports are under `%LOCALAPPDATA%/seige2222/Saved`. Test routes do not modify player saves. Source publication uses the private `site815/seige2222` repository; executable archives and local verification logs remain excluded from Git.
-
-Tracked cooked-game captures: [colony view](../Art/Previews/v02_gameplay.png), [scenario setup](../Art/Previews/v02_scenario.png), and [nine-sector overview](../Art/Previews/v02_neighborhood.png). These are runtime screenshots, not target-art mockups.
-
-### v0.2 offline operation
-
-The deliverable uses Shipping configuration, which avoids Unreal's development profiling listener. HTTP transport, UDP/TCP messaging, telemetry, and unused online-service plugins are disabled. The game requires no account or server. Its third-party textures are local packaged assets. Development downloads and GitHub publishing are separate from runtime behavior.
-
-The v0.2 Shipping game was observed with zero TCP sockets and UDP endpoints in every live-process sample during the menu/gameplay/observer check and the separate rule-edit run. This is an observation of those executed paths, not a packet capture of every possible future session. Editor commandlets may initialize additional development plugins and are not the single-player deliverable.
-
-Earlier sandboxed Unreal build attempts coincided with the reported dotnet dialogs. Subsequent engine/compiler calls use the required filesystem access. No .NET or engine reinstall was performed.
-
-### v0.2 remaining scope
-
-Some forest views still show an abrupt pale foliage shading band at a distance. Explicit movable sunlight and a separate far-shadow-culling diagnostic did not eliminate it; the diagnostic override is not included in the release. This remains visual polish to investigate, alongside broader terrain variety and art refinement. The presentation is an early art pass, not finished production graphics.
-
-Neighbor colonies are independent instances of the same simulation, not a shared multiplayer economy or battlefield. Fleet control, privateering, cross-sector extraction/trade/travel, full robot needs and revolt, abandoned-region scavenging, shuttle loading/relocation, and persistent networking remain future work. Multiplayer is explicitly marked Coming soon in the menu. The full design remains the persistent-world baseline, with single-player developed first.
-
-See [first-playable scope](game-design/FIRST_PLAYABLE_SCOPE.md), [scenario setup](game-design/SCENARIO_AND_AI_SETUP.md), and the [design index](game-design/README.md). The design documents distinguish confirmed intent, prototype choices, and unimplemented systems.
-
-## Reproduce
+## Reproduce and interpret checks
 
 ```powershell
 node Tools/validate_configuration.mjs
@@ -246,6 +73,8 @@ node Tools/validate_rules.mjs --self-test
 powershell -ExecutionPolicy Bypass -File Tools/build.ps1 -Package
 ```
 
-Native tests use UnrealEditor-Cmd with `-NullRHI`, `-ExecCmds="Automation RunTests Seige"`, `-TestExit="Automation Test Queue Empty"`, and a report export directory. Inspect test result JSON; an editor process exit code alone does not report individual test failures. Rendered verification uses `-UiSmoke -RenderOffscreen -ForceRes -ResX=1600 -ResY=900`. The flag drives test-only interactions and exits after writing its report.
+Native automation uses UnrealEditor-Cmd with `-NullRHI`, `-ExecCmds="Automation RunTests Seige"`, `-TestExit="Automation Test Queue Empty"` and a report export directory. Read the test JSON: an editor process exit code alone cannot prove that all tests passed.
 
-The build script generates a directory for the current `ProjectVersion`. The verified v0.7.0 package is in `Builds/v0.7.0/Windows`; `Play-seige2222.cmd` launches it and honors saved display settings. Compatible v0.6 saves use the same `prototype-6.0` rules. Versioned binaries remain local and are excluded from the source repository. Older packages are retained. Build output, caches, downloaded tools, and test logs are excluded from Git; source assets and their provenance are tracked.
+Rendered verification uses `-UiSmoke -RenderOffscreen -ForceRes -ResX=1600 -ResY=900` and writes captures plus `PresentationSmoke.json`. `Tools/verify_packaged.ps1` requires the expected **117 completed stages** and zero failures. Display verification separately exercises native borderless, 1280×720 windowed, 75% rendering and restoration without saving test preferences. Native-resolution graphics benchmarks remain separate from interaction-route FPS snapshots.
+
+The build script creates a directory for `ProjectVersion`. Versioned binaries, tools, caches and generated logs remain local; source assets and provenance are tracked. The verified v0.7 package is retained at `Builds/v0.7.0/Windows`; `Play-seige2222.cmd` now launches the locally verified v0.8.0 package.

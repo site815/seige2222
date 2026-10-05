@@ -1,104 +1,358 @@
 {
-  "version": "prototype-6.0",
+  "version": "prototype-8.0",
+  "quantity_note": "Raw/product quantities are kg or L. Stored workers are indivisible counts with external mass and berth volume. The current 1 kg worker material bill and 50 L occupied berth are provisional accounting values, not finished robot engineering. Grid energy and credits remain separate ledgers.",
   "resources": [
     {
-      "id": "iron_ore",
-      "name": "Iron ore",
+      "id": "water",
+      "name": "Water",
+      "class": "standard",
+      "unit": "L",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 1,
       "tier": 0,
       "color": [
-        0.75,
-        0.4,
-        0.24
+        0.24,
+        0.62,
+        0.9
       ],
-      "stockpile_visual": "bulk"
+      "stockpile_visual": "bulk",
+      "discrete": false
     },
     {
-      "id": "copper_ore",
-      "name": "Copper ore",
+      "id": "iron_ore",
+      "name": "Metal ore",
+      "class": "standard",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.4,
       "tier": 0,
       "color": [
-        0.96,
-        0.52,
+        0.57,
+        0.36,
         0.25
       ],
-      "stockpile_visual": "bulk"
+      "stockpile_visual": "bulk",
+      "discrete": false
     },
     {
       "id": "silica",
       "name": "Silica",
+      "class": "standard",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.65,
       "tier": 0,
       "color": [
-        0.4,
+        0.76,
         0.8,
-        0.95
+        0.77
       ],
-      "stockpile_visual": "bulk"
+      "stockpile_visual": "bulk",
+      "discrete": false
     },
     {
       "id": "carbon",
-      "name": "Carbon",
+      "name": "Biomass",
+      "class": "standard",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 2,
       "tier": 0,
       "color": [
-        0.31,
-        0.35,
-        0.44
+        0.32,
+        0.49,
+        0.25
       ],
-      "stockpile_visual": "bulk"
+      "stockpile_visual": "bulk",
+      "discrete": false
+    },
+    {
+      "id": "copper_ore",
+      "name": "Rare metals",
+      "class": "rare",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.3,
+      "tier": 0,
+      "color": [
+        0.7,
+        0.46,
+        0.27
+      ],
+      "stockpile_visual": "bulk",
+      "discrete": false
+    },
+    {
+      "id": "radioactive_ore",
+      "name": "Radioactive ore",
+      "class": "rare",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.35,
+      "tier": 0,
+      "color": [
+        0.57,
+        0.64,
+        0.27
+      ],
+      "stockpile_visual": "bulk",
+      "discrete": false
+    },
+    {
+      "id": "crystalline",
+      "name": "Crystalline material",
+      "class": "rare",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.5,
+      "tier": 0,
+      "color": [
+        0.54,
+        0.38,
+        0.7
+      ],
+      "stockpile_visual": "bulk",
+      "discrete": false
+    },
+    {
+      "id": "hydrocarbons",
+      "name": "Hydrocarbons",
+      "class": "rare",
+      "unit": "L",
+      "unit_mass_kg": 0.85,
+      "litres_per_unit": 1,
+      "tier": 0,
+      "color": [
+        0.28,
+        0.25,
+        0.22
+      ],
+      "stockpile_visual": "bulk",
+      "discrete": false
     },
     {
       "id": "alloy",
-      "name": "Alloy stock",
+      "name": "Construction alloys",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.2,
       "tier": 1,
       "color": [
         0.7,
         0.8,
         0.87
       ],
-      "stockpile_visual": "ingots"
+      "stockpile_visual": "ingots",
+      "discrete": false
     },
     {
       "id": "conductors",
       "name": "Conductors",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.2,
       "tier": 1,
       "color": [
-        1,
-        0.65,
+        0.9,
+        0.58,
         0.25
       ],
-      "stockpile_visual": "crates"
+      "stockpile_visual": "crates",
+      "discrete": false
     },
     {
       "id": "substrates",
-      "name": "Substrates",
+      "name": "Industrial glass",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.5,
       "tier": 1,
       "color": [
         0.48,
-        0.9,
-        0.83
+        0.76,
+        0.73
       ],
-      "stockpile_visual": "crates"
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "fuel",
+      "name": "Fuel",
+      "class": "manufactured",
+      "unit": "L",
+      "unit_mass_kg": 0.8,
+      "litres_per_unit": 1,
+      "tier": 1,
+      "color": [
+        0.79,
+        0.59,
+        0.27
+      ],
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "plastic",
+      "name": "Plastic pellets",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 1.5,
+      "tier": 1,
+      "color": [
+        0.75,
+        0.76,
+        0.7
+      ],
+      "stockpile_visual": "bulk",
+      "discrete": false
+    },
+    {
+      "id": "organic_food",
+      "name": "Organic food",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 1.5,
+      "tier": 1,
+      "color": [
+        0.67,
+        0.61,
+        0.32
+      ],
+      "stockpile_visual": "crates",
+      "discrete": false
     },
     {
       "id": "circuits",
       "name": "Control circuits",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.8,
       "tier": 2,
       "color": [
-        0.46,
-        1,
-        0.55
+        0.36,
+        0.75,
+        0.45
       ],
-      "stockpile_visual": "crates"
+      "stockpile_visual": "crates",
+      "discrete": false
     },
     {
       "id": "components",
-      "name": "Robot components",
+      "name": "Robotic parts",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.6,
+      "tier": 2,
+      "color": [
+        0.69,
+        0.58,
+        0.8
+      ],
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "batteries",
+      "name": "Battery modules",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.6,
+      "tier": 2,
+      "color": [
+        0.37,
+        0.63,
+        0.69
+      ],
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "ai_chips",
+      "name": "AI chips",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 1,
       "tier": 3,
       "color": [
-        0.85,
-        0.6,
-        1
+        0.48,
+        0.57,
+        0.91
       ],
-      "stockpile_visual": "crates"
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "fusion_reactors",
+      "name": "Fusion reactor assemblies",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.4,
+      "tier": 3,
+      "color": [
+        0.75,
+        0.81,
+        0.92
+      ],
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "shells",
+      "name": "Kinetic ammunition",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 0.2,
+      "tier": 2,
+      "color": [
+        0.58,
+        0.48,
+        0.32
+      ],
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "missiles",
+      "name": "Missile ammunition",
+      "class": "manufactured",
+      "unit": "kg",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 1,
+      "tier": 2,
+      "color": [
+        0.6,
+        0.65,
+        0.68
+      ],
+      "stockpile_visual": "crates",
+      "discrete": false
+    },
+    {
+      "id": "stored_workers",
+      "name": "Inactive workers",
+      "class": "manufactured",
+      "unit": "workers",
+      "unit_mass_kg": 1,
+      "litres_per_unit": 50,
+      "tier": 2,
+      "color": [
+        0.64,
+        0.72,
+        0.81
+      ],
+      "stockpile_visual": "crates",
+      "discrete": true
     }
   ]
 }

@@ -1,4 +1,6 @@
 #include "SeigeGameMode.h"
+#include "SeigeSceneryContact.h"
+#include "SeigeSceneryPlacement.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "ProceduralMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -52,15 +54,48 @@ bool HidePendingHomeFoundation(const ASeigeGameMode& G)
     // Main/settings backdrops must not turn that reservation into a graded pad.
     return G.Sim.Time<=UE_DOUBLE_SMALL_NUMBER&&G.Screen!=TEXT("playing")&&!(G.MenuOpen&&G.MenuReturnScreen==TEXT("playing"));
 }
+double RoadHalfWidth(const FSeigeSimulation& Colony,const FSeigeTransportSegment& Road)
+{
+    double Width=0;
+    if(const auto* Tier=Colony.TransportTiers.Find(Road.Tier))Width=Tier->WidthMeters;
+    if(Road.IsConstructing)if(const auto* Tier=Colony.TransportTiers.Find(Road.TargetTier))Width=FMath::Max(Width,Tier->WidthMeters);
+    return Width/(2*FMath::Max(.000001,Colony.MetersPerWorldUnit()));
+}
+FVector2D ClosestRoadPoint(FVector2D P,FVector2D A,FVector2D B)
+{
+    const FVector2D Delta=B-A;const double LengthSquared=Delta.SquaredLength();
+    return A+Delta*(LengthSquared>UE_DOUBLE_SMALL_NUMBER?FMath::Clamp(FVector2D::DotProduct(P-A,Delta)/LengthSquared,0.,1.):0.);
+}
+FString RoadSightToken(const ASeigeGameMode& G,FVector2D A,FVector2D B,bool& Revealed)
+{
+    // Match the rendered route's 8 m visibility sampling. Two visible endpoints
+    // must not expose a graded corridor through an unseen gap between sensors.
+    Revealed=true;const int32 Steps=FMath::Max(1,FMath::CeilToInt(FVector2D::Distance(A,B)*G.RenderScale/800.));
+    for(int32 I=0;I<=Steps;++I)if(!G.IsWorldVisible(FMath::Lerp(A,B,double(I)/Steps))){Revealed=false;break;}
+    FString Result;
+    for(const auto& Sensor:G.Sim.Buildings)if(const auto* D=G.Sim.Definition(Sensor))if(D->SensorRange>0)
+    {
+        Result+=FString::Printf(TEXT("%d:%.3f:%.3f:%d:%d:%d:%d;"),Sensor.Id,Sensor.Position.X,Sensor.Position.Y,
+            Sensor.Enabled?1:0,Sensor.Health>0?1:0,Sensor.IsConstructing?1:0,Sensor.Workers);
+    }
+    return Result;
+}
 struct FHeightPad
 {
     FVector2D Position;
     double Height=0,Inner=0,Outer=0;
 };
+struct FHeightRoad
+{
+    FVector2D A,B;
+    double Inner=0,Outer=0;
+    bool RequiresSight=false;
+};
 struct FPreparedTerrain
 {
     const ASeigeGameMode& Game;
     TArray<FHeightPad> Pads[9];
+    TArray<FHeightRoad> Roads[9];
     TMap<FString,FVector4> Bounds;
     FString Signature;
     double RidgeCos=0,RidgeSin=0;
@@ -74,14 +109,17 @@ struct FPreparedTerrain
             for(const auto& B:Colony.Buildings)
             {
                 const FVector2D P=B.Position+Offset;
-                if(B.Health<=0||(!G.Observer&&Index!=4&&!G.Sim.IsVisible(P)))continue;
+                if(B.Health<=0||(!G.Observer&&Index!=4&&!G.IsWorldVisible(P)))continue;
                 if(const auto* D=Colony.Definition(B))
                 {
                     const double GridStep=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
                     // Grid vertices bordering an off-grid foundation must also be
                     // flat, otherwise a triangle cuts through its outer corners.
-                    const double Inner=FMath::Max(double(D->Footprint*G.CorePadInnerRatio),D->Footprint+GridStep);
-                    const double Outer=FMath::Max(double(D->Footprint*G.CorePadOuterRatio),Inner+GridStep);
+                    // Reserve future upgrades for placement, but grade only the built footprint.
+                    const auto* Planned=B.UpgradeTarget.IsEmpty()?D:Colony.BuildingDefs.Find(B.UpgradeTarget);
+                    const double Reserved=Planned?Planned->Footprint:D->Footprint;
+                    const double Inner=FMath::Max(double(Reserved*G.CorePadInnerRatio),Reserved+GridStep);
+                    const double Outer=FMath::Max(double(Reserved*G.CorePadOuterRatio),Inner+GridStep);
                     const FHeightPad Pad{P,Natural(P),Inner,Outer};
                     const FString Key=FString::Printf(TEXT("%d:%d"),Index,B.Id);
                     Bounds.Add(Key,FVector4(P.X,P.Y,Inner,Outer));
@@ -97,6 +135,31 @@ struct FPreparedTerrain
         };
         AddColony(G.Sim,FVector2D::ZeroVector,4);
         for(const auto& N:G.Neighbors)AddColony(N.Sim,N.Offset,N.Index);
+        auto AddRoads=[&](const FSeigeSimulation& Colony,FVector2D Offset,int32 Index)
+        {
+            if(Index<0||Index>8)return;
+            const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution,Span=G.Sim.WorldHalfSize*2;
+            for(const auto& Road:Colony.Roads)
+            {
+                if(Road.Health<=0)continue;
+                const double Half=RoadHalfWidth(Colony,Road);if(Half<=0)continue;
+                const FVector2D A=Road.A+Offset,B=Road.B+Offset,Center=(A+B)*.5;
+                const double Inner=Half+Step,Outer=Inner+Step;
+                const bool RequiresSight=!G.Observer&&Index!=4;
+                bool AnyVisible=true;const FString Sight=RequiresSight?RoadSightToken(G,A,B,AnyVisible):FString();
+                if(!AnyVisible)continue;
+                const FHeightRoad Grade{A,B,Inner,Outer,RequiresSight};
+                const double Radius=FMath::Max(FMath::Abs(A.X-B.X),FMath::Abs(A.Y-B.Y))*.5+Outer;
+                const FString Key=FString::Printf(TEXT("road:%d:%d:%s"),Index,Road.Id,*Sight);
+                Bounds.Add(Key,FVector4(Center.X,Center.Y,Inner,Radius));
+                Signature+=FString::Printf(TEXT("%s:%.4f:%.4f:%.4f:%.4f:%.4f;"),*Key,A.X,A.Y,B.X,B.Y,Half);
+                const int32 MinX=FMath::Clamp(FMath::FloorToInt((FMath::Min(A.X,B.X)-Outer+Span*.5)/Span),-1,1),MaxX=FMath::Clamp(FMath::FloorToInt((FMath::Max(A.X,B.X)+Outer+Span*.5)/Span),-1,1);
+                const int32 MinY=FMath::Clamp(FMath::FloorToInt((FMath::Min(A.Y,B.Y)-Outer+Span*.5)/Span),-1,1),MaxY=FMath::Clamp(FMath::FloorToInt((FMath::Max(A.Y,B.Y)+Outer+Span*.5)/Span),-1,1);
+                for(int32 Y=MinY;Y<=MaxY;++Y)for(int32 X=MinX;X<=MaxX;++X)Roads[(Y+1)*3+X+1].Add(Grade);
+            }
+        };
+        AddRoads(G.Sim,FVector2D::ZeroVector,4);
+        for(const auto& N:G.Neighbors)AddRoads(N.Sim,N.Offset,N.Index);
     }
     double Natural(FVector2D P) const
     {
@@ -108,9 +171,9 @@ struct FPreparedTerrain
             FMath::PerlinNoise2D(P/Game.RollingTerrainWavelength+FVector2D(-4.6,25.4))*Game.RollingTerrainAmplitude+
             FMath::PerlinNoise2D(P/Game.MicroTerrainWavelength+FVector2D(41.2,12.5))*Game.MicroTerrainAmplitude+Ridge;
     }
-    double Height(FVector2D P) const
+    double PadHeight(FVector2D P,double Base) const
     {
-        const double Base=Natural(P),Span=Game.Sim.WorldHalfSize*2;
+        const double Span=Game.Sim.WorldHalfSize*2;
         const int32 X=FMath::FloorToInt((P.X+Span*.5)/Span),Y=FMath::FloorToInt((P.Y+Span*.5)/Span);
         if(X<-1||X>1||Y<-1||Y>1)return Base;
         double WeightedHeight=0,TotalWeight=0,Influence=0;
@@ -126,6 +189,29 @@ struct FPreparedTerrain
             WeightedHeight+=Pad.Height*BlendWeight;TotalWeight+=BlendWeight;Influence=FMath::Max(Influence,Weight);
         }
         return TotalWeight>0?FMath::Lerp(Base,WeightedHeight/TotalWeight,Influence):Base;
+    }
+    double Height(FVector2D P) const
+    {
+        double Base=Natural(P);const double Span=Game.Sim.WorldHalfSize*2;
+        const int32 X=FMath::FloorToInt((P.X+Span*.5)/Span),Y=FMath::FloorToInt((P.Y+Span*.5)/Span);
+        if(X<-1||X>1||Y<-1||Y>1)return Base;
+        double WeightedHeight=0,TotalWeight=0,Influence=0;
+        for(const auto& Road:Roads[(Y+1)*3+X+1])
+        {
+            const FVector2D Q=ClosestRoadPoint(P,Road.A,Road.B);
+            const double Distance=(P-Q).Length();
+            if(Distance>=Road.Outer||(Road.RequiresSight&&(!Game.IsWorldVisible(Q)||!Game.IsWorldVisible(P))))continue;
+            const double Weight=1-FMath::SmoothStep(Road.Inner,Road.Outer,Distance);
+            const double BlendWeight=Weight/FMath::Max(.000001,1-Weight);
+            const FVector2D Along=(Road.B-Road.A).GetSafeNormal()*Span/Game.DetailedTerrainResolution;
+            // Smooth a few meters along the existing hill, not a straight ramp
+            // between distant endpoints. Pads take precedence at plot entrances.
+            const FVector2D Before=ClosestRoadPoint(Q-Along,Road.A,Road.B),After=ClosestRoadPoint(Q+Along,Road.A,Road.B);
+            const double Target=(PadHeight(Before,Natural(Before))+2*PadHeight(Q,Natural(Q))+PadHeight(After,Natural(After)))*.25;
+            WeightedHeight+=Target*BlendWeight;TotalWeight+=BlendWeight;Influence=FMath::Max(Influence,Weight);
+        }
+        if(TotalWeight>0)Base=FMath::Lerp(Base,WeightedHeight/TotalWeight,Influence);
+        return PadHeight(P,Base);
     }
 };
 double VertexHeight(const FPreparedTerrain& Prepared,const FSeigeTerrainTile& Tile,int32 X,int32 Y)
@@ -214,6 +300,12 @@ FQuat GroundCoverRotation(const ASeigeGameMode& G,FVector2D P,double Yaw)
     const FVector Normal=FVector(-DX,-DY,24).GetSafeNormal();
     return FRotationMatrix::MakeFromZX(Normal,FRotator(0,Yaw,0).Vector()).ToQuat();
 }
+FTransform GroundCoverContact(const ASeigeGameMode& G,const FTransform& Transform,const UStaticMesh* Mesh)
+{
+    if(!Mesh)return Transform;
+    return FitSeigeSceneryRootPlane(Transform,Mesh->GetBoundingBox(),[&](FVector2D World)
+    {return G.GroundHeight(World/G.RenderScale)*G.RenderScale;});
+}
 TArray<FDirtPatch> PrepareDirt(const ASeigeGameMode& G)
 {
     TArray<FDirtPatch> DirtPatches;
@@ -221,11 +313,13 @@ TArray<FDirtPatch> PrepareDirt(const ASeigeGameMode& G)
     if(const auto* Colony=G.ViewedSimulation())
     {
         if(G.DetailedSectorIndex()!=4||!HidePendingHomeFoundation(G))for(const auto& B:Colony->Buildings)
-            if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.Sim.IsVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))
+            if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.IsWorldVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))
             {
                 const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
-                const double PadInner=FMath::Max(double(D->Footprint*G.CorePadInnerRatio),D->Footprint+Step);
-                const double PadOuter=FMath::Max(double(D->Footprint*G.CorePadOuterRatio),PadInner+Step);
+                // Reserve future upgrades for placement, but grade only the built footprint.
+                    const double Reserved=D->Footprint;
+                const double PadInner=FMath::Max(double(Reserved*G.CorePadInnerRatio),Reserved+Step);
+                const double PadOuter=FMath::Max(double(Reserved*G.CorePadOuterRatio),PadInner+Step);
                 // Exposed soil follows the foundation edge, while the wider
                 // graded bank remains a meadow rather than a square dirt lot.
                 DirtPatches.Add({B.Position+Offset,D->Footprint*.72,D->Footprint+90,.65,true,PadOuter+Step});
@@ -261,7 +355,10 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
             Vertices.Add(FVector(P.X*G.RenderScale,P.Y*G.RenderScale,Tile.Heights[I]*G.RenderScale));Normals.Add(Normal);UVs.Add(P*G.RenderScale/700);
             const double Woodland=G.WoodlandDensity(P);
             double Dirt=FMath::Clamp((FMath::PerlinNoise2D(P/1250+FVector2D(14,3))-.28)*.7,0.,.22);
-            Dirt=FMath::Max(Dirt,(1-MeadowSwardDensity(P))*.3*(1-Woodland));
+            // Sward occupancy varies over 7.8 m and is thresholded for placement.
+            // Sampling that field on the 3.5 m terrain lattice aliases into
+            // diagonal soil bands. Keep soil's broader field and local patches;
+            // grass placement still uses the independent fine occupancy field.
             double FoundationGrade=0;
             if(Detailed)for(const auto& Patch:DirtPatches)
             {
@@ -274,7 +371,12 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
             // Meadow slopes retain soil. Exposed rock belongs on steep faces or
             // localized outcrops, not every gently rolling hill.
             const double Rock=FMath::Clamp((.82-Normal.Z)*5+FMath::Max(0.,Noise-.42)*.45,0.,.85)*(1-FMath::Max(Dirt,FoundationGrade));
-            Colors.Add(FLinearColor(float(Dirt*(1-Rock)),float(Rock),float(Woodland),1));
+            // A broad world-anchored meadow variation, separate from the much
+            // smaller sward-density patches. Shared positions give both tile
+            // detail levels the same material input without per-pixel noise.
+            const double Vigor=FMath::Clamp(.5+FMath::PerlinNoise2D(P/1300+FVector2D(7.4,-21.8))*.6+
+                FMath::PerlinNoise2D(P/310+FVector2D(-8.2,5.7))*.18,.15,.85);
+            Colors.Add(FLinearColor(float(Dirt*(1-Rock)),float(Rock),float(Woodland),float(Vigor)));
             Tangents.Add(FProcMeshTangent(FVector(1,0,DX).GetSafeNormal(),false));
             if(U<Cells&&V<Cells)
             {
@@ -401,6 +503,16 @@ void ASeigeGameMode::RefreshBuildingPads()
                     FVector P=Transform.GetLocation()-Pivot;P.Z=GroundHeight(FVector2D(P)/RenderScale)*RenderScale;
                     if(Actor==GroundCover.Get())Transform.SetRotation(GroundCoverRotation(*this,FVector2D(P)/RenderScale,Transform.Rotator().Yaw));
                     Transform.SetLocation(P+(ProxySource?ProxyPivotOffset(Transform,ProxySource,Component->GetStaticMesh()):FVector::ZeroVector));
+                    if(Actor==GroundCover.Get()&&Component->ComponentHasTag(FName(TEXT("seige_sward"))))
+                    {
+                        if(ProxySource)
+                        {
+                            FTransform Near=Transform;Near.SetLocation(P);
+                            Near.SetScale3D(Transform.GetScale3D()*Component->GetStaticMesh()->GetBounds().BoxExtent/ProxySource->GetBounds().BoxExtent);
+                            Transform=AlignProxyBounds(GroundCoverContact(*this,Near,ProxySource),ProxySource,Component->GetStaticMesh());
+                        }
+                        else Transform=GroundCoverContact(*this,Transform,Component->GetStaticMesh());
+                    }
                     Component->UpdateInstanceTransform(Index,Transform,true,false,true);
                 }
             }
@@ -414,23 +526,44 @@ namespace
 constexpr double GroundTileSize=900;
 constexpr int32 GroundReferenceCells=81;
 constexpr int32 SceneryLodBands=8;
-struct FSceneryClearance {FVector2D Position;double Radius;bool Square=false;};
+struct FSceneryClearance
+{
+    FVector2D Position;
+    double Radius;
+    bool Square=false;
+    FVector2D End=FVector2D::ZeroVector;
+    bool Segment=false,RequiresSight=false;
+};
+void AddRoadClearances(const ASeigeGameMode& G,const FSeigeSimulation& Colony,FVector2D Offset,int32 Sector,TArray<FSceneryClearance>& Areas)
+{
+    for(const auto& Road:Colony.Roads)
+    {
+        if(Road.Health<=0)continue;
+        const double Half=RoadHalfWidth(Colony,Road);if(Half<=0)continue;
+        const FVector2D A=Road.A+Offset,B=Road.B+Offset;const bool RequiresSight=!G.Observer&&Sector!=4;
+        bool AnyVisible=true;if(RequiresSight)RoadSightToken(G,A,B,AnyVisible);if(!AnyVisible)continue;
+        Areas.Add({A,Half,false,B,true,RequiresSight});
+    }
+}
 TArray<FSceneryClearance> VisibleClearances(const ASeigeGameMode& G)
 {
     TArray<FSceneryClearance> Areas;const auto* Colony=G.ViewedSimulation();if(!Colony)return Areas;
     const FVector2D Offset=G.DetailedSectorOffset();
     if(G.DetailedSectorIndex()!=4||!HidePendingHomeFoundation(G))for(const auto& B:Colony->Buildings)
-        if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.Sim.IsVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->Footprint,true});
+        if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.IsWorldVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->ReservedFootprint,true});
     if(G.Observer||G.DetailedSectorIndex()==4)
         for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
+    AddRoadClearances(G,*Colony,Offset,G.DetailedSectorIndex(),Areas);
     return Areas;
 }
-bool IsSceneryClear(FVector2D P,double Radius,FVector2D Offset,double Half,const TArray<FSceneryClearance>& Areas)
+bool IsSceneryClear(const ASeigeGameMode& G,FVector2D P,double Radius,FVector2D Offset,double Half,const TArray<FSceneryClearance>& Areas)
 {
     const FVector2D Local=P-Offset;if(FMath::Abs(Local.X)>Half||FMath::Abs(Local.Y)>Half)return true;
     for(const auto& A:Areas)
     {
-        const FVector2D D=P-A.Position;
+        const FVector2D Closest=A.Segment?ClosestRoadPoint(P,A.Position,A.End):A.Position;
+        if(A.RequiresSight&&(!G.IsWorldVisible(P)||!G.IsWorldVisible(Closest)))continue;
+        const FVector2D D=P-Closest;
         if(A.Square?FMath::Max(FMath::Abs(D.X),FMath::Abs(D.Y))<A.Radius+Radius:D.SquaredLength()<FMath::Square(A.Radius+Radius))return true;
     }
     return false;
@@ -555,15 +688,16 @@ void ASeigeGameMode::CreateFoliage()
         TArray<FSceneryClearance> Areas;
         if(Colony&&(Sector!=4||!HidePendingHomeFoundation(*this)))
         {
-            for(const auto& B:Colony->Buildings)if(B.Health>0&&(Observer||Sector==4||Sim.IsVisible(B.Position+Offset)))
-                if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->Footprint,true});
+            for(const auto& B:Colony->Buildings)if(B.Health>0&&(Observer||Sector==4||IsWorldVisible(B.Position+Offset)))
+                if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->ReservedFootprint,true});
             if(Observer||Sector==4)for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
+            AddRoadClearances(*this,*Colony,Offset,Sector,Areas);
         }
         FRandomStream R(2222+Sector*100003);
         auto Tree=[&](FVector2D P,int32 I)
         {
             const double Chance=R.FRand(),Size=R.FRandRange(.72,1.16),Yaw=R.FRandRange(0,360);
-            if(IsSceneryClear(P,210,Offset,Half,Areas)||Chance>WoodlandDensity(P)*.9)return;
+            if(IsSceneryClear(*this,P,210,Offset,Half,Areas)||Chance>WoodlandDensity(P)*.9)return;
             const FString Kind=I%9==0?(I%2?TEXT("PineA"):TEXT("PineB")):(I%2?TEXT("OakA"):TEXT("OakB"));
             const int32 Band=int32(GroundCellSeed(I,Sector)%SceneryLodBands);
             Add(Kind,P,Size,Yaw,Band);++Trees;
@@ -574,7 +708,9 @@ void ASeigeGameMode::CreateFoliage()
         if(Sector==DetailedSectorIndex()&&Colony&&(Observer||Sector==4))for(const auto& N:Colony->Nodes)for(int32 I=0;I<13;++I)
         {
             const FVector2D P=Offset+N.Position+FVector2D(R.FRandRange(-125,125),R.FRandRange(-125,125));
-            Add(I%2?TEXT("RockA"):TEXT("RockB"),P,R.FRandRange(.35,.8),R.FRandRange(0,360),0);
+            const double Size=R.FRandRange(.35,.8),Yaw=R.FRandRange(0,360);
+            if(IsSceneryClear(*this,P,30,Offset,Half,Areas))continue;
+            Add(I%2?TEXT("RockA"):TEXT("RockB"),P,Size,Yaw,0);
         }
     }
     for(auto& Pair:Batches)if(auto** Set=Sets.Find(Pair.Key))(*Set)->AddInstances(Pair.Value,false,false,false);
@@ -727,16 +863,20 @@ void ASeigeGameMode::CreateGroundCover()
             if(I<0)
             {
                 const FVector2D P=Origin+FVector2D(R.FRandRange(0,GroundTileSize),R.FRandRange(0,GroundTileSize));const double Size=R.FRandRange(.4,1.1),Yaw=R.FRandRange(0,360);
-                if(!State.PendingBase||IsSceneryClear(P,30,Offset,Half,Areas))continue;
+                if(!State.PendingBase||IsSceneryClear(*this,P,30,Offset,Half,Areas))continue;
                 const bool Outcrop=FMath::PerlinNoise2D(P/950+FVector2D(13,-8))>.24;const int32 Index=I+PropsPerCell;
                 const FString Kind=Index%5==0&&Outcrop?(Index%2?TEXT("RockA"):TEXT("RockB")):TEXT("Shrub");
                 Add(Kind,0,FTransform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size)));continue;
             }
-            const FVector2D P=Origin+FVector2D(R.FRandRange(0,GroundTileSize),R.FRandRange(0,GroundTileSize));const double Chance=R.FRand(),Size=R.FRandRange(GrassScaleMin,GrassScaleMax),Yaw=R.FRandRange(0,360);
+            // Keep the same candidate count, random consumption, coherent density
+            // and plot exclusions. Near/proxy regeneration uses identical strata.
+            const FVector2D Jitter(R.FRand(),R.FRand());
+            const FVector2D P=Origin+SeigeSwardCandidate(I,GrassPerCell,Jitter)*GroundTileSize;
+            const double Chance=R.FRand(),Size=R.FRandRange(GrassScaleMin,GrassScaleMax),Yaw=R.FRandRange(0,360);
             const double Woodland=WoodlandDensity(P);const bool Flowers=I%35==0&&Woodland<.15&&FMath::PerlinNoise2D(P/700+FVector2D(4.2,18.6))>.02;
             const FString Kind=Flowers?TEXT("Wildflowers"):I%2?TEXT("Grass"):TEXT("GrassB");
             const UStaticMesh* Mesh=State.Meshes.FindRef(Kind).Get();const double Margin=Mesh?Mesh->GetBounds().SphereRadius*Size/RenderScale:15.;
-            if(!Mesh||IsSceneryClear(P,Margin,Offset,Half,Areas)||Chance<Woodland*.7||Chance>MeadowSwardDensity(P))continue;
+            if(!Mesh||IsSceneryClear(*this,P,Margin,Offset,Half,Areas)||Chance<Woodland*.7||Chance>MeadowSwardDensity(P))continue;
             const FTransform Transform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size));
             const int32 Band=int32(GroundCellSeed(I,State.PendingCell.X*31+State.PendingCell.Y)%SceneryLodBands);
             if(Flowers){if(State.PendingBase)Add(Kind,0,Transform);continue;}
@@ -768,7 +908,7 @@ void ASeigeGameMode::CreateGroundCover()
                     const FVector2D Logical=FVector2D(Transform.GetLocation()-Pivot)/RenderScale;
                     const FVector SourceScale=Proxy&&Source&&ProxyMesh?Transform.GetScale3D()*ProxyMesh->GetBounds().BoxExtent/Source->GetBounds().BoxExtent:Transform.GetScale3D();
                     const double Margin=Source?Source->GetBounds().SphereRadius*SourceScale.GetAbsMax()/RenderScale:30.;
-                    return IsSceneryClear(Logical,Margin,Offset,Half,Areas);
+                    return IsSceneryClear(*this,Logical,Margin,Offset,Half,Areas);
                 });
                 // Commit retained instances against the authoritative surface.
                 for(auto& Transform:Pair.Value)
@@ -778,6 +918,14 @@ void ASeigeGameMode::CreateGroundCover()
                     P.Z=GroundHeight(Logical)*RenderScale;
                     Transform.SetRotation(GroundCoverRotation(*this,Logical,Transform.Rotator().Yaw));
                     Transform.SetLocation(P+(Proxy?ProxyPivotOffset(Transform,Source,ProxyMesh):FVector::ZeroVector));
+                    if(Proxy)
+                    {
+                        FTransform Near=Transform;Near.SetLocation(P);
+                        Near.SetScale3D(Transform.GetScale3D()*ProxyMesh->GetBounds().BoxExtent/Source->GetBounds().BoxExtent);
+                        Transform=AlignProxyBounds(GroundCoverContact(*this,Near,Source),Source,ProxyMesh);
+                    }
+                    else if(Kind==TEXT("Grass")||Kind==TEXT("GrassB")||Kind==TEXT("Wildflowers"))
+                        Transform=GroundCoverContact(*this,Transform,Source);
                 }
                 if(!Pair.Value.IsEmpty())
                 {
@@ -820,16 +968,71 @@ void ASeigeGameMode::RefreshEnvironment()
         if(RenderedSector!=DetailedSectorIndex()){SelectedId=0;SelectedBuild.Empty();CreateLandscape();}
         else
         {
+            const FString Before=TerrainPadSignature;
             RefreshBuildingPads();
+            if(Before!=TerrainPadSignature)RefreshTransportScenery();
             CreateGroundCover();
         }
     }
     if(Landscape)Landscape->SetActorHiddenInGame(Map);if(Foliage)Foliage->SetActorHiddenInGame(Map);if(GroundCover)GroundCover->SetActorHiddenInGame(Map);
 }
+void ASeigeGameMode::RefreshTransportScenery()
+{
+    RefreshBuildingPads();
+    TArray<FSceneryClearance> Roads;
+    AddRoadClearances(*this,Sim,FVector2D::ZeroVector,4,Roads);
+    for(const auto& N:Neighbors)AddRoadClearances(*this,N.Sim,N.Offset,N.Index,Roads);
+    if(Roads.IsEmpty())return;
+    auto OverlapsRoad=[&](const FTransform& Transform,const UStaticMesh* Mesh,const FSceneryClearance& Road)
+    {
+        if(!Mesh)return false;
+        const FBox Box=Mesh->GetBoundingBox().TransformBy(Transform);
+        const FVector2D P=FVector2D(Box.GetCenter())/RenderScale;
+        const FVector2D Closest=ClosestRoadPoint(P,Road.Position,Road.End);
+        if(Road.RequiresSight&&(!IsWorldVisible(P)||!IsWorldVisible(Closest)))return false;
+        const double Margin=FVector2D(Box.GetExtent()).Length()/RenderScale;
+        return (P-Closest).SquaredLength()<FMath::Square(Road.Radius+Margin);
+    };
+    for(AActor* Actor:{Foliage.Get(),GroundCover.Get()})if(Actor)
+    {
+        TArray<UInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
+        for(auto* Component:Components)
+        {
+            TSet<int32> Removed;
+            for(const auto& Road:Roads)
+            {
+                const FVector2D Lo(FMath::Min(Road.Position.X,Road.End.X)-Road.Radius,FMath::Min(Road.Position.Y,Road.End.Y)-Road.Radius);
+                const FVector2D Hi(FMath::Max(Road.Position.X,Road.End.X)+Road.Radius,FMath::Max(Road.Position.Y,Road.End.Y)+Road.Radius);
+                const FBox Bounds(FVector(Lo.X*RenderScale,Lo.Y*RenderScale,-6000*RenderScale),FVector(Hi.X*RenderScale,Hi.Y*RenderScale,6000*RenderScale));
+                for(int32 Index:Component->GetInstancesOverlappingBox(Bounds,true))
+                {
+                    FTransform Transform;
+                    if(Component->GetInstanceTransform(Index,Transform,true)&&OverlapsRoad(Transform,Component->GetStaticMesh(),Road))Removed.Add(Index);
+                }
+            }
+            if(Removed.IsEmpty())continue;
+            if(Actor==GroundCover.Get()&&SceneryStream)
+                for(auto& Cell:SceneryStream->Cells)for(auto& Pair:Cell.Value.Instances)
+                    if(SceneryStream->Sets.FindRef(Pair.Key).Get()==Component)
+                        Pair.Value.RemoveAll([&](FPrimitiveInstanceId Id){return !Component->IsValidId(Id)||Removed.Contains(Component->GetInstanceIndexForId(Id));});
+            Component->RemoveInstances(Removed.Array());
+        }
+    }
+    if(SceneryStream)for(auto& Pair:SceneryStream->PendingTransforms)
+    {
+        FString Kind,Band;Pair.Key.ToString().Split(TEXT("_"),&Kind,&Band,ESearchCase::CaseSensitive,ESearchDir::FromEnd);
+        const UStaticMesh* Mesh=SceneryStream->Meshes.FindRef(Kind.StartsWith(TEXT("GrassProxy"))?TEXT("GrassProxy"):Kind).Get();
+        Pair.Value.RemoveAll([&](const FTransform& Transform)
+        {
+            for(const auto& Road:Roads)if(OverlapsRoad(Transform,Mesh,Road))return true;
+            return false;
+        });
+    }
+}
 void ASeigeGameMode::ClearSceneryAt(FVector2D Position,float Radius)
 {
     const bool Home=FMath::Abs(Position.X)<=Sim.WorldHalfSize&&FMath::Abs(Position.Y)<=Sim.WorldHalfSize;
-    if(!Observer&&!Home&&!Sim.IsVisible(Position))return;
+    if(!Observer&&!Home&&!IsWorldVisible(Position))return;
     for(AActor* Actor:{Foliage.Get(),GroundCover.Get()})if(Actor)
     {
         TArray<UInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);

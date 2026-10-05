@@ -1,0 +1,47 @@
+{
+  "Meadow": {
+    "source": "Art/EnvironmentV04/Textures/Grass004/Grass004_2K-JPG_Color.jpg",
+    "linear_mean": [
+      0.12941095973554584,
+      0.163544459635007,
+      0.03532440295098165
+    ],
+    "linear_luminance_mean": 0.14703018946405916
+  },
+  "EarthMeadow": {
+    "source": "Art/Textures/PolyHaven/leafy_grass_diff_2k.jpg",
+    "linear_mean": [
+      0.32378885900877247,
+      0.23865014125778894,
+      0.10857234782976836
+    ],
+    "linear_luminance_mean": 0.24735901596603813
+  },
+  "Dirt": {
+    "source": "Art/Textures/PolyHaven/brown_mud_dry_diff_2k.jpg",
+    "linear_mean": [
+      0.19831157243775926,
+      0.1243323530640041,
+      0.059465618716368795
+    ],
+    "linear_luminance_mean": 0.13537695688323945
+  },
+  "Rock": {
+    "source": "Art/Textures/PolyHaven/rock_boulder_dry_diff_2k.jpg",
+    "linear_mean": [
+      0.40079727950756633,
+      0.3398176651879069,
+      0.2731070857081847
+    ],
+    "linear_luminance_mean": 0.3479654273561459
+  },
+  "Forest": {
+    "source": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_diffuse_2k.jpg",
+    "linear_mean": [
+      0.2986148506332322,
+      0.18126343655181562,
+      0.05940324911472282
+    ],
+    "linear_luminance_mean": 0.1974140416532384
+  }
+}

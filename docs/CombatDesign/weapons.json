@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "confirmed_design_not_runtime",
+  "families": [
+    {"id": "energy", "requires_energy": true, "requires_targeting": true, "requires_ammunition": false},
+    {"id": "kinetic", "examples": ["railgun", "cannon"], "ammunition_products": null, "energy_per_shot": null},
+    {"id": "missile", "ammunition_products": null, "guidance": null},
+    {"id": "plasma", "behavior": "slow_energy_projectile", "factions": ["colony", "bugs"], "consumables": null}
+  ],
+  "required_resolution": {"misses": true, "unintended_hits": true, "splash_damage": true, "first_actual_collision": true},
+  "defense_layers": ["shield", "armor", "hull"],
+  "weapon_family_response_matrix": null,
+  "friendly_fire_policy": null,
+  "splash_falloff": null,
+  "shield_regeneration": null
+}

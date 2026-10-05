@@ -1,0 +1,69 @@
+{
+  "license": "CC0-1.0 source derivatives; retained original creator attribution",
+  "units": "centimeters",
+  "runtime_review_pending": true,
+  "meshes": {
+    "SM_BroadleafSpraysV08": {
+      "fbx": "SM_BroadleafSpraysV08.fbx",
+      "triangles": 22822,
+      "vertices": 26456,
+      "dimensions_cm": [
+        2441.704956,
+        1915.457458,
+        1946.887451
+      ],
+      "ground_z": 0,
+      "material": "M_BroadleafSpraysV08",
+      "material_slots": [
+        "M_BroadleafSpraysV08",
+        "PH_jacaranda_tree_trunk.001",
+        "PH_jacaranda_tree_branches.001"
+      ],
+      "sha256": "9d95ed7808109163546c089cf88254d6a8627be4ec9e30d15df1c138ed8a5d7d",
+      "source_file": "Art/EnvironmentV07/Source/SM_JacarandaNearV07.blend",
+      "source_object": "SM_JacarandaNearV07",
+      "source_asset": "jacaranda_tree",
+      "license": "CC0-1.0 derivative",
+      "sprays": 1450,
+      "source_cells": 20626,
+      "method": "source foliage cell sampling; open folded pointed sprays; retained source wood",
+      "opaque": true,
+      "two_sided_foliage": true,
+      "runtime_review_pending": true,
+      "unreal_path": "/Game/Art/NatureV08/SM_BroadleafSpraysV08",
+      "previous_triangles": 23422,
+      "verified_loop_colors": 67710
+    },
+    "SM_ConiferSpraysV08": {
+      "fbx": "SM_ConiferSpraysV08.fbx",
+      "triangles": 17420,
+      "vertices": 19754,
+      "dimensions_cm": [
+        658.326508,
+        646.704773,
+        1895.460083
+      ],
+      "ground_z": 0,
+      "material": "M_ConiferSpraysV08",
+      "material_slots": [
+        "M_ConiferSpraysV08",
+        "PH_fir_tree_01_bark.001",
+        "PH_fir_tree_01_trunk_a.001"
+      ],
+      "sha256": "7ad96de2f7a4fe4e4133a71e9eceaf168ada2463c17df05e14d06097e6f113e5",
+      "source_file": "Art/Nature/Source/fir_tree_01.blend",
+      "source_object": "SM_FirA",
+      "source_asset": "fir_tree_01",
+      "license": "CC0-1.0 derivative",
+      "sprays": 1160,
+      "source_cells": 10426,
+      "method": "source foliage cell sampling; open folded pointed sprays; retained source wood",
+      "opaque": true,
+      "two_sided_foliage": true,
+      "runtime_review_pending": true,
+      "unreal_path": "/Game/Art/NatureV08/SM_ConiferSpraysV08",
+      "previous_triangles": 18000,
+      "verified_loop_colors": 51420
+    }
+  }
+}

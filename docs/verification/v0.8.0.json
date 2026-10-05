@@ -1,0 +1,2973 @@
+{
+  "version": "0.8.0",
+  "engine": "5.8.3",
+  "platform": "Windows x64 Shipping candidate",
+  "status": "locally_verified_prototype_known_graphics_limits",
+  "record_date": "2026-10-06",
+  "save_format": 5,
+  "rules_version": "prototype-8.0",
+  "prior_saves_compatible": false,
+  "retained_verified_package": "Builds/v0.7.0/Windows",
+  "launcher_version": "0.8.0",
+  "native": {
+    "status": "84_test_combined_native_checkpoint_passed",
+    "scope": "84 unique authored native tests have clean latest results. The 117-stage Shipping gameplay checkpoint ran on the earlier A081430D executable; final affected native tests and final boot/display/performance are separate evidence.",
+    "runs": [
+      {
+        "id": "v08-final-2",
+        "status": "failed",
+        "passed": 72,
+        "clean_passes": 72,
+        "succeeded_with_warnings": 0,
+        "failed": 1,
+        "not_run": 0,
+        "duration_seconds": 2271.993408203125,
+        "report": "Saved/Automation/v08-final-2/index.json",
+        "report_sha256": "F5CACA3B17A1F937D54CC63E1A1A84F9CBC5C1DB8FA081CBA3C00712D08A4EA4",
+        "failed_test": "Seige.AI.StartingAndDevelopedColonies",
+        "failure_scope": "Old exact-18-hour Starting colony target census. Snapshot had Won=true, 224 components and fully supplied 65.09-percent component-works recovery; three incomplete target assertions belonged to one failed test."
+      },
+      {
+        "id": "v08-release-regressions",
+        "status": "failed",
+        "passed": 50,
+        "clean_passes": 50,
+        "succeeded_with_warnings": 0,
+        "failed": 1,
+        "not_run": 0,
+        "duration_seconds": 452.2720642089844,
+        "report": "Saved/Automation/v08-release-regressions/index.json",
+        "report_sha256": "8E3CCDA756E9649452C377852C68878EE850A73B98D5D6B4B3FCAEDA076414B7",
+        "failed_test": "Seige.AI.StartingAndDevelopedColonies",
+        "failure_scope": "Developed seed 815 failed to finish worker_factory within the preparation budget after incremental-stepping changes. This is separate from the corrected Starting census contract."
+      },
+      {
+        "id": "v08-preparation-fixed",
+        "status": "passed",
+        "passed": 9,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "report": "Saved/Automation/v08-preparation-fixed/index.json",
+        "report_sha256": "646F994830A01CE40013C2494D961492C9DF3FAD09ED27FD1CF85FD91F773418",
+        "scope": "Corrective AI, frontend scenario-preparation and preparation-cancel rerun; includes Starting/Developed viability and incremental preparation determinism.",
+        "clean_passes": 9,
+        "not_run": 0,
+        "duration_seconds": 504.40753173828125
+      },
+      {
+        "id": "v08-loot-final",
+        "status": "passed",
+        "passed": 6,
+        "clean_passes": 6,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 0.11921869218349457,
+        "report": "Saved/Automation/v08-loot-final/index.json",
+        "report_sha256": "9A1C470BC72843914BC853D4C60E483E3B639F8B8841A8E79C258B591F648E5B",
+        "scope": "Targeted six-test combat rerun after external privateer loot-tier/scarcity selection; includes new LootTierScarcityAndPersistence regression."
+      }
+    ],
+    "accepted_for_native_matrix": true,
+    "single_full_run": false,
+    "prior_matrix": {
+      "selection": "Process reports in listed order; replace each fullTestPath with its latest result. Never sum run totals.",
+      "reports_in_order": [
+        "Saved/Automation/v08-final-2/index.json",
+        "Saved/Automation/v08-release-regressions/index.json",
+        "Saved/Automation/v08-preparation-fixed/index.json",
+        "Saved/Automation/v08-loot-final/index.json"
+      ],
+      "unique_tests": 77,
+      "passed": 77,
+      "clean_passes": 77,
+      "succeeded_with_warnings": 0,
+      "warning_events": 0,
+      "failed": 0,
+      "not_run": 0,
+      "latest_results_by_report": [
+        {
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "tests": 20
+        },
+        {
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "tests": 42
+        },
+        {
+          "report": "Saved/Automation/v08-preparation-fixed/index.json",
+          "tests": 9
+        },
+        {
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "tests": 6
+        }
+      ]
+    },
+    "current_matrix": {
+      "status": "passed_combined_native_checkpoint",
+      "selection": "Sort completed relevant reports by reportCreatedOn; latest fullTestPath result wins. Diagnostics excluded; do not sum overlapping totals.",
+      "reports_in_order": [
+        "Saved/Automation/v08-final-2/index.json",
+        "Saved/Automation/v08-release-regressions/index.json",
+        "Saved/Automation/v08-preparation-fixed/index.json",
+        "Saved/Automation/v08-loot-final/index.json",
+        "Saved/Automation/v08-recovery-final/index.json",
+        "Saved/Automation/v08-shuttle-final/index.json",
+        "Saved/Automation/v08-reserves-final/index.json",
+        "Saved/Automation/v08-scheduler-gates/index.json",
+        "Saved/Automation/v08-independent-neighbor/index.json",
+        "Saved/Automation/v08-independent-ai-remainder/index.json",
+        "Saved/Automation/v08-final-controls/index.json",
+        "Saved/Automation/v08-ground-contact/index.json",
+        "Saved/Automation/v08-final-rules-terrain/index.json",
+        "Saved/Automation/v08-final-placement/index.json"
+      ],
+      "unique_tests": 84,
+      "passed": 84,
+      "clean_passes": 84,
+      "succeeded_with_warnings": 0,
+      "warning_events": 0,
+      "failed": 0,
+      "not_run": 0,
+      "authored_native_tests": 84,
+      "source_coverage_complete": true,
+      "latest_results_by_report": [
+        {
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "tests": 2
+        },
+        {
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "tests": 28
+        },
+        {
+          "report": "Saved/Automation/v08-independent-neighbor/index.json",
+          "tests": 1
+        },
+        {
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "tests": 9
+        },
+        {
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "tests": 20
+        },
+        {
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "tests": 7
+        },
+        {
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "tests": 17
+        }
+      ],
+      "latest_results": [
+        {
+          "full_test_path": "Seige.AI.ConfigValidation",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.ConstructionRecoveryImportPriority",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.DeterministicSaveContinuation",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.DevelopedNeighborSeedRecovery",
+          "report": "Saved/Automation/v08-independent-neighbor/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.GuardServiceAndCompactCoverage",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.IncrementalPreparationDeterminism",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.InitialCoreAndThreatOrigin",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.StartingAndDevelopedColonies",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.SupportRecoveryImportPriority",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.WorkerSupportRecovery",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.AboveHorizonTerrain",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.BoundedTerrainRay",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.CompactBuildingPads",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.HiddenNeighborTerrain",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.IncrementalSectorSeams",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.NearestTerrainCrossing",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.PerspectiveTransformAndPan",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.RegionFocusAndOrbit",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.RoadGradeAndSeams",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.RoadTerrainPrivacy",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.SurveyAndSmoothZoom",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.SwardPlacementCoverage",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.SwardRootContact",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.TransportSceneryClearance",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.AutonomousClearFire",
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.EditableHardpointAndFleetBudgets",
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.LoadoutAndFiniteFactory",
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.LootTierScarcityAndPersistence",
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.PrivateerTravelCargoAndShuttle",
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.ProjectilesProtectionAndPersistence",
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.ShotCostsSplashAndRefitDemand",
+          "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Companions.FirstPersonControls",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Companions.PhysicalFoodAndMorale",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Companions.WalkingInterpolationAndPersistence",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.AICenterObservation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.ConfigurationAndLanding",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.DisplayAntialiasingSelection",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.GameMenuPauseAndSave",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.NeighborhoodSaveLoad",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.ScenarioPreparationCancellationAndAtomicCommit",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.ScenarioThreatSettings",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.BuildMenuShortcuts",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.CombatPlansPaymentsAndOwnership",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.CommandShuttleGeometrySelection",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.ControllerClickBetweenDraws",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.FloatingDockAndRegionIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.PreparationCancelAndInputIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.RoadToolsAndIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.SelectedCoreCommands",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.SpeedAndGameMenuShortcuts",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.TradingPortWorkerTargets",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.UiClickIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.WallPlanInputsWithoutCanvas",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.WorkerProductionAndReserveControls",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Regions.DepositVisibility",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Regions.EmptyResourceCatalog",
+          "report": "Saved/Automation/v08-final-placement/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.AutomaticWorkforceAndRepair",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.BlockedCourierPersistenceAndOccupiedPlots",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.BuildingInformation",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.CoreLossAndShuttle",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Economy.BatchEscrowAndPersistence",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Economy.ExportImportAndUpgrade",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Economy.IndependentRoadGrids",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.FirstPlayableSolvable",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.IndependentScenarioThreats",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.PhysicalConstructionAndReservations",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.PhysicalDelivery",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RenderInterpolationByIdentity",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RoadNetworkSpeedUpgradeAndPersistence",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RoadPlansRespectConstructionLengths",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RoadWearRepairUsesLocalService",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RobotSupportCapacityAndLocalMaintenance",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RuleValidation",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.SaveLoadDeterminism",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.SeededResourceRegions",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.ThreatSaveValidation",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.VisibleWorkUsesOperatingGates",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Walls.InvalidCoordinatesCrossingsAndSides",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Walls.OccupiedCorridor",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Walls.PreviewCommitAndAtomicRejection",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.WeaponCadenceAndPersistence",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.WorkerTravelAndPhasedConstruction",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Workforce.ReplicatorAndFactory",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Workforce.StoredBodiesAndDisassembly",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        }
+      ],
+      "scope": "Combined full and focused evidence, not a single final full-suite run. Latest 23-test terrain/combat and 17-test placement runs refresh affected code and add EditableHardpointAndFleetBudgets and SwardPlacementCoverage. Final rendered/performance evidence remains separate."
+    },
+    "checkpoint_runs": [
+      {
+        "id": "v08-recovery-final",
+        "status": "failed",
+        "passed": 9,
+        "clean_passes": 9,
+        "succeeded_with_warnings": 0,
+        "failed": 2,
+        "not_run": 0,
+        "duration_seconds": 756.5350952148438,
+        "report": "Saved/Automation/v08-recovery-final/index.json",
+        "report_sha256": "966A73116038C33F0DA5EB8B67969CF0C9991729853349294F392019D12619B5",
+        "failed_tests": [
+          "Seige.AI.ConstructionRecoveryImportPriority",
+          "Seige.AI.DevelopedNeighborSeedRecovery"
+        ],
+        "scope": "Recovery checkpoint: construction-recovery fixture support-capacity assertion and exact Developed neighbor seed -2027807669 failed. The latter remained unfinished at the authored 64800-second preparation limit."
+      },
+      {
+        "id": "v08-reserves-final",
+        "status": "failed",
+        "passed": 9,
+        "clean_passes": 9,
+        "succeeded_with_warnings": 0,
+        "failed": 1,
+        "not_run": 0,
+        "duration_seconds": 809.367919921875,
+        "report": "Saved/Automation/v08-reserves-final/index.json",
+        "report_sha256": "E576387CFA0FC79E4E8DA6D6BFA314E3001B8EE26C533801F2EC2B5DA3E7387E",
+        "failed_tests": [
+          "Seige.AI.DevelopedNeighborSeedRecovery"
+        ],
+        "scope": "Reserve-policy checkpoint: nine clean passes; exact Developed neighbor seed -2027807669 still failed at 64800 seconds while rebuilding alloy_refinery."
+      },
+      {
+        "id": "v08-scheduler-gates",
+        "status": "passed",
+        "passed": 3,
+        "clean_passes": 3,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 0.5988929867744446,
+        "report": "Saved/Automation/v08-scheduler-gates/index.json",
+        "report_sha256": "36F7E89F8504BE070823B89B9FDC60C34090E773F7073D06B368810B8EB8560C",
+        "failed_tests": [],
+        "scope": "Three clean targeted scheduling gates; this is a focused subset, not full-suite acceptance."
+      },
+      {
+        "id": "v08-shuttle-final",
+        "status": "passed",
+        "passed": 1,
+        "clean_passes": 1,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 0.19969329237937927,
+        "report": "Saved/Automation/v08-shuttle-final/index.json",
+        "report_sha256": "ACB5FF1A0811FCB7A214A8A89264036C481EFCA3097F1483257AE64CB7AD19C9",
+        "failed_tests": [],
+        "scope": "One clean CommandShuttleGeometrySelection regression using the real parked command hull, low-angle geometry ray and native physics readiness. The later117-stage gameplay checkpoint also passed rendered selection."
+      },
+      {
+        "id": "v08-independent-neighbor",
+        "status": "passed",
+        "passed": 1,
+        "clean_passes": 1,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 180.2206268310547,
+        "report": "Saved/Automation/v08-independent-neighbor/index.json",
+        "report_sha256": "1EEDD872FC403AE9FAA715C9B08681AA4484BE2B007C629D19E166779480D9A9",
+        "failed_tests": [],
+        "scope": "Official exact-seed Developed preparation regression passed under independent guard/trade/construction scheduling. Seed -2027807669 reached all 20 required targets at 53920 simulated seconds within the authored 64800-second limit, without grants or weakened readiness.",
+        "seed": -2027807669,
+        "ready_targets": 20,
+        "required_targets": 20,
+        "ready_at_simulation_seconds": 53920,
+        "preparation_limit_seconds": 64800,
+        "decision_scheduling_policy": "independent_tactics_trade_construction"
+      },
+      {
+        "id": "v08-independent-ai-remainder",
+        "status": "passed",
+        "passed": 9,
+        "clean_passes": 9,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 555.7691040039062,
+        "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+        "report_sha256": "32E88CE27489D6DB08658EB09ADF72DF15FFE7A9422A6F90AF34F8C4310C8F3E",
+        "scope": "Nine remaining AI regressions under independent scheduling; combined with the exact-neighbor check covers all ten authored AI tests."
+      },
+      {
+        "id": "v08-final-controls",
+        "status": "passed",
+        "passed": 21,
+        "clean_passes": 21,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 1752.284912109375,
+        "report": "Saved/Automation/v08-final-controls/index.json",
+        "report_sha256": "7036653F7BD0F907BCC234F3A8BB05DCBFD7BC85CE670490CC60451531116D94",
+        "scope": "Current Seige.Frontend, Seige.Interaction and companion FirstPersonControls rerun: 21 clean tests, including all four threat combinations and full neighborhood save/load."
+      },
+      {
+        "id": "v08-ground-contact",
+        "status": "passed",
+        "passed": 16,
+        "clean_passes": 16,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 2.8755991458892822,
+        "report": "Saved/Automation/v08-ground-contact/index.json",
+        "report_sha256": "D38719529702FC35F64BD255BDA27ACD8A891F2CBABD9DD9CEB30ED6454BCEDC",
+        "scope": "Affected camera/terrain, region-visibility and real command-hull regression pass after root-contact correction. Adds Seige.Camera.SwardRootContact; this native geometry check does not establish visible grass-contact quality or final shader/performance acceptance."
+      },
+      {
+        "id": "v08-final-rules-terrain",
+        "status": "passed",
+        "passed": 23,
+        "clean_passes": 23,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 3.012648820877075,
+        "report": "Saved/Automation/v08-final-rules-terrain/index.json",
+        "report_sha256": "45412947E5628F6711B32B8C02159A3C02C67FF2C7D725182CB5E8F8A654B929",
+        "scope": "Targeted final terrain/combat coverage, including new configurable budget regression."
+      },
+      {
+        "id": "v08-final-placement",
+        "status": "passed",
+        "passed": 17,
+        "clean_passes": 17,
+        "succeeded_with_warnings": 0,
+        "failed": 0,
+        "not_run": 0,
+        "duration_seconds": 2.8842501640319824,
+        "report": "Saved/Automation/v08-final-placement/index.json",
+        "report_sha256": "749BFA456D7BF94BF81802F80C9C86943914447B051AD9BEC10CD0096860C4E8",
+        "scope": "Targeted placement/camera/region/command-hull rerun, adding SwardPlacementCoverage without summing overlapping tests."
+      }
+    ],
+    "pending_required_checks": [],
+    "pre_visual_correction_matrix": {
+      "status": "passed_for_pre_visual_correction_checkpoint",
+      "selection": "Sort relevant completed reports by reportCreatedOn; replace each fullTestPath with its latest result. Exclude Diagnostics.* and never sum overlapping run totals.",
+      "reports_in_order": [
+        "Saved/Automation/v08-final-2/index.json",
+        "Saved/Automation/v08-release-regressions/index.json",
+        "Saved/Automation/v08-preparation-fixed/index.json",
+        "Saved/Automation/v08-loot-final/index.json",
+        "Saved/Automation/v08-recovery-final/index.json",
+        "Saved/Automation/v08-shuttle-final/index.json",
+        "Saved/Automation/v08-reserves-final/index.json",
+        "Saved/Automation/v08-scheduler-gates/index.json",
+        "Saved/Automation/v08-independent-neighbor/index.json",
+        "Saved/Automation/v08-independent-ai-remainder/index.json",
+        "Saved/Automation/v08-final-controls/index.json"
+      ],
+      "unique_tests": 81,
+      "passed": 81,
+      "clean_passes": 81,
+      "succeeded_with_warnings": 0,
+      "warning_events": 0,
+      "failed": 0,
+      "not_run": 0,
+      "authored_native_tests": 81,
+      "source_coverage_complete": true,
+      "latest_results_by_report": [
+        {
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "tests": 16
+        },
+        {
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "tests": 28
+        },
+        {
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "tests": 6
+        },
+        {
+          "report": "Saved/Automation/v08-independent-neighbor/index.json",
+          "tests": 1
+        },
+        {
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "tests": 9
+        },
+        {
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "tests": 21
+        }
+      ],
+      "latest_results": [
+        {
+          "full_test_path": "Seige.AI.ConfigValidation",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.ConstructionRecoveryImportPriority",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.DeterministicSaveContinuation",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.DevelopedNeighborSeedRecovery",
+          "report": "Saved/Automation/v08-independent-neighbor/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.GuardServiceAndCompactCoverage",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.IncrementalPreparationDeterminism",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.InitialCoreAndThreatOrigin",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.StartingAndDevelopedColonies",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.SupportRecoveryImportPriority",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.AI.WorkerSupportRecovery",
+          "report": "Saved/Automation/v08-independent-ai-remainder/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.AboveHorizonTerrain",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.BoundedTerrainRay",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.CompactBuildingPads",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.HiddenNeighborTerrain",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.IncrementalSectorSeams",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.NearestTerrainCrossing",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.PerspectiveTransformAndPan",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.RegionFocusAndOrbit",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.RoadGradeAndSeams",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.RoadTerrainPrivacy",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.SurveyAndSmoothZoom",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Camera.TransportSceneryClearance",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.AutonomousClearFire",
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.LoadoutAndFiniteFactory",
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.LootTierScarcityAndPersistence",
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.PrivateerTravelCargoAndShuttle",
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.ProjectilesProtectionAndPersistence",
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Combat.ShotCostsSplashAndRefitDemand",
+          "report": "Saved/Automation/v08-loot-final/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Companions.FirstPersonControls",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Companions.PhysicalFoodAndMorale",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Companions.WalkingInterpolationAndPersistence",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.AICenterObservation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.ConfigurationAndLanding",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.DisplayAntialiasingSelection",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.GameMenuPauseAndSave",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.NeighborhoodSaveLoad",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.ScenarioPreparationCancellationAndAtomicCommit",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Frontend.ScenarioThreatSettings",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.BuildMenuShortcuts",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.CombatPlansPaymentsAndOwnership",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.CommandShuttleGeometrySelection",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.ControllerClickBetweenDraws",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.FloatingDockAndRegionIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.PreparationCancelAndInputIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.RoadToolsAndIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.SelectedCoreCommands",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.SpeedAndGameMenuShortcuts",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.TradingPortWorkerTargets",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.UiClickIsolation",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.WallPlanInputsWithoutCanvas",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Interaction.WorkerProductionAndReserveControls",
+          "report": "Saved/Automation/v08-final-controls/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Regions.DepositVisibility",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Regions.EmptyResourceCatalog",
+          "report": "Saved/Automation/v08-final-2/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.AutomaticWorkforceAndRepair",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.BlockedCourierPersistenceAndOccupiedPlots",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.BuildingInformation",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.CoreLossAndShuttle",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Economy.BatchEscrowAndPersistence",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Economy.ExportImportAndUpgrade",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Economy.IndependentRoadGrids",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.FirstPlayableSolvable",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.IndependentScenarioThreats",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.PhysicalConstructionAndReservations",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.PhysicalDelivery",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RenderInterpolationByIdentity",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RoadNetworkSpeedUpgradeAndPersistence",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RoadPlansRespectConstructionLengths",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RoadWearRepairUsesLocalService",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RobotSupportCapacityAndLocalMaintenance",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.RuleValidation",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.SaveLoadDeterminism",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.SeededResourceRegions",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.ThreatSaveValidation",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.VisibleWorkUsesOperatingGates",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Walls.InvalidCoordinatesCrossingsAndSides",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Walls.OccupiedCorridor",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Walls.PreviewCommitAndAtomicRejection",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.WeaponCadenceAndPersistence",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.WorkerTravelAndPhasedConstruction",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Workforce.ReplicatorAndFactory",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        },
+        {
+          "full_test_path": "Seige.Simulation.Workforce.StoredBodiesAndDisassembly",
+          "report": "Saved/Automation/v08-release-regressions/index.json",
+          "state": "Success",
+          "warnings": 0,
+          "errors": 0
+        }
+      ],
+      "scope": "Combined latest-result matrix over relevant full and targeted reports; not a single final full-suite invocation. The current independent scheduler has all ten AI tests covered; the current frontend/interaction/first-person rerun has 21 clean tests. Prior 77 matrix and all superseded failures remain recorded.",
+      "source_coverage_scope": "All 81 authored native acceptance names observed before the subsequent grass-contact/material corrections; added terrain tests must be reconciled separately."
+    }
+  },
+  "targeted_rex_after_walk_cycle_change": {
+    "passed": 3,
+    "clean_passes": 3,
+    "succeeded_with_warnings": 0,
+    "failed": 0,
+    "not_run": 0,
+    "duration_seconds": 0.02665960043668747,
+    "report": "Saved/Automation/v08-rex-final/index.json",
+    "report_sha256": "6C000563A3C583818D35CCDEDC2480256B7FF17CAD56B664748A4AFED25D3371",
+    "scope": "Targeted rerun after external distance-driven walk_cycle_meters was added; not additional distinct tests beyond the full suite."
+  },
+  "definitions": {
+    "configuration": "passed",
+    "rules_negative_cases_passed": 79,
+    "scope": "Current external definitions revalidated after the AI scheduling policy change. This is schema/configuration validation, not gameplay or release acceptance.",
+    "combat": "passed",
+    "ai_valid_cases_passed": 2,
+    "ai_invalid_cases_rejected": 4,
+    "confirmed_utc_window": [
+      "2026-10-05T18:15:00Z",
+      "2026-10-05T18:16:59Z"
+    ],
+    "evidence": "Root reported repeated validation at this checkpoint; no report artifact hash supplied."
+  },
+  "imports": {
+    "terrain": {
+      "status": "passed",
+      "report": "Art/EnvironmentV08/surface_import_report.json",
+      "shared_macro_samples": 1,
+      "macro_scale_meters": 22,
+      "samples_per_active_layer": {
+        "near": 4,
+        "far": 2
+      },
+      "band_correction_status": "retained_forest_fade_reimported_stochastic_experiment_rejected",
+      "import_log": "Saved/import-terrain-v08-final.log",
+      "forest_pattern_control": {
+        "near_source": "forest_leaves_02",
+        "far_source": "leafy_grass",
+        "far_palette": "Forest",
+        "far_sampling": "rotated world coordinates with matching explicit gradients",
+        "fade_start_m": 40.0,
+        "fade_end_m": 120.0,
+        "near_max_samples": 4,
+        "far_max_samples": 1,
+        "flat_color_fill": false,
+        "source_analysis": "Art/EnvironmentV08/forest_pattern_analysis.json"
+      },
+      "geometry_or_density_changed": false,
+      "performance_accepted": true,
+      "report_sha256": "1071DB6865DCCE154467EB6319BDB8343523D2D309399CAFACF30F6E1614FF8B",
+      "performance_scope": "Final package measured in two isolated native-resolution benchmarks; acceptance retains observed30.5-48.9meanFPS and remaining visual limits, not a60FPS claim."
+    },
+    "canopies": {
+      "status": "passed",
+      "report": "Art/EnvironmentV08/Canopies/canopy_import_report.json",
+      "source_triangles": {
+        "broadleaf": 22822,
+        "conifer": 17420
+      }
+    },
+    "rex": {
+      "status": "passed",
+      "report": "Art/CompanionDog/import_report.json",
+      "source_triangles": 118331,
+      "bones": 24,
+      "lods": 3,
+      "animations": [
+        "A_DogIdle",
+        "A_DogWalk"
+      ],
+      "runtime_appearance_accepted": true,
+      "private_photographs_imported": false,
+      "runtime_review_status": "reviewed_local_prototype_stylized_likeness_limit",
+      "material_slots": 10,
+      "iris_material": "/Game/Art/CompanionDog/M_Iris",
+      "revision": "r4",
+      "import_log": "Saved/import-rex-v08-r4.log",
+      "runtime_appearance_scope": "Accepted as an authored prototype interpretation; no photographic likeness or perfect foot-contact claim."
+    }
+  },
+  "graphics": {
+    "editor_preview": {
+      "status": "completed",
+      "report": "Saved/GraphicsBenchmark-v08-surface-canopy.json",
+      "report_sha256": "DA73DFE18D300423A2BCEB28029736FE8FF55F0119E6CFDB75EA265EED41546F",
+      "screenshots": "Saved/Screenshots/Benchmark/v08-surface-canopy",
+      "width": 1600,
+      "height": 900,
+      "profile": "Medium",
+      "render_percent": 100,
+      "simulation_speed": 10,
+      "camera_mode": "static",
+      "views": [
+        "colony",
+        "meadow",
+        "ground",
+        "hills",
+        "boundary"
+      ],
+      "scope": "Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then runs at10x with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit samples include camera-driven streaming and report pending-cell mean/max/start/end without resetting; static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded."
+    },
+    "shipping_native_resolution": {
+      "status": "completed_final_package",
+      "report": "Art/EnvironmentV08/benchmark-shipping-native.json",
+      "source_report": "Saved/GraphicsBenchmark-v08-final-native.json",
+      "report_sha256": "7E87D620A6C4AB36F84696BD9519570C4F7D2373AD149EB209B02AD3EE95DCBF",
+      "tested_executable_sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877",
+      "width": 3840,
+      "height": 1600,
+      "profile": "Medium",
+      "render_percent": 100,
+      "simulation_speed": 10,
+      "camera_mode": "static",
+      "orbit_degrees_per_second": 0,
+      "orbit_pitch_amplitude_degrees": 0,
+      "warmup_seconds": 4,
+      "sample_seconds_per_view": 5,
+      "method": "Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then runs at10x with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit samples include camera-driven streaming and report pending-cell mean/max/start/end without resetting; static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded.",
+      "thread_timing_method": "Latest completed RenderTimer counters exclude idle; GPU uses RHIGetGPUFrameCycles(0). Counters can lag camera samples, and repeated GPU readback values are not de-duplicated. Zero counters are omitted and availability/sample counts reported. These distributions are bottleneck evidence, not synchronized CPU/GPU frame traces.",
+      "results": [
+        {
+          "view": "colony",
+          "samples": 241,
+          "sample_seconds": 5.009423900395632,
+          "mean_fps": 48.10932450355547,
+          "mean_frame_ms": 20.78599128794868,
+          "p95_frame_ms": 22.27570116519928,
+          "p99_frame_ms": 23.331698030233383,
+          "max_frame_ms": 26.88879892230034,
+          "pending_scenery_cells_max": 0,
+          "pending_scenery_cells_mean": 0,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 241,
+              "mean_ms": 20.78599128794868,
+              "p95_ms": 22.27570116519928,
+              "p99_ms": 23.331698030233383,
+              "max_ms": 26.88879892230034
+            },
+            "game": {
+              "available": true,
+              "samples": 241,
+              "mean_ms": 0.6303734433106861,
+              "p95_ms": 0.9595999717712402,
+              "p99_ms": 1.1425000429153442,
+              "max_ms": 2.426800012588501
+            },
+            "render": {
+              "available": true,
+              "samples": 241,
+              "mean_ms": 1.5305846447271925,
+              "p95_ms": 1.9026000499725342,
+              "p99_ms": 2.1998000144958496,
+              "max_ms": 2.4707999229431152
+            },
+            "rhi": {
+              "available": true,
+              "samples": 241,
+              "mean_ms": 0.5153676367894248,
+              "p95_ms": 0.6668000221252441,
+              "p99_ms": 0.7875000238418579,
+              "max_ms": 0.8633000254631042
+            },
+            "gpu": {
+              "available": true,
+              "samples": 241,
+              "mean_ms": 20.26559165701332,
+              "p95_ms": 21.704299926757812,
+              "p99_ms": 22.457199096679688,
+              "max_ms": 22.86639976501465
+            }
+          }
+        },
+        {
+          "view": "meadow",
+          "samples": 164,
+          "sample_seconds": 5.021738100796938,
+          "mean_fps": 32.65801535408101,
+          "mean_frame_ms": 30.62035427315206,
+          "p95_frame_ms": 33.3159975707531,
+          "p99_frame_ms": 34.044403582811356,
+          "max_frame_ms": 34.79929640889168,
+          "pending_scenery_cells_max": 0,
+          "pending_scenery_cells_mean": 0,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 30.62035427315206,
+              "p95_ms": 33.3159975707531,
+              "p99_ms": 34.044403582811356,
+              "max_ms": 34.79929640889168
+            },
+            "game": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 0.6066359724940323,
+              "p95_ms": 0.7692000269889832,
+              "p99_ms": 0.9746999740600586,
+              "max_ms": 0.9927999973297119
+            },
+            "render": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 1.5581353633868984,
+              "p95_ms": 1.9322999715805054,
+              "p99_ms": 2.0861001014709473,
+              "max_ms": 2.1800999641418457
+            },
+            "rhi": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 0.5109878064292234,
+              "p95_ms": 0.6103000044822693,
+              "p99_ms": 0.7027999758720398,
+              "max_ms": 0.704800009727478
+            },
+            "gpu": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 30.107190271703207,
+              "p95_ms": 31.692399978637695,
+              "p99_ms": 32.73500061035156,
+              "max_ms": 32.81959915161133
+            }
+          }
+        },
+        {
+          "view": "ground",
+          "samples": 153,
+          "sample_seconds": 5.011276699602604,
+          "mean_fps": 30.531141896860927,
+          "mean_frame_ms": 32.75344248106277,
+          "p95_frame_ms": 35.84830090403557,
+          "p99_frame_ms": 37.00000047683716,
+          "max_frame_ms": 37.123002111911774,
+          "pending_scenery_cells_max": 0,
+          "pending_scenery_cells_mean": 0,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 153,
+              "mean_ms": 32.75344248106277,
+              "p95_ms": 35.84830090403557,
+              "p99_ms": 37.00000047683716,
+              "max_ms": 37.123002111911774
+            },
+            "game": {
+              "available": true,
+              "samples": 153,
+              "mean_ms": 0.6388078417653352,
+              "p95_ms": 0.9484999775886536,
+              "p99_ms": 1.1159000396728516,
+              "max_ms": 1.5664000511169434
+            },
+            "render": {
+              "available": true,
+              "samples": 153,
+              "mean_ms": 1.652084314745236,
+              "p95_ms": 1.9557000398635864,
+              "p99_ms": 2.1949000358581543,
+              "max_ms": 2.4563000202178955
+            },
+            "rhi": {
+              "available": true,
+              "samples": 153,
+              "mean_ms": 0.5445915028160694,
+              "p95_ms": 0.73580002784729,
+              "p99_ms": 0.972100019454956,
+              "max_ms": 0.9879999756813049
+            },
+            "gpu": {
+              "available": true,
+              "samples": 153,
+              "mean_ms": 32.22033989351559,
+              "p95_ms": 33.877899169921875,
+              "p99_ms": 34.47800064086914,
+              "max_ms": 35.30459976196289
+            }
+          }
+        },
+        {
+          "view": "hills",
+          "samples": 191,
+          "sample_seconds": 5.009009499102831,
+          "mean_fps": 38.131291233168994,
+          "mean_frame_ms": 26.22518062357503,
+          "p95_frame_ms": 28.032999485731125,
+          "p99_frame_ms": 28.478998690843582,
+          "max_frame_ms": 28.78589928150177,
+          "pending_scenery_cells_max": 0,
+          "pending_scenery_cells_mean": 0,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 191,
+              "mean_ms": 26.22518062357503,
+              "p95_ms": 28.032999485731125,
+              "p99_ms": 28.478998690843582,
+              "max_ms": 28.78589928150177
+            },
+            "game": {
+              "available": true,
+              "samples": 191,
+              "mean_ms": 0.5831068061409196,
+              "p95_ms": 0.760200023651123,
+              "p99_ms": 0.9490000009536743,
+              "max_ms": 0.9837999939918518
+            },
+            "render": {
+              "available": true,
+              "samples": 191,
+              "mean_ms": 1.4799083789605745,
+              "p95_ms": 1.7877000570297241,
+              "p99_ms": 1.895400047302246,
+              "max_ms": 1.9651000499725342
+            },
+            "rhi": {
+              "available": true,
+              "samples": 191,
+              "mean_ms": 0.5073031427348471,
+              "p95_ms": 0.671500027179718,
+              "p99_ms": 0.7529000043869019,
+              "max_ms": 0.835099995136261
+            },
+            "gpu": {
+              "available": true,
+              "samples": 191,
+              "mean_ms": 25.750525110055015,
+              "p95_ms": 27.693099975585938,
+              "p99_ms": 28.103200912475586,
+              "max_ms": 28.20479965209961
+            }
+          }
+        },
+        {
+          "view": "boundary",
+          "samples": 221,
+          "sample_seconds": 5.001274101436138,
+          "mean_fps": 44.18873981262872,
+          "mean_frame_ms": 22.630199554009675,
+          "p95_frame_ms": 23.952201008796692,
+          "p99_frame_ms": 24.36869964003563,
+          "max_frame_ms": 24.921800941228867,
+          "pending_scenery_cells_max": 0,
+          "pending_scenery_cells_mean": 0,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 221,
+              "mean_ms": 22.630199554009675,
+              "p95_ms": 23.952201008796692,
+              "p99_ms": 24.36869964003563,
+              "max_ms": 24.921800941228867
+            },
+            "game": {
+              "available": true,
+              "samples": 221,
+              "mean_ms": 1.8619049803703618,
+              "p95_ms": 2.03629994392395,
+              "p99_ms": 2.1568000316619873,
+              "max_ms": 3.1036999225616455
+            },
+            "render": {
+              "available": true,
+              "samples": 221,
+              "mean_ms": 1.4794805435573353,
+              "p95_ms": 1.8186999559402466,
+              "p99_ms": 2.0009000301361084,
+              "max_ms": 2.0901999473571777
+            },
+            "rhi": {
+              "available": true,
+              "samples": 221,
+              "mean_ms": 0.4507457031383773,
+              "p95_ms": 0.560699999332428,
+              "p99_ms": 0.6144000291824341,
+              "max_ms": 0.6833000183105469
+            },
+            "gpu": {
+              "available": true,
+              "samples": 221,
+              "mean_ms": 22.165091346291934,
+              "p95_ms": 23.63010025024414,
+              "p99_ms": 24.11829948425293,
+              "max_ms": 24.31450080871582
+            }
+          }
+        }
+      ]
+    },
+    "final_runtime_appearance": {
+      "status": "reviewed_local_prototype_with_known_visual_limits",
+      "reference_game_parity_claimed": false,
+      "defects": [
+        "Some exposed grass patches remain",
+        "Residual repeated brown-soil pattern",
+        "Rex remains a stylized authored interpretation rather than photographic likeness"
+      ],
+      "latest_comparison": [
+        "Saved/Screenshots/Benchmark/v08-contact-ground/ground.png",
+        "Saved/Screenshots/Benchmark/v08-placement-ground/ground.png"
+      ],
+      "scope": "Same-view placement improves long gaps; no full visual-parity or artifact-elimination claim."
+    },
+    "band_correction_preview": {
+      "status": "completed_visual_preview_only",
+      "report": "Saved/GraphicsBenchmark-v08-band-preview.json",
+      "performance_accepted": false,
+      "shipping_appearance_accepted": false,
+      "scope": "Material band correction imported and previewed. Preview timings do not constitute final native-resolution Shipping performance acceptance."
+    },
+    "shipping_orbit_native_resolution": {
+      "status": "completed_final_package",
+      "report": "Art/EnvironmentV08/benchmark-shipping-orbit-native.json",
+      "source_report": "Saved/GraphicsBenchmark-v08-final-orbit.json",
+      "report_sha256": "1290C8E279CDB45BFA1131A91AAC327F3FAB98B781E5691B5A64666FEEB720D0",
+      "tested_executable_sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877",
+      "width": 3840,
+      "height": 1600,
+      "profile": "Medium",
+      "render_percent": 100,
+      "simulation_speed": 10,
+      "camera_mode": "orbit",
+      "orbit_degrees_per_second": 72,
+      "orbit_pitch_amplitude_degrees": 8,
+      "warmup_seconds": 4,
+      "sample_seconds_per_view": 5,
+      "method": "Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then runs at10x with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit samples include camera-driven streaming and report pending-cell mean/max/start/end without resetting; static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded.",
+      "thread_timing_method": "Latest completed RenderTimer counters exclude idle; GPU uses RHIGetGPUFrameCycles(0). Counters can lag camera samples, and repeated GPU readback values are not de-duplicated. Zero counters are omitted and availability/sample counts reported. These distributions are bottleneck evidence, not synchronized CPU/GPU frame traces.",
+      "results": [
+        {
+          "view": "colony",
+          "samples": 245,
+          "sample_seconds": 5.01283759996295,
+          "mean_fps": 48.874513708924226,
+          "mean_frame_ms": 20.460561632501836,
+          "p95_frame_ms": 23.587100207805634,
+          "p99_frame_ms": 25.32080188393593,
+          "max_frame_ms": 25.59550106525421,
+          "pending_scenery_cells_max": 18,
+          "pending_scenery_cells_mean": 3.3714285714285714,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 245,
+              "mean_ms": 20.460561632501836,
+              "p95_ms": 23.587100207805634,
+              "p99_ms": 25.32080188393593,
+              "max_ms": 25.59550106525421
+            },
+            "game": {
+              "available": true,
+              "samples": 245,
+              "mean_ms": 2.1085257153121795,
+              "p95_ms": 4.194699764251709,
+              "p99_ms": 4.5605998039245605,
+              "max_ms": 4.876699924468994
+            },
+            "render": {
+              "available": true,
+              "samples": 245,
+              "mean_ms": 2.1736534707400263,
+              "p95_ms": 2.9748001098632812,
+              "p99_ms": 3.2922000885009766,
+              "max_ms": 3.396199941635132
+            },
+            "rhi": {
+              "available": true,
+              "samples": 245,
+              "mean_ms": 0.5925167357435032,
+              "p95_ms": 0.7310000061988831,
+              "p99_ms": 0.8367000222206116,
+              "max_ms": 0.9132999777793884
+            },
+            "gpu": {
+              "available": true,
+              "samples": 245,
+              "mean_ms": 19.89689259821055,
+              "p95_ms": 22.414100646972656,
+              "p99_ms": 23.07200050354004,
+              "max_ms": 23.680500030517578
+            }
+          }
+        },
+        {
+          "view": "meadow",
+          "samples": 214,
+          "sample_seconds": 5.0160878002643585,
+          "mean_fps": 42.66273010387134,
+          "mean_frame_ms": 23.43966261805775,
+          "p95_frame_ms": 36.30540147423744,
+          "p99_frame_ms": 38.03200274705887,
+          "max_frame_ms": 39.24649953842163,
+          "pending_scenery_cells_max": 0,
+          "pending_scenery_cells_mean": 0,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 214,
+              "mean_ms": 23.43966261805775,
+              "p95_ms": 36.30540147423744,
+              "p99_ms": 38.03200274705887,
+              "max_ms": 39.24649953842163
+            },
+            "game": {
+              "available": true,
+              "samples": 214,
+              "mean_ms": 0.6645481331604663,
+              "p95_ms": 0.8831999897956848,
+              "p99_ms": 1.1994999647140503,
+              "max_ms": 5.138400077819824
+            },
+            "render": {
+              "available": true,
+              "samples": 214,
+              "mean_ms": 1.871613083041717,
+              "p95_ms": 2.5220000743865967,
+              "p99_ms": 2.875999927520752,
+              "max_ms": 2.917799949645996
+            },
+            "rhi": {
+              "available": true,
+              "samples": 214,
+              "mean_ms": 0.5812836477411127,
+              "p95_ms": 0.7085000276565552,
+              "p99_ms": 0.7587000131607056,
+              "max_ms": 0.8353999853134155
+            },
+            "gpu": {
+              "available": true,
+              "samples": 214,
+              "mean_ms": 22.904067275680113,
+              "p95_ms": 36.0015983581543,
+              "p99_ms": 37.38309860229492,
+              "max_ms": 38.442298889160156
+            }
+          }
+        },
+        {
+          "view": "ground",
+          "samples": 164,
+          "sample_seconds": 5.001525200903416,
+          "mean_fps": 32.78999773316688,
+          "mean_frame_ms": 30.497104883557412,
+          "p95_frame_ms": 38.42620179057121,
+          "p99_frame_ms": 39.65579718351364,
+          "max_frame_ms": 39.826299995183945,
+          "pending_scenery_cells_max": 0,
+          "pending_scenery_cells_mean": 0,
+          "pending_scenery_cells_at_sample_end": 0,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 30.497104883557412,
+              "p95_ms": 38.42620179057121,
+              "p99_ms": 39.65579718351364,
+              "max_ms": 39.826299995183945
+            },
+            "game": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 0.6462304886521363,
+              "p95_ms": 0.8080999851226807,
+              "p99_ms": 0.9476000070571899,
+              "max_ms": 1.1187000274658203
+            },
+            "render": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 1.6695103638055848,
+              "p95_ms": 2.010499954223633,
+              "p99_ms": 2.1294000148773193,
+              "max_ms": 2.18179988861084
+            },
+            "rhi": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 0.5958103666581759,
+              "p95_ms": 0.7745000123977661,
+              "p99_ms": 0.9368000030517578,
+              "max_ms": 0.978600025177002
+            },
+            "gpu": {
+              "available": true,
+              "samples": 164,
+              "mean_ms": 29.978253085438798,
+              "p95_ms": 37.18119812011719,
+              "p99_ms": 38.705299377441406,
+              "max_ms": 38.71889877319336
+            }
+          }
+        },
+        {
+          "view": "hills",
+          "samples": 183,
+          "sample_seconds": 5.00952659919858,
+          "mean_fps": 36.53039790811295,
+          "mean_frame_ms": 27.37446229070262,
+          "p95_frame_ms": 30.902400612831116,
+          "p99_frame_ms": 33.043600618839264,
+          "max_frame_ms": 33.11910107731819,
+          "pending_scenery_cells_max": 78,
+          "pending_scenery_cells_mean": 52.87978142076503,
+          "pending_scenery_cells_at_sample_end": 48,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 183,
+              "mean_ms": 27.37446229070262,
+              "p95_ms": 30.902400612831116,
+              "p99_ms": 33.043600618839264,
+              "max_ms": 33.11910107731819
+            },
+            "game": {
+              "available": true,
+              "samples": 183,
+              "mean_ms": 3.1450732236351473,
+              "p95_ms": 4.39139986038208,
+              "p99_ms": 4.997900009155273,
+              "max_ms": 5.111400127410889
+            },
+            "render": {
+              "available": true,
+              "samples": 183,
+              "mean_ms": 1.74542294629936,
+              "p95_ms": 2.110300064086914,
+              "p99_ms": 2.2004001140594482,
+              "max_ms": 2.2030999660491943
+            },
+            "rhi": {
+              "available": true,
+              "samples": 183,
+              "mean_ms": 0.6323163940932581,
+              "p95_ms": 0.7781000137329102,
+              "p99_ms": 0.9196000099182129,
+              "max_ms": 1.0542999505996704
+            },
+            "gpu": {
+              "available": true,
+              "samples": 183,
+              "mean_ms": 26.823198308058775,
+              "p95_ms": 30.09950065612793,
+              "p99_ms": 30.995899200439453,
+              "max_ms": 32.107200622558594
+            }
+          }
+        },
+        {
+          "view": "boundary",
+          "samples": 207,
+          "sample_seconds": 5.009401697665453,
+          "mean_fps": 41.32230004562598,
+          "mean_frame_ms": 24.200008201282383,
+          "p95_frame_ms": 26.996497064828873,
+          "p99_frame_ms": 28.710298240184784,
+          "max_frame_ms": 34.04419869184494,
+          "pending_scenery_cells_max": 135,
+          "pending_scenery_cells_mean": 60.7536231884058,
+          "pending_scenery_cells_at_sample_end": 115,
+          "timings": {
+            "wall": {
+              "available": true,
+              "samples": 207,
+              "mean_ms": 24.200008201282383,
+              "p95_ms": 26.996497064828873,
+              "p99_ms": 28.710298240184784,
+              "max_ms": 34.04419869184494
+            },
+            "game": {
+              "available": true,
+              "samples": 207,
+              "mean_ms": 4.066371977617199,
+              "p95_ms": 6.084099769592285,
+              "p99_ms": 7.251399993896484,
+              "max_ms": 8.818599700927734
+            },
+            "render": {
+              "available": true,
+              "samples": 207,
+              "mean_ms": 1.76243767991734,
+              "p95_ms": 2.1347999572753906,
+              "p99_ms": 2.600100040435791,
+              "max_ms": 6.471099853515625
+            },
+            "rhi": {
+              "available": true,
+              "samples": 207,
+              "mean_ms": 0.5912318847317627,
+              "p95_ms": 0.7878000140190125,
+              "p99_ms": 0.9710000157356262,
+              "max_ms": 1.0814000368118286
+            },
+            "gpu": {
+              "available": true,
+              "samples": 207,
+              "mean_ms": 23.698672944220945,
+              "p95_ms": 26.554899215698242,
+              "p99_ms": 27.234699249267578,
+              "max_ms": 28.331600189208984
+            }
+          }
+        }
+      ]
+    },
+    "benchmark_hardware": {
+      "cpu": "AMD Ryzen 7 9800X3D",
+      "gpu": "NVIDIA GeForce RTX 4070 Ti SUPER",
+      "ram_gb": 32,
+      "engine": "Unreal Engine 5.8.3",
+      "platform": "Windows x64",
+      "source": "Saved/Automation/v08-final-placement/index.json",
+      "execution": "Static and orbit ran sequentially in isolation, as confirmed by release owner."
+    },
+    "performance_summary": {
+      "status": "measured_known_native_resolution_limit",
+      "minimum_view_mean_fps": 30.531141896860927,
+      "maximum_view_mean_fps": 48.874513708924226,
+      "worst_view_p95_frame_ms": 38.42620179057121,
+      "worst_frame_ms": 39.826299995183945,
+      "sustained_60_fps": false,
+      "bottleneck": "GPU-bound in sampled views; game/render counters are lagged bottleneck evidence, not synchronized frame traces.",
+      "scope": "Short five-view samples with fresh deployed core and eight empty neighbors at10x; not populated-colony/endurance coverage. Orbit includes actual pending streaming cells."
+    }
+  },
+  "shipping": {
+    "status": "passed_gameplay_checkpoint",
+    "build_exit_code": 0,
+    "exit_code": 0,
+    "expected_stages": 117,
+    "stages": 117,
+    "failures": 0,
+    "report": "Saved/packaged-v0.8.0-UiSmoke-verification.json",
+    "report_sha256": "99D2DD4FA5806C23BD495A56DE3283336798FF7F52861A1CB32ED8F3CE6AA979",
+    "started": "2026-10-06T03:25:08.9562383+09:00",
+    "report_written_utc": "2026-10-05T18:56:29.927081+00:00",
+    "presentation_seconds": 1869.3124203272164,
+    "simulation_seconds": 12030.349999965181,
+    "socket_samples": 828,
+    "tcp_max": 0,
+    "udp_max": 0,
+    "courier_motion_frames_between_ticks_at_1x": 790,
+    "measured_worker_walking_kmh": 4.999999999979308,
+    "main_test_speed": 10,
+    "walking_probe_speed": 1,
+    "credits_after_paid_trade": 0.0006000000000000001,
+    "exported_resource": "carbon",
+    "imported_missing_standard": "iron_ore",
+    "transport_segments": 10,
+    "resource_deposits": 5,
+    "buildings": 6,
+    "tested_executable_sha256": "A081430DD13DB2A26E9262F61D85A6DC3AC5B663B3B4EAC85A398F68CEAA9DE8",
+    "final_release_acceptance": false,
+    "scope": "117-stage gameplay checkpoint on A081430D before final rendering and configurable-validation changes. It is not a 117-stage run on the final 784B4CFA executable; affected native tests and final boot/display/performance are recorded separately.",
+    "acceptance_role": "Passing gameplay checkpoint supporting local release; not a full-route claim on the final executable."
+  },
+  "display": {
+    "status": "passed_final_package",
+    "failures": 0,
+    "report": "Saved/DisplaySmoke-v0.8.0.json",
+    "report_sha256": "1FC2DF89B12535E3C6FCDB3FEF829E586B7B7A73C8AD099C78F25A47A144D2F8",
+    "states": [
+      {
+        "state": "borderless",
+        "valid": true,
+        "mode": 1,
+        "width": 3840,
+        "height": 1600,
+        "expected_width": 3840,
+        "expected_height": 1600,
+        "render_percent": 100,
+        "shadow_quality": 2,
+        "antialiasing_method": 2,
+        "expected_antialiasing_method": 2
+      },
+      {
+        "state": "windowed",
+        "valid": true,
+        "mode": 2,
+        "width": 1280,
+        "height": 720,
+        "expected_width": 1280,
+        "expected_height": 720,
+        "render_percent": 100,
+        "shadow_quality": 2,
+        "antialiasing_method": 2,
+        "expected_antialiasing_method": 2
+      },
+      {
+        "state": "render75",
+        "valid": true,
+        "mode": 2,
+        "width": 1280,
+        "height": 720,
+        "expected_width": 1280,
+        "expected_height": 720,
+        "render_percent": 75,
+        "shadow_quality": 2,
+        "antialiasing_method": 4,
+        "expected_antialiasing_method": 4
+      },
+      {
+        "state": "restored",
+        "valid": true,
+        "mode": 1,
+        "width": 3840,
+        "height": 1600,
+        "expected_width": 3840,
+        "expected_height": 1600,
+        "render_percent": 100,
+        "shadow_quality": 2,
+        "antialiasing_method": 2,
+        "expected_antialiasing_method": 2
+      }
+    ],
+    "tested_executable_sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877",
+    "scope": "Four actual display states on final candidate:3840x1600 borderless100%,1280x720 windowed100%,windowed75%,restored borderless100%; AA2/2/4/2."
+  },
+  "packaged_executable_sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877",
+  "publication": {
+    "tracking": "Git history and delivery message",
+    "scope": "Local verification is complete; source publication is tracked by the release owner outside this immutable evidence record."
+  },
+  "combat_design": {
+    "status": "runtime_verified_prototype",
+    "base_capacity_points": 50,
+    "chassis_points": {
+      "small": 1,
+      "medium": 2,
+      "large": 4,
+      "behemoth": 8
+    },
+    "total_shared_fleet_slots_by_command_center_level": {
+      "1": 1,
+      "2": 2,
+      "3": 3
+    },
+    "source": "docs/CombatDesign/README.md"
+  },
+  "expanded_revision": {
+    "status": "locally_verified_prototype_known_graphics_limits",
+    "save_format": 5,
+    "definitions": {
+      "configuration": "passed",
+      "negative_cases_passed": 79,
+      "combat": "passed",
+      "cargo": 22,
+      "recipes": 14,
+      "buildings": 59,
+      "ui_entries": 38
+    },
+    "authored_ui_tests_added": 4,
+    "expected_shipping_stages": 117
+  },
+  "historical_native_checkpoint": {
+    "passed": 55,
+    "clean_passes": 49,
+    "succeeded_with_warnings": 6,
+    "warning_events": 17,
+    "failed": 0,
+    "not_run": 0,
+    "duration_seconds": 472.9620056152344,
+    "report": "Saved/Automation/v08-checkpoint/index.json",
+    "report_sha256": "73A932A976C99D250EBCDED81C979D2A12C23AE958FFA39918FE96F98D75C008",
+    "warning_scope": "Editor HTTP connectivity and telemetry messages; not Shipping runtime network evidence.",
+    "scope": "Earlier economy/Rex checkpoint, before tiered replication, stored workers, walls and combat modules."
+  },
+  "historical_shipping_baseline": {
+    "status": "baseline_failed",
+    "build_exit_code": 0,
+    "exit_code": 0,
+    "expected_stages": 105,
+    "stages": 105,
+    "failures": 9,
+    "socket_samples": 476,
+    "tcp_max": 0,
+    "udp_max": 0,
+    "report": "Saved/verify-v08-ui.log",
+    "scope": "Earlier economy/Rex package. Failed assertions mean this is not release acceptance."
+  },
+  "external_definition_source_manifest": {
+    "status": "all_17_match_final_staged_package",
+    "captured_utc": "2026-10-05T19:27:49.123771+00:00",
+    "algorithm": "SHA256",
+    "file_count": 17,
+    "scope": "All authoritative runtime JSON bytes match the final784B4CFA package staged manifest.",
+    "files": [
+      {
+        "path": "Rules/buildings.json",
+        "bytes": 92082,
+        "sha256": "4DC2C39AA325DDA77B087F0E100C839563331B8378FF7627BF88D71D2CBD6E5E"
+      },
+      {
+        "path": "Rules/chassis.json",
+        "bytes": 10065,
+        "sha256": "6ABFBBE1CD2285AC12288C90205698C1613DCED555C5A2411077EA98EADE7DA8"
+      },
+      {
+        "path": "Rules/combat.json",
+        "bytes": 6199,
+        "sha256": "52CB91E9285BBA3A5FE45EF0820BDA6725C1AF12655CBB385F56C88FD5F9542F"
+      },
+      {
+        "path": "Rules/companions.json",
+        "bytes": 824,
+        "sha256": "DB7FAF743165B991A04658F62C20ABF3659E18E97FED7029AB419885DD067F9C"
+      },
+      {
+        "path": "Rules/energy.json",
+        "bytes": 20094,
+        "sha256": "ECBDA7C997708F9315014BD9A94B3735D71CA6604022D07C4625FFB29E3CA971"
+      },
+      {
+        "path": "Rules/policies.json",
+        "bytes": 3129,
+        "sha256": "E8F23B0CB232A6AC09AA5AC8AFDCEDCB8C25D6630223EA3F82ED3AB1C52AE567"
+      },
+      {
+        "path": "Rules/recipes.json",
+        "bytes": 3941,
+        "sha256": "F5E5DBE4781246415EDC205BD2DC32558B682640C294EC91CB8F1ADA73DEEEA7"
+      },
+      {
+        "path": "Rules/resources.json",
+        "bytes": 7307,
+        "sha256": "8FC2E3C28AC7713E18D9D4F3B61868FBA799BED17D2A27F7338954CF32201C3D"
+      },
+      {
+        "path": "Rules/scenario.json",
+        "bytes": 1144,
+        "sha256": "441578654DF50B34DDBDFCD043CE2593DE25F0B99E04C9A1B138C02AA1EAB8BD"
+      },
+      {
+        "path": "Rules/trade.json",
+        "bytes": 2758,
+        "sha256": "065701B2F8D81D4A3DC80DD22998599434B544E54A5A2122D4DCC72A05AA474A"
+      },
+      {
+        "path": "Rules/transport.json",
+        "bytes": 2103,
+        "sha256": "89ED64EB5E95F6C523D714F7914D97F9D411CB8A9352C50027EDBC2B3CE1D90E"
+      },
+      {
+        "path": "Rules/walls.json",
+        "bytes": 374,
+        "sha256": "51D194E8710C15822945DE0F26715105C764772A7DEACB5B587159F3EE16C153"
+      },
+      {
+        "path": "Rules/weapons.json",
+        "bytes": 8965,
+        "sha256": "D43A2C80C7D534A296B69C7CABB7192ABABF7A68F619587F169D1DC896B8B1F5"
+      },
+      {
+        "path": "AIFILES/colony_ai.json",
+        "bytes": 2862,
+        "sha256": "36FFAC77CAC8092D6CBB1FA47C2B663E5015208006E0D8E7176978CD8B1C7368"
+      },
+      {
+        "path": "AIFILES/developed_start.json",
+        "bytes": 199,
+        "sha256": "467CCC59F025EDE620068F3E893029C961461B5FEF582FC81B9AB8E50F993B19"
+      },
+      {
+        "path": "Interface/ui.json",
+        "bytes": 6667,
+        "sha256": "7BB527EA3183F06EAF9D4CDFDE9C4BC891C07ADE5B01A169AA12D9ACBFBE1C44"
+      },
+      {
+        "path": "Graphics/scene.json",
+        "bytes": 4056,
+        "sha256": "298E5E242070A783C42CE43C8D13CE248FE961778A4AC3D1D25740D7B62A4CDC"
+      }
+    ]
+  },
+  "package": {
+    "status": "built_and_locally_verified",
+    "build_cook_run_seconds": 40.41,
+    "exit_code": 0,
+    "report": "Saved/package-v08-final.log",
+    "report_sha256": "7D901F135C598BE6CB06106BC58E2F558D13BFE93E4EB1585DDAF44E882808BE",
+    "directory": "Builds/v0.8.0/Windows",
+    "current_source_complete": true,
+    "runtime_acceptance": "final_boot_offline_display_and_static_orbit_benchmarks_complete_known_limits",
+    "scope": "Final frozen rendering and configurable-validation package. The earlier A081430D executable owns the successful 117-stage gameplay checkpoint; final affected native tests, boot/offline, display and isolated benchmarks are separate completed evidence."
+  },
+  "packaged_executable": {
+    "path": "Builds/v0.8.0/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+    "bytes": 166759936,
+    "sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877"
+  },
+  "staged_definition_verification": {
+    "status": "passed_final_package",
+    "file_count": 17,
+    "all_match": true,
+    "current_source_match": true,
+    "report": "Saved/staged-v08-final-hashes.json",
+    "report_sha256": "EA092711729A97819F468885838567309C7C497C3C44E7A3C8A03C125118D48D",
+    "source_manifest_match": true,
+    "tested_executable_sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877"
+  },
+  "pending_corrections": [
+    {
+      "area": "Developed neighbor recovery",
+      "status": "native_and_shipping_gameplay_passed",
+      "scope": "All ten AI tests pass; corrected A081430D package completes117Shipping gameplay stages including Developed preparation. Final rendered package has separate completed boot/display/benchmark evidence."
+    },
+    {
+      "area": "Command shuttle geometry picking",
+      "status": "native_and_shipping_geometry_selection_passed",
+      "report": "Saved/Automation/v08-shuttle-final/index.json",
+      "scope": "Real command-hull geometry selection passes native regressions and the 117-stage Shipping gameplay route; decorative shuttles remain noncolliding."
+    }
+  ],
+  "runtime_json_checkout_preservation": {
+    "status": "final_staging_check_passed",
+    "attributes_file": ".gitattributes",
+    "paths": [
+      "Rules/*.json",
+      "AIFILES/*.json",
+      "Interface/*.json",
+      "Graphics/*.json"
+    ],
+    "attribute": "-text",
+    "reason": "Save compatibility fingerprints hash raw external JSON bytes; line-ending normalization would change those fingerprints.",
+    "index_blob_matches": 17,
+    "comparison": "Raw working-file git hash-object --no-filters IDs matched staged index blob IDs for all 17 files after renormalization.",
+    "runtime_json_bytes_changed": false,
+    "packaged_executable_hash_changed": false,
+    "scope": "Final source/index comparison matched all17files; current raw Git blob IDs independently recomputed without modifying the index. Final source/staged SHA256 also matches all17files.",
+    "report": "Saved/indexed-v08-final-hashes.json",
+    "report_sha256": "D645A08C12D081A3DC0E11C6693EB95927A95A08817A0E405EA58395BF546991"
+  },
+  "diagnostic_runs": [
+    {
+      "id": "v08-continuation-24h",
+      "status": "failed",
+      "acceptance_test": false,
+      "passed": 0,
+      "failed": 1,
+      "succeeded_with_warnings": 0,
+      "not_run": 0,
+      "duration_seconds": 143.9752197265625,
+      "report": "Saved/Automation/v08-continuation-24h/index.json",
+      "report_sha256": "4D272639E21D0295E628AFB222A6830F80E5B8527E9455A33E64BF5849616AAB",
+      "log": "Saved/test-v08-continuation-24h.log",
+      "snapshot": "Saved/Diagnostics/developed-ai-continuation--2027807669.json",
+      "seed": -2027807669,
+      "start_simulation_seconds": 64800,
+      "end_simulation_seconds": 86400,
+      "ready": false,
+      "colony_failed": false,
+      "best_ready_targets": 17,
+      "required_targets": 20,
+      "waiting_for": "component_works",
+      "decision_scheduling_policy": "shared_action_budget",
+      "scope": "Diagnostic continuation of the saved 18-hour failure under the prior shared scheduler. Still unfinished at 24 hours; excluded from native acceptance and does not alter the authored 18-hour preparation limit."
+    }
+  ],
+  "implemented_readouts": {
+    "status": "included_in_verified_gameplay_checkpoint",
+    "credits": "Galactic credit balance",
+    "energy": "Stored/capacity kWh and generation/passive demand kW",
+    "scope": "Readouts exercised in the117-stage Shipping gameplay checkpoint; current local review retains documented prototype visual limits."
+  },
+  "historical_matching_external_definitions": [
+    "Rules/buildings.json",
+    "Rules/chassis.json",
+    "Rules/combat.json",
+    "Rules/companions.json",
+    "Rules/energy.json",
+    "Rules/policies.json",
+    "Rules/recipes.json",
+    "Rules/resources.json",
+    "Rules/scenario.json",
+    "Rules/trade.json",
+    "Rules/transport.json",
+    "Rules/walls.json",
+    "Rules/weapons.json",
+    "AIFILES/colony_ai.json",
+    "AIFILES/developed_start.json",
+    "Interface/ui.json",
+    "Graphics/scene.json"
+  ],
+  "current_configuration_change": {
+    "path": "AIFILES/colony_ai.json",
+    "decision_scheduling_policy": "independent_tactics_trade_construction",
+    "fingerprint_changed": true,
+    "staged_manifest_current": true,
+    "scope": "Independent scheduling changed the earlier fingerprint; final package matches all17 authoritative loose JSON files."
+  },
+  "package_attempts": [
+    {
+      "id": "v08-release",
+      "status": "failed",
+      "exit_code": 6,
+      "report": "Saved/package-v08-release.log",
+      "scope": "UAT tried to relink the editor DLL while native tests held it open; Shipping executable compilation alone is not completed packaging.",
+      "report_sha256": "2AA726132AE43ED46DAF1A719CA19BECE0E9CB11C5F0CE3E03763CB7F10B343B"
+    },
+    {
+      "id": "v08-release-2",
+      "status": "passed",
+      "report": "Saved/package-v08-release-2.log",
+      "skip_build_editor": true,
+      "scope": "Retry with -skipbuildeditor avoided the editor-DLL lock and completed packaging. This earlier package subsequently passed its117-stage gameplay checkpoint.",
+      "exit_code": 0,
+      "build_cook_run_seconds": 25.03,
+      "report_sha256": "27B8D44297024EBDAA37D824845CD1773A6CCB63D22BDF644031887F5700AB37"
+    }
+  ],
+  "historical_failed_candidate_identity": {
+    "package": {
+      "status": "historical_failed_candidate_superseded",
+      "build_cook_run_seconds": 102.51,
+      "exit_code": 0,
+      "report": "Saved/package-v08-final.log",
+      "report_sha256": "3C4C4359B7F1BE5E123616AB934E38AFAAD8D96A0702A8619BBAD17B2FF5D9CE",
+      "directory": "Builds/v0.8.0/Windows",
+      "runtime_acceptance": "failed_candidate_pending_corrected_build",
+      "scope": "Earlier failed candidate, retained for traceability. Corrected gameplay checkpoint and final local verification are recorded separately.",
+      "report_path_reused": true,
+      "report_artifact_status": "pathname now contains final 40.41-second build; old 102.51-second metadata/hash were captured before reuse"
+    },
+    "packaged_executable": {
+      "path": "Builds/v0.8.0/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+      "bytes": 166756352,
+      "sha256": "79B599B1650574350529A86935238ED1896110753FF42E13E41D4E8CE79456A6"
+    },
+    "external_definition_source_manifest": {
+      "status": "historical_failed_candidate_obsolete_for_current_source",
+      "captured_utc": "2026-10-05T16:54:46.3228078Z",
+      "algorithm": "SHA256",
+      "file_count": 17,
+      "scope": "These 17 hashes matched the earlier failed Shipping candidate when staged. Subsequent AI policy changes alter the current fingerprint; this is not a current-source/package match.",
+      "files": [
+        {
+          "path": "AIFILES/colony_ai.json",
+          "bytes": 2787,
+          "sha256": "D573591DC66C6BF868FE64F4E3ABC47FB2E08668996F7861CCDDDE693F3BF94F"
+        },
+        {
+          "path": "AIFILES/developed_start.json",
+          "bytes": 199,
+          "sha256": "467CCC59F025EDE620068F3E893029C961461B5FEF582FC81B9AB8E50F993B19"
+        },
+        {
+          "path": "Graphics/scene.json",
+          "bytes": 4056,
+          "sha256": "298E5E242070A783C42CE43C8D13CE248FE961778A4AC3D1D25740D7B62A4CDC"
+        },
+        {
+          "path": "Interface/ui.json",
+          "bytes": 6667,
+          "sha256": "7BB527EA3183F06EAF9D4CDFDE9C4BC891C07ADE5B01A169AA12D9ACBFBE1C44"
+        },
+        {
+          "path": "Rules/buildings.json",
+          "bytes": 92082,
+          "sha256": "4DC2C39AA325DDA77B087F0E100C839563331B8378FF7627BF88D71D2CBD6E5E"
+        },
+        {
+          "path": "Rules/chassis.json",
+          "bytes": 10065,
+          "sha256": "6ABFBBE1CD2285AC12288C90205698C1613DCED555C5A2411077EA98EADE7DA8"
+        },
+        {
+          "path": "Rules/combat.json",
+          "bytes": 6199,
+          "sha256": "52CB91E9285BBA3A5FE45EF0820BDA6725C1AF12655CBB385F56C88FD5F9542F"
+        },
+        {
+          "path": "Rules/companions.json",
+          "bytes": 824,
+          "sha256": "DB7FAF743165B991A04658F62C20ABF3659E18E97FED7029AB419885DD067F9C"
+        },
+        {
+          "path": "Rules/energy.json",
+          "bytes": 20094,
+          "sha256": "ECBDA7C997708F9315014BD9A94B3735D71CA6604022D07C4625FFB29E3CA971"
+        },
+        {
+          "path": "Rules/policies.json",
+          "bytes": 3129,
+          "sha256": "E8F23B0CB232A6AC09AA5AC8AFDCEDCB8C25D6630223EA3F82ED3AB1C52AE567"
+        },
+        {
+          "path": "Rules/recipes.json",
+          "bytes": 3941,
+          "sha256": "F5E5DBE4781246415EDC205BD2DC32558B682640C294EC91CB8F1ADA73DEEEA7"
+        },
+        {
+          "path": "Rules/resources.json",
+          "bytes": 7307,
+          "sha256": "8FC2E3C28AC7713E18D9D4F3B61868FBA799BED17D2A27F7338954CF32201C3D"
+        },
+        {
+          "path": "Rules/scenario.json",
+          "bytes": 1144,
+          "sha256": "441578654DF50B34DDBDFCD043CE2593DE25F0B99E04C9A1B138C02AA1EAB8BD"
+        },
+        {
+          "path": "Rules/trade.json",
+          "bytes": 2758,
+          "sha256": "065701B2F8D81D4A3DC80DD22998599434B544E54A5A2122D4DCC72A05AA474A"
+        },
+        {
+          "path": "Rules/transport.json",
+          "bytes": 2103,
+          "sha256": "89ED64EB5E95F6C523D714F7914D97F9D411CB8A9352C50027EDBC2B3CE1D90E"
+        },
+        {
+          "path": "Rules/walls.json",
+          "bytes": 374,
+          "sha256": "51D194E8710C15822945DE0F26715105C764772A7DEACB5B587159F3EE16C153"
+        },
+        {
+          "path": "Rules/weapons.json",
+          "bytes": 8965,
+          "sha256": "D43A2C80C7D534A296B69C7CABB7192ABABF7A68F619587F169D1DC896B8B1F5"
+        }
+      ]
+    },
+    "staged_definition_verification": {
+      "status": "historical_match_obsolete_for_current_source",
+      "file_count": 17,
+      "all_match": true,
+      "checked_utc": "2026-10-05T16:57:07.5186605Z",
+      "report": "Saved/staged-v08-final-hashes.json",
+      "report_sha256": "BA0A8FF29F71E320FC339B2F38DF7C9718D2FB7D643F9FDE9C46572751B0E027",
+      "source_manifest_match": true,
+      "current_source_match": false,
+      "scope": "All 17 files matched at the recorded historical staging time. Current AI policy changes invalidate use of that manifest as current release evidence."
+    }
+  },
+  "historical_shipping_failed_candidate": {
+    "status": "failed",
+    "build_exit_code": 0,
+    "exit_code": 0,
+    "expected_stages": 117,
+    "stages": 117,
+    "failures": 18,
+    "socket_samples": 837,
+    "tcp_max": 0,
+    "udp_max": 0,
+    "report": "Saved/packaged-v0.8.0-UiSmoke-before-recovery-verification.json",
+    "scope": "Candidate before current AI recovery and command-shuttle picking corrections. All 117 stages completed but 18 assertions failed; process exit 0 does not establish acceptance. Endpoint observations apply only to this failed run and are not packet capture.",
+    "started_utc": "2026-10-05T16:55:25.8437222Z",
+    "report_sha256": "132DFC85A9AB0CD2401E080EE358E17045B3A35B098E6C5E19F8D6212C2987AE",
+    "completed_utc": "2026-10-05T17:26:47Z",
+    "presentation_seconds": 1875.5648966170847,
+    "failure_breakdown": {
+      "command_shuttle_selection": 1,
+      "developed_preparation_and_downstream_assertions": 17,
+      "developed_seed": -2027807669,
+      "scope": "Stage 11 is an independent geometry-selection failure; stages 20 through 42 follow failed Developed preparation, leaving the scenario screen active."
+    },
+    "courier_motion_frames_between_ticks_at_1x": 640,
+    "credits_after_paid_trade": 0.0006000000000000001,
+    "rerun_status": "superseded_by_successful_117_stage_gameplay_checkpoint"
+  },
+  "matching_external_definitions": [
+    "Rules/buildings.json",
+    "Rules/chassis.json",
+    "Rules/combat.json",
+    "Rules/companions.json",
+    "Rules/energy.json",
+    "Rules/policies.json",
+    "Rules/recipes.json",
+    "Rules/resources.json",
+    "Rules/scenario.json",
+    "Rules/trade.json",
+    "Rules/transport.json",
+    "Rules/walls.json",
+    "Rules/weapons.json",
+    "AIFILES/colony_ai.json",
+    "AIFILES/developed_start.json",
+    "Interface/ui.json",
+    "Graphics/scene.json"
+  ],
+  "pending_visual_corrections": [
+    {
+      "area": "Slope grass contact",
+      "status": "contact_and_stratified_placement_native_passed_partial_visual_improvement",
+      "evidence": "Settled runtime captures show bare strips on slopes.",
+      "covered_by_81_test_checkpoint": false,
+      "native_report": "Saved/Automation/v08-ground-contact/index.json",
+      "scope": "Same-count stratified placement markedly reduces long gaps in the matching view; bare patches remain as a known prototype limitation. Final isolated static/orbit performance is recorded.",
+      "native_reports": [
+        "Saved/Automation/v08-final-rules-terrain/index.json",
+        "Saved/Automation/v08-final-placement/index.json"
+      ]
+    },
+    {
+      "area": "Dirt and forest material tiling",
+      "status": "retained_forest_fade_imported_stochastic_rejected_residual_bands_remain",
+      "evidence": "Settled runtime captures show faint repeating brown soil.",
+      "covered_by_81_test_checkpoint": false,
+      "scope": "Higher-sample stochastic experiment showed no demonstrated benefit and was reverted. Current shader is the retained 4/2 ordinary,4/1 Forest,+1 macro implementation; residual soil patterns remain."
+    }
+  ],
+  "gameplay_checkpoint_package": {
+    "status": "built_gameplay_checkpoint_before_visual_corrections",
+    "build_cook_run_seconds": 25.03,
+    "exit_code": 0,
+    "report": "Saved/package-v08-release-2.log",
+    "report_sha256": "27B8D44297024EBDAA37D824845CD1773A6CCB63D22BDF644031887F5700AB37",
+    "directory": "Builds/v0.8.0/Windows",
+    "runtime_acceptance": "117_stage_gameplay_checkpoint_passed",
+    "scope": "A081430D executable completed117gameplay stages before final rendering and configurable-validation changes. Final784B4CFA boot/display/benchmark checks are separately recorded.",
+    "current_source_complete": false
+  },
+  "gameplay_checkpoint_executable": {
+    "path": "Builds/v0.8.0/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+    "bytes": 166747648,
+    "sha256": "A081430DD13DB2A26E9262F61D85A6DC3AC5B663B3B4EAC85A398F68CEAA9DE8"
+  },
+  "final_boot_offline": {
+    "status": "passed_final_package",
+    "report": "Saved/packaged-v0.8.0-PrototypeSmoke-verification.json",
+    "report_sha256": "8ECBF19D9CE31B72C4113D915D274E0549E2603C07E30E9452D7E46FB83B029E",
+    "tested_executable_sha256": "784B4CFA05A8C980C3F7A9BE37DEBFCF51B590A6BFFB3DAE2D7BA655073CD877",
+    "started": "2026-10-06T04:20:18.9403092+09:00",
+    "exit_code": 0,
+    "ready": true,
+    "simulation_seconds": 15.0,
+    "socket_samples": 8,
+    "tcp_max": 0,
+    "udp_max": 0,
+    "scope": "Final package15-simulation-second boot and bounded process-tree endpoint observation; no packet-capture or117-stage rerun claim."
+  },
+  "gameplay_checkpoint_staged_definition_verification": {
+    "status": "passed",
+    "file_count": 17,
+    "all_match": true,
+    "current_source_match": true,
+    "report": "Saved/staged-v08-release-hashes.json",
+    "report_sha256": "434EBF5F0D417DCDBB24C5924A0C243EB9EB317A5E5155FA1A4337F132F3DE06",
+    "source_manifest_match": true
+  },
+  "gameplay_checkpoint_source_manifest": {
+    "status": "all_17_match_current_staged_package",
+    "captured_utc": "2026-10-05T18:25:19.245409+00:00",
+    "algorithm": "SHA256",
+    "file_count": 17,
+    "scope": "Current authoritative source and staged loose JSON match after independent AI scheduling changed the old fingerprint.",
+    "files": [
+      {
+        "path": "Rules/buildings.json",
+        "bytes": 92082,
+        "sha256": "4DC2C39AA325DDA77B087F0E100C839563331B8378FF7627BF88D71D2CBD6E5E"
+      },
+      {
+        "path": "Rules/chassis.json",
+        "bytes": 10065,
+        "sha256": "6ABFBBE1CD2285AC12288C90205698C1613DCED555C5A2411077EA98EADE7DA8"
+      },
+      {
+        "path": "Rules/combat.json",
+        "bytes": 6199,
+        "sha256": "52CB91E9285BBA3A5FE45EF0820BDA6725C1AF12655CBB385F56C88FD5F9542F"
+      },
+      {
+        "path": "Rules/companions.json",
+        "bytes": 824,
+        "sha256": "DB7FAF743165B991A04658F62C20ABF3659E18E97FED7029AB419885DD067F9C"
+      },
+      {
+        "path": "Rules/energy.json",
+        "bytes": 20094,
+        "sha256": "ECBDA7C997708F9315014BD9A94B3735D71CA6604022D07C4625FFB29E3CA971"
+      },
+      {
+        "path": "Rules/policies.json",
+        "bytes": 3129,
+        "sha256": "E8F23B0CB232A6AC09AA5AC8AFDCEDCB8C25D6630223EA3F82ED3AB1C52AE567"
+      },
+      {
+        "path": "Rules/recipes.json",
+        "bytes": 3941,
+        "sha256": "F5E5DBE4781246415EDC205BD2DC32558B682640C294EC91CB8F1ADA73DEEEA7"
+      },
+      {
+        "path": "Rules/resources.json",
+        "bytes": 7307,
+        "sha256": "8FC2E3C28AC7713E18D9D4F3B61868FBA799BED17D2A27F7338954CF32201C3D"
+      },
+      {
+        "path": "Rules/scenario.json",
+        "bytes": 1144,
+        "sha256": "441578654DF50B34DDBDFCD043CE2593DE25F0B99E04C9A1B138C02AA1EAB8BD"
+      },
+      {
+        "path": "Rules/trade.json",
+        "bytes": 2758,
+        "sha256": "065701B2F8D81D4A3DC80DD22998599434B544E54A5A2122D4DCC72A05AA474A"
+      },
+      {
+        "path": "Rules/transport.json",
+        "bytes": 2103,
+        "sha256": "89ED64EB5E95F6C523D714F7914D97F9D411CB8A9352C50027EDBC2B3CE1D90E"
+      },
+      {
+        "path": "Rules/walls.json",
+        "bytes": 374,
+        "sha256": "51D194E8710C15822945DE0F26715105C764772A7DEACB5B587159F3EE16C153"
+      },
+      {
+        "path": "Rules/weapons.json",
+        "bytes": 8965,
+        "sha256": "D43A2C80C7D534A296B69C7CABB7192ABABF7A68F619587F169D1DC896B8B1F5"
+      },
+      {
+        "path": "AIFILES/colony_ai.json",
+        "bytes": 2862,
+        "sha256": "36FFAC77CAC8092D6CBB1FA47C2B663E5015208006E0D8E7176978CD8B1C7368"
+      },
+      {
+        "path": "AIFILES/developed_start.json",
+        "bytes": 199,
+        "sha256": "467CCC59F025EDE620068F3E893029C961461B5FEF582FC81B9AB8E50F993B19"
+      },
+      {
+        "path": "Interface/ui.json",
+        "bytes": 6667,
+        "sha256": "7BB527EA3183F06EAF9D4CDFDE9C4BC891C07ADE5B01A169AA12D9ACBFBE1C44"
+      },
+      {
+        "path": "Graphics/scene.json",
+        "bytes": 4056,
+        "sha256": "298E5E242070A783C42CE43C8D13CE248FE961778A4AC3D1D25740D7B62A4CDC"
+      }
+    ]
+  }
+}

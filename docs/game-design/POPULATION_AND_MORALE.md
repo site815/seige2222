@@ -4,11 +4,17 @@
 
 The current robotic population scope, population-serving commodities, growth, and the earlier needs and morale ideas that require adaptation.
 
-## v0.6 visible population boundary
+## Current worker terminology and v0.8 movement
+
+The interface calls the robotic population **workers**. This does not introduce humans or a second population type. The latest confirmed direction adds a slow selectable core replicator, a faster and more energy-efficient worker factory, physical inactive-worker storage and worker exports. Construction crews and couriers have physical access-port routes and arrival requirements; ordinary staffing remains aggregate, without individually commanding every worker. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md#replication-and-inactive-workers) owns the precise current contract and provisional catalog values. Runtime and release verification of this expansion are pending.
+
+The current economy source adds actual road-connected electricity and shared battery storage; this supersedes the historical v0.5 abstract-charging boundary below. [Rex](COMPANIONS_AND_REX.md) adds one specific companion morale mechanism: local physical organic-food consumption and a capped benefit near the fed dog. Workers still do not eat food, and the broader happiness/revolt model remains open. Rex's direct walking controls do not extend to worker micromanagement.
+
+## Historical v0.6 visible population boundary
 
 Current source displays aggregate examples of existing builders, operating workers and supported service robots. Exterior tool-fetch/workstation cycles are presentation, not extra population or an independent worker simulation. Real staffing and supplies determine whether work is active, and interpolated simulation time freezes animations when paused. Capacity, growth, maintenance and retirement rates are unchanged. The v0.6 editor compiled; all 34 native tests passed cleanly (zero warnings, failed or unrun), and the 79-stage editor route passed with zero failures, including 413 interpolated courier-motion frames at 1×. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; older release evidence remains version-specific.
 
-## v0.5 robot services — current implementation
+## Service mechanism introduced in v0.5
 
 The user now requires a robot charging/maintenance building analogous to housing. The source implements a service bay with a real population-support capacity and a staffed operating requirement. The core supports the initial crew, so the player can establish the first bay before expansion. Exact capacities, worker counts, construction duration and upkeep remain external prototype values in `Rules/buildings.json` and `Rules/policies.json`.
 
@@ -27,16 +33,16 @@ The user chose this scope to support plausible growth at an accelerated game pac
 **Confirmed direction:**
 
 - The robotic population is produced.
-- The core automatically produces robots to fill open jobs.
-- When the colony's job demand falls, the core automatically reduces robot population accordingly. Population adjustment should not require a player-set population target.
+- Core replication or a dedicated worker factory produces workers using materials and energy to fill jobs, with an optional configurable inactive-worker reserve target.
+- When job demand falls, excess workers leave active staffing and occupy physical storage. A player need not micromanage their jobs.
 - Robot production has a maximum rate: a ceiling on the number produced per unit of time.
 - Resource production provides a second bottleneck, with resources produced at defined rates per time unit. Having more production capacity does not remove the need for sufficient inputs.
 
-**Provisional direction:** The command core is the only place able to produce new robots.
+**Superseded:** Core-only worker manufacture. A separate worker factory is now confirmed, with faster assembly and lower transaction energy than the universal core replicator.
 
-**Possible explanation, not a selected building specification:** The core could contain the colony's only high-end lithography plant or another unique capability needed for robot production. The purpose is to make the core's role plausible; no exact technology, recipe, or additional structure is established.
+The earlier suggestion that only the core has lithography is historical speculation, not a current restriction on worker manufacturing.
 
-**Open:** Exact input resources or components, output rate and time unit, effects of core upgrades, which roles count toward job demand, response delays, and the mechanism and rate of population reduction. Storage, deactivation, dismantling, and resource refunds have not been selected. Any effect of robot needs or satisfaction on output also remains open. A maximum production rate is not a decided absolute cap on total population.
+**Confirmed:** Inactive workers are whole physical cargo items. Configurable colony and trading-port reserve targets can retain them for later work or export. Surplus workers disassemble automatically for a parts shortage or insufficient storage; manual surplus disassembly and target controls are implemented in the worker HUD, with release acceptance pending. Disassembly costs 1 kWh by default and returns configured parts without creating matter. Exact assembly, response and recycling rates, energy, body mass, berth volume and refund quantities remain provisional external balance. Effects of broader satisfaction on production remain open. A maximum production rate is not a decided absolute population cap.
 
 ## Population needs and growth
 
@@ -45,7 +51,7 @@ The user chose this scope to support plausible growth at an accelerated game pac
 - Colony development includes producing commodities that support the population and its happiness, in competition with investment in defenses and resource expansion.
 - Needs and population systems should make sense for robots. The earlier human-oriented model should be adapted accordingly, rather than assuming the same consumption requirements.
 
-**Updated direction:** Population changes automatically with job demand: the core produces robots for open jobs and reduces population when demand falls. The earlier happiness-driven growth idea is superseded as the primary growth rule. Robot needs and any equivalent of happiness still require design; any effect they have on production or workforce behavior is open.
+**Updated direction:** Active workforce follows job demand while inactive workers can be retained or exported under reserve targets. The earlier happiness-driven growth idea is superseded as the primary growth rule. Broader robot needs and happiness effects remain open beyond implemented energy/maintenance and Rex's specific morale contribution.
 
 **Broadly accepted proposal:** Civilian goods must reach the population; merely existing elsewhere in the colony is insufficient. Exact delivery and consumption mechanics remain open.
 

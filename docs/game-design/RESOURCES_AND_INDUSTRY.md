@@ -8,15 +8,19 @@ Resource geography, settlement patterns, trade access, manufacturing chains, and
 
 **Confirmed direction**
 
-- Approximately 10–15 raw resource types, including common and rare materials; the final set is undecided.
-- Each sector receives a fair subset. “Three common plus two rare” was an illustration, not a distribution rule.
+- Current resource pool: four standard types (water, metal ore, silica, biomass) and four rare types (rare metals, radioactive ore, crystalline material, hydrocarbons). The earlier approximately 10–15-type direction is superseded for current scope.
+- Each region contains exactly three different standard deposits and two different rare deposits, with no duplicate resource type. Draw from the four-plus-four pool and randomize positions inside the inner 75% of the region's area. The current implementation chooses a centered square, stable region seeds and separated locations; fairness remains to verify.
 - Spatially separated resource sites should create meaningful choices between one large city and multiple smaller settlements or outposts.
 - Both common and rare materials may unlock production branches or improve and specialize products. Rarity does not determine a material's role.
 - Trade in raw materials and manufactured goods expands access to production, subject to having the necessary buildings.
 
 **Proposal:** A hybrid of a main city and satellite outposts is another possible settlement pattern.
 
-**Open:** Resource distribution, fairness criteria, site placement, extraction rates, depletion, trade mechanics, and the final catalog.
+**Confirmed trade and operating economy:** Galactic credits are used only for external trade through a trading port upgradeable from level 1 to 3; 1 credit is anchored to the value of 1 kg of gold. The colony starts with zero credits. Landed materials must support a road, solar generation and the first port; exporting local raw goods funds missing-standard imports. This does not imply free credit, universal buyers or a gold deposit.
+
+Energy is the main operating resource: passive consumption per simulation second plus production energy per transaction, including transactions with multiple outputs. Buildings on the same connected road network share a grid with battery storage. Organic food feeds Rex and supports exports; it is not worker nutrition. Confirmed stages are fuel/plastic pellets/organic food; control circuits/robotic parts; AI chips/fusion reactors.
+
+**Current v0.8 source:** Seeded generation, physical kg/L cargo, litre storage, road-connected grids, batteries, paid external shipments and three port levels have provisional external definitions. [Resource Proposal](RESOURCE_PROPOSAL.md) identifies their authority; [Product Recipes and Starter Viability](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md) distinguishes executable recipes from larger illustrative alternatives. Fairness, depletion, final yields/prices, long-term viability, advanced battery limits and future upgrade balance remain open. New-economy engine/package verification is pending.
 
 ## Viable settlement strategies
 

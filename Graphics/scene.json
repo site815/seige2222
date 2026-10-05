@@ -58,7 +58,7 @@
   "region_map_transition_width": 40000,
   "orbit_yaw_degrees_per_pixel": 0.22,
   "orbit_pitch_degrees_per_pixel": 0.18,
-  "terrain_material": "/Game/Art/NatureV07/M_TerrainV07.M_TerrainV07",
+  "terrain_material": "/Game/Art/NatureV08/M_TerrainV08.M_TerrainV08",
   "ground_cover_candidates": 350000,
   "grass_scale_min": 1,
   "grass_scale_max": 1.3,
@@ -106,7 +106,7 @@
   "grass_stream_cells_per_frame": 2,
   "forest_detail_distance_m": 500,
   "forest_lod_transition_m": 200,
-  "grass_proxy_asset": "/Game/Art/NatureV07/SM_GrassProxy.SM_GrassProxy",
-  "broadleaf_proxy_asset": "/Game/Art/NatureV07/SM_BroadleafProxy.SM_BroadleafProxy",
-  "conifer_proxy_asset": "/Game/Art/NatureV07/SM_ConiferProxy.SM_ConiferProxy"
+  "grass_proxy_asset": "/Game/Art/NatureV08/SM_GrassProxyV08.SM_GrassProxyV08",
+  "broadleaf_proxy_asset": "/Game/Art/NatureV08/SM_BroadleafSpraysV08.SM_BroadleafSpraysV08",
+  "conifer_proxy_asset": "/Game/Art/NatureV08/SM_ConiferSpraysV08.SM_ConiferSpraysV08"
 }

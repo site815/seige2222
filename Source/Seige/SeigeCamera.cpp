@@ -197,10 +197,12 @@ FVector2D ASeigeGameMode::CameraPanDirection(float Forward,float Right) const
 }
 float ASeigeGameMode::CameraViewZoom() const
 {
+    if(CompanionView)return MinimumZoom;
     return FMath::Clamp(Camera&&RenderedZoom>=0?RenderedZoom:Zoom,MinimumZoom,MaximumZoom);
 }
 FTransform ASeigeGameMode::CameraTransform(float ZoomOverride) const
 {
+    if(CompanionView)return FTransform(FRotator(CompanionPitch,CompanionYaw,0),RenderPosition(CompanionRenderPosition(),Sim.Companions.EyeHeightCm));
     const FVector Target=RenderPosition(FVector2D(CameraCenter),70);
     const double ViewZoom=FMath::Clamp(double(ZoomOverride>=0?ZoomOverride:Zoom),double(MinimumZoom),double(MaximumZoom));
     const double Distance=ViewZoom*RenderScale/(2*FMath::Tan(FMath::DegreesToRadians(CameraFov*.5)));
@@ -217,6 +219,12 @@ FTransform ASeigeGameMode::CameraTransform(float ZoomOverride) const
 }
 void ASeigeGameMode::UpdateCamera(float DeltaSeconds)
 {
+    if(CompanionView)
+    {
+        CameraCenter=FVector(CompanionRenderPosition(),0);RenderedZoom=MinimumZoom;
+        if(Camera){Camera->SetActorTransform(CameraTransform());Camera->GetCameraComponent()->SetFieldOfView(Sim.Companions.ViewFov);}
+        return;
+    }
     Zoom=FMath::Clamp(Zoom,MinimumZoom,MaximumZoom);
     if(DeltaSeconds<=0||!FMath::IsFinite(RenderedZoom)||RenderedZoom<MinimumZoom)RenderedZoom=Zoom;
     else

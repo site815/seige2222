@@ -13,7 +13,7 @@ void ASeigeController::HandlePrimaryClick(float X,float Y)
     auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;if(!G)return;
     if(GetLocalPlayer())UpdateCursorFromScreen(X,Y);
     auto* UI=Cast<ASeigeHUD>(GetHUD());if(UI&&UI->Click(X,Y))return;
-    if(G->IsRegionMap()||OrbitActive)return;
+    if(G->IsRegionMap()||OrbitActive||G->CompanionView)return;
     FVector Origin,Direction;
     if(GetLocalPlayer()&&ScreenRay(FVector2D(X,Y),Origin,Direction)&&G->SelectBuildingRay(Origin,Direction))return;
     G->ClickWorld();
@@ -71,14 +71,34 @@ void ASeigeController::PlayerTick(float Dt)
 {
     Super::PlayerTick(Dt);auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;if(!G)return;
     auto* UI=Cast<ASeigeHUD>(GetHUD());
+    const bool CaptureDog=G->CompanionView&&G->Screen==TEXT("playing")&&!G->MenuOpen;
+    if(CaptureDog!=CompanionMouseCaptured)
+    {
+        EndOrbitGesture();CompanionMouseCaptured=CaptureDog;bShowMouseCursor=!CaptureDog;
+        if(CaptureDog){FInputModeGameOnly Mode;Mode.SetConsumeCaptureMouseDown(false);SetInputMode(Mode);}
+        else{FInputModeGameAndUI Mode;Mode.SetHideCursorDuringCapture(false);SetInputMode(Mode);}
+    }
+    if(CaptureDog)
+    {
+        if(WasInputKeyJustPressed(EKeys::Escape)){G->ExitCompanionView();return;}
+        if(WasInputKeyJustPressed(EKeys::F10)){G->Sim.Companions.SetControlDirection(FVector2D::ZeroVector);G->ToggleGameMenu();return;}
+        if(WasInputKeyJustPressed(EKeys::SpaceBar))G->Paused=!G->Paused;
+        if(WasInputKeyJustPressed(EKeys::F5))G->SaveGame();
+        if(WasInputKeyJustPressed(EKeys::F9)){G->LoadGame();return;}
+        float X=0,Y=0;GetInputMouseDelta(X,Y);G->LookCompanion(FVector2D(X,-Y));
+        const float Forward=(IsInputKeyDown(EKeys::W)||IsInputKeyDown(EKeys::Up)?1.f:0.f)-(IsInputKeyDown(EKeys::S)||IsInputKeyDown(EKeys::Down)?1.f:0.f);
+        const float Right=(IsInputKeyDown(EKeys::D)||IsInputKeyDown(EKeys::Right)?1.f:0.f)-(IsInputKeyDown(EKeys::A)||IsInputKeyDown(EKeys::Left)?1.f:0.f);
+        G->MoveCompanion(Forward,Right);G->UpdateCamera(Dt);if(PlayerCameraManager)PlayerCameraManager->UpdateCamera(Dt);
+        G->CursorOnWorld=false;return;
+    }
     bool Consumed=false;
     for(auto It=ConsumedKeysUntilRelease.CreateIterator();It;++It)if(!IsInputKeyDown(*It))It.RemoveCurrent();
-    TArray<FKey> Keys={EKeys::Escape,EKeys::RightMouseButton,EKeys::SpaceBar,EKeys::F5,EKeys::F9,EKeys::F10,EKeys::Add,EKeys::Subtract,EKeys::Equals,EKeys::Hyphen};
+    TArray<FKey> Keys={EKeys::Enter,EKeys::BackSpace,EKeys::Delete,EKeys::Escape,EKeys::RightMouseButton,EKeys::SpaceBar,EKeys::F5,EKeys::F9,EKeys::F10,EKeys::Add,EKeys::Subtract,EKeys::Equals,EKeys::Hyphen};
     for(TCHAR Letter=TEXT('A');Letter<=TEXT('Z');++Letter)Keys.Add(FKey(FName(*FString::Chr(Letter))));
     for(const FKey& Key:Keys)if(WasInputKeyJustPressed(Key))
     {
         if(UI){const bool Handled=UI->HandleShortcut(Key);Consumed=Handled||Consumed;if(Handled)ConsumedKeysUntilRelease.Add(Key);}
-        else if(Key==EKeys::Escape||Key==EKeys::RightMouseButton){G->SelectedBuild.Empty();G->SelectedId=0;Consumed=true;}
+        else if(Key==EKeys::Escape||Key==EKeys::RightMouseButton){G->CancelRoadTool();G->SelectedRoadId=0;G->SelectedBuild.Empty();G->SelectedId=0;Consumed=true;}
     }
     const bool CameraScreen=G->Screen==TEXT("playing")||G->Screen==TEXT("landing");
     if(OrbitActive&&(!IsInputKeyDown(EKeys::MiddleMouseButton)||!CameraScreen||G->IsRegionMap()))EndOrbitGesture();

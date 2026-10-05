@@ -1,0 +1,109 @@
+{
+  "mesh": "/Game/Art/CompanionDog/SK_CompanionDog.SK_CompanionDog",
+  "skeleton": "/Game/Art/CompanionDog/SK_CompanionDog_Skeleton.SK_CompanionDog_Skeleton",
+  "animations": {
+    "A_DogIdle": {
+      "path": "/Game/Art/CompanionDog/A_DogIdle.A_DogIdle",
+      "seconds": 3.0,
+      "root_motion": false
+    },
+    "A_DogWalk": {
+      "path": "/Game/Art/CompanionDog/A_DogWalk.A_DogWalk",
+      "seconds": 0.4333333373069763,
+      "root_motion": false
+    }
+  },
+  "lod_count": 3,
+  "lod_vertices": [
+    214490,
+    44642,
+    20077
+  ],
+  "material_slots": [
+    "DM_Coat",
+    "DM_Mouth",
+    "DM_Tongue",
+    "DM_Nose",
+    "DM_Eye",
+    "DM_Collar",
+    "DM_CollarEdge",
+    "DM_Metal",
+    "DM_Iris",
+    "DM_Teeth"
+  ],
+  "vertex_colors": true,
+  "vertex_color_encoding": "FBX sRGB decoded by material",
+  "source_triangles": 118331,
+  "source_bones": [
+    "root",
+    "pelvis",
+    "spine",
+    "neck",
+    "head",
+    "jaw",
+    "fore_upper_R",
+    "fore_lower_R",
+    "fore_paw_R",
+    "hind_upper_R",
+    "hind_lower_R",
+    "hind_paw_R",
+    "ear_R",
+    "fore_upper_L",
+    "fore_lower_L",
+    "fore_paw_L",
+    "hind_upper_L",
+    "hind_lower_L",
+    "hind_paw_L",
+    "ear_L",
+    "tail_1",
+    "tail_2",
+    "tail_3",
+    "tail_4"
+  ],
+  "source_reference_bounds_cm": {
+    "min": [
+      -106.06922149658203,
+      -19.194599151611328,
+      0.3547893166542053
+    ],
+    "max": [
+      77.39978790283203,
+      18.8996639251709,
+      86.56334686279297
+    ]
+  },
+  "imported_dimensions_cm": [
+    183.46900939941406,
+    38.094261169433594,
+    86.20855754613876
+  ],
+  "verified_bones": [
+    "ear_L",
+    "ear_R",
+    "fore_lower_L",
+    "fore_lower_R",
+    "fore_paw_L",
+    "fore_paw_R",
+    "fore_upper_L",
+    "fore_upper_R",
+    "head",
+    "hind_lower_L",
+    "hind_lower_R",
+    "hind_paw_L",
+    "hind_paw_R",
+    "hind_upper_L",
+    "hind_upper_R",
+    "jaw",
+    "neck",
+    "pelvis",
+    "root",
+    "spine",
+    "tail_1",
+    "tail_2",
+    "tail_3",
+    "tail_4"
+  ],
+  "fur_card_shadow_casting": false,
+  "runtime_review_pending": true,
+  "reference_photographs_imported": false
+}

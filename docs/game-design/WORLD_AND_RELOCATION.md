@@ -72,7 +72,7 @@ The disabled-neighbor rule means an empty sector. Startup selections are now imp
 
 The player may attempt resource extraction in empty neighboring sectors. Those resources are distant and expose operations and transport to risks such as pirates. Such activity is an extension from the single home center, not a second central zone.
 
-**Open:** How cross-sector extraction is established, supported, and accessed; destination and ownership rules; the exact relocation sequence; and what happens to a surviving former core after departure. The one-center limit is distinct from the still-provisional rule that only the core can manufacture new robots.
+**Open:** How cross-sector extraction is established, supported, and accessed; destination and ownership rules; the exact relocation sequence; and what happens to a surviving former core after departure. The one-center limit does not prohibit dedicated worker factories: those are now confirmed alongside the core's slow universal replicator.
 
 ## Loss, escape, and relocation
 

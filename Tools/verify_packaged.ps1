@@ -16,12 +16,14 @@ do {
   $gameProcesses=@(Get-Process -Name 'Seige','Seige-Win64-Shipping' -ErrorAction SilentlyContinue | Where-Object {$_.Path -and $_.Path.StartsWith($packageRoot,[StringComparison]::OrdinalIgnoreCase)})
   if($gameProcesses.Count -gt 0){
     $gameIds=@($gameProcesses.Id)
-    $tcp=@(Get-NetTCPConnection -ErrorAction SilentlyContinue | Where-Object {$_.OwningProcess -in $gameIds})
-    $udp=@(Get-NetUDPEndpoint -ErrorAction SilentlyContinue | Where-Object {$_.OwningProcess -in $gameIds})
+    # A failed OS query is not evidence of zero endpoints. Keep this check
+    # fail-closed while the launch/child processes are actually alive.
+    $tcp=@(Get-NetTCPConnection -ErrorAction Stop | Where-Object {$_.OwningProcess -in $gameIds})
+    $udp=@(Get-NetUDPEndpoint -ErrorAction Stop | Where-Object {$_.OwningProcess -in $gameIds})
     $samples.Add([pscustomobject]@{seconds=[math]::Round(((Get-Date)-$started).TotalSeconds,2);process_ids=$gameIds;tcp=$tcp.Count;udp=$udp.Count})
   }
   $launch.Refresh()
-} while(($gameProcesses.Count -gt 0 -or -not $launch.HasExited) -and ((Get-Date)-$started).TotalSeconds -lt 360)
+} while(($gameProcesses.Count -gt 0 -or -not $launch.HasExited) -and ((Get-Date)-$started).TotalSeconds -lt 3600)
 if($gameProcesses.Count -gt 0){throw 'Packaged smoke did not finish before the verification timeout'}
 $reportPath=Join-Path $saveRoot $reportName
 if(-not (Test-Path -LiteralPath $reportPath)){throw "Missing $reportName"}
@@ -31,6 +33,6 @@ $record=[pscustomobject]@{mode=$Mode;started=$started.ToString('o');exit_code=$l
 $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $projectRoot "Saved/packaged-v$version-$Mode-verification.json")
 $record | ConvertTo-Json -Depth 8
 if($launch.ExitCode -ne 0){throw "Packaged game exited with code $($launch.ExitCode)"}
-if(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 79))){throw 'Packaged smoke assertions failed'}
+if(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 117))){throw 'Packaged smoke assertions failed'}
 if($samples.Count -eq 0){throw 'No live process observed'}
 if(@($samples | Where-Object {$_.tcp -gt 0 -or $_.udp -gt 0}).Count -gt 0){throw 'Game opened a network endpoint'}

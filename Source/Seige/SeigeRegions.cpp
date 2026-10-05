@@ -1,5 +1,14 @@
 #include "SeigeGameMode.h"
 
+bool ASeigeGameMode::IsWorldVisible(FVector2D P) const
+{
+    if(Sim.IsVisible(P))return true;
+    const double Span=Sim.WorldHalfSize*2;
+    const int32 X=FMath::FloorToInt((P.X+Span*.5)/Span),Y=FMath::FloorToInt((P.Y+Span*.5)/Span);
+    if(X< -1||X>1||Y< -1||Y>1)return false;
+    return Sim.Combat.IsVisibleInSector((Y+1)*3+X+1,P-FVector2D(X,Y)*Span);
+}
+
 bool ASeigeGameMode::IsRegionMap() const
 {
     return (Screen==TEXT("playing")||Screen==TEXT("landing"))&&CameraViewZoom()>=RegionMapZoom;

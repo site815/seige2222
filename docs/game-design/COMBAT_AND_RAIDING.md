@@ -4,9 +4,11 @@
 
 Alien pressure, automatic combat, privateering, raids, theft, and colony defenses.
 
+**Current v0.8 expansion, acceptance pending:** [Weapons, Defenses and Vehicle Outfitting](WEAPONS_DEFENSES_AND_VEHICLE_OUTFITTING.md) records the confirmed energy/kinetic/missile/plasma families, differentiated shields/armor, misses and unintended impacts, splash damage, twelve configurable chassis classes and command-center fleet slots. Runtime modules now implement this prototype combat and the privateering world bridge; fresh native and packaged evidence is still required. Defensive/escort fleets can reposition around friendly buildings for a clear shot within their sensor, range and leash limits. Passive fleets do not pursue. Broader confirmed directions and open questions below remain distinct from provisional runtime rules.
+
 ## Current conflict scope
 
-**Confirmed full-game scope change:** War against other colonies or regions is removed for now. Privateering, attacks on neighbors, and theft remain in the wider design. Formal war declarations and war-fleet missions are not current mechanics. Privateering and cross-colony combat are also not yet implemented in the playable slice.
+**Confirmed full-game scope change:** Formal war against other colonies or regions is removed for now. Privateering, attacks on neighbors, and theft remain. The current v0.8 source implements player-directed privateer travel, local encounters, cargo theft and return through a bridge between separate colony simulations; expanded release acceptance is pending. Formal war declarations, territorial conquest, mercenary contracts and strategic AI privateer dispatch are not current mechanics.
 
 The wider setting of humanity's war against the aliens remains. This change concerns conflict between neighboring colonies.
 

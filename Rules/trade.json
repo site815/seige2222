@@ -1,0 +1,116 @@
+{
+  "version": "prototype-8.0",
+  "trade": {
+    "prices": {
+      "water": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "iron_ore": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "silica": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "carbon": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "copper_ore": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "radioactive_ore": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "crystalline": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "hydrocarbons": {
+        "buy_credits": 0.0002,
+        "sell_credits": 0.0001
+      },
+      "alloy": {
+        "buy_credits": 0.0006000000000000001,
+        "sell_credits": 0.00030000000000000003
+      },
+      "conductors": {
+        "buy_credits": 0.0006000000000000001,
+        "sell_credits": 0.00030000000000000003
+      },
+      "substrates": {
+        "buy_credits": 0.0006000000000000001,
+        "sell_credits": 0.00030000000000000003
+      },
+      "fuel": {
+        "buy_credits": 0.0006000000000000001,
+        "sell_credits": 0.00030000000000000003
+      },
+      "plastic": {
+        "buy_credits": 0.0006000000000000001,
+        "sell_credits": 0.00030000000000000003
+      },
+      "organic_food": {
+        "buy_credits": 0.0006000000000000001,
+        "sell_credits": 0.00030000000000000003
+      },
+      "circuits": {
+        "buy_credits": 0.001,
+        "sell_credits": 0.0005
+      },
+      "components": {
+        "buy_credits": 0.001,
+        "sell_credits": 0.0005
+      },
+      "batteries": {
+        "buy_credits": 0.001,
+        "sell_credits": 0.0005
+      },
+      "ai_chips": {
+        "buy_credits": 0.0014,
+        "sell_credits": 0.0007
+      },
+      "fusion_reactors": {
+        "buy_credits": 0.0014,
+        "sell_credits": 0.0007
+      },
+      "shells": {
+        "buy_credits": 0.001,
+        "sell_credits": 0.0005
+      },
+      "missiles": {
+        "buy_credits": 0.001,
+        "sell_credits": 0.0005
+      },
+      "stored_workers": {
+        "buy_credits": 0.0015,
+        "sell_credits": 0.0007
+      }
+    },
+    "ports": {
+      "trading_port": {
+        "level": 1,
+        "capacity_kg": 100,
+        "shipment_seconds": 120,
+        "energy_kwh": 0.25
+      },
+      "trading_port_2": {
+        "level": 2,
+        "capacity_kg": 200,
+        "shipment_seconds": 120,
+        "energy_kwh": 0.25
+      },
+      "trading_port_3": {
+        "level": 3,
+        "capacity_kg": 300,
+        "shipment_seconds": 120,
+        "energy_kwh": 0.25
+      }
+    },
+    "credit_anchor_kg_gold": 1
+  }
+}

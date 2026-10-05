@@ -1,4 +1,6 @@
 #include "SeigeGameMode.h"
+#include "Engine/StaticMesh.h"
+#include "ProceduralMeshComponent.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Misc/CommandLine.h"
@@ -101,10 +103,30 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     }
     auto ApplySwardDiagnostic=[&]()
     {
-        if(GroundCover&&FParse::Param(FCommandLine::Get(),TEXT("BenchmarkHideSward")))
+        const bool Hide=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkHideSward"));
+        const bool Opaque=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkOpaqueSward"));
+        const bool OnlyA=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkSwardOnlyA"));
+        const bool OnlyB=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkSwardOnlyB"));
+        if(GroundCover&&(Hide||Opaque||OnlyA||OnlyB))
         {
             TArray<UInstancedStaticMeshComponent*> Components;GroundCover->GetComponents(Components);
-            for(auto* Component:Components)if(Component->IsVisible()&&Component->ComponentHasTag(TEXT("seige_sward")))Component->SetVisibility(false);
+            UMaterialInterface* Plain=Opaque?LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Art/NatureV08/M_GrassProxyV08.M_GrassProxyV08")):nullptr;
+            for(auto* Component:Components)if(Component->ComponentHasTag(TEXT("seige_sward")))
+            {
+                bool IsA=false,IsB=false;
+                for(const FName Tag:Component->ComponentTags)
+                {
+                    const FString Text=Tag.ToString();
+                    IsA|=Text.Contains(TEXT(":Grass_"))||Text==TEXT("seige_source:Grass");
+                    IsB|=Text.Contains(TEXT(":GrassB_"))||Text==TEXT("seige_source:GrassB");
+                }
+                if(Hide||(OnlyA&&!IsA)||(OnlyB&&!IsB)){if(Component->IsVisible())Component->SetVisibility(false);continue;}
+                // Use the existing opaque *two-sided* grass shader so back-face
+                // culling cannot masquerade as missing masked-card coverage.
+                // Geometry/transforms remain identical, including new instances.
+                if(Plain)for(int32 Slot=0;Slot<Component->GetNumMaterials();++Slot)
+                    if(Component->GetMaterial(Slot)!=Plain)Component->SetMaterial(Slot,Plain);
+            }
         }
     };
     auto ApplyViewDiagnostics=[&]()
@@ -128,6 +150,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     {
         ViewSetupStarted=FPlatformTime::Seconds();
         CameraCenter=Views[View].Center;CameraYaw=Views[View].Yaw;CameraPitch=Views[View].Pitch;Zoom=Views[View].Distance;
+        if(View==0&&FParse::Param(FCommandLine::Get(),TEXT("BenchmarkClearing")))
+        {CameraCenter=FVector(HomePosition(),0);CameraPitch=50;}
         UpdateCamera();RefreshEnvironment();SyncVisuals();
         ApplyViewDiagnostics();
         // Synchronous setup and budgeted scenery generation are both excluded.
@@ -164,12 +188,26 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNaniteBaseline")))
             if(auto* NaniteEdge=IConsoleManager::Get().FindConsoleVariable(TEXT("r.Nanite.MaxPixelsPerEdge")))
                 NaniteEdge->Set(1.f,ECVF_SetByConsole);
-        ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");StartScenario();
-        if(Screen==TEXT("landing"))ConfirmLanding(FVector2D::ZeroVector);
+        const bool Clearing=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkClearing"));
+        ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");
+        if(Clearing)ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;
+        StartScenario();
+        FVector2D Landing=FVector2D::ZeroVector;
+        if(Clearing)
+        {
+            // The same ordinary resource-side landing used by the interaction
+            // route, isolated for settled surface review without replaying it.
+            bool Found=false;
+            for(const auto& Node:Sim.Nodes)if(!Found&&Sim.Resources[Node.Resource].Class==TEXT("standard"))
+                for(int32 I=0;I<16&&!Found;++I)
+                {const double A=I*UE_TWO_PI/16;const auto Candidate=Node.Position+FVector2D(FMath::Cos(A),FMath::Sin(A))*1100;FString Why;if(CanLand(Candidate,Why)){Landing=Candidate;Found=true;}}
+            if(!Found){UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK no valid clearing landing"));FPlatformMisc::RequestExitWithStatus(false,1);return;}
+        }
+        if(Screen==TEXT("landing"))ConfirmLanding(Landing);
         const FSeigeBuildingDef* CommandDefinition=Sim.BuildingDefs.Find(Sim.CoreDefinition);
         if(Screen==TEXT("playing")&&!Observer&&CommandDefinition)
             Sim.Tick(CommandDefinition->ConstructionSeconds+Sim.FixedStepSeconds());
-        Paused=true;
+        Paused=false;Speed=10;ResetSimulationPresentation();
         const FSeigeBuilding* Command=Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& Building){return Building.DefId==Sim.CoreDefinition;});
         if(Screen!=TEXT("playing")||Observer||!Command||Command->IsConstructing||Command->Health<=0)
         {
@@ -311,7 +349,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     TSharedPtr<FJsonObject> Report=MakeShared<FJsonObject>();
     Report->SetStringField(TEXT("name"),Name);Report->SetArrayField(TEXT("views"),Results);
     Report->SetStringField(TEXT("selected_view"),SelectedView==INDEX_NONE?TEXT("all"):Views[SelectedView].Name);
-    Report->SetNumberField(TEXT("schema_version"),3);
+    Report->SetNumberField(TEXT("schema_version"),4);
+    Report->SetNumberField(TEXT("simulation_speed"),Speed);Report->SetNumberField(TEXT("simulation_seconds"),Sim.Time);
     Report->SetStringField(TEXT("camera_mode"),Orbit?TEXT("orbit"):TEXT("static"));
     Report->SetStringField(TEXT("camera_path_version"),TEXT("five-views-v1"));
     Report->SetNumberField(TEXT("orbit_degrees_per_second"),Orbit?72:0);
@@ -326,6 +365,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetNumberField(TEXT("grass_programmable_distance_m"),GrassProgrammableDistanceMeters);
     Report->SetNumberField(TEXT("configured_nanite_max_pixels_per_edge"),NaniteMaxPixelsPerEdge);
     Report->SetBoolField(TEXT("diagnostic_nanite_baseline"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNaniteBaseline")));
+    Report->SetBoolField(TEXT("diagnostic_clearing_view"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkClearing")));
     Report->SetBoolField(TEXT("grass_distance_field_lighting"),GrassDistanceFieldLighting);
     Report->SetNumberField(TEXT("ground_cover_candidates"),GroundCoverCandidates);
     Report->SetStringField(TEXT("profile"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkV05Epic"))?TEXT("v0.5 Epic reference"):TEXT("Medium"));
@@ -336,6 +376,87 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetNumberField(TEXT("sun_source_angle"),SunSourceAngle);
     Report->SetNumberField(TEXT("cloud_shadow_resolution_scale"),CloudShadowResolutionScale);
     Report->SetBoolField(TEXT("diagnostic_sward_hidden"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkHideSward")));
+    Report->SetBoolField(TEXT("diagnostic_sward_opaque"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkOpaqueSward")));
+    Report->SetBoolField(TEXT("diagnostic_sward_only_a"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkSwardOnlyA")));
+    Report->SetBoolField(TEXT("diagnostic_sward_only_b"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkSwardOnlyB")));
+    if(GroundCover&&FParse::Param(FCommandLine::Get(),TEXT("BenchmarkDumpSward")))
+    {
+        // Opt-in post-sample evidence: inspect the actual committed transforms,
+        // not a reconstruction of the random generator. No measured frames use
+        // this path and normal release reports contain no instance dump.
+        auto VectorJson=[](FVector V){return TArray<TSharedPtr<FJsonValue>>{
+            MakeShared<FJsonValueNumber>(V.X),MakeShared<FJsonValueNumber>(V.Y),MakeShared<FJsonValueNumber>(V.Z)};};
+        const FTransform CameraPose=CameraTransform(CameraViewZoom());
+        auto Dump=MakeShared<FJsonObject>();Dump->SetArrayField(TEXT("camera_position"),VectorJson(CameraPose.GetLocation()));
+        Dump->SetArrayField(TEXT("camera_forward"),VectorJson(CameraPose.GetUnitAxis(EAxis::X)));
+        Dump->SetNumberField(TEXT("camera_fov"),CameraFov);Dump->SetNumberField(TEXT("render_scale"),RenderScale);
+        TArray<TSharedPtr<FJsonValue>> Groups;
+        TArray<UProceduralMeshComponent*> TerrainComponents;if(Landscape)Landscape->GetComponents(TerrainComponents);
+        auto RenderedHeight=[&](FVector2D P,double& Height)
+        {
+            for(auto* Terrain:TerrainComponents)
+            {
+                const auto* Section=Terrain->GetProcMeshSection(0);if(!Section||Section->ProcVertexBuffer.IsEmpty())continue;
+                const FTransform ToWorld=Terrain->GetComponentTransform();
+                const FBox Box=Section->SectionLocalBox.TransformBy(ToWorld);
+                if(P.X<Box.Min.X||P.X>Box.Max.X||P.Y<Box.Min.Y||P.Y>Box.Max.Y)continue;
+                const int32 Stride=FMath::RoundToInt(FMath::Sqrt(double(Section->ProcVertexBuffer.Num()))),Cells=Stride-1;
+                if(Cells<1||Stride*Stride!=Section->ProcVertexBuffer.Num())continue;
+                const FVector Origin=ToWorld.TransformPosition(Section->ProcVertexBuffer[0].Position);
+                const FVector Across=ToWorld.TransformPosition(Section->ProcVertexBuffer[1].Position)-Origin;
+                const FVector Down=ToWorld.TransformPosition(Section->ProcVertexBuffer[Stride].Position)-Origin;
+                if(FMath::Abs(Across.Y)>.0001||FMath::Abs(Down.X)>.0001||Across.X<=0||Down.Y<=0)continue;
+                const int32 X=FMath::Clamp(FMath::FloorToInt((P.X-Origin.X)/Across.X),0,Cells-1),Y=FMath::Clamp(FMath::FloorToInt((P.Y-Origin.Y)/Down.Y),0,Cells-1);
+                const int32 First=(Y*Cells+X)*6;if(First+5>=Section->ProcIndexBuffer.Num())continue;
+                for(int32 Triangle=0;Triangle<2;++Triangle)
+                {
+                    const FVector A=ToWorld.TransformPosition(Section->ProcVertexBuffer[Section->ProcIndexBuffer[First+Triangle*3]].Position);
+                    const FVector B=ToWorld.TransformPosition(Section->ProcVertexBuffer[Section->ProcIndexBuffer[First+Triangle*3+1]].Position);
+                    const FVector C=ToWorld.TransformPosition(Section->ProcVertexBuffer[Section->ProcIndexBuffer[First+Triangle*3+2]].Position);
+                    const double Den=(B.Y-C.Y)*(A.X-C.X)+(C.X-B.X)*(A.Y-C.Y);if(FMath::Abs(Den)<.000001)continue;
+                    const double U=((B.Y-C.Y)*(P.X-C.X)+(C.X-B.X)*(P.Y-C.Y))/Den;
+                    const double V=((C.Y-A.Y)*(P.X-C.X)+(A.X-C.X)*(P.Y-C.Y))/Den,W=1-U-V;
+                    if(U>=-.000001&&V>=-.000001&&W>=-.000001){Height=U*A.Z+V*B.Z+W*C.Z;return true;}
+                }
+            }
+            return false;
+        };
+        double WorstMeshCacheDifference=0;int32 RenderedComparisons=0,MissingRenderedSamples=0;
+        TArray<UInstancedStaticMeshComponent*> Components;GroundCover->GetComponents(Components);
+        for(auto* Component:Components)
+        {
+            if(!Component->ComponentHasTag(TEXT("seige_sward"))||Component->ComponentHasTag(TEXT("seige_proxy"))||
+                !Component->GetStaticMesh()||Component->Bounds.GetBox().ComputeSquaredDistanceToPoint(CameraPose.GetLocation())>FMath::Square(4000.))continue;
+            auto Group=MakeShared<FJsonObject>();UStaticMesh* Mesh=Component->GetStaticMesh();const FBox Bounds=Mesh->GetBoundingBox();
+            Group->SetStringField(TEXT("mesh"),Mesh->GetPathName());Group->SetBoolField(TEXT("visible"),Component->IsVisible());
+            Group->SetArrayField(TEXT("bounds_min"),VectorJson(Bounds.Min));Group->SetArrayField(TEXT("bounds_max"),VectorJson(Bounds.Max));
+            Group->SetArrayField(TEXT("component_position"),VectorJson(Component->GetComponentLocation()));
+            TArray<TSharedPtr<FJsonValue>> Instances;
+            for(int32 I=0;I<Component->GetInstanceCount();++I)
+            {
+                FTransform Transform;if(!Component->GetInstanceTransform(I,Transform,true)||
+                    FVector::DistSquared(Transform.GetLocation(),CameraPose.GetLocation())>FMath::Square(3000.))continue;
+                auto Instance=MakeShared<FJsonObject>();Instance->SetArrayField(TEXT("position"),VectorJson(Transform.GetLocation()));
+                Instance->SetArrayField(TEXT("scale"),VectorJson(Transform.GetScale3D()));const FQuat Q=Transform.GetRotation();
+                Instance->SetArrayField(TEXT("quaternion"),{MakeShared<FJsonValueNumber>(Q.X),MakeShared<FJsonValueNumber>(Q.Y),MakeShared<FJsonValueNumber>(Q.Z),MakeShared<FJsonValueNumber>(Q.W)});
+                Instance->SetNumberField(TEXT("pivot_ground_z"),GroundHeight(FVector2D(Transform.GetLocation())/RenderScale)*RenderScale);
+                double Rendered=0;
+                if(RenderedHeight(FVector2D(Transform.GetLocation()),Rendered))
+                {
+                    const double Difference=Rendered-GroundHeight(FVector2D(Transform.GetLocation())/RenderScale)*RenderScale;
+                    Instance->SetNumberField(TEXT("rendered_ground_z"),Rendered);Instance->SetNumberField(TEXT("rendered_minus_cache_z"),Difference);
+                    WorstMeshCacheDifference=FMath::Max(WorstMeshCacheDifference,FMath::Abs(Difference));++RenderedComparisons;
+                }
+                else ++MissingRenderedSamples;
+                Instances.Add(MakeShared<FJsonValueObject>(Instance));
+            }
+            if(!Instances.IsEmpty()){Group->SetArrayField(TEXT("instances"),Instances);Groups.Add(MakeShared<FJsonValueObject>(Group));}
+        }
+        Dump->SetNumberField(TEXT("rendered_triangle_comparisons"),RenderedComparisons);
+        Dump->SetNumberField(TEXT("missing_rendered_triangle_samples"),MissingRenderedSamples);
+        Dump->SetNumberField(TEXT("maximum_absolute_rendered_cache_difference_cm"),WorstMeshCacheDifference);
+        Dump->SetArrayField(TEXT("groups"),Groups);Report->SetObjectField(TEXT("diagnostic_sward_instances"),Dump);
+    }
     int32 Width=0,Height=0;if(auto* PC=UGameplayStatics::GetPlayerController(this,0))PC->GetViewportSize(Width,Height);
     Report->SetNumberField(TEXT("width"),Width);Report->SetNumberField(TEXT("height"),Height);Report->SetStringField(TEXT("engine"),FEngineVersion::Current().ToString());
     auto Quality=MakeShared<FJsonObject>();
@@ -345,7 +466,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     for(const auto& Pair:MediumRenderSettings)if(const auto* Variable=IConsoleManager::Get().FindConsoleVariable(*Pair.Key))Quality->SetNumberField(Pair.Key,Variable->GetFloat());
     if(const auto* Method=IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))Quality->SetNumberField(TEXT("r.AntiAliasingMethod"),Method->GetInt());
     Report->SetObjectField(TEXT("quality"),Quality);
-    Report->SetStringField(TEXT("method"),TEXT("Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then paused with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit samples include camera-driven streaming and report pending-cell mean/max/start/end without resetting; static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded."));
+    Report->SetStringField(TEXT("method"),TEXT("Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then runs at10x with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit samples include camera-driven streaming and report pending-cell mean/max/start/end without resetting; static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded."));
     FString Json;FJsonSerializer::Serialize(Report.ToSharedRef(),TJsonWriterFactory<TCHAR,TPrettyJsonPrintPolicy<TCHAR>>::Create(&Json));
     if(!FFileHelper::SaveStringToFile(Json,*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("GraphicsBenchmark-")+Name+TEXT(".json"))))
     {UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK report write failed"));FPlatformMisc::RequestExitWithStatus(false,1);return;}

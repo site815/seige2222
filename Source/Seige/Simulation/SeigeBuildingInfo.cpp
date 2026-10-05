@@ -14,86 +14,108 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     auto Amounts=[&](const TMap<FString,double>& Values)
     {
         TArray<FString> Keys,Parts;Values.GetKeys(Keys);Keys.Sort();
-        for(const FString& Key:Keys)if(Values[Key]>0)Parts.Add(N(Values[Key])+TEXT(" ")+Name(Key));
+        for(const FString& Key:Keys)if(Values[Key]>0)Parts.Add(N(Values[Key])+TEXT(" ")+Resources[Key].Unit+TEXT(" ")+Name(Key));
         return Parts.IsEmpty()?FString(TEXT("None (0)")):FString::Join(Parts,TEXT(", "));
     };
     auto Metres=[&](double Units){return N(Units*CentimetersPerUnit/100)+TEXT(" m");};
     const double Fraction=B?WorkFraction(*B):1;
+    const double WeaponFraction=B&&B->IsConstructing&&D.DeploymentDefense&&B->Enabled&&B->Health>0?Energy.Fraction(B->Id):Fraction;
     Add(TEXT("Overview"),TEXT("Building"),D.Name);
     Add(TEXT("Overview"),TEXT("Role"),D.Role);
+    Add(TEXT("Overview"),TEXT("Level"),FString::FromInt(D.Level)+TEXT(" / 3"));
+    if(!D.NextUpgrade.IsEmpty())Add(TEXT("Overview"),TEXT("Next-level upgrade"),BuildingDefs[D.NextUpgrade].Name+TEXT(": ")+Amounts(D.UpgradeCost));
     Add(TEXT("Overview"),TEXT("Status"),B?B->Status:TEXT("Blueprint"));
     Add(TEXT("Overview"),TEXT("Health"),B?N(B->Health)+TEXT(" / ")+N(D.Health):N(D.Health)+TEXT(" maximum"));
     Add(TEXT("Overview"),TEXT("Jobs"),B?FString::Printf(TEXT("%d / %d staffed"),B->Workers,D.Jobs):FString::FromInt(D.Jobs));
     Add(TEXT("Overview"),TEXT("Automatic staffing priority"),FString::FromInt(D.StaffingPriority)+TEXT(" (lower first; includes construction)"));
     Add(TEXT("Overview"),TEXT("Operating efficiency"),N(Fraction*100)+TEXT("%")+(B?TEXT(""):TEXT(" at full staffing and upkeep")));
-    Add(TEXT("Overview"),TEXT("Footprint radius"),Metres(D.Footprint));
+    Add(TEXT("Overview"),TEXT("Current building width"),Metres(D.Footprint*2));
+    Add(TEXT("Overview"),TEXT("Reserved plot width"),Metres(D.ReservedFootprint*2));
     Add(TEXT("Overview"),TEXT("Sensor range"),Metres(D.SensorRange));
     FString Activity=D.WorkerActivity;if(!Activity.IsEmpty())Activity[0]=FChar::ToUpper(Activity[0]);
     Add(TEXT("Overview"),TEXT("Worker activity"),Activity);
-    Add(TEXT("Overview"),TEXT("Construction cost"),Amounts(D.Cost));
-    Add(TEXT("Overview"),TEXT("Construction payment"),D.Role==TEXT("core")?TEXT("Deployment kit physically carried by the landing shuttle"):TEXT("Reserved at core; couriers deliver before worker construction"));
-    Add(TEXT("Overview"),TEXT("Construction duration"),N(D.ConstructionSeconds)+TEXT(" s with ")+FString::FromInt(D.ConstructionWorkers)+TEXT(" builders at full efficiency"));
+    Add(TEXT("Overview"),TEXT("Construction cost"),Amounts(B&&B->IsConstructing?ConstructionCost(*B):D.Cost));
+    Add(TEXT("Overview"),TEXT("Construction payment"),D.Role==TEXT("core")?TEXT("Deployment kit physically carried by the landing shuttle"):TEXT("Reserved stock; physically delivered to the exterior site"));
+    Add(TEXT("Overview"),TEXT("Construction duration"),N(B?ConstructionSeconds(*B):D.ConstructionSeconds)+TEXT(" s with ")+FString::FromInt(B?RequiredBuilders(*B):D.ConstructionWorkers)+TEXT(" builders at full efficiency"));
     Add(TEXT("Resources"),TEXT("Stock location"),D.InventoryPresentation==TEXT("outdoor")?TEXT("Outdoor stockyard"):TEXT("Inside the building"));
-    if(B&&B->IsConstructing)Add(TEXT("Resources"),TEXT("Delivered materials"),TEXT("Includes material already installed. Stacks shrink as construction progresses."));
+    if(B&&B->IsConstructing)Add(TEXT("Resources"),TEXT("Delivered materials"),TEXT("Uninstalled material at the site; workers incorporate it progressively."));
+    if(B&&B->IsConstructing){Add(TEXT("Overview"),TEXT("Construction phase"),ConstructionStage(*B));Add(TEXT("Overview"),TEXT("Builders on site"),FString::FromInt(B->BuildersOnSite));Add(TEXT("Overview"),TEXT("Travelling builders"),FString::FromInt(B->TravellingBuilders));}
     if(B){Add(TEXT("Overview"),TEXT("Construction progress"),N(B->ConstructionProgress*100)+TEXT("%"));Add(TEXT("Overview"),TEXT("Assigned builders"),FString::FromInt(B->Builders));}
 
-    const bool Armed=D.DamagePerShot>0;
-    Add(TEXT("Weapons"),TEXT("Weapon"),Armed?D.WeaponName:TEXT("Unarmed"));
-    Add(TEXT("Weapons"),TEXT("Damage per shot"),N(D.DamagePerShot)+TEXT(" health"));
-    Add(TEXT("Weapons"),TEXT("Reload time"),N(D.ReloadSeconds)+TEXT(" s at full efficiency"));
-    Add(TEXT("Weapons"),TEXT("Nominal DPS"),N(D.DamagePerSecond)+TEXT(" health/s"));
-    Add(TEXT("Weapons"),TEXT("Operating DPS"),N(D.DamagePerSecond*Fraction)+TEXT(" health/s with continuous targets"));
-    Add(TEXT("Weapons"),TEXT("Attack range"),Metres(D.AttackRange));
-    Add(TEXT("Weapons"),TEXT("Targets"),Armed?TEXT("Nearest living visible bug in range"):TEXT("None (0)"));
-    Add(TEXT("Weapons"),TEXT("Ammunition use"),TEXT("None (0); no ammunition resource in this prototype"));
-    if(B)Add(TEXT("Weapons"),TEXT("Reload remaining"),!Armed?TEXT("0 s (unarmed)"):B->WeaponCooldown<=UE_DOUBLE_SMALL_NUMBER?TEXT("0 s (ready)"):Fraction>0?N(B->WeaponCooldown/Fraction)+TEXT(" s"):TEXT("Paused until operational"));
+    const auto* Platform=Combat.BuildingPlatforms.Find(D.Id);
+    const auto* WeaponState=B?Combat.BuildingState.Find(B->Id):nullptr;
+    const TArray<FString> Loadout=WeaponState?WeaponState->Weapons:Platform?Platform->Weapons:TArray<FString>();
+    double DPS=0,ShotEnergy=0;int32 Area=0;double Mass=0;TMap<FString,double> Ammunition;
+    Add(TEXT("Weapons"),TEXT("Weapon"),Loadout.IsEmpty()?TEXT("Unarmed (0)"):FString::FromInt(Loadout.Num())+TEXT(" equipped modules"));
+    for(int32 I=0;I<Loadout.Num();++I)if(const auto* W=Combat.Weapons.Find(Loadout[I]))
+    {
+        DPS+=W->Damage/W->ReloadSeconds;ShotEnergy+=W->EnergyKWh;Area+=W->MountPoints;Mass+=W->MassKg;
+        if(!W->Ammo.IsEmpty())Ammunition.FindOrAdd(W->Ammo)+=W->AmmoPerShot;
+        Rows.Add({TEXT("Weapons"),FString::Printf(TEXT("Mount %d - %s"),I+1,*W->Name),N(W->Damage)+TEXT(" damage / ")+N(W->ReloadSeconds)+TEXT(" s = ")+N(W->Damage/W->ReloadSeconds)+TEXT(" DPS; ")+N(W->RangeMeters)+TEXT(" m; ")+N(W->EnergyKWh)+TEXT(" kWh/shot")});
+    }
+    Add(TEXT("Weapons"),TEXT("Nominal DPS"),N(DPS)+TEXT(" health/s before misses and protection"));
+    Add(TEXT("Weapons"),TEXT("Operating DPS"),N(DPS*WeaponFraction)+TEXT(" theoretical; requires energy/ammunition"));
+    Add(TEXT("Weapons"),TEXT("Mount area used / capacity"),FString::FromInt(Area)+TEXT(" / ")+FString::FromInt(Platform?Platform->MountPoints:0)+TEXT(" small units (1 large = 4 medium = 16 small)"));
+    Add(TEXT("Weapons"),TEXT("Weapon mass used / capacity"),N(Mass)+TEXT(" / ")+N(Platform?Platform->MaxWeaponMassKg:0)+TEXT(" kg"));
+    Add(TEXT("Weapons"),TEXT("Energy per full volley"),N(ShotEnergy)+TEXT(" kWh"));
+    Add(TEXT("Weapons"),TEXT("Ammunition per full volley"),Amounts(Ammunition));
+    Add(TEXT("Weapons"),TEXT("Shield / armor"),N(WeaponState?WeaponState->Shield:Platform?Platform->Shield:0)+TEXT(" / ")+N(WeaponState?WeaponState->Armor:Platform?Platform->Armor:0)+TEXT(" HP"));
+    if(Loadout.IsEmpty()){Add(TEXT("Weapons"),TEXT("Damage per shot"),TEXT("0"));Add(TEXT("Weapons"),TEXT("Reload time"),TEXT("0 s"));Add(TEXT("Weapons"),TEXT("Attack range"),TEXT("0 m"));}
 
-    Add(TEXT("Power"),TEXT("Power consumption"),N(D.PowerUsageKW)+TEXT(" kW"));
-    Add(TEXT("Power"),TEXT("Power generation"),N(D.PowerGenerationKW)+TEXT(" kW"));
-    Add(TEXT("Power"),TEXT("Power system"),TEXT("No separate power grid is simulated in this prototype"));
+    const auto* E=Energy.Definition(D.Id);const auto Grid=B?Energy.Info(*this,B->Id):FSeigeEnergyInfo();
+    Add(TEXT("Power"),TEXT("Power consumption"),N(E?E->IdleKW:0)+TEXT(" kW"));
+    Add(TEXT("Power"),TEXT("Power generation"),N(E?E->GenerationKW:0)+TEXT(" kW"));
+    Add(TEXT("Power"),TEXT("Battery charge / capacity"),N(B?B->BatteryEnergyKWh:0)+TEXT(" / ")+N(E?E->BatteryCapacityKWh:0)+TEXT(" kWh"));
+    Add(TEXT("Power"),TEXT("Power system"),B?(Grid.Connected?TEXT("Connected road grid"):E&&!E->RequiresRoadGrid?TEXT("Self-contained bootstrap generation"):TEXT("Disconnected; connect a powered road")):TEXT("Shares power and batteries within its connected road network"));
+    Add(TEXT("Power"),TEXT("Grid generation / demand"),N(Grid.GenerationKW)+TEXT(" / ")+N(Grid.DemandKW)+TEXT(" kW"));
+    Add(TEXT("Power"),TEXT("Grid battery charge / capacity"),N(Grid.StoredKWh)+TEXT(" / ")+N(Grid.CapacityKWh)+TEXT(" kWh"));
+    Add(TEXT("Power"),TEXT("Worker electricity"),N(Energy.WorkerKW)+TEXT(" kW per worker"));
+    if(E&&!E->FuelResource.IsEmpty())Add(TEXT("Power"),TEXT("Generator fuel"),Name(E->FuelResource)+TEXT("; ")+N(E->FuelUnitsPerKWh)+TEXT(" units / kWh"));
+    if(const auto* Port=Trade.Definition(D.Id)){Add(TEXT("Production"),TEXT("Trade level"),FString::FromInt(Port->Level));Add(TEXT("Production"),TEXT("Shipment capacity"),N(Port->CapacityKg)+TEXT(" kg"));Add(TEXT("Production"),TEXT("Shipment duration"),N(Port->ShipmentSeconds)+TEXT(" s"));Add(TEXT("Production"),TEXT("Shipment energy"),N(Port->EnergyKWh)+TEXT(" kWh"));Add(TEXT("Production"),TEXT("Credit account"),FString::Printf(TEXT("%.6f credits"),Credits));if(B&&!B->Shipment.Resource.IsEmpty())Add(TEXT("Production"),TEXT("Current shipment"),(B->Shipment.Buy?TEXT("Import "):TEXT("Export "))+Name(B->Shipment.Resource)+TEXT(" ")+N(B->Shipment.Quantity)+TEXT("; ")+N(B->Shipment.Progress*100)+TEXT("%"));if(B)Add(TEXT("Production"),TEXT("Worker export reserve target"),FString::FromInt(B->WorkerExportTarget));}
+
 
     const bool CoreBuilding=D.Role==TEXT("core");
-    const FSeigeRecipeDef* Recipe=Recipes.Find(CoreBuilding?TextRule(TEXT("population_recipe")):D.Recipe);
+    FString RecipeId=B?(B->ProductionCommitted?B->CommittedRecipe:B->SelectedRecipe):D.Recipe;
+    if(RecipeId.IsEmpty()&&!D.AllowedRecipes.IsEmpty())RecipeId=D.AllowedRecipes[0];
+    const FSeigeRecipeDef* Recipe=Recipes.Find(RecipeId);
     if(Recipe)
     {
-        Add(TEXT("Production"),TEXT("Inputs per cycle"),Amounts(Recipe->Inputs));
-        Add(TEXT("Production"),TEXT("Outputs per cycle"),CoreBuilding?TEXT("1 robot when population is below job demand/minimum"):Amounts(Recipe->Outputs));
-        Add(TEXT("Production"),TEXT("Base cycle time"),N(Recipe->Seconds)+TEXT(" simulation s"));
-        if(!CoreBuilding)Add(TEXT("Production"),TEXT("Operating cycle time"),Fraction>0?N(Recipe->Seconds/Fraction)+TEXT(" s; requires local inputs and output space"):TEXT("Paused until operational"));
-        else Add(TEXT("Production"),TEXT("Assembly policy"),TEXT("Open jobs, available service capacity and local inputs; after deployment"));
-        if(B)
-        {
-            const int32 Target=FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))));
-            const bool Retiring=CoreBuilding&&Population>Target,Idle=CoreBuilding&&Population==Target;
-            const double Progress=CoreBuilding?(Idle?0:PopulationClock/(Retiring?Number(TEXT("robot_retire_seconds")):Recipe->Seconds)):B->Progress;
-            Add(TEXT("Production"),TEXT("Cycle progress"),N(FMath::Clamp(Progress,0.,1.)*100)+TEXT("%")+(Retiring?TEXT(" (retirement)"):Idle?TEXT(" (idle)"):TEXT("")));
-        }
-        if(!CoreBuilding)
-        {
-            TMap<FString,double> Rates;for(const auto& Pair:Recipe->Inputs)Rates.Add(Pair.Key,Pair.Value/Recipe->Seconds);
-            Add(TEXT("Production"),TEXT("Nominal input rates"),Amounts(Rates)+TEXT(" / s"));
-            Rates.Empty();for(const auto& Pair:Recipe->Outputs)Rates.Add(Pair.Key,Pair.Value/Recipe->Seconds);
-            Add(TEXT("Production"),TEXT("Nominal output rates"),Amounts(Rates)+TEXT(" / s"));
-        }
-        else
-        {
-            Add(TEXT("Production"),TEXT("Population target"),FString::FromInt(FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))))));
-            Add(TEXT("Production"),TEXT("Surplus retirement"),TEXT("1 robot / ")+N(Number(TEXT("robot_retire_seconds")))+TEXT(" s; no material refund"));
-        }
+        TMap<FString,double> Inputs=Recipe->Inputs;for(auto& P:Inputs)P.Value*=D.RecipeInputMultiplier;
+        const double Duration=Recipe->Seconds*D.RecipeTimeMultiplier;
+        Add(TEXT("Production"),TEXT("Selected recipe"),RecipeId);
+        Add(TEXT("Production"),TEXT("Inputs per cycle"),Amounts(Inputs));
+        Add(TEXT("Production"),TEXT("Batch electricity"),N(Recipe->EnergyKWh*D.RecipeEnergyMultiplier)+TEXT(" kWh reserved before production"));
+        Add(TEXT("Production"),TEXT("Outputs per cycle"),Recipe->WorkerOutput>0?FString::FromInt(Recipe->WorkerOutput)+TEXT(" stored worker(s)"):Amounts(Recipe->Outputs));
+        Add(TEXT("Production"),TEXT("Base cycle time"),N(Duration)+TEXT(" simulation s"));
+        Add(TEXT("Production"),TEXT("Operating cycle time"),Fraction>0?N(Duration/Fraction)+TEXT(" s; requires local inputs and output space"):TEXT("Paused until operational"));
+        if(B)Add(TEXT("Production"),TEXT("Cycle progress"),N(B->Progress*100)+TEXT("%"));
+        if(CoreBuilding)Add(TEXT("Production"),TEXT("Assembly policy"),TEXT("Automatic vacancy cover when no worker factory operates; selected paid batch finishes first"));
+        TMap<FString,double> Rates;for(const auto& Pair:Inputs)Rates.Add(Pair.Key,Pair.Value/Duration);
+        Add(TEXT("Production"),TEXT("Nominal input rates"),Amounts(Rates)+TEXT(" / s"));
+        Rates.Empty();for(const auto& Pair:Recipe->Outputs)Rates.Add(Pair.Key,Pair.Value/Duration);
+        Add(TEXT("Production"),TEXT("Nominal output rates"),Amounts(Rates)+TEXT(" / s"));
     }
     else
     {
         Add(TEXT("Production"),TEXT("Resource inputs"),TEXT("None (0)"));
         Add(TEXT("Production"),TEXT("Resource output"),D.ExtractResource.IsEmpty()?TEXT("None (0)"):Name(D.ExtractResource));
-        Add(TEXT("Production"),TEXT("Nominal extraction"),N(D.ExtractRate)+TEXT(" units / simulation s"));
+        const FString ExtractionUnit=Resources.Contains(D.ExtractResource)?Resources[D.ExtractResource].Unit:TEXT("kg");
+        Add(TEXT("Production"),TEXT("Nominal extraction"),N(D.ExtractRate)+TEXT(" ")+ExtractionUnit+TEXT(" / simulation s"));
         const bool Full=B&&Occupied(*B)>=D.StorageCapacity-UE_DOUBLE_SMALL_NUMBER;
-        Add(TEXT("Production"),TEXT("Operating extraction"),N(Full?0:D.ExtractRate*Fraction)+TEXT(" units / s"));
+        Add(TEXT("Production"),TEXT("Operating extraction"),N(Full?0:D.ExtractRate*Fraction)+TEXT(" ")+ExtractionUnit+TEXT(" / s"));
         Add(TEXT("Production"),TEXT("Extraction limit"),D.ExtractResource.IsEmpty()?TEXT("Not an extractor"):TEXT("One matching deposit; output stops when local storage is full"));
     }
 
-    Add(TEXT("Resources"),TEXT("Local storage"),B?N(Occupied(*B))+TEXT(" / ")+N(D.StorageCapacity)+TEXT(" units"):N(D.StorageCapacity)+TEXT(" units capacity"));
+    if(D.StoresInactiveWorkers)
+    {
+        Add(TEXT("Production"),TEXT("Inactive workers here"),FString::FromInt(B?FMath::RoundToInt(B->Inventory.FindRef(TextRule(TEXT("inactive_worker_resource")))):0));
+        Add(TEXT("Production"),TEXT("Colony worker stock target"),FString::FromInt(WorkerSurplusTarget));
+        Add(TEXT("Production"),TEXT("Disassembly"),TEXT("Stored surplus only; ")+N(DisassemblyEnergyKWh())+TEXT(" kWh per worker; ")+Amounts(DisassemblyOutputs()));
+        if(B)Add(TEXT("Production"),TEXT("Disassembly queue / progress"),FString::FromInt(B->DisassemblyQueued)+TEXT(" / ")+N(B->DisassemblyProgress*100)+TEXT("%"));
+    }
+    Add(TEXT("Resources"),TEXT("Local storage"),B?N(Occupied(*B))+TEXT(" / ")+N(D.StorageCapacity)+TEXT(" L"):N(D.StorageCapacity)+TEXT(" L capacity"));
     TSet<FString> StockIds;
-    if(B&&B->IsConstructing)for(const auto& Pair:D.Cost)StockIds.Add(Pair.Key);
+    if(B&&B->IsConstructing)for(const auto& Pair:ConstructionCost(*B))StockIds.Add(Pair.Key);
     if(CoreBuilding||D.Role==TEXT("storage"))for(const auto& Pair:Resources)StockIds.Add(Pair.Key);
     StockIds.Add(TextRule(TEXT("repair_resource")));
     if(!D.ExtractResource.IsEmpty())StockIds.Add(D.ExtractResource);
@@ -102,22 +124,22 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     TArray<FString> StockKeys=StockIds.Array();StockKeys.Sort();
     for(const FString& Key:StockKeys)
     {
-        FString Value=B?N(B->Inventory.FindRef(Key))+TEXT(" units"):TEXT("0 units (no instance)");
-        if(B&&B->IsConstructing)Value+=TEXT("; construction ")+N(B->ConstructionMaterials.FindRef(Key))+TEXT(" / ")+N(D.Cost.FindRef(Key));
+        FString Value=B?N(B->Inventory.FindRef(Key))+TEXT(" ")+Resources[Key].Unit:TEXT("0 ")+Resources[Key].Unit+TEXT(" (no instance)");
+        if(B&&B->IsConstructing)Value+=TEXT("; construction ")+N(B->ConstructionMaterials.FindRef(Key))+TEXT(" uninstalled; ")+N(B->InstalledMaterials.FindRef(Key))+TEXT(" / ")+N(ConstructionCost(*B).FindRef(Key))+TEXT(" installed");
         const double Inbound=B?Incoming(B->Id,Key):0;if(Inbound>0)Value+=TEXT(" (+")+N(Inbound)+TEXT(" inbound)");
         Rows.Add({TEXT("Resources"),Name(Key),Value});
     }
-    Add(TEXT("Resources"),TEXT("Transport"),TEXT("Physical couriers; ")+N(Number(TEXT("courier_capacity")))+TEXT(" units per cargo batch"));
+    Add(TEXT("Resources"),TEXT("Transport"),TEXT("Physical couriers; ")+N(Number(TEXT("courier_capacity")))+TEXT(" kg per cargo batch"));
 
     Add(TEXT("Maintenance"),TEXT("Repair material"),Name(TextRule(TEXT("repair_resource"))));
     Add(TEXT("Maintenance"),TEXT("Maximum repair rate"),N(Number(TEXT("repair_health_per_second")))+TEXT(" health / s from local stock"));
     Add(TEXT("Maintenance"),TEXT("Repair conversion"),N(Number(TEXT("repair_health_per_unit")))+TEXT(" health / material unit"));
     Add(TEXT("Maintenance"),TEXT("Local repair buffer"),N(Number(TEXT("repair_buffer_units")))+TEXT(" units"));
     Add(TEXT("Maintenance"),TEXT("Repair operation"),TEXT("Automatic after construction, including while disabled; destroyed buildings do not repair"));
-    Add(TEXT("Maintenance"),TEXT("Robot upkeep"),N(Number(TEXT("upkeep_per_robot")))+TEXT(" ")+Name(TextRule(TEXT("upkeep_resource")))+TEXT(" / robot every ")+N(Number(TEXT("upkeep_interval")))+TEXT(" s"));
-    Add(TEXT("Maintenance"),TEXT("Robot support capacity"),FString::FromInt(D.RobotSupportCapacity)+TEXT(" robots when completed and operating"));
+    Add(TEXT("Maintenance"),TEXT("Worker upkeep"),N(Number(TEXT("upkeep_per_robot")))+TEXT(" ")+Name(TextRule(TEXT("upkeep_resource")))+TEXT(" / worker every ")+N(Number(TEXT("upkeep_interval")))+TEXT(" s"));
+    Add(TEXT("Maintenance"),TEXT("Worker support capacity"),FString::FromInt(D.RobotSupportCapacity)+TEXT(" workers when completed and operating"));
     Add(TEXT("Maintenance"),TEXT("Upkeep payment"),TEXT("Local core/service-bay stock, delivered by physical couriers"));
-    if(B&&D.RobotSupportCapacity>0){Add(TEXT("Maintenance"),TEXT("Robots supported here"),FString::FromInt(B->SupportedRobots));Add(TEXT("Maintenance"),TEXT("Service supply"),B->IsConstructing?TEXT("Under construction"):B->MaintenanceSupplied?TEXT("Supplied at last maintenance interval"):TEXT("Maintenance shortage"));}
+    if(B&&D.RobotSupportCapacity>0){Add(TEXT("Maintenance"),TEXT("Workers supported here"),FString::FromInt(B->SupportedRobots));Add(TEXT("Maintenance"),TEXT("Service supply"),B->IsConstructing?TEXT("Under construction"):B->MaintenanceSupplied?TEXT("Supplied at last maintenance interval"):TEXT("Maintenance shortage"));}
     Add(TEXT("Maintenance"),TEXT("Shortage efficiency"),N(Number(TEXT("upkeep_shortage_efficiency"))*100)+TEXT("% until a supplied upkeep interval"));
     if(CoreBuilding)
     {

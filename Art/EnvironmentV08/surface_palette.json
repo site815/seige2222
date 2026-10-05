@@ -1,0 +1,36 @@
+{
+  "Meadow": [
+    0.105,
+    0.13,
+    0.032
+  ],
+  "EarthMeadow": [
+    0.125,
+    0.115,
+    0.044
+  ],
+  "Forest": [
+    0.1,
+    0.075,
+    0.038
+  ],
+  "Dirt": [
+    0.14,
+    0.11,
+    0.065
+  ],
+  "Rock": [
+    0.23,
+    0.23,
+    0.205
+  ],
+  "GrassProxy": [
+    0.074,
+    0.108,
+    0.034
+  ],
+  "GrassNormalBlend": 0.5,
+  "SoilStrength": 1.3,
+  "ForestPatternFadeStartMeters": 40,
+  "ForestPatternFadeEndMeters": 120
+}

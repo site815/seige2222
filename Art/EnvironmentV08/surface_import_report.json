@@ -1,0 +1,90 @@
+{
+  "terrain_material": "/Game/Art/NatureV08/M_TerrainV08.M_TerrainV08",
+  "grass_material": "/Game/Art/NatureV08/M_GrassProxyV08.M_GrassProxyV08",
+  "grass_proxy": "/Game/Art/NatureV08/SM_GrassProxyV08.SM_GrassProxyV08",
+  "retained_geometry_source": "/Game/Art/NatureV07/SM_GrassProxy",
+  "source_triangles": 1280,
+  "palette": {
+    "Meadow": [
+      0.105,
+      0.13,
+      0.032
+    ],
+    "EarthMeadow": [
+      0.125,
+      0.115,
+      0.044
+    ],
+    "Forest": [
+      0.1,
+      0.075,
+      0.038
+    ],
+    "Dirt": [
+      0.14,
+      0.11,
+      0.065
+    ],
+    "Rock": [
+      0.23,
+      0.23,
+      0.205
+    ],
+    "GrassProxy": [
+      0.074,
+      0.108,
+      0.034
+    ],
+    "GrassNormalBlend": 0.5,
+    "SoilStrength": 1.3,
+    "ForestPatternFadeStartMeters": 40,
+    "ForestPatternFadeEndMeters": 120
+  },
+  "texture_sources": {
+    "MeadowColor": "/Game/Art/NatureV04/Textures/T_Grass004_surface_color.T_Grass004_surface_color",
+    "MeadowNormal": "/Game/Art/NatureV04/Textures/T_Grass004_surface_normal.T_Grass004_surface_normal",
+    "MeadowRoughness": "/Game/Art/NatureV04/Textures/T_Grass004_surface_roughness.T_Grass004_surface_roughness",
+    "EarthMeadowColor": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+    "EarthMeadowNormal": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+    "EarthMeadowRoughness": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+    "ForestColor": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.T_forest_leaves_02_surface_color",
+    "ForestNormal": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.T_forest_leaves_02_surface_normal",
+    "ForestRoughness": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness.T_forest_leaves_02_surface_roughness",
+    "DirtColor": "/Game/Art/Textures/T_Dirt_Color.T_Dirt_Color",
+    "DirtNormal": "/Game/Art/Textures/T_Dirt_Normal.T_Dirt_Normal",
+    "DirtRoughness": "/Game/Art/Textures/T_Dirt_Roughness.T_Dirt_Roughness",
+    "RockColor": "/Game/Art/Textures/T_Rock_Color.T_Rock_Color",
+    "RockNormal": "/Game/Art/Textures/T_Rock_Normal.T_Rock_Normal",
+    "RockRoughness": "/Game/Art/Textures/T_Rock_Roughness.T_Rock_Roughness"
+  },
+  "samples_per_active_layer": {
+    "near": 4,
+    "far": 2
+  },
+  "shared_macro_samples": 1,
+  "forest_pattern_control": {
+    "near_source": "forest_leaves_02",
+    "far_source": "leafy_grass",
+    "far_palette": "Forest",
+    "far_sampling": "rotated world coordinates with matching explicit gradients",
+    "fade_start_m": 40.0,
+    "fade_end_m": 120.0,
+    "near_max_samples": 4,
+    "far_max_samples": 1,
+    "flat_color_fill": false,
+    "source_analysis": "Art/EnvironmentV08/forest_pattern_analysis.json"
+  },
+  "ground_vertex_channels": {
+    "r": "soil",
+    "g": "rock",
+    "b": "woodland",
+    "a": "coherent meadow vigor"
+  },
+  "grass_normal_space": "instance-up transformed to world, blended with blade normal",
+  "geometry_or_density_changed": false,
+  "opacity_masks_added": false,
+  "dither": false,
+  "prior_assets_preserved": true,
+  "rendered_review_pending": true,
+  "performance_verified": false
+}

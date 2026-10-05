@@ -1,0 +1,75 @@
+{
+  "version": "prototype-8.0",
+  "transport": {
+    "meters_per_world_unit": 0.06,
+    "worker_walk_kmh": 5,
+    "access_clearance": 60,
+    "path_clearance": 8,
+    "snap_distance": 100,
+    "minimum_segment_meters": 6,
+    "maximum_segment_meters": 500,
+    "max_segments": 128,
+    "initial_tier": "road",
+    "tiers": [
+      {
+        "id": "road",
+        "name": "Road",
+        "next_tier": "road_rail",
+        "speed_multiplier": 2,
+        "width_meters": 3,
+        "construction_seconds_per_100_meters": 900,
+        "construction_workers": 2,
+        "cost_per_100_meters": {
+          "alloy": 6
+        },
+        "minimum_construction_seconds": 120,
+        "visual": "road",
+        "idle_kw_per_100_meters": 0.05,
+        "health_per_meter": 100
+      },
+      {
+        "id": "road_rail",
+        "name": "Road + rail",
+        "next_tier": "road_rail_vacuum",
+        "speed_multiplier": 4,
+        "width_meters": 4.5,
+        "construction_seconds_per_100_meters": 1800,
+        "construction_workers": 2,
+        "cost_per_100_meters": {
+          "alloy": 12,
+          "components": 2
+        },
+        "minimum_construction_seconds": 240,
+        "visual": "rail",
+        "idle_kw_per_100_meters": 0.2,
+        "health_per_meter": 150
+      },
+      {
+        "id": "road_rail_vacuum",
+        "name": "Road + rail + vacuum",
+        "next_tier": "",
+        "speed_multiplier": 8,
+        "width_meters": 6,
+        "construction_seconds_per_100_meters": 3600,
+        "construction_workers": 2,
+        "cost_per_100_meters": {
+          "alloy": 18,
+          "circuits": 4,
+          "components": 4
+        },
+        "minimum_construction_seconds": 480,
+        "visual": "vacuum",
+        "idle_kw_per_100_meters": 0.5,
+        "health_per_meter": 200
+      }
+    ],
+    "unpowered_speed_multiplier": 1,
+    "construction_staffing_priority": 2,
+    "repair_resource": "alloy",
+    "repair_service_range_meters": 12,
+    "repair_health_per_second": 20,
+    "repair_health_per_unit": 100,
+    "repair_energy_kwh_per_health": 0.0001,
+    "repair_buffer_units": 2
+  }
+}

@@ -9,6 +9,7 @@
 
 class FSeigeScenarioAI;
 struct FSeigeSceneryStreamState;
+struct FSeigeScenarioPreparation;
 struct FSeigeNeighbor
 {
     int32 Index=0;
@@ -24,6 +25,11 @@ struct FSeigeTerrainTile
     int32 Resolution=0;
     TArray<float> Heights;
 };
+struct FSeigeRegionResources
+{
+    int32 Index=0,Seed=0;
+    TArray<FSeigeNode> Nodes;
+};
 
 UCLASS()
 class SEIGE_API ASeigeGameMode : public AGameModeBase
@@ -36,6 +42,27 @@ public:
     FSeigeSimulation Sim;
     FString Error, Notice, SelectedBuild;
     int32 SelectedId=0;
+    int32 SelectedCompanionId=0;
+    bool CompanionView=false;
+    float CompanionYaw=0,CompanionPitch=0;
+    bool EnterCompanionView(int32 Id=1);
+    void ExitCompanionView();
+    void FocusCompanion(int32 Id=1);
+    void MoveCompanion(float Forward,float Right);
+    void LookCompanion(FVector2D Pixels);
+    FVector2D CompanionRenderPosition() const;
+    int32 SelectedRoadId=0;
+    int32 SelectedFleetId=0;
+    bool FleetOrderActive=false;
+    bool WallPlacementActive=false,WallInsideLeft=true;
+    TArray<FVector2D> WallJoints;
+    int32 SelectedWallJoint=INDEX_NONE;
+    void BeginWallPlacement();
+    void CancelWallTool();
+    void ClickWallPlan();
+    bool WallShortcut(const FKey& Key);
+    bool RoadPlacementActive=false,RoadUpgradeActive=false,RoadHasStart=false;
+    FVector2D RoadStart=FVector2D::ZeroVector;
     bool Paused=false, Ready=false, WinAcknowledged=false;
     float Speed=1;
     FVector CameraCenter=FVector::ZeroVector;
@@ -84,6 +111,10 @@ public:
     TArray<FString> ScenarioSlots;
     bool ScenarioBackgroundBugs=true,ScenarioPeriodicAttacks=true;
     TArray<FSeigeNeighbor> Neighbors;
+    TArray<FSeigeRegionResources> EmptyRegionResources;
+    static bool GenerateEmptyRegionResources(const FSeigeSimulation& Center,const TArray<FString>& Slots,TArray<FSeigeRegionResources>& Output,FString& Error);
+    const TArray<FSeigeNode>* RegionNodes(int32 Index) const;
+    bool IsRegionResourceVisible(int32 Index,const FSeigeNode& Node) const;
     bool Observer=false,Fullscreen=true;
     int32 GraphicsQuality=1;
     bool MenuOpen=false,PauseBeforeMenu=false;
@@ -93,6 +124,12 @@ public:
     TArray<int32> GameSpeeds={1,5,10};
     void ShowScreen(const FString& NewScreen);
     void StartScenario();
+    void BeginScenarioPreparation();
+    void TickScenarioPreparation(double BudgetMilliseconds=6);
+    void CancelScenarioPreparation();
+    bool IsPreparingScenario() const;
+    double ScenarioPreparationProgress() const;
+    FString ScenarioPreparationStatus() const;
     void ConfirmLanding(FVector2D Position);
     void CycleScenarioSlot(int32 Index);
     void ToggleScenarioThreat(const FString& Threat);
@@ -111,6 +148,11 @@ public:
     bool CanLand(FVector2D Position,FString& Reason) const;
     FVector2D HomePosition() const;
     void ClickWorld();
+    void BeginRoadPlacement();
+    void BeginRoadUpgrade();
+    void CancelRoadTool();
+    bool IsRoadToolActive() const {return RoadPlacementActive||RoadUpgradeActive;}
+    FVector2D SnapRoadCursor(FVector2D Position) const;
     void ResetColony();
     void SaveGame();
     void LoadGame();
@@ -123,12 +165,14 @@ public:
     bool TraceGroundRay(const FVector& Origin,const FVector& Direction,FVector& Hit) const;
     bool SelectBuildingRay(const FVector& Origin,const FVector& Direction);
     void RebuildTerrainHeights();
+    void RefreshTransportScenery();
     bool IsSceneryStreamingReady() const;
     int32 PendingSceneryCells() const;
     FTransform CameraTransform(float ZoomOverride=-1) const;
     FVector2D CameraPanDirection(float Forward,float Right) const;
     void ApplyOrbitDrag(FVector2D Pixels);
     bool IsRegionMap() const;
+    bool IsWorldVisible(FVector2D Position) const;
     int32 DetailedSectorIndex() const;
     FVector2D DetailedSectorOffset() const;
     const FSeigeSimulation* ViewedSimulation() const;
@@ -137,8 +181,17 @@ public:
 private:
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FSeigeIncrementalSectorSeamTest;
+    friend class FSeigeTransportClearanceTest;
+    friend class FSeigeCompanionViewTest;
+    friend class FSeigeCommandShuttlePickTest;
 #endif
     UPROPERTY() TObjectPtr<class ACameraActor> Camera;
+    FString CompanionVisualAssetKey;
+    UPROPERTY() TObjectPtr<class USkeletalMesh> CompanionMesh;
+    UPROPERTY() TObjectPtr<class UAnimSequence> CompanionWalk;
+    UPROPERTY() TObjectPtr<class UAnimSequence> CompanionIdle;
+    FVector SavedColonyCamera=FVector::ZeroVector;
+    float SavedColonyZoom=3500,SavedColonyYaw=135,SavedColonyPitch=52;
     UPROPERTY() TObjectPtr<AActor> Landscape;
     UPROPERTY() TObjectPtr<AActor> Foliage;
     UPROPERTY() TObjectPtr<AActor> GroundCover;
@@ -157,6 +210,8 @@ private:
     TSharedPtr<FSeigeScenarioAI> CenterBrain;
     FString DataDirectory(const TCHAR* Folder) const;
     bool InitializeScenario(FString& Reason);
+    void FinishScenarioStart();
+    TSharedPtr<FSeigeScenarioPreparation> ScenarioPreparation;
     UMaterialInterface* Material(FLinearColor Color);
     AActor* Visual(const FString& Key, const FString& Kind, FVector Location, FLinearColor Color, float Size);
     void Part(AActor* Actor,const FString& Shape,FVector Offset,FVector Scale,FLinearColor Color,FRotator Rotation=FRotator::ZeroRotator);
@@ -164,6 +219,8 @@ private:
     void RefreshEnvironment();
     void RefreshBuildingPads();
     FString TerrainPadSignature;
+    FString RoadGhostSignature;
+    FString BuildingPlotGhostSignature;
     TMap<FString,FVector4> TerrainPadBounds;
     void CreateFoliage();
     void CreateGroundCover();
@@ -175,6 +232,14 @@ private:
     TArray<FSeigeTerrainTile> TerrainTiles;
     void ClearSceneryAt(FVector2D Position,float Radius);
     void SyncVisuals();
+    void SyncCompanionVisuals(TSet<FString>& Live);
+    void SyncWallVisuals(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live);
+    void SyncWallGhost(TSet<FString>& Live);
+    void SyncCombatVisuals(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live);
+    void ConfigureCombatTerrain();
+    void SyncRoadVisuals(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live);
+    void SyncRoadPlacementGhost(TSet<FString>& Live);
+    void SyncBuildingPlot(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D Position,const FString& Key,TSet<FString>& Live);
     UMaterialInterface* ConstructionMaterial(FLinearColor Color,bool Reveal=false);
     void SyncPlacementGhost(TSet<FString>& Live);
     void SyncConstructionVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
@@ -208,6 +273,7 @@ public:
     void EndOrbitGesture();
 private:
     bool OrbitActive=false;
+    bool CompanionMouseCaptured=false;
     FVector2D OrbitCursor;
     TSet<FKey> ConsumedKeysUntilRelease;
 };
@@ -221,7 +287,7 @@ struct FSeigeDepositLabelState { FVector2D Offset=FVector2D(14,-14); bool Initia
 struct FSeigeUiState
 {
     float ViewportWidth=1600,ViewportHeight=900,Scale=1;
-    bool BuildOpen=false,ColonyOpen=false,GroupFocused=false;
+    bool BuildOpen=false,GroupFocused=false;
     FString Category,HoverPanel;
     TArray<FSeigeMenuGroup> Categories;
     TArray<FSeigeCredit> Credits;
@@ -261,6 +327,21 @@ private:
     FVector2D LabelViewport=FVector2D::ZeroVector;
     float LabelStillSeconds=0;
     void DrawBuildingInfo(ASeigeGameMode& GameMode,float Width,float Height);
+    void DrawTradeInfo(ASeigeGameMode& GameMode,float Width,float Height);
+    void DrawCommandInfo(ASeigeGameMode& GameMode,float Width,float Height);
+    bool HandleCommandAction(const FString& Action,ASeigeGameMode& GameMode);
+    void DrawWorkforceControls(ASeigeGameMode& GameMode,float X,float Y,float Width);
+    void DrawWallPlan(ASeigeGameMode& GameMode,float Width,float Height);
+    void DrawCombatInfo(ASeigeGameMode& GameMode,float Width,float Height);
+    bool HandleCombatAction(const FString& Action,ASeigeGameMode& GameMode);
+    bool CombatPanelOpen=false;
+    FString CombatTab=TEXT("fleet"),ChosenChassis,ChosenWeapon,LoadoutContext;
+    int32 OutfitVehicleId=0;
+    bool OutfitBuilding=false;
+    TArray<FString> DraftWeapons;
+    bool HandleTradeAction(const FString& Action,ASeigeGameMode& GameMode);
+    FString TradeResourceSelection;
+    double TradeQuantity=10;
     void DrawRegionMap(ASeigeGameMode& GameMode,float Width,float Height);
     void Box(float X,float Y,float W,float H,FLinearColor Color);
     void Label(const FString& Text,float X,float Y,float Size,FLinearColor Color=FLinearColor::White);
