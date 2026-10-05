@@ -1,0 +1,326 @@
+{
+  "license": "CC0-1.0",
+  "license_urls": [
+    "https://polyhaven.com/license",
+    "https://docs.ambientcg.com/license/"
+  ],
+  "assets": {
+    "jacaranda_tree": {
+      "provider": "Poly Haven",
+      "source_page": "https://polyhaven.com/a/jacaranda_tree",
+      "authors": {
+        "Rob Tuytel": "guidance",
+        "Rico Cilliers": "All"
+      },
+      "maps": {
+        "branches": {
+          "ao": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_branches_ao_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_branches_ao_1k.jpg",
+            "bytes": 447002,
+            "sha256": "f8e86176a50f970df1d3390d2678b150ed458322e96363db2c73a6562ebb47af",
+            "official_md5": "ff347b6e87d2709c6487fd4f8460e344"
+          },
+          "roughness": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_branches_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_branches_rough_1k.jpg",
+            "bytes": 296253,
+            "sha256": "b9f5a894c5f4d6f3ecbdcfa0b253a991d3a11142041a679f42a2d355e1871097",
+            "official_md5": "2662769c28909660c926991fcf663f47"
+          },
+          "color": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_branches_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/jacaranda_tree/jacaranda_tree_branches_diff_2k.jpg",
+            "bytes": 1483476,
+            "sha256": "0c558fe09ce7e74e211ed181607be323f299724caf131af8605cc91b11335b66",
+            "official_md5": "4a8b8f050f4dd43c380b8d7721709cfd"
+          },
+          "normal": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_branches_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/jacaranda_tree/jacaranda_tree_branches_nor_gl_2k.jpg",
+            "bytes": 2437750,
+            "sha256": "e4cac77b4f35ad47ba4fcdb9061f91acf3318d9889dd259cb5e6e132b0ab60c7",
+            "official_md5": "0b598c975ce1515ea0d51fb0d5696ea3"
+          }
+        },
+        "leaves": {
+          "ao": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_leaves_ao_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_leaves_ao_1k.jpg",
+            "bytes": 295352,
+            "sha256": "3d26996ab755910a5f4facbc8f5602cc6c5672fe4de290dfceddfcf7e35a9c65",
+            "official_md5": "d1ea046de712eea7eac71e09521169bc"
+          },
+          "alpha": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_leaves_alpha_4k.png",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/jacaranda_tree/jacaranda_tree_leaves_alpha_4k.png",
+            "bytes": 3540700,
+            "sha256": "433a5b518881d6c228e5be84c75eccee140923516effd87e188f8a8845d10b4c",
+            "official_md5": "f73e809bd6d312b3fa0f356cbd932936"
+          },
+          "roughness": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_leaves_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_leaves_rough_1k.jpg",
+            "bytes": 260886,
+            "sha256": "4bc40acf1d534592e7a324c4ab12c14cea80368f7c6049515b60ee9a384ccc00",
+            "official_md5": "d3e30f1e7dba16ac609b295afe5ed7b3"
+          },
+          "normal": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_leaves_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/jacaranda_tree/jacaranda_tree_leaves_nor_gl_2k.jpg",
+            "bytes": 2162002,
+            "sha256": "b5515c611ae7faa6245a0f1a056d50905118366e7ebf1aacb9e220160c7b989f",
+            "official_md5": "7333d450f7d695069496416db73ca3ce"
+          },
+          "color": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_leaves_diff_4k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/jacaranda_tree/jacaranda_tree_leaves_diff_4k.jpg",
+            "bytes": 4598266,
+            "sha256": "1d90f4c537dd4701ae67a35c49851525d78281a0106a544a660da6fbe9412032",
+            "official_md5": "4429f133d6a1bc3af84c017072239c29"
+          }
+        },
+        "trunk": {
+          "ao": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_trunk_ao_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_trunk_ao_1k.jpg",
+            "bytes": 842186,
+            "sha256": "9136386e2e60d70c7c6af2b58baaade8e98b403fa08731c2e9b61ae181e9e869",
+            "official_md5": "1efe05ab1f0852e9b2de7843b9dd9167"
+          },
+          "roughness": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_trunk_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_trunk_rough_1k.jpg",
+            "bytes": 572657,
+            "sha256": "09ef08f54a8c6a2f063a900cde8e06fc5283833dae6c13795a6cd8c05bc037c2",
+            "official_md5": "647c3f55cc0444c381998fb119dd1d0b"
+          },
+          "color": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_trunk_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/jacaranda_tree/jacaranda_tree_trunk_diff_2k.jpg",
+            "bytes": 3397103,
+            "sha256": "d3ab4fd9f3d6237a4e7c3d2b7ac0fde9f34a8d09c3aee443c0a3e1a033ce7d96",
+            "official_md5": "313836f3418f75c8a3be7b562d50c2d5"
+          },
+          "normal": {
+            "local_path": "Art/EnvironmentV04/Textures/jacaranda_tree/jacaranda_tree_trunk_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/jacaranda_tree/jacaranda_tree_trunk_nor_gl_2k.jpg",
+            "bytes": 4050519,
+            "sha256": "bb7b2c4914c139bc61c9ac5e0e1fd1c4b38f781351ead433a1e93dd886c732d6",
+            "official_md5": "4c397e335b200ebb47f2af4a36e97de6"
+          }
+        }
+      },
+      "original_source": {
+        "local_path": ".tools/nature-downloads/jacaranda_tree/jacaranda_tree_1k.blend",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/jacaranda_tree/jacaranda_tree_1k.blend",
+        "bytes": 180228496,
+        "sha256": "e28e9ea0deb782a830420126b3c5536bde44d1b532cbfb4dccbcc0e46119a0ce",
+        "official_md5": "1b827c7c364c6ebb2cbbff0f02b52a15"
+      }
+    },
+    "grass_bermuda_01": {
+      "provider": "Poly Haven",
+      "source_page": "https://polyhaven.com/a/grass_bermuda_01",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "maps": {
+        "surface": {
+          "alpha": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_alpha_2k.png",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/grass_bermuda_01/grass_bermuda_01_alpha_2k.png",
+            "bytes": 118124,
+            "sha256": "2750b808598d2c4116e494c20065a2dbf7fba5a098c3ed445772ff6d02ec3d3c",
+            "official_md5": "62f5d6785a48f74ba3820279f685e14d"
+          },
+          "ao": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_ao_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_bermuda_01/grass_bermuda_01_ao_1k.jpg",
+            "bytes": 198976,
+            "sha256": "1f5d6ebbb5eeef4e84072f4cd4ea997540f253e59c469922c49b5e87df956e6a",
+            "official_md5": "53e590a8d7657c47c73115c8d9b187de"
+          },
+          "color": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_bermuda_01/grass_bermuda_01_diff_2k.jpg",
+            "bytes": 494673,
+            "sha256": "30183c203739dee9812b70f21916fcdcd88719dcfe4fa3270d8ce208369ec933",
+            "official_md5": "16d1d5cccc2966fff5abeeb2e91b44a2"
+          },
+          "roughness": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_bermuda_01/grass_bermuda_01_rough_1k.jpg",
+            "bytes": 402148,
+            "sha256": "3173aeec2fcf6d6f26f6fc0fb93db5e1fcdd2b1da673f76abf24b17a0ec3a119",
+            "official_md5": "6bdafe3be064bda7d5fa51ccb6bcbf57"
+          },
+          "normal": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_bermuda_01/grass_bermuda_01_nor_gl_2k.jpg",
+            "bytes": 2556691,
+            "sha256": "d8a16471065a1206e455d0c4128694b56d265d7cb9908718fc83c581fddb1dc8",
+            "official_md5": "95ce5f93d1acf2844129597d132ea9ae"
+          }
+        }
+      },
+      "original_source": {
+        "local_path": ".tools/nature-downloads/grass_bermuda_01/grass_bermuda_01_1k.blend",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/grass_bermuda_01/grass_bermuda_01_1k.blend",
+        "bytes": 185844,
+        "sha256": "6ff15e278219947ce8013663f918fc3ae074f19157ace2f2dcfb3484e2e4e654",
+        "official_md5": "61d700a2259ec67ba8ed6846ebc680cc"
+      }
+    },
+    "grass_medium_02": {
+      "provider": "Poly Haven",
+      "source_page": "https://polyhaven.com/a/grass_medium_02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "maps": {
+        "surface": {
+          "ao": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_ao_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_02/grass_medium_02_ao_1k.jpg",
+            "bytes": 88210,
+            "sha256": "8a87b0c2cdda07f166551e9950074a7af6ed2ca4ef4b2042cbca0f78f6072d74",
+            "official_md5": "1967f3fe460e82d1d58fbf22afce742a"
+          },
+          "alpha": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_alpha_2k.png",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/grass_medium_02/grass_medium_02_alpha_2k.png",
+            "bytes": 303260,
+            "sha256": "c96abf8da86aa750ff6425b8ded78aa98cf61858834e3557ad2dcc5348359337",
+            "official_md5": "3b2ba296de3cffad18e8119e6ca693e5"
+          },
+          "color": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_diff_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_02/grass_medium_02_diff_2k.jpg",
+            "bytes": 456989,
+            "sha256": "70c0e294fd94b980d01ed91bde30ab19fe7eeed1f2717088cc88ab20bb115c87",
+            "official_md5": "3431e6de76f40f25bef48755f4c6a76a"
+          },
+          "normal": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_02/grass_medium_02_nor_gl_2k.jpg",
+            "bytes": 353362,
+            "sha256": "98ab154f35798b1e28660c28016e9a9f768859efbe86dbcb2c5bff1aebcd6318",
+            "official_md5": "9ca6e2499ce71446f0cd8a3fc8c54a1b"
+          },
+          "roughness": {
+            "local_path": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_02/grass_medium_02_rough_1k.jpg",
+            "bytes": 184910,
+            "sha256": "1ccf7d18f9c468ab43cb1995db54883ba55493b9d9952a4d5c16c8b9f14608c3",
+            "official_md5": "b4eb2ceb1b7287b92f6ccf378965d237"
+          }
+        }
+      },
+      "original_source": {
+        "local_path": ".tools/nature-downloads/grass_medium_02/grass_medium_02_1k.blend",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/grass_medium_02/grass_medium_02_1k.blend",
+        "bytes": 318842,
+        "sha256": "fd53aafc0650f0e7d9a10bc95f669d396ea7eb746bf2ca5a14497e331410eff1",
+        "official_md5": "14cffdc414f42565302df84c4652938c"
+      }
+    },
+    "forest_leaves_02": {
+      "provider": "Poly Haven",
+      "source_page": "https://polyhaven.com/a/forest_leaves_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "maps": {
+        "surface": {
+          "color": {
+            "local_path": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_diffuse_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/forest_leaves_02/forest_leaves_02_diffuse_2k.jpg",
+            "bytes": 1668009,
+            "sha256": "9c38b2b151a0415457a6914966422cfca5a546c94674442e5395e0b1e908a196",
+            "official_md5": "b7837ba1c51fb0e11af36d6b4e225c20"
+          },
+          "normal": {
+            "local_path": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_nor_gl_2k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/forest_leaves_02/forest_leaves_02_nor_gl_2k.jpg",
+            "bytes": 2323898,
+            "sha256": "af0346114834c347a8d6a138f6ea16a97b0bec8d6e4db32c24f1c7e482163235",
+            "official_md5": "f974000a2ddc7dcd22bc84c37aa5d7ce"
+          },
+          "ao": {
+            "local_path": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_ao_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_ao_1k.jpg",
+            "bytes": 436343,
+            "sha256": "b11e01b3c5d1ca4e1d4770f7cde2849e60589e37719f8ea667f607c2a07445ed",
+            "official_md5": "77ec29d72658d790f5e6099dbf2917a9"
+          },
+          "roughness": {
+            "local_path": "Art/EnvironmentV04/Textures/forest_leaves_02/forest_leaves_02_rough_1k.jpg",
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_rough_1k.jpg",
+            "bytes": 192523,
+            "sha256": "3d2163acb9e22801caa4d34cb3e9bb443dfd0e6f2bebbd559c61e9b14f945dd4",
+            "official_md5": "578e637510d8fdd7acf97afc6f329e9d"
+          }
+        }
+      }
+    },
+    "Grass004": {
+      "provider": "ambientCG",
+      "source_page": "https://ambientcg.com/a/Grass004",
+      "authors": {
+        "Lennart Demes": "ambientCG"
+      },
+      "physical_size_cm": [
+        140,
+        140
+      ],
+      "maps": {
+        "surface": {
+          "ao": {
+            "local_path": "Art/EnvironmentV04/Textures/Grass004/Grass004_2K-JPG_AmbientOcclusion.jpg",
+            "sha256": "0f9180993db4c7b9479ad2a4b65763d90e8668fb7e800baff68cac1883a9dff5",
+            "bytes": 3659925,
+            "archive_member": "Grass004_2K-JPG_AmbientOcclusion.jpg",
+            "url": "https://ambientcg.com/get?file=Grass004_2K-JPG.zip"
+          },
+          "color": {
+            "local_path": "Art/EnvironmentV04/Textures/Grass004/Grass004_2K-JPG_Color.jpg",
+            "sha256": "735b141c8f1972e70a45879424f1238fea9f887324173097785f4ac36e67e9a3",
+            "bytes": 7644307,
+            "archive_member": "Grass004_2K-JPG_Color.jpg",
+            "url": "https://ambientcg.com/get?file=Grass004_2K-JPG.zip"
+          },
+          "height": {
+            "local_path": "Art/EnvironmentV04/Textures/Grass004/Grass004_2K-JPG_Displacement.jpg",
+            "sha256": "7b3f8f545fad85bd980330dc29bb59fc5c76ea3099fb1ef2a29fb1d916f602c9",
+            "bytes": 3491166,
+            "archive_member": "Grass004_2K-JPG_Displacement.jpg",
+            "url": "https://ambientcg.com/get?file=Grass004_2K-JPG.zip"
+          },
+          "normal": {
+            "local_path": "Art/EnvironmentV04/Textures/Grass004/Grass004_2K-JPG_NormalGL.jpg",
+            "sha256": "15ccad231764049d6581a52076d02bb6b627df77895cb0508e4017d8a4877fef",
+            "bytes": 10015079,
+            "archive_member": "Grass004_2K-JPG_NormalGL.jpg",
+            "url": "https://ambientcg.com/get?file=Grass004_2K-JPG.zip"
+          },
+          "roughness": {
+            "local_path": "Art/EnvironmentV04/Textures/Grass004/Grass004_2K-JPG_Roughness.jpg",
+            "sha256": "c449fdf1e779eb7be5a19c1d58ee28cc155ed0523a141b151f3cbc843c4ae2e3",
+            "bytes": 3413801,
+            "archive_member": "Grass004_2K-JPG_Roughness.jpg",
+            "url": "https://ambientcg.com/get?file=Grass004_2K-JPG.zip"
+          }
+        }
+      },
+      "creation_method": "PBRProcedural, as listed by provider",
+      "original_bundle": {
+        "local_path": ".tools/nature-downloads/Grass004/Grass004_2K-JPG.zip",
+        "url": "https://ambientcg.com/get?file=Grass004_2K-JPG.zip",
+        "bytes": 39900302,
+        "sha256": "d7d3f08e8bb1e59aed0c3dbb85ea0b46d5308481f89b6a3fd62c0ec9e862245b",
+        "official_md5": null
+      }
+    }
+  }
+}

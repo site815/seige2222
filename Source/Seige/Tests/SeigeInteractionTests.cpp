@@ -164,4 +164,25 @@ bool FSeigeUiClickIsolationTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Observer rejects stale player construction actions"), Game.SelectedBuild.IsEmpty());
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeFloatingDockTest, "Seige.Interaction.FloatingDockAndRegionIsolation", InteractionFlags)
+bool FSeigeFloatingDockTest::RunTest(const FString& Parameters)
+{
+    FInteractionWorld World;if(!World.Prepare(*this))return false;
+    auto& G=*World.Game;auto& Hud=*World.Hud;G.CursorOnWorld=true;G.CursorWorld=FVector2D(700,0);G.SelectedBuild=TEXT("sensor");
+    const int32 Buildings=G.Sim.Buildings.Num();
+    Hud.Ui.Scale=1.5f;Hud.Ui.HitRegions={{FVector2D(453,817),FVector2D(132,58),TEXT("build-menu"),TEXT("")}};
+    World.Controller->HandlePrimaryClick(750,1260);
+    TestTrue(TEXT("Floating bottom dock opens construction between drawing passes"),Hud.Ui.BuildOpen);
+    TestEqual(TEXT("Bottom dock never places through its UI rectangle"),G.Sim.Buildings.Num(),Buildings);
+    Hud.HandleShortcut(EKeys::L);Hud.HandleShortcut(EKeys::S);
+    TestEqual(TEXT("Bottom dock retains B/category/blueprint keyboard flow"),G.SelectedBuild,FString(TEXT("sensor")));
+    G.Zoom=G.Sim.WorldHalfSize*12;Hud.Ui.Scale=1;
+    Hud.Ui.HitRegions={{FVector2D(500,500),FVector2D(200,100),TEXT("build:turret"),TEXT("")}};
+    World.Controller->HandlePrimaryClick(550,550);
+    TestEqual(TEXT("A stale blueprint click cannot issue construction in regional view"),G.SelectedBuild,FString(TEXT("sensor")));
+    TestTrue(TEXT("Regional view consumes B without opening construction"),Hud.HandleShortcut(EKeys::B));
+    TestFalse(TEXT("Regional map keeps local construction catalog closed"),Hud.Ui.BuildOpen);
+    TestEqual(TEXT("Regional UI input does not mutate the colony"),G.Sim.Buildings.Num(),Buildings);
+    return true;
+}
 #endif

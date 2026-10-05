@@ -1,0 +1,49 @@
+{
+  "source_maps_verified": 32,
+  "prepared": {
+    "Source/Environment_Review.blend": {
+      "bytes": 112391,
+      "sha256": "e1219251063524ba8d089ce7be604f6f9e9983f97d565b25796590fb5b7e933c"
+    },
+    "Source/Meadow_Sward_Review.blend": {
+      "bytes": 1032422,
+      "sha256": "332fc0479c88dba447235d7aef1244361689a2e5aa613e286ed4b1c8557e8721"
+    },
+    "Source/Meadow_Swards.blend": {
+      "bytes": 3472501,
+      "sha256": "23569a3ac50e5aebbc7dbc597c997cab0c6ab2ec0a66b7226c767fa653ff3af8"
+    },
+    "Source/Meadow_Wildflowers.blend": {
+      "bytes": 156504,
+      "sha256": "6bc87ad80fa68d7f21d0047f54c28e68055da006159f3bed402227e6b1098b6e"
+    },
+    "Source/SM_JacarandaA.blend": {
+      "bytes": 99168224,
+      "sha256": "e462fe6e4100db970d1e61e7808e1be2dff39e193fb39960377a13ced49006a3"
+    },
+    "Source/SM_MeadowGrassA.blend": {
+      "bytes": 376704,
+      "sha256": "3853340d790857f5943efe83bf5215a706447481cfe9dfce470a71e7611569bd"
+    },
+    "Exports/SM_JacarandaA.fbx": {
+      "bytes": 132239308,
+      "sha256": "b15e84c676917c0a484e8a197b8302dd1289dec66e13f9d96edeef074b637ffe"
+    },
+    "Exports/SM_MeadowGrassA.fbx": {
+      "bytes": 442620,
+      "sha256": "4be8e83977d5a51192de9cec65587bd48d9b638af8de8efa727912a1ef764bcd"
+    },
+    "Exports/SM_MeadowSwardA.fbx": {
+      "bytes": 2675244,
+      "sha256": "d650f081365f8b2cc29f5bb192031ccec714c7b23a3964c872ed1fa93e08aada"
+    },
+    "Exports/SM_MeadowSwardB.fbx": {
+      "bytes": 2673068,
+      "sha256": "57b1baa21b9cfbefd38f8abdfef49c284b5790842cfc15b6f88a71617cff1fb1"
+    },
+    "Exports/SM_WildflowerPatch.fbx": {
+      "bytes": 111036,
+      "sha256": "645d8823c76fef000a332aeaaa29cf6412de40cd34be65f5d2b22813b93d59fc"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "material": "/Game/Art/NatureV04/M_V04Grass.M_V04Grass",
+  "instance": "/Game/Art/NatureV04/MI_grass_medium_02_surface.MI_grass_medium_02_surface",
+  "tint": [
+    0.82,
+    1,
+    0.7
+  ],
+  "transmission": 0.75,
+  "thickness": 0.3,
+  "micro_occlusion": 0.15,
+  "mip_bias": {
+    "BaseColor": -2,
+    "OpacityMap": -2
+  },
+  "padded_colour": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.T_grass_medium_02_surface_color_padded",
+  "grass_maps_never_stream": true,
+  "tree_material_unchanged": true,
+  "emissive": false,
+  "geometry_reimported": false,
+  "instances": [
+    "/Game/Art/NatureV04/MI_grass_medium_02_surface.MI_grass_medium_02_surface",
+    "/Game/Art/NatureV04/MI_grass_bermuda_01_surface.MI_grass_bermuda_01_surface"
+  ]
+}

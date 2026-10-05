@@ -15,19 +15,21 @@ struct FSeigeRecipeDef
 };
 struct FSeigeBuildingDef
 {
-    FString Id, Name, Category, Description, Visual, Recipe, ExtractResource, Role;
+    FString Id, Name, Category, Description, Visual, Recipe, ExtractResource, Role, WeaponName;
     FLinearColor Color = FLinearColor::White;
     TMap<FString, double> Cost;
     int32 Jobs = 0;
     double Health = 1, Footprint = 100, SensorRange = 0, AttackRange = 0, DamagePerSecond = 0, ExtractRate = 0;
     double StorageCapacity = 0;
+    double DamagePerShot = 0, ReloadSeconds = 0, PowerUsageKW = 0, PowerGenerationKW = 0;
 };
 struct FSeigeBuilding
 {
     int32 Id = 0;
     FString DefId, Status;
     FVector2D Position = FVector2D::ZeroVector;
-    double Health = 0, Progress = 0;
+    double Health = 0, Progress = 0, WeaponCooldown = 0, LastShotTime = -1;
+    FVector2D LastShotPosition = FVector2D::ZeroVector;
     bool Enabled = true;
     int32 Workers = 0;
     TMap<FString, double> Inventory;
@@ -56,6 +58,10 @@ struct FSeigeEvent
     double Time = 0;
     FString Text;
 };
+struct FSeigeBuildingInfoRow
+{
+    FString Section, Label, Value;
+};
 
 // Simulation knows no rendering or input. Game-specific definitions and policies are loaded from Rules/*.json.
 class SEIGE_API FSeigeSimulation
@@ -81,6 +87,7 @@ public:
     FString ObjectiveText() const;
     FString WorkforceStatus() const;
     double FixedStepSeconds() const;
+    TArray<FSeigeBuildingInfoRow> BuildingInfo(const FString& DefinitionId, int32 BuildingId = 0, double CentimetersPerUnit = 1) const;
 
     TMap<FString, FSeigeResourceDef> Resources;
     TMap<FString, FSeigeRecipeDef> Recipes;

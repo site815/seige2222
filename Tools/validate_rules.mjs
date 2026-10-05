@@ -43,7 +43,12 @@ export function validateRules(d) {
     for(const k of ['recipe','extract_resource']) str(b[k],`${b.id}.${k}`,true);
     if(!roles.includes(b.role)) fail(`Unsupported building role ${b.role}`);
     for(const k of ['health','footprint','storage_capacity']) num(b[k],`${b.id}.${k}`,0,false,true);
-    for(const k of ['sensor_range','attack_range','damage_per_second','extract_rate']) num(b[k],`${b.id}.${k}`);
+    for(const k of ['sensor_range','attack_range','damage_per_shot','reload_seconds','extract_rate','power_usage_kw','power_generation_kw']) num(b[k],`${b.id}.${k}`);
+    str(b.weapon_name,`${b.id}.weapon_name`,true);
+    const armed=b.damage_per_shot>0;
+    if('damage_per_second' in b || (armed && (!b.weapon_name || b.reload_seconds<=0 || b.attack_range<=0)) || (!armed && (b.weapon_name || b.reload_seconds!==0 || b.attack_range!==0))) fail(`${b.id} weapon fields disagree; DPS is derived from shot damage and reload`);
+    if(armed && !Number.isFinite(b.damage_per_shot/b.reload_seconds)) fail(`${b.id} derived weapon DPS is not finite`);
+    if(b.power_usage_kw!==0 || b.power_generation_kw!==0) fail(`${b.id}: power grid is not implemented; power values must remain zero`);
     num(b.jobs,`${b.id}.jobs`,0,true); color(b.color,`${b.id}.color`); amounts(b.cost,`${b.id}.cost`);
     if(b.recipe && !recipes.has(b.recipe)) fail(`${b.id} references unknown recipe`);
     if(b.extract_resource && !resources.has(b.extract_resource)) fail(`${b.id} references unknown extraction resource`);
@@ -58,6 +63,7 @@ export function validateRules(d) {
   for(const k of nonnegative) num(p[k],k);
   for(const k of integerPolicies) num(p[k],k,0,true);
   if(p.max_couriers<1 || p.event_history_limit<1 || p.wave_max_count<p.wave_base_count || p.placement_requires_visibility>1 || p.upkeep_shortage_efficiency>1 || p.courier_min_batch>p.courier_capacity || p.fixed_step_seconds>p.dispatch_interval) fail('Inconsistent policy ranges');
+  for(const b of buildings.values()) if(b.damage_per_shot>0 && b.reload_seconds<p.fixed_step_seconds) fail(`${b.id}: reload cannot be shorter than fixed_step_seconds`);
   for(const [k,allowed] of Object.entries(selectors)) if(!allowed.includes(p[k])) fail(`Unsupported ${k}: ${p[k]}`);
   for(const k of ['upkeep_resource','repair_resource','objective_resource']) if(!resources.has(p[k])) fail(`Unknown resource in ${k}`);
   if(!recipes.has(p.population_recipe) || Object.keys(recipes.get(p.population_recipe).outputs).length) fail('Population recipe requires no physical outputs');
@@ -107,6 +113,13 @@ function selfTest(source) {
     ['invalid color',d=>d.resources.resources[0].color=[2,0,0]],
     ['zero recipe duration',d=>d.recipes.recipes[0].seconds=0],
     ['storage deadlock',d=>d.buildings.buildings[1].storage_capacity=1],
+    ['missing weapon damage',d=>delete d.buildings.buildings[0].damage_per_shot],
+    ['zero armed reload',d=>d.buildings.buildings[0].reload_seconds=0],
+    ['unarmed weapon metadata',d=>d.buildings.buildings[1].weapon_name='Phantom weapon'],
+    ['faster-than-step reload',d=>d.buildings.buildings[0].reload_seconds=d.policies.policies.fixed_step_seconds/2],
+    ['independent DPS override',d=>d.buildings.buildings[0].damage_per_second=999],
+    ['unimplemented power demand',d=>d.buildings.buildings[0].power_usage_kw=1],
+    ['nonfinite derived DPS',d=>{d.buildings.buildings[0].damage_per_shot=Number.MAX_VALUE;d.buildings.buildings[0].reload_seconds=.1;}],
   ];
   for(const [name,mutate] of cases) { const d=structuredClone(source); mutate(d); let rejected=false; try {validateRules(d);} catch {rejected=true;} if(!rejected) throw new Error(`Negative test was accepted: ${name}`); }
   return cases.length;

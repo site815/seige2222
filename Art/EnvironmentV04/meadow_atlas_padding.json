@@ -1,0 +1,12 @@
+{
+  "source": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_diff_2k.jpg",
+  "source_sha256": "70c0e294fd94b980d01ed91bde30ab19fe7eeed1f2717088cc88ab20bb115c87",
+  "alpha_source": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_alpha_2k.png",
+  "derivative": "Art/EnvironmentV04/Textures/grass_medium_02/grass_medium_02_diff_padded_2k.png",
+  "sha256": "82e61cfc419caedf03e20d5c15fac8c02ac56b8ff538f6f5179cb472273b40ec",
+  "bytes": 937340,
+  "process": "24-texel RGB dilation from alpha > .95, remaining invisible atlas background filled with source median; alpha unchanged",
+  "source_solid_fraction": 0.09409832954406738,
+  "license": "CC0-1.0",
+  "original_source_unchanged": true
+}

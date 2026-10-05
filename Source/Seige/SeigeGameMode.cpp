@@ -9,6 +9,7 @@
 #include "Components/SkyLightComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
+#include "Components/VolumetricCloudComponent.h"
 #include "Engine/DirectionalLight.h"
 #include "Engine/SkyLight.h"
 #include "Engine/ExponentialHeightFog.h"
@@ -53,7 +54,7 @@ void ASeigeGameMode::BeginPlay()
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureMethod=true;
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureMethod=EAutoExposureMethod::AEM_Manual;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureBias=true;
-    Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=-.25f;
+    Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=-.1f;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionIntensity=true;
     Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionIntensity=.8f;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionRadius=true;
@@ -64,21 +65,34 @@ void ASeigeGameMode::BeginPlay()
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureApplyPhysicalCameraExposure=false;
     if(auto* PC=UGameplayStatics::GetPlayerController(this,0)) PC->SetViewTarget(Camera);
     auto* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,3000),FRotator(-38,-28,0));
-    Sun->GetLightComponent()->SetIntensity(6.f);
+    Sun->GetLightComponent()->SetIntensity(SunIntensity);
     auto* SunComponent=Cast<UDirectionalLightComponent>(Sun->GetLightComponent());
     SunComponent->SetMobility(EComponentMobility::Movable);
     SunComponent->ForwardShadingPriority=1;
     SunComponent->SetAtmosphereSunLight(true);
-    SunComponent->LightSourceAngle=.9f;
+    SunComponent->LightSourceAngle=2.0f;
+    SunComponent->bCastCloudShadows=true;
+    SunComponent->CloudShadowStrength=CloudShadowStrength;
+    SunComponent->CloudShadowOnSurfaceStrength=CloudShadowStrength;
+    SunComponent->CloudShadowExtent=10;
+    SunComponent->CloudShadowMapResolutionScale=2;
     SunComponent->DynamicShadowDistanceMovableLight=120000;
     Sun->GetLightComponent()->MarkRenderStateDirty();
-    Sun->GetLightComponent()->SetLightColor(FLinearColor(1,.96f,.87f));
+    Sun->GetLightComponent()->SetLightColor(FLinearColor(1,.985f,.955f));
     auto* Atmosphere=GetWorld()->SpawnActor<AActor>();
     auto* AtmosphereComponent=NewObject<USkyAtmosphereComponent>(Atmosphere);
     Atmosphere->SetRootComponent(AtmosphereComponent); AtmosphereComponent->RegisterComponent();
+    if(auto* CloudMaterial=LoadObject<UMaterialInterface>(nullptr,*CloudMaterialPath,nullptr,LOAD_NoWarn))
+    {
+        auto* Clouds=GetWorld()->SpawnActor<AActor>();
+        auto* CloudComponent=NewObject<UVolumetricCloudComponent>(Clouds);
+        Clouds->SetRootComponent(CloudComponent);
+        CloudComponent->SetLayerBottomAltitude(1.2f);CloudComponent->SetLayerHeight(3.f);
+        CloudComponent->SetMaterial(CloudMaterial);CloudComponent->RegisterComponent();
+    }
     auto* Sky=GetWorld()->SpawnActor<ASkyLight>();
     Sky->GetLightComponent()->SetMobility(EComponentMobility::Movable);
-    Sky->GetLightComponent()->SetIntensity(1.1f);
+    Sky->GetLightComponent()->SetIntensity(SkyIntensity);
     Sky->GetLightComponent()->SetRealTimeCaptureEnabled(true);
     auto* Fog=GetWorld()->SpawnActor<AExponentialHeightFog>();
     Fog->GetComponent()->SetFogDensity(.0025f);
@@ -118,6 +132,7 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
         }
     }
     RenderClock+=DeltaSeconds;
+    RefreshEnvironment();
     SyncVisuals();
     if(FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))) RunPresentationSmoke();
     if(!ScreenshotRequested && RenderClock>8 && FParse::Param(FCommandLine::Get(),TEXT("PrototypeScreenshot")))
@@ -196,6 +211,7 @@ AActor* ASeigeGameMode::Visual(const FString& Key,const FString& Kind,FVector Lo
 void ASeigeGameMode::SyncVisuals()
 {
     if(!FApp::CanEverRender()) return;
+    if(IsRegionMap()){for(auto& V:Visuals)V.Value->SetActorHiddenInGame(true);return;}
     TSet<FString> Live;
     auto Sync=[&](FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,bool Show)
     {
@@ -230,31 +246,35 @@ void ASeigeGameMode::SyncVisuals()
             A->SetActorRotation(FVector(Target-E.Position,0).Rotation());
         }
     };
-    Sync(Sim,FVector2D::ZeroVector,TEXT("home_"),Screen!=TEXT("landing"));
-    for(auto& N:Neighbors) Sync(N.Sim,N.Offset,FString::Printf(TEXT("zone_%d_"),N.Index),true);
+    Sync(Sim,FVector2D::ZeroVector,TEXT("home_"),Screen!=TEXT("landing")&&DetailedSectorIndex()==4);
+    for(auto& N:Neighbors) Sync(N.Sim,N.Offset,FString::Printf(TEXT("zone_%d_"),N.Index),DetailedSectorIndex()==N.Index);
     for(auto It=Visuals.CreateIterator();It;++It) if(!Live.Contains(It.Key())) { It.Value()->Destroy(); It.RemoveCurrent(); }
 }
 void ASeigeGameMode::ClickWorld()
 {
-    if(!Ready||!CursorOnWorld) return;
+    if(!Ready||!CursorOnWorld||IsRegionMap()) return;
     if(Screen==TEXT("landing")) { ConfirmLanding(CursorWorld); return; }
-    if(Screen!=TEXT("playing")||Observer) return;
+    if(Screen!=TEXT("playing")) return;
     if(!SelectedBuild.IsEmpty())
     {
+        if(Observer||DetailedSectorIndex()!=4)return;
         if(Sim.PlaceBuilding(SelectedBuild,CursorWorld,Error)) Notice=TEXT("Building online. Staffing and deliveries are automatic."); else Notice=Error;
         return;
     }
     SelectedId=0; double Distance=350;
-    for(const auto& B:Sim.Buildings) if(B.Health>0 && FVector2D::Distance(B.Position,CursorWorld)<Distance){ Distance=FVector2D::Distance(B.Position,CursorWorld); SelectedId=B.Id; }
+    if(const auto* Viewed=ViewedSimulation())for(const auto& B:Viewed->Buildings)
+        if(B.Health>0&&(Observer||DetailedSectorIndex()==4||Sim.IsVisible(B.Position+DetailedSectorOffset()))&&FVector2D::Distance(B.Position+DetailedSectorOffset(),CursorWorld)<Distance)
+        {Distance=FVector2D::Distance(B.Position+DetailedSectorOffset(),CursorWorld);SelectedId=B.Id;}
 }
 bool ASeigeGameMode::SelectBuildingRay(const FVector& Origin,const FVector& Direction)
 {
-    if(!Ready||Observer||Screen!=TEXT("playing")||!SelectedBuild.IsEmpty())return false;
+    if(!Ready||IsRegionMap()||Screen!=TEXT("playing")||!SelectedBuild.IsEmpty())return false;
     FHitResult Hit;FCollisionQueryParams Params(SCENE_QUERY_STAT(SeigeBuildingPick),true);
     if(!GetWorld()->LineTraceSingleByChannel(Hit,Origin,Origin+Direction.GetSafeNormal()*Sim.WorldHalfSize*RenderScale*24,ECC_Visibility,Params))return false;
     FVector TerrainHit;
     if(TraceGroundRay(Origin,Direction,TerrainHit)&&FVector::DistSquared(Origin,TerrainHit)+25<FVector::DistSquared(Origin,Hit.ImpactPoint))return false;
-    for(const auto& B:Sim.Buildings)
-        if(B.Health>0&&Visuals.FindRef(FString::Printf(TEXT("home_building_%d"),B.Id))==Hit.GetActor()){SelectedId=B.Id;return true;}
+    const FString Prefix=DetailedSectorIndex()==4?TEXT("home_"):FString::Printf(TEXT("zone_%d_"),DetailedSectorIndex());
+    if(const auto* Viewed=ViewedSimulation())for(const auto& B:Viewed->Buildings)
+        if(B.Health>0&&Visuals.FindRef(Prefix+FString::Printf(TEXT("building_%d"),B.Id))==Hit.GetActor()){SelectedId=B.Id;return true;}
     return false;
 }

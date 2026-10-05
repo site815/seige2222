@@ -1,12 +1,14 @@
 # SEIGE — Third-party Asset Attribution
 
-The project's downloaded nature models and photographic surfaces come from Poly Haven. Its asset license was checked again on **2026-10-05**: these assets are **CC0 1.0**, permitting modification, redistribution, and commercial use. Attribution is voluntary and is retained here for provenance. No paid assets are used. The license applies to the asset files; website branding and example renders are not included.
+The project's downloaded nature models and photographic surfaces come from Poly Haven; v0.4 also adds a procedural grass PBR surface from ambientCG. Their asset licenses were checked on **2026-10-05**: these assets are **CC0 1.0**, permitting modification, redistribution, and commercial use. Attribution is voluntary and is retained here for provenance. No paid assets are used. The license applies to the asset files; website branding and example renders are not included.
 
 [Poly Haven asset license](https://polyhaven.com/license) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 All models and texture files are local and imported into Unreal content. The game does not download from Poly Haven. The v0.3 additions are imported and included in the verified Windows Shipping package; its rendered interaction check completed twenty-eight stages with zero failures. This verifies integration, not finished visual quality.
 
 ## v0.3 licensed nature models
+
+The newer [v0.4 environment register](EnvironmentV04/ATTRIBUTION.md) documents the complete mature Jacaranda crown, photographic Bermuda grass tufts, forest litter, and fresh meadow material. It includes source licenses, artist credits, exact downloads and hashes, editable Blender derivatives, and separate new Unreal paths. Those additions do not replace or relicense the historical assets listed below.
 
 | Source asset | Creator credits | Prepared project meshes |
 | --- | --- | --- |

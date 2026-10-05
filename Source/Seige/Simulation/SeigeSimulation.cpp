@@ -152,7 +152,13 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
     {
         const FObject O = V->AsObject(); FSeigeBuildingDef B;
         if (!StringField(O, TEXT("id"), B.Id, Error) || !StringField(O, TEXT("name"), B.Name, Error) || !StringField(O, TEXT("category"), B.Category, Error) || !StringField(O, TEXT("role"), B.Role, Error) || !StringField(O, TEXT("description"), B.Description, Error) || !StringField(O, TEXT("visual"), B.Visual, Error) || !StringField(O, TEXT("recipe"), B.Recipe, Error) || !StringField(O, TEXT("extract_resource"), B.ExtractResource, Error) || !ColorField(O, B.Color, Error) || !Amounts(O, TEXT("cost"), B.Cost, Resources, Error)) return false;
-        if (!IntegerField(O, TEXT("jobs"), B.Jobs, 0, Error) || !Numeric(O, TEXT("health"), B.Health, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("footprint"), B.Footprint, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("storage_capacity"), B.StorageCapacity, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("sensor_range"), B.SensorRange, 0, Error) || !Numeric(O, TEXT("attack_range"), B.AttackRange, 0, Error) || !Numeric(O, TEXT("damage_per_second"), B.DamagePerSecond, 0, Error) || !Numeric(O, TEXT("extract_rate"), B.ExtractRate, 0, Error)) return false;
+        if (!IntegerField(O, TEXT("jobs"), B.Jobs, 0, Error) || !Numeric(O, TEXT("health"), B.Health, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("footprint"), B.Footprint, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("storage_capacity"), B.StorageCapacity, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("sensor_range"), B.SensorRange, 0, Error) || !Numeric(O, TEXT("attack_range"), B.AttackRange, 0, Error) || !Numeric(O, TEXT("extract_rate"), B.ExtractRate, 0, Error) || !StringField(O,TEXT("weapon_name"),B.WeaponName,Error) || !Numeric(O,TEXT("damage_per_shot"),B.DamagePerShot,0,Error) || !Numeric(O,TEXT("reload_seconds"),B.ReloadSeconds,0,Error) || !Numeric(O,TEXT("power_usage_kw"),B.PowerUsageKW,0,Error) || !Numeric(O,TEXT("power_generation_kw"),B.PowerGenerationKW,0,Error)) return false;
+        const bool Armed=B.DamagePerShot>0;
+        if (O->HasField(TEXT("damage_per_second")) || (Armed && (B.WeaponName.IsEmpty() || B.ReloadSeconds<=0 || B.AttackRange<=0)) || (!Armed && (!B.WeaponName.IsEmpty() || B.ReloadSeconds!=0 || B.AttackRange!=0)))
+        { Error=TEXT("Weapon requires consistent name, shot damage, reload and range; DPS is derived: ")+B.Id;return false; }
+        if (B.PowerUsageKW!=0 || B.PowerGenerationKW!=0) {Error=TEXT("Power grid is not implemented; power values must remain zero: ")+B.Id;return false;}
+        B.DamagePerSecond=Armed?B.DamagePerShot/B.ReloadSeconds:0;
+        if (!FMath::IsFinite(B.DamagePerSecond)) {Error=TEXT("Weapon DPS is nonfinite: ")+B.Id;return false;}
         const TArray<FString> Roles = {TEXT("core"), TEXT("extractor"), TEXT("processor"), TEXT("storage"), TEXT("sensor"), TEXT("defense")};
         if (B.Id.IsEmpty() || BuildingDefs.Contains(B.Id) || !Roles.Contains(B.Role) || (!B.Recipe.IsEmpty() && !Recipes.Contains(B.Recipe)) || (!B.ExtractResource.IsEmpty() && !Resources.Contains(B.ExtractResource))) { Error = TEXT("Invalid building definition: ") + B.Id; return false; }
         if (B.Role == TEXT("core")) ++CoreDefinitions;
@@ -177,6 +183,8 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
     for (const FString& Key : Nonnegative) if (!Numeric(Policy, Key, Scratch, 0, Error)) return false;
     for (const FString& Key : Integers) if (!Numeric(Policy, Key, Scratch, 0, Error, true)) return false;
     if (Number(TEXT("max_couriers")) < 1 || Number(TEXT("event_history_limit")) < 1 || Number(TEXT("wave_max_count")) < Number(TEXT("wave_base_count")) || Number(TEXT("placement_requires_visibility")) > 1 || Number(TEXT("upkeep_shortage_efficiency")) > 1 || Number(TEXT("courier_min_batch")) > Number(TEXT("courier_capacity")) || Number(TEXT("fixed_step_seconds")) > Number(TEXT("dispatch_interval"))) { Error = TEXT("Policy ranges are inconsistent"); return false; }
+    for (const auto& Pair:BuildingDefs) if (Pair.Value.DamagePerShot>0 && Pair.Value.ReloadSeconds<Number(TEXT("fixed_step_seconds")))
+    {Error=TEXT("Weapon reload cannot be shorter than fixed_step_seconds: ")+Pair.Key;return false;}
     const TMap<FString,FString> Selectors = {
         {TEXT("population_policy"),TEXT("fill_open_jobs")},{TEXT("surplus_policy"),TEXT("retire_without_refund")},
         {TEXT("logistics_policy"),TEXT("local_delivery")},{TEXT("enemy_target_policy"),TEXT("nearest_building")},
@@ -533,11 +541,21 @@ void FSeigeSimulation::StepCombat(double Seconds)
     for (FSeigeBuilding& B : Buildings)
     {
         const FSeigeBuildingDef& D = *Definition(B); const double Fraction = WorkFraction(B);
-        if (D.DamagePerSecond <= 0 || Fraction <= 0) continue;
-        FSeigeEnemy* Target = nullptr; double Closest = D.AttackRange;
-        for (FSeigeEnemy& E : Enemies)
-        { const double Distance = FVector2D::Distance(E.Position, B.Position); if (E.Health > 0 && Distance <= Closest && IsVisible(E.Position)) { Target = &E; Closest = Distance; } }
-        if (Target) Target->Health -= D.DamagePerSecond * Fraction * Seconds;
+        if (D.DamagePerShot <= 0 || Fraction <= 0) continue;
+        double WorkSeconds=Seconds*Fraction;
+        while (true)
+        {
+            if (B.WeaponCooldown>WorkSeconds+UE_DOUBLE_SMALL_NUMBER) {B.WeaponCooldown-=WorkSeconds;break;}
+            WorkSeconds=FMath::Max(0.,WorkSeconds-B.WeaponCooldown);B.WeaponCooldown=0;
+            FSeigeEnemy* Target = nullptr; double Closest = D.AttackRange;
+            for (FSeigeEnemy& E : Enemies)
+            { const double Distance = FVector2D::Distance(E.Position, B.Position); if (E.Health > 0 && Distance <= Closest && IsVisible(E.Position)) { Target = &E; Closest = Distance; } }
+            // No target stores one ready shot, never a backlog of idle-time damage.
+            if (!Target) break;
+            Target->Health-=D.DamagePerShot;B.WeaponCooldown=D.ReloadSeconds;
+            B.LastShotTime=Time;B.LastShotPosition=Target->Position;
+            if (WorkSeconds<=UE_DOUBLE_SMALL_NUMBER) break;
+        }
     }
     Enemies.RemoveAll([](const FSeigeEnemy& E){return E.Health <= 0;});
     for (FSeigeEnemy& E : Enemies)
@@ -605,7 +623,9 @@ bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
     for (const FSeigeBuilding& B : Buildings)
     {
         FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),B.Id); V->SetStringField(TEXT("definition"),B.DefId); V->SetStringField(TEXT("status"),B.Status); WritePosition(V,B.Position);
-        V->SetNumberField(TEXT("health"),B.Health); V->SetNumberField(TEXT("progress"),B.Progress); V->SetBoolField(TEXT("enabled"),B.Enabled); V->SetObjectField(TEXT("inventory"),JsonAmounts(B.Inventory)); A.Add(MakeShared<FJsonValueObject>(V));
+        V->SetNumberField(TEXT("health"),B.Health); V->SetNumberField(TEXT("progress"),B.Progress); V->SetBoolField(TEXT("enabled"),B.Enabled); V->SetObjectField(TEXT("inventory"),JsonAmounts(B.Inventory));
+        V->SetNumberField(TEXT("weapon_cooldown"),B.WeaponCooldown);V->SetNumberField(TEXT("last_shot_time"),B.LastShotTime);
+        V->SetArrayField(TEXT("last_shot_position"),{MakeShared<FJsonValueNumber>(B.LastShotPosition.X),MakeShared<FJsonValueNumber>(B.LastShotPosition.Y)});A.Add(MakeShared<FJsonValueObject>(V));
     }
     O->SetArrayField(TEXT("buildings"),A); A.Empty();
     for (const FSeigeNode& N : Nodes) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),N.Id); V->SetStringField(TEXT("resource"),N.Resource); WritePosition(V,N.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
@@ -644,6 +664,8 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
         const FObject V = Value->AsObject(); FSeigeBuilding B;
         if (!ReadId(V,B.Id) || !StringField(V,TEXT("definition"),B.DefId,Error) || !BuildingDefs.Contains(B.DefId) || !StringField(V,TEXT("status"),B.Status,Error) || !PositionField(V,TEXT("position"),B.Position,Error) || !Inside(B.Position) || !Numeric(V,TEXT("health"),B.Health,0,Error) || !Numeric(V,TEXT("progress"),B.Progress,0,Error) || !Amounts(V,TEXT("inventory"),B.Inventory,Resources,Error)) { if (Error.IsEmpty()) Error = TEXT("Invalid saved building"); return false; }
         if (!V->TryGetBoolField(TEXT("enabled"),B.Enabled) || B.Health > BuildingDefs[B.DefId].Health || B.Progress > 1 + UE_DOUBLE_SMALL_NUMBER || Occupied(B) > BuildingDefs[B.DefId].StorageCapacity + UE_DOUBLE_SMALL_NUMBER) { Error = TEXT("Invalid building health, progress or storage"); return false; }
+        if (!Numeric(V,TEXT("weapon_cooldown"),B.WeaponCooldown,0,Error) || B.WeaponCooldown>BuildingDefs[B.DefId].ReloadSeconds+UE_DOUBLE_SMALL_NUMBER || !Numeric(V,TEXT("last_shot_time"),B.LastShotTime,-1,Error) || B.LastShotTime>Candidate.Time || (B.LastShotTime<0 && B.LastShotTime!=-1) || !PositionField(V,TEXT("last_shot_position"),B.LastShotPosition,Error) || !Inside(B.LastShotPosition))
+        {Error=TEXT("Invalid saved weapon timing or target position");return false;}
         if (B.DefId == CoreDefinition) ++CoreCount;
         Candidate.Buildings.Add(B);
     }

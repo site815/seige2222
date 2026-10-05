@@ -168,8 +168,8 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
         auto Invalid=FreshMetadata();if(!Invalid)return false;
         if(Case==0)Invalid->SetNumberField(TEXT("camera_yaw"),361);
         else if(Case==1)Invalid->SetStringField(TEXT("camera_yaw"),TEXT("invalid"));
-        else if(Case==2)Invalid->SetNumberField(TEXT("camera_pitch"),24);
-        else Invalid->SetNumberField(TEXT("camera_pitch"),76);
+        else if(Case==2)Invalid->SetNumberField(TEXT("camera_pitch"),G.MinimumCameraPitch-1);
+        else Invalid->SetNumberField(TEXT("camera_pitch"),G.MaximumCameraPitch+1);
         if(!TestTrue(TEXT("Invalid-camera fixture is written"),WriteMetadata(Invalid)))return false;
         G.LoadGame();
         TestTrue(TEXT("Malformed or out-of-range saved orientation is rejected"),G.Notice.Contains(TEXT("camera orientation is invalid")));

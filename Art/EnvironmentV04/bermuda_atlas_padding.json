@@ -1,0 +1,12 @@
+{
+  "source": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_diff_2k.jpg",
+  "source_sha256": "30183c203739dee9812b70f21916fcdcd88719dcfe4fa3270d8ce208369ec933",
+  "alpha_source": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_alpha_2k.png",
+  "derivative": "Art/EnvironmentV04/Textures/grass_bermuda_01/grass_bermuda_01_diff_padded_2k.png",
+  "sha256": "3b3222ede7c20860f957c34957d7c35d896e825fdba5f5e9e981d05546f723d3",
+  "bytes": 895019,
+  "process": "24-texel RGB dilation from alpha > .95, remaining invisible atlas background filled with source median; alpha unchanged",
+  "source_solid_fraction": 0.0586400032043457,
+  "license": "CC0-1.0",
+  "original_source_unchanged": true
+}

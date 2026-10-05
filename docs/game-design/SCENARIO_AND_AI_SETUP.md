@@ -21,6 +21,8 @@ The default setup is one player center and eight empty neighbors. Before a human
 
 After human landing, live information uses finite sensor coverage. Seeing sector borders does not reveal its buildings or threats. Observer mode shows the simulated colonies so the player can watch AI behavior; this is an observation tool, not a scouting advantage in human play.
 
+The current v0.4 presentation work adds a less detailed cartographic neighborhood and a detailed focused sector, retaining the same scale conversion. Selecting a sector changes the view, not ownership or sensor knowledge. Human commands remain restricted to the home colony; observer inspection does not grant construction control. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md) for verification status.
+
 ## AI behavior and editable files
 
 **Confirmed requirement:** AI definitions live separately in `AIFILES`. Shared resource, building, production, and threat rules stay in `Rules`.
@@ -31,7 +33,7 @@ After human landing, live information uses finite sensor coverage. Seeing sector
 | [developed_start.json](../../AIFILES/developed_start.json) | Finite initial core stock and population for developed colonies; initial buildings pay ordinary costs from that stock. |
 | [Rules/scenario.json](../../Rules/scenario.json) | Ordinary starting inventory and population, core, deposit template, world extent, and seed. |
 | [Interface/ui.json](../../Interface/ui.json) | Construction groups and shortcut mappings, displayed summary resources, descriptions, and credits. |
-| [Graphics/scene.json](../../Graphics/scene.json) | Perspective camera, rendering scale, vegetation density, and nature asset references; separate from logical gameplay balance. |
+| [Graphics/scene.json](../../Graphics/scene.json) | Perspective camera, orbit sensitivity, regional-view threshold, rendering scale, terrain material, vegetation density, and nature asset references; separate from logical gameplay balance. |
 
 A starting AI begins with the ordinary colony start. Both AI types seek nearby matching deposits, place industry and defenses, extend working sensor coverage when necessary, and replace missing targets when affordable. They use ordinary placement commands and construction costs. Staffing, physical couriers, input consumption, repair, and alien pressure follow the same simulation as the player. The developed preset grants setup assets once; there is no recurring free inventory.
 
@@ -43,12 +45,14 @@ Only active, unpaused play advances the colony simulations. Main menu, setup, la
 
 Local scenario saves include every occupied colony, scenario selections, camera, speed, pause state, and AI configuration fingerprints. Loading validates all snapshots before replacing the active scenario. AI cadence derives from saved simulation time; it has no separate hidden timer. Changed Rules or AI definitions invalidate incompatible saves. v0.3 adds optional bounded yaw/pitch fields with defaults for older format-2 saves. Restart scenarios to apply gameplay definition changes, and restart the application after interface or graphics edits. Live reload and general gameplay-save migration are not implemented.
 
+v0.4 Rules use `prototype-4.0` and persist weapon reload/shot state. Earlier-rule saves are intentionally rejected with a new-scenario diagnostic; optional camera-field compatibility does not override the rule fingerprint.
+
 These single-player controls do not establish how a future persistent multiplayer world pauses, simulates offline colonies, or transfers a relocating core.
 
 ## Validation and remaining work
 
 Run `node Tools/validate_configuration.mjs` before building. It checks Rules plus AI/UI references, bounds, construction-menu coverage, shortcut conflicts, developed preset capacity and necessary cost bounds, and Graphics settings and asset references. [Tools/build.ps1](../../Tools/build.ps1) and the [GitHub workflow](../../.github/workflows/rules.yml) run it automatically. Geometric feasibility and long-term survival still require simulation tests and playtesting.
 
-**Verified:** The current definition set passes static validation, and focused invalid-reference/shortcut/timing mutations are rejected. The sixteen-test native suite includes AI startup, deterministic continuation, core placement, frontend/observer controls, and neighborhood save/load. A separate rendered route completed twenty-three stages without failures. See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for evidence and the remaining package checks.
+**Verification status:** v0.4.0 passed 27 native tests (26 clean plus one with editor background HTTP warnings), with zero failures/unrun tests, and 53 Shipping interaction stages with zero failures and exit 0. Coverage includes AI, frontend, saves, terrain privacy, uphill picking, and incremental seams. The editor warning is separate from gameplay correctness. All 45 packaged process-tree samples showed zero TCP/UDP endpoints and ten staged files matched source hashes. These are bounded observations, not proof of every future path. Start a new scenario for `prototype-4.0`; earlier-rule saves are incompatible. See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) and the [development report](../DEVELOPMENT_REPORT.md).
 
 **Later work:** Cross-sector travel and physical transfer, neighboring extraction, trade, privateering, relocation, abandoned territories, richer AI strategies, distinct sector generation, and persistent multiplayer. Changing occupied AI slots during play is not supported. No existing test result establishes those features or indefinite AI survival.

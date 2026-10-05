@@ -67,7 +67,7 @@ void ASeigeGameMode::StartScenario()
     Visuals.Empty(); Ready=true; SelectedId=0; SelectedBuild.Empty(); WinAcknowledged=false;
     Accumulator=0; Speed=1; Paused=false;
     Screen=Observer?TEXT("playing"):TEXT("landing");
-    CameraCenter=FVector(HomePosition(),0); Zoom=Observer?14000:Sim.WorldHalfSize*3.7;
+    CameraCenter=FVector(HomePosition(),0); Zoom=DefaultZoom*2;
     Notice=Observer?TEXT("OBSERVATION MODE | AI colonies follow the same industry and defense rules."):TEXT("CHOOSE YOUR COMMAND CENTER | Time is paused. Survey deposits, then click a landing site.");
     CreateLandscape(); SyncVisuals(); UpdateCamera();
 }

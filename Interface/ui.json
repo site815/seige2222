@@ -28,8 +28,12 @@
       "text": "Fir Tree 01 and Fern 02: Rob Tuytel and Rico Cilliers. Tree Small 02: Rico Cilliers. Rock Moss Set 01: Kless Gyzen. Bark Brown 02 and Brown Mud Dry: Rob Tuytel. Grass Ground and Leafy Grass: Charlotte Baglioni. Rock Boulder Dry: Dimitrios Savva and Rico Cilliers."
     },
     {
+      "heading": "Mature woodland and meadow / CC0 1.0",
+      "text": "Jacaranda Tree: Rico Cilliers, with guidance from Rob Tuytel. Grass Bermuda 01 and Grass Medium 02: Rico Cilliers. Forest Leaves 02: Rob Tuytel. Models and photographic maps: Poly Haven (polyhaven.com/license). Grass 004 procedural PBR surface: Lennart Demes / ambientCG (docs.ambientcg.com/license). These sources permit commercial use and redistribution. Original wildflower geometry authored for this project in Blender. Development asset tool: Powered by Poly Haven."
+    },
+    {
       "heading": "Asset provenance",
-      "text": "Downloaded models and photographic maps are CC0 and permit commercial use. Creator credits, source links, licenses and file hashes are retained with the project. Original Blender source and generation scripts are included. All game assets are local; no runtime downloads."
+      "text": "Downloaded models and photographic or procedural PBR maps are CC0 and permit commercial use. Creator credits, source links, licenses and file hashes are retained with the project. Editable Blender derivatives and generation scripts are included. All game assets are local; no runtime downloads."
     }
   ],
   "build_groups": [

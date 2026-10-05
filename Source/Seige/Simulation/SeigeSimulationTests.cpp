@@ -3,6 +3,9 @@
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
 #include "HAL/FileManager.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -33,6 +36,92 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
     }
     TestFalse(TEXT("Unknown recipe reference rejected by runtime"),S.Initialize(BadRules,Error));
     TestTrue(TEXT("Unknown reference diagnostic names bad item"),Error.Contains(TEXT("nonexistent_item")));
+    FString GoodRecipes,GoodBuildings;
+    FFileHelper::LoadFileToString(GoodRecipes,*FPaths::Combine(TestRules(),TEXT("recipes.json")));
+    FFileHelper::LoadFileToString(GoodBuildings,*FPaths::Combine(TestRules(),TEXT("buildings.json")));
+    FFileHelper::SaveStringToFile(GoodRecipes,*FPaths::Combine(BadRules,TEXT("recipes.json")));
+    for(int32 Case=0;Case<5;++Case)
+    {
+        TSharedPtr<FJsonObject> Document;FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(GoodBuildings),Document);
+        const auto Core=Document->GetArrayField(TEXT("buildings"))[0]->AsObject();
+        if(Case==0)Core->SetNumberField(TEXT("reload_seconds"),0);
+        if(Case==1)Core->SetNumberField(TEXT("reload_seconds"),.001);
+        if(Case==2)Core->SetNumberField(TEXT("power_usage_kw"),1);
+        if(Case==3)Core->SetNumberField(TEXT("damage_per_second"),999);
+        if(Case==4)Core->RemoveField(TEXT("damage_per_shot"));
+        FString Invalid;FJsonSerializer::Serialize(Document.ToSharedRef(),TJsonWriterFactory<>::Create(&Invalid));
+        FFileHelper::SaveStringToFile(Invalid,*FPaths::Combine(BadRules,TEXT("buildings.json")));
+        TestFalse(*FString::Printf(TEXT("Runtime rejects inconsistent weapon/power rule variant %d"),Case),S.Initialize(BadRules,Error));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeWeaponCadenceTest,"Seige.Simulation.WeaponCadenceAndPersistence",TestFlags)
+bool FSeigeWeaponCadenceTest::RunTest(const FString& Parameters)
+{
+    FString Error;FSeigeSimulation A,B;
+    if(!A.Initialize(TestRules(),Error)){AddError(Error);return false;}
+    A.TriggerWave();A.Enemies.SetNum(1);A.Enemies[0].Position=FVector2D(500,0);
+    const double Health=A.Enemies[0].Health,Damage=A.BuildingDefs[A.CoreDefinition].DamagePerShot;
+    A.Tick(.05);
+    if(!TestEqual(TEXT("A ready weapon applies one whole shot, not continuous tick damage"),A.Enemies.Num(),1))return false;
+    TestEqual(TEXT("Shot damage agrees with the loaded weapon rule"),A.Enemies[0].Health,Health-Damage);
+    TestTrue(TEXT("Firing starts a reload cycle"),A.Buildings[0].WeaponCooldown>0);
+    if(!A.Save(TestSave(TEXT("weapon-mid-reload")),Error)||!B.Initialize(TestRules(),Error)||!B.Load(TestSave(TEXT("weapon-mid-reload")),Error)){AddError(Error);return false;}
+    TestEqual(TEXT("Save/load preserves the active reload"),B.Buildings[0].WeaponCooldown,A.Buildings[0].WeaponCooldown);
+    TestEqual(TEXT("Save/load preserves the actual shot event"),B.Buildings[0].LastShotTime,A.Buildings[0].LastShotTime);
+    A.Tick(.8);B.Tick(.8);
+    TestEqual(TEXT("A target takes no additional damage before reload finishes"),A.Enemies[0].Health,Health-Damage);
+    TestEqual(TEXT("Loading does not grant a free shot"),B.Enemies[0].Health,A.Enemies[0].Health);
+    A.Tick(.2);B.Tick(.2);
+    TestEqual(TEXT("The next full shot defeats the target after the reload interval"),A.Enemies.Num(),0);
+    if(!A.Save(TestSave(TEXT("weapon-a")),Error)||!B.Save(TestSave(TEXT("weapon-b")),Error)){AddError(Error);return false;}
+    FString SA,SB;FFileHelper::LoadFileToString(SA,*TestSave(TEXT("weapon-a")));FFileHelper::LoadFileToString(SB,*TestSave(TEXT("weapon-b")));
+    TestEqual(TEXT("Reloaded and uninterrupted combat states remain identical"),SA,SB);
+    FSeigeSimulation C;if(!C.Initialize(TestRules(),Error)){AddError(Error);return false;}
+    auto& Weapon=C.BuildingDefs[C.CoreDefinition];Weapon.DamagePerShot=1;Weapon.ReloadSeconds=.17;Weapon.DamagePerSecond=1/.17;
+    C.TriggerWave();C.Enemies.SetNum(1);C.Enemies[0].Position=FVector2D(500,0);
+    C.Tick(1);
+    TestEqual(TEXT("Non-step-multiple reload retains elapsed time (six shots in one second including ready shot)"),C.Enemies[0].Health,Health-6);
+    C.Enemies.Empty();C.Tick(1);TestEqual(TEXT("Idle weapon stores only one ready shot"),C.Buildings[0].WeaponCooldown,0.);
+    C.TriggerWave();C.Enemies.SetNum(1);C.Enemies[0].Position=FVector2D(500,0);C.Tick(.05);
+    TestEqual(TEXT("No idle-time damage backlog is released"),C.Enemies[0].Health,Health-1);
+    C.Population=0;const double Before=C.Enemies[0].Health,Cooldown=C.Buildings[0].WeaponCooldown;C.Tick(.2);
+    TestEqual(TEXT("Unstaffed weapons do not fire"),C.Enemies[0].Health,Before);
+    TestEqual(TEXT("Unstaffed weapons pause reload progress"),C.Buildings[0].WeaponCooldown,Cooldown);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeBuildingInfoTest,"Seige.Simulation.BuildingInformation",TestFlags)
+bool FSeigeBuildingInfoTest::RunTest(const FString& Parameters)
+{
+    FString Error;FSeigeSimulation S;if(!S.Initialize(TestRules(),Error)){AddError(Error);return false;}
+    auto Value=[](const TArray<FSeigeBuildingInfoRow>& Rows,const FString& Section,const FString& Label)
+    {const auto* Row=Rows.FindByPredicate([&](const auto& R){return R.Section==Section&&R.Label==Label;});return Row?Row->Value:FString();};
+    for(const auto& Pair:S.BuildingDefs)
+    {
+        const auto Rows=S.BuildingInfo(Pair.Key,0,6);
+        TSet<FString> Sections;for(const auto& Row:Rows)Sections.Add(Row.Section);
+        TestEqual(TEXT("Every blueprint exposes all six information sections"),Sections.Num(),6);
+        TestEqual(TEXT("Absent power demand is explicit"),Value(Rows,TEXT("Power"),TEXT("Power consumption")),FString(TEXT("0 kW")));
+        TestEqual(TEXT("Absent power generation is explicit"),Value(Rows,TEXT("Power"),TEXT("Power generation")),FString(TEXT("0 kW")));
+        TestFalse(TEXT("Every definition reports shot damage"),Value(Rows,TEXT("Weapons"),TEXT("Damage per shot")).IsEmpty());
+        TestFalse(TEXT("Every definition reports reload time"),Value(Rows,TEXT("Weapons"),TEXT("Reload time")).IsEmpty());
+        if(Pair.Value.DamagePerShot==0)
+        {
+            TestEqual(TEXT("Unarmed buildings say unarmed"),Value(Rows,TEXT("Weapons"),TEXT("Weapon")),FString(TEXT("Unarmed")));
+            TestEqual(TEXT("Unarmed DPS is displayed as zero"),Value(Rows,TEXT("Weapons"),TEXT("Nominal DPS")),FString(TEXT("0 health/s")));
+        }
+    }
+    if(!S.PlaceBuilding(TEXT("component_works"),FVector2D(700,0),Error)){AddError(Error);return false;}
+    auto& B=S.Buildings.Last();B.Inventory.Add(TEXT("conductors"),3);
+    const auto Live=S.BuildingInfo(B.DefId,B.Id,6);
+    TestEqual(TEXT("Required but missing input stock remains visible as zero"),Value(Live,TEXT("Resources"),S.Resources[TEXT("circuits")].Name),FString(TEXT("0 units")));
+    TestEqual(TEXT("Local inventory uses actual instance stock"),Value(Live,TEXT("Resources"),S.Resources[TEXT("conductors")].Name),FString(TEXT("3 units")));
+    TestTrue(TEXT("Recipe inputs are shown with their quantities"),Value(Live,TEXT("Production"),TEXT("Inputs per cycle")).Contains(TEXT("2 ")+S.Resources[TEXT("alloy")].Name));
+    TestEqual(TEXT("Unknown instances cannot show another building's stock"),S.BuildingInfo(B.DefId,S.Buildings[0].Id,6).Num(),0);
+    const auto Core=S.BuildingInfo(S.CoreDefinition,S.Buildings[0].Id,6);
+    TestEqual(TEXT("Displayed attack range uses the caller's rendering scale"),Value(Core,TEXT("Weapons"),TEXT("Attack range")),FString(TEXT("72 m")));
     return true;
 }
 

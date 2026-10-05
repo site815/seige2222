@@ -66,7 +66,7 @@ void ASeigeGameMode::LoadGame()
        !Metadata->TryGetNumberField(TEXT("speed"),StoredSpeed)||(StoredSpeed!=1&&StoredSpeed!=3)||!Metadata->TryGetBoolField(TEXT("paused"),StoredPaused)||
        !Metadata->TryGetBoolField(TEXT("objective_acknowledged"),StoredAcknowledged)) { Notice=TEXT("Scenario save metadata is invalid."); return; }
     if((Metadata->HasField(TEXT("camera_yaw"))&&(!Metadata->TryGetNumberField(TEXT("camera_yaw"),StoredYaw)||!FMath::IsFinite(StoredYaw)||StoredYaw < -360||StoredYaw > 360))||
-       (Metadata->HasField(TEXT("camera_pitch"))&&(!Metadata->TryGetNumberField(TEXT("camera_pitch"),StoredPitch)||!FMath::IsFinite(StoredPitch)||StoredPitch < 25||StoredPitch > 75)))
+       (Metadata->HasField(TEXT("camera_pitch"))&&(!Metadata->TryGetNumberField(TEXT("camera_pitch"),StoredPitch)||!FMath::IsFinite(StoredPitch)||StoredPitch < MinimumCameraPitch||StoredPitch > MaximumCameraPitch)))
     { Notice=TEXT("Saved camera orientation is invalid."); return; }
     TArray<FString> NewSlots;
     for(int32 I=0;I<9;I++)

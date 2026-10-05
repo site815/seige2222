@@ -22,18 +22,50 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         {Error=FString::Printf(TEXT("Invalid Graphics/scene.json value: %s"),Key);return false;}
         Value=Number;return true;
     };
-    float Forest=0,NearForest=0;
+    float Forest=0,NearForest=0,GroundCandidates=0,TerrainResolution=0,RidgeX=0,RidgeY=0;
     if(!Read(TEXT("world_centimeters_per_unit"),1,20,RenderScale)||
-       !Read(TEXT("camera_fov"),35,80,CameraFov)||!Read(TEXT("camera_pitch"),25,75,CameraPitch)||
+       !Read(TEXT("camera_fov"),35,80,CameraFov)||!Read(TEXT("camera_pitch"),5,85,CameraPitch)||
+       !Read(TEXT("minimum_camera_pitch"),5,25,MinimumCameraPitch)||!Read(TEXT("maximum_camera_pitch"),60,85,MaximumCameraPitch)||
+       !Read(TEXT("camera_ground_clearance_cm"),100,500,CameraGroundClearance)||
+       !Read(TEXT("sun_intensity"),.1,20,SunIntensity)||!Read(TEXT("sky_intensity"),.1,5,SkyIntensity)||
+       !Read(TEXT("cloud_shadow_strength"),0,1,CloudShadowStrength)||
        !Read(TEXT("camera_yaw"),-360,360,CameraYaw)||!Read(TEXT("default_zoom"),900,20000,DefaultZoom)||
-       !Read(TEXT("minimum_zoom"),300,2000,MinimumZoom)||!Read(TEXT("forest_candidates"),1000,200000,Forest)||
-       !Read(TEXT("near_forest_candidates"),100,30000,NearForest))return false;
+       !Read(TEXT("minimum_zoom"),60,2000,MinimumZoom)||!Read(TEXT("forest_candidates"),1000,200000,Forest)||
+       !Read(TEXT("near_forest_candidates"),100,30000,NearForest)||
+       !Read(TEXT("region_map_zoom"),20000,90000,RegionMapZoom)||
+       !Read(TEXT("orbit_yaw_degrees_per_pixel"),.05,2,OrbitYawPerPixel)||
+       !Read(TEXT("orbit_pitch_degrees_per_pixel"),.05,2,OrbitPitchPerPixel)||
+       !Read(TEXT("ground_cover_candidates"),10000,400000,GroundCandidates)||
+       !Read(TEXT("grass_scale_min"),.1,3,GrassScaleMin)||!Read(TEXT("grass_scale_max"),.1,3,GrassScaleMax)||
+       !Read(TEXT("detailed_terrain_resolution"),512,1024,TerrainResolution)||
+       !Read(TEXT("rolling_terrain_wavelength"),1000,10000,RollingTerrainWavelength)||
+       !Read(TEXT("rolling_terrain_amplitude"),0,1000,RollingTerrainAmplitude)||
+       !Read(TEXT("micro_terrain_wavelength"),100,1000,MicroTerrainWavelength)||
+       !Read(TEXT("micro_terrain_amplitude"),0,50,MicroTerrainAmplitude)||
+       !Read(TEXT("core_pad_inner_ratio"),1,2,CorePadInnerRatio)||
+       !Read(TEXT("core_pad_outer_ratio"),1.1,4,CorePadOuterRatio)||
+       !Read(TEXT("ridge_center_x"),-90000,90000,RidgeX)||!Read(TEXT("ridge_center_y"),-90000,90000,RidgeY)||
+       !Read(TEXT("ridge_angle_degrees"),-360,360,RidgeAngleDegrees)||
+       !Read(TEXT("ridge_width"),500,10000,RidgeWidth)||!Read(TEXT("ridge_length"),1000,30000,RidgeLength)||
+       !Read(TEXT("ridge_height"),0,1500,RidgeHeight))return false;
+    if(!Root->TryGetStringField(TEXT("terrain_material"),TerrainMaterialPath)||!TerrainMaterialPath.StartsWith(TEXT("/Game/")))
+    {Error=TEXT("Invalid terrain material path");return false;}
+    if(!Root->TryGetStringField(TEXT("cloud_material"),CloudMaterialPath)||!(CloudMaterialPath.StartsWith(TEXT("/Game/"))||CloudMaterialPath==TEXT("/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst")))
+    {Error=TEXT("Invalid cloud material path");return false;}
+    if(CameraPitch<MinimumCameraPitch||CameraPitch>MaximumCameraPitch){Error=TEXT("Default camera pitch lies outside orbit limits");return false;}
     if(MinimumZoom>DefaultZoom){Error=TEXT("Minimum camera zoom exceeds default zoom");return false;}
-    if(FMath::FloorToFloat(Forest)!=Forest||FMath::FloorToFloat(NearForest)!=NearForest){Error=TEXT("Forest candidate counts must be integers");return false;}
+    if(MinimumZoom>=DefaultZoom*.45f){Error=TEXT("Minimum camera zoom must lie below the close-view transition");return false;}
+    if(FMath::FloorToFloat(Forest)!=Forest||FMath::FloorToFloat(NearForest)!=NearForest||FMath::FloorToFloat(GroundCandidates)!=GroundCandidates){Error=TEXT("Vegetation candidate counts must be integers");return false;}
+    if(GrassScaleMin>GrassScaleMax){Error=TEXT("Minimum grass scale exceeds maximum");return false;}
+    if(TerrainResolution!=512&&TerrainResolution!=1024){Error=TEXT("Detailed terrain resolution must be 512 or 1024");return false;}
+    if(CorePadOuterRatio<=CorePadInnerRatio){Error=TEXT("Terrain pad outer ratio must exceed its inner ratio");return false;}
+    if(1500+RollingTerrainAmplitude+MicroTerrainAmplitude+RidgeHeight>=6000){Error=TEXT("Terrain amplitudes exceed the camera trace bounds");return false;}
+    DetailedTerrainResolution=FMath::RoundToInt(TerrainResolution);RidgeCenter=FVector2D(RidgeX,RidgeY);
+    GroundCoverCandidates=FMath::RoundToInt(GroundCandidates);
     ForestCandidates=FMath::RoundToInt(Forest);NearForestCandidates=FMath::RoundToInt(NearForest);
     const TSharedPtr<FJsonObject>* Assets=nullptr;
     if(!Root->TryGetObjectField(TEXT("nature_assets"),Assets)){Error=TEXT("Missing nature asset definitions");return false;}
-    for(const FString Key:{TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB"),TEXT("Shrub"),TEXT("Grass"),TEXT("RockA"),TEXT("RockB")})
+    for(const FString Key:{TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB"),TEXT("Shrub"),TEXT("Grass"),TEXT("GrassB"),TEXT("Wildflowers"),TEXT("RockA"),TEXT("RockB")})
     {
         FString Path;
         if(!(*Assets)->TryGetStringField(Key,Path)||!Path.StartsWith(TEXT("/Game/"))){Error=TEXT("Missing or invalid nature asset path: ")+Key;return false;}
@@ -54,11 +86,15 @@ FTransform ASeigeGameMode::CameraTransform() const
 {
     const FVector Target=RenderPosition(FVector2D(CameraCenter),70);
     const double Distance=FMath::Clamp(double(Zoom),double(MinimumZoom),Sim.WorldHalfSize*12)*RenderScale/(2*FMath::Tan(FMath::DegreesToRadians(CameraFov*.5)));
-    const FRotator Aim(-FMath::Clamp(CameraPitch,25.f,75.f),CameraYaw,0);
+    // Close zoom lowers the view gradually to show actual ground detail. The
+    // chosen orbit angle remains intact, returning as the camera pulls back.
+    const double CloseBlend=FMath::SmoothStep(double(MinimumZoom),double(DefaultZoom)*.45,double(Zoom));
+    const double Pitch=FMath::Lerp(double(MinimumCameraPitch),double(FMath::Clamp(CameraPitch,MinimumCameraPitch,MaximumCameraPitch)),CloseBlend);
+    const FRotator Aim(-Pitch,CameraYaw,0);
     FVector Position=Target-Aim.Vector()*Distance;
     const FVector2D Logical(Position.X/RenderScale,Position.Y/RenderScale);
     if(FMath::Abs(Logical.X)<=Sim.WorldHalfSize*3&&FMath::Abs(Logical.Y)<=Sim.WorldHalfSize*3)
-        Position.Z=FMath::Max(Position.Z,GroundHeight(Logical)*RenderScale+300);
+        Position.Z=FMath::Max(Position.Z,GroundHeight(Logical)*RenderScale+CameraGroundClearance);
     return FTransform((Target-Position).Rotation(),Position);
 }
 void ASeigeGameMode::UpdateCamera()
@@ -71,7 +107,8 @@ bool ASeigeGameMode::TraceGroundRay(const FVector& WorldOrigin,const FVector& Wo
 {
     if(WorldOrigin.ContainsNaN()||WorldDirection.ContainsNaN()||RenderScale<=0||WorldDirection.IsNearlyZero())return false;
     const FVector Origin=WorldOrigin/RenderScale,Direction=WorldDirection.GetSafeNormal();
-    if(Direction.Z>=-.00001)return false;
+    // A low camera can see an uphill surface above its own horizon. Horizontal
+    // and upward rays must reach the bounded terrain test, just like downward rays.
     const double Extent=Sim.WorldHalfSize*3;
     double Enter=0,Leave=1.e9;
     const FVector Low(-Extent,-Extent,-6000),High(Extent,Extent,6000);
@@ -87,7 +124,10 @@ bool ASeigeGameMode::TraceGroundRay(const FVector& WorldOrigin,const FVector& Wo
     if(Gap(Enter)<0)return false;
     // Walk at less than half a terrain triangle's horizontal width, then refine the
     // first surface crossing. This finds the visible ridge, not ground behind it.
-    const double Step=FMath::Clamp((Sim.WorldHalfSize*2/256)*.4/FMath::Max(FMath::Abs(Direction.X),FMath::Max(FMath::Abs(Direction.Y),.05)),20.,500.);
+    int32 FinestResolution=DetailedTerrainResolution;
+    for(const auto& Tile:TerrainTiles)FinestResolution=FMath::Max(FinestResolution,Tile.Resolution);
+    const double FinestSpacing=Sim.WorldHalfSize*2/FMath::Max(1,FinestResolution);
+    const double Step=FMath::Clamp(FinestSpacing*.4/FMath::Max(FMath::Abs(Direction.X),FMath::Max(FMath::Abs(Direction.Y),.05)),1.,500.);
     for(double T=FMath::Min(Enter+Step,Leave);T<=Leave;T=FMath::Min(T+Step,Leave))
     {
         const double CurrentGap=Gap(T);

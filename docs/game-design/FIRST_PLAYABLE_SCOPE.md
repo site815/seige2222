@@ -2,14 +2,16 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-**Implemented first-playable scope, v0.3 package verified.** The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current working name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier working labels. This file records the first implementation slice, its limitations, and the specific verification status below.
+**Current delivery: verified v0.4.0 Windows Shipping package.** The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
 
 ## Current graphics revision
 
-**v0.3 is packaged and verified:** The rotatable perspective camera, credible physical scale, detailed original industry, licensed CC0 nature, and revised ground surfaces are included. [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md) records implementation and remaining visual polish. Logical content/balance is unchanged; six rendered centimeters per logical unit gives 3.6 km sectors and a 10.8 km neighborhood.
+**v0.4.0 is packaged and verified in `Builds/v0.4.0/Windows`; the launcher selects it.** The slice includes responsive orbit, regional map/focused detail, resource overlays/alerts, floating bottom construction, complete building statistics, and rebuilt terrain with dense low/tall grass. The final native suite passed **27 tests: 26 clean plus one with editor background HTTP warnings; zero failed or unrun**. Shipping packaging exited 0; its interaction route passed **53 stages with zero failures**, 45 process-tree samples each showed zero TCP/UDP endpoints, and ten staged files matched source hashes. The editor warning was not a gameplay assertion failure; the packaged observations are bounded checks, not a guarantee about all runs. Close/middle views improve while distant ground/forest uniformity remain below the reference. **Start a new scenario:** Rules `prototype-4.0` use actual weapon shots/reloads and explicit unarmed/zero-power information; older-rule saves are rejected. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md) and the [development report](../DEVELOPMENT_REPORT.md).
+
+**Historical v0.3 verification:** The rotatable perspective camera, credible physical scale, detailed original industry, licensed CC0 nature, and revised ground surfaces are included. [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md) records implementation and remaining visual polish. Logical content/balance is unchanged; six rendered centimeters per logical unit gives 3.6 km sectors and a 10.8 km neighborhood.
 
 - Win64 Shipping packaging completed with exit 0 in `Builds/v0.3.0/Windows`.
-- Nineteen native tests passed with zero failures or warnings (`Saved/Automation/v03-final/index.json`). Source code did not change after that run.
+- Nineteen native tests passed with zero failures or warnings (`Saved/Automation/v03-final/index.json`). The delivered v0.3 source did not change after that run; current v0.4 work requires separate checks.
 - The packaged rendered interaction route completed 28 stages with zero failures and exit 0, including frontend, human landing/construction, observation, and perspective selection in rotated/low-angle views.
 - Eighteen samples of the packaged process tree each showed zero TCP/UDP endpoints. This is a bounded endpoint observation, not packet capture or proof about all execution paths.
 - Ten loose files across Rules, AIFILES, Interface, and Graphics matched source hashes and loaded successfully. The controlled packaged balance-edit experiment remains v0.2 evidence and was not repeated for v0.3.
@@ -47,7 +49,7 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | [policies.json](../../Rules/policies.json) | Simulation timing, staffing, population adjustment, physical delivery, repair/upkeep, visibility, threat behavior, scenario objectives, and numerical tuning. |
 | [scenario.json](../../Rules/scenario.json) | First Landing title, initial core, starting population and inventory, separate initial shuttle cargo, world extent, seed, and irregularly distributed resource-source locations. |
 | [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a finite developed-colony preset. Runtime AI uses the normal simulation rules. |
-| [Graphics definitions](../../Graphics/scene.json) | v0.3 camera, logical-to-rendered scale, vegetation candidate counts, and nature asset roles. These change presentation without changing logical costs, rates, or travel times. |
+| [Graphics definitions](../../Graphics/scene.json) | Camera limits/clearance and orbit sensitivity, regional-view threshold, logical-to-rendered scale, relief/pad settings, terrain/cloud materials and lighting, vegetation density/scales, and ten nature roles. These change presentation without changing logical costs, rates, or travel times. |
 
 The proposed twelve-resource catalog is not all implemented. The current thirteen building definitions represent reusable prototype functions, not adoption of every proposed facility or upgrade. The JSON files own exact quantities and rates so this document does not become a second balance table.
 
@@ -76,6 +78,7 @@ The precise local interface and input bindings belong with the delivered build's
 
 ## Explicit simplifications and differences from the full design
 
+- **Placement footprints:** Simulation spacing uses circles, while rendered foundations/pads are square. Diagonal placements can pass spacing checks while square corners overlap; building-art and footprint alignment work is deferred.
 - **Construction delivery:** Costs are debited from core inventory immediately. Material hauling to construction sites, construction jobs, and staged assembly are not yet simulated.
 - **Workers:** Aggregate job allocation and decorative/representative robot presentation can stand in for fully individualized worker scheduling. Do not present population count as unlimited extraction capacity.
 - **Population reduction:** Retirement without refunds is a selected prototype policy. It does not settle dismantling, deactivation, storage, or recovery for the complete game.
@@ -98,7 +101,7 @@ These omissions do not remove those ideas from their subject documents. The full
 
 ## Acceptance checklist and verification boundaries
 
-This checklist remains useful for subsequent revisions. Current verification is recorded above; it is not a declaration that every item was rerun end to end in the packaged v0.3 build. In particular, save/load is covered natively, while the controlled packaged balance edit is historical v0.2 evidence.
+This checklist remains useful for subsequent revisions. Current verification is recorded above; it is not a declaration that every item was rerun end to end in the packaged v0.4 build. In particular, save/load is covered natively, while the controlled packaged balance edit is historical v0.2 evidence.
 
 1. Compile and launch the native Unreal editor/game targets; produce a standalone package that launches outside the editor.
 2. Load the external definition set with useful errors for broken references or invalid rules. In the packaged build, verify a controlled numerical rule edit takes effect after the documented restart/reload path.

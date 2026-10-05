@@ -16,7 +16,7 @@
 void ASeigeGameMode::RunPresentationSmoke()
 {
     if(!FParse::Param(FCommandLine::Get(),TEXT("UiSmoke")))return;
-    static const double Times[]={2,3,4,5,7,8,10,11,12,13,14,15,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40};
+    static const double Times[]={2,3,4,5,7,8,10,11,12,13,14,15,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,78,80,84,86,90,92,96,98};
     if(PresentationSmokeStage>=UE_ARRAY_COUNT(Times)||RenderClock<Times[PresentationSmokeStage])return;
     const int32 Stage=PresentationSmokeStage++;
     auto* Controller=Cast<ASeigeController>(UGameplayStatics::GetPlayerController(this,0));
@@ -28,7 +28,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     };
     auto Capture=[&](const TCHAR* Name)
     {
-        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v03"));
+        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v04"));
         if(!Require(IFileManager::Get().MakeDirectory(*Directory,true),TEXT("Could not create screenshot directory")))return;
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Name)+TEXT(".png")),true,false);
         UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CAPTURE %s stage=%d screen=%s"),Name,Stage,*Screen);
@@ -118,7 +118,46 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 24: CameraYaw=220;CameraPitch=65;Zoom=3000;UpdateCamera();break;
     case 25: Capture(TEXT("rotated"));WorldClick(HomePosition());break;
     case 26: CameraYaw=135;CameraPitch=52;Zoom=DefaultZoom;UpdateCamera();break;
-    case 27:
+    case 27: WorldClick(HomePosition());Require(SelectedId==Sim.Buildings[0].Id,TEXT("Observer core must be inspectable"));break;
+    case 28: ClickAction(TEXT("info-section:Weapons"));break;
+    case 29: Capture(TEXT("weapons"));break;
+    case 30: ClickAction(TEXT("info-section:Power"));break;
+    case 31: Capture(TEXT("power"));break;
+    case 32: ClickAction(TEXT("region-map"));Require(IsRegionMap(),TEXT("Region dock did not open cartographic view"));break;
+    case 33: Capture(TEXT("regional_ai"));break;
+    case 34: ClickAction(TEXT("focus-sector:0"));break;
+    case 35:
+        Require(DetailedSectorIndex()==0&&!IsRegionMap()&&ViewedSimulation()!=&Sim,TEXT("Map click did not focus the selected neighbor"));
+        Capture(TEXT("neighbor"));break;
+    case 36:
+        if(Controller)
+        {
+            const FVector Focus=CameraCenter;const float Yaw=CameraYaw;
+            Controller->BeginOrbitGesture(800,450);Controller->OrbitGestureDelta(120,10);Controller->EndOrbitGesture();UpdateCamera();
+            Require(FMath::Abs(FMath::FindDeltaAngleDegrees(Yaw,CameraYaw)-120*OrbitYawPerPixel)<.01,TEXT("Captured middle drag did not apply full mouse sensitivity"));
+            Require(CameraCenter.Equals(Focus),TEXT("Orbit drag moved the world focus"));
+        }
+        break;
+    case 37: Capture(TEXT("neighbor_orbit"));break;
+    case 38: FocusSector(4);break;
+    case 39:
+        for(const auto& B:Sim.Buildings)if(const auto* D=Sim.Definition(B))if(D->Role==TEXT("sensor"))
+        {CameraCenter=FVector(B.Position,0);Zoom=DefaultZoom;WorldClick(B.Position);Require(SelectedId==B.Id,TEXT("Unarmed sensor could not be inspected"));break;}
+        Require(SelectedId>0,TEXT("No unarmed sensor in observer scenario"));break;
+    case 40: ClickAction(TEXT("info-section:Weapons"));break;
+    case 41: Capture(TEXT("unarmed"));break;
+    case 42: ClickAction(TEXT("info-section:Power"));break;
+    case 43: Capture(TEXT("unarmed_power"));break;
+    case 44:
+        FocusSector(4);Paused=true;SelectedId=0;CameraCenter=FVector(0,-900,0);CameraYaw=35;CameraPitch=40;Zoom=2600;UpdateCamera();break;
+    case 45: Capture(TEXT("terrain_overlook"));break;
+    case 46: CameraCenter=FVector(1200,400,0);CameraYaw=150;CameraPitch=25;Zoom=900;UpdateCamera();break;
+    case 47: Capture(TEXT("meadow_mid"));break;
+    case 48: CameraCenter=FVector(1300,450,0);CameraYaw=35;CameraPitch=20;Zoom=180;UpdateCamera();break;
+    case 49: Capture(TEXT("meadow_ground"));break;
+    case 50: CameraCenter=FVector(3000,-700,0);CameraYaw=155;CameraPitch=48;Zoom=7000;UpdateCamera();break;
+    case 51: Capture(TEXT("terrain_hills"));break;
+    case 52:
     {
         Require(Ready&&Observer&&Neighbors.Num()==2&&Screen==TEXT("playing"),TEXT("Final observer state is invalid"));
         const float Dt=GetWorld()?GetWorld()->GetDeltaSeconds():0;

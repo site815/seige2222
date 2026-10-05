@@ -1,0 +1,48 @@
+{
+  "license": "CC0-1.0",
+  "meshes": {
+    "SM_JacarandaA": {
+      "path": "/Game/Art/NatureV04/SM_JacarandaA.SM_JacarandaA",
+      "dimensions_cm": [
+        2441.7049560546875,
+        1915.4574584960938,
+        1946.887451171875
+      ],
+      "ground_z": 0.0,
+      "materials": [
+        "PH_jacaranda_tree_branches",
+        "PH_jacaranda_tree_trunk",
+        "PH_jacaranda_tree_leaves"
+      ],
+      "source_triangles": 3863832,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true
+    },
+    "SM_MeadowGrassA": {
+      "path": "/Game/Art/NatureV04/SM_MeadowGrassA.SM_MeadowGrassA",
+      "dimensions_cm": [
+        67.84298324584961,
+        72.04228591918945,
+        27.195606231689453
+      ],
+      "ground_z": 0.0,
+      "materials": [
+        "PH_grass_bermuda_01_surface"
+      ],
+      "source_triangles": 12265,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true
+    }
+  },
+  "textures": 26,
+  "materials": 4,
+  "runtime_network_required": false,
+  "foliage_mip_bias": {
+    "BaseColor": -1,
+    "OpacityMap": -2
+  },
+  "alpha_coverage": 0.33,
+  "normal_conversion": "OpenGL green channel inverted"
+}

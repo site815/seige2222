@@ -1,0 +1,68 @@
+{
+  "license": "CC0 natural sources; original project wildflowers",
+  "meshes": {
+    "SM_MeadowSwardA": {
+      "path": "/Game/Art/NatureV04/SM_MeadowSwardA.SM_MeadowSwardA",
+      "dimensions_cm": [
+        140.39906311035156,
+        143.31773376464844,
+        55.69947814941406
+      ],
+      "ground_z": 0.0,
+      "materials": [
+        "PH_grass_medium_02_surface",
+        "PH_grass_bermuda_01_surface"
+      ],
+      "source_triangles": 77572,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true
+    },
+    "SM_MeadowSwardB": {
+      "path": "/Game/Art/NatureV04/SM_MeadowSwardB.SM_MeadowSwardB",
+      "dimensions_cm": [
+        136.5093994140625,
+        131.28323364257812,
+        52.480194091796875
+      ],
+      "ground_z": 0.0,
+      "materials": [
+        "PH_grass_medium_02_surface",
+        "PH_grass_bermuda_01_surface"
+      ],
+      "source_triangles": 77572,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true
+    },
+    "SM_WildflowerPatch": {
+      "path": "/Game/Art/NatureV04/SM_WildflowerPatch.SM_WildflowerPatch",
+      "dimensions_cm": [
+        108.94389343261719,
+        91.42248916625977,
+        57.15052032470703
+      ],
+      "ground_z": 0.0,
+      "materials": [
+        "Original_Meadow_Stem",
+        "Original_Meadow_Leaf",
+        "Original_Meadow_Cream",
+        "Original_Meadow_Violet",
+        "Original_Meadow_Gold"
+      ],
+      "source_triangles": 3000,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true
+    }
+  },
+  "textures": 10,
+  "materials": 7,
+  "runtime_network_required": false,
+  "foliage_mip_bias": {
+    "BaseColor": -1,
+    "OpacityMap": -2
+  },
+  "alpha_coverage": 0.33,
+  "normal_conversion": "OpenGL green channel inverted"
+}

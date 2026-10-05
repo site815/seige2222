@@ -12,6 +12,7 @@ __pycache__/
 *.VC.db
 *.opensdf
 *.log
+optix7cache.db
 Art/Exports/*
 !Art/Exports/asset_manifest.json
 Art/RealisticExports/*.fbx
@@ -19,3 +20,4 @@ Art/*.blend1
 Art/**/*.blend1
 Art/IndustryExports/*.fbx
 Art/Nature/Exports/*.fbx
+Art/EnvironmentV04/Exports/*.fbx

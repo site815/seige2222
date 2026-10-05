@@ -1,5 +1,5 @@
 {
-  "version": "prototype-2.0",
+  "version": "prototype-4.0",
   "buildings": [
     {
       "id": "command_core",
@@ -18,12 +18,16 @@
       "extract_rate": 0,
       "sensor_range": 2050,
       "attack_range": 1200,
-      "damage_per_second": 30,
       "color": [
         0.9,
         0.97,
         1
-      ]
+      ],
+      "weapon_name": "Core pulse emitter",
+      "damage_per_shot": 30,
+      "reload_seconds": 1,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "extract_iron_ore",
@@ -45,12 +49,16 @@
       "extract_rate": 1,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.75,
         0.4,
         0.24
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "extract_copper_ore",
@@ -72,12 +80,16 @@
       "extract_rate": 1,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.96,
         0.52,
         0.25
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "extract_silica",
@@ -99,12 +111,16 @@
       "extract_rate": 1,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.4,
         0.8,
         0.95
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "extract_carbon",
@@ -126,12 +142,16 @@
       "extract_rate": 1,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.31,
         0.35,
         0.44
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "alloy_refinery",
@@ -153,12 +173,16 @@
       "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.65,
         0.84,
         0.9
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "conductor_works",
@@ -180,12 +204,16 @@
       "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.65,
         0.84,
         0.9
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "substrate_works",
@@ -207,12 +235,16 @@
       "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.65,
         0.84,
         0.9
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "circuit_works",
@@ -234,12 +266,16 @@
       "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.65,
         0.84,
         0.9
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "component_works",
@@ -261,12 +297,16 @@
       "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.65,
         0.84,
         0.9
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "sensor",
@@ -288,12 +328,16 @@
       "extract_rate": 0,
       "sensor_range": 1700,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.65,
         0.84,
         0.9
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "turret",
@@ -316,12 +360,16 @@
       "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 1100,
-      "damage_per_second": 25,
       "color": [
         0.9,
         0.95,
         1
-      ]
+      ],
+      "weapon_name": "Sentinel cannon",
+      "damage_per_shot": 25,
+      "reload_seconds": 1,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     },
     {
       "id": "depot",
@@ -343,12 +391,16 @@
       "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
-      "damage_per_second": 0,
       "color": [
         0.65,
         0.84,
         0.9
-      ]
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0
     }
   ],
   "build_menu": [

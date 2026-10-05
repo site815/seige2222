@@ -10,6 +10,7 @@ Sector layout, information coverage, adjacent colonies, escape, and permanent lo
 
 - A planet is divided into sectors. The player owns a center sector and sees eight neighboring sectors in a 3×3 grid.
 - The camera should provide a broad overview of all nine sectors as well as a closer colony view.
+- Surrounding sectors should use a less detailed map presentation; zooming into a chosen area should show its detailed environment. Viewing or focusing a sector does not transfer ownership or reveal hidden colony activity.
 - Before a single-player scenario, each neighbor can be empty, a starting AI colony, or a developed AI colony. Disabled means empty, not frozen inhabitants.
 - The center can instead be AI-controlled for an observer scenario. Human play begins with a paused survey and selection of the one command-core site.
 - Seeing a sector on the map does not reveal its current activity.
@@ -28,6 +29,8 @@ Sector layout, information coverage, adjacent colonies, escape, and permanent lo
 The logical sector is **60,000 units square**, with **25 irregularly clustered resource nodes** repeated in each instantiated colony's local sector. The v0.3 graphics mapping is six Unreal centimeters per unit: **3.6 km × 3.6 km** rendered sectors and a **10.8 km** neighborhood side. v0.2 used one centimeter per unit, yielding the earlier 600 m sectors and 1.8 km neighborhood. Logical travel times, rates, positions, and balance are unchanged. This is a finite prototype map, not procedural planetary geography or a final scale decision; see [Graphics Milestone 0.3](GRAPHICS_MILESTONE_0_3.md).
 
 Human core selection pauses the scenario and displays a resource survey. Placement rejects sector-edge and deposit conflicts through normal simulation validation. After placement, ordinary finite live coverage applies. Neighbor building and threat rendering respects the human colony's coverage; observer mode deliberately shows the simulated colonies for observation.
+
+Current v0.4 retains this scale and adds a cartographic regional view with focused terrain: 1024 subdivisions, approximately 3.52 m spacing, compact foundations, and natural unbuilt deposits. Human commands remain restricted to the home sector; AI observation may inspect neighbors. Hidden building locations must not leak through summaries, ground pads, dirt, or vegetation. Native privacy, uphill picking, and incremental seam checks pass, and both final editor and Shipping routes completed 53 stages without failures. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md).
 
 Each occupied sector runs an independent local economy and alien threat simulation. The shared view does **not** yet permit cross-sector travel, goods transfer, trade, raiding, or a player's extraction in a neighboring sector. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md) for startup, controller, and save details.
 

@@ -1,0 +1,715 @@
+{
+  "meshes": {
+    "SM_JacarandaA": {
+      "path": "/Game/Art/NatureV04/SM_JacarandaA.SM_JacarandaA",
+      "dimensions_cm": [
+        2441.7049560546875,
+        1915.4574584960938,
+        1946.887451171875
+      ],
+      "ground_z": 0.0,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true,
+      "material_slots": [
+        "/Game/Art/NatureV04/MI_jacaranda_tree_branches.MI_jacaranda_tree_branches",
+        "/Game/Art/NatureV04/MI_jacaranda_tree_trunk.MI_jacaranda_tree_trunk",
+        "/Game/Art/NatureV04/MI_jacaranda_tree_leaves.MI_jacaranda_tree_leaves"
+      ]
+    },
+    "SM_MeadowGrassA": {
+      "path": "/Game/Art/NatureV04/SM_MeadowGrassA.SM_MeadowGrassA",
+      "dimensions_cm": [
+        67.84298324584961,
+        72.04228591918945,
+        27.195606231689453
+      ],
+      "ground_z": 0.0,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true,
+      "material_slots": [
+        "/Game/Art/NatureV04/MI_grass_bermuda_01_surface.MI_grass_bermuda_01_surface"
+      ]
+    },
+    "SM_MeadowSwardA": {
+      "path": "/Game/Art/NatureV04/SM_MeadowSwardA.SM_MeadowSwardA",
+      "dimensions_cm": [
+        140.39906311035156,
+        143.31773376464844,
+        55.69947814941406
+      ],
+      "ground_z": 0.0,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true,
+      "material_slots": [
+        "/Game/Art/NatureV04/MI_grass_medium_02_surface.MI_grass_medium_02_surface",
+        "/Game/Art/NatureV04/MI_grass_bermuda_01_surface.MI_grass_bermuda_01_surface"
+      ]
+    },
+    "SM_MeadowSwardB": {
+      "path": "/Game/Art/NatureV04/SM_MeadowSwardB.SM_MeadowSwardB",
+      "dimensions_cm": [
+        136.5093994140625,
+        131.28323364257812,
+        52.480194091796875
+      ],
+      "ground_z": 0.0,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true,
+      "material_slots": [
+        "/Game/Art/NatureV04/MI_grass_medium_02_surface.MI_grass_medium_02_surface",
+        "/Game/Art/NatureV04/MI_grass_bermuda_01_surface.MI_grass_bermuda_01_surface"
+      ]
+    },
+    "SM_WildflowerPatch": {
+      "path": "/Game/Art/NatureV04/SM_WildflowerPatch.SM_WildflowerPatch",
+      "dimensions_cm": [
+        108.94389343261719,
+        91.42248916625977,
+        57.15052032470703
+      ],
+      "ground_z": 0.0,
+      "uv_channels": 1,
+      "nanite": true,
+      "preserve_area": true,
+      "material_slots": [
+        "/Game/Art/NatureV04/MI_Original_Meadow_Stem.MI_Original_Meadow_Stem",
+        "/Game/Art/NatureV04/MI_Original_Meadow_Leaf.MI_Original_Meadow_Leaf",
+        "/Game/Art/NatureV04/MI_Original_Meadow_Cream.MI_Original_Meadow_Cream",
+        "/Game/Art/NatureV04/MI_Original_Meadow_Violet.MI_Original_Meadow_Violet",
+        "/Game/Art/NatureV04/MI_Original_Meadow_Gold.MI_Original_Meadow_Gold"
+      ]
+    }
+  },
+  "materials": {
+    "M_V04Bark": {
+      "expressions": 6,
+      "texture_samples": [
+        {
+          "parameter": "BaseColor",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_branches_color.T_jacaranda_tree_branches_color",
+          "never_stream": false,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "NormalMap",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_branches_normal.T_jacaranda_tree_branches_normal",
+          "never_stream": false,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RoughnessMap",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_branches_roughness.T_jacaranda_tree_branches_roughness",
+          "never_stream": false,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "OcclusionMap",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_branches_ao.T_jacaranda_tree_branches_ao",
+          "never_stream": false,
+          "mip_bias": 0
+        }
+      ]
+    },
+    "M_V04Foliage": {
+      "expressions": 11,
+      "texture_samples": [
+        {
+          "parameter": "BaseColor",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_leaves_color.T_jacaranda_tree_leaves_color",
+          "never_stream": false,
+          "mip_bias": -1
+        },
+        {
+          "parameter": "NormalMap",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_leaves_normal.T_jacaranda_tree_leaves_normal",
+          "never_stream": false,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RoughnessMap",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_leaves_roughness.T_jacaranda_tree_leaves_roughness",
+          "never_stream": false,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "OcclusionMap",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_leaves_ao.T_jacaranda_tree_leaves_ao",
+          "never_stream": false,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "OpacityMap",
+          "path": "/Game/Art/NatureV04/Textures/T_jacaranda_tree_leaves_alpha.T_jacaranda_tree_leaves_alpha",
+          "never_stream": false,
+          "mip_bias": -2
+        }
+      ]
+    },
+    "M_V04Grass": {
+      "expressions": 19,
+      "texture_samples": [
+        {
+          "parameter": "BaseColor",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.T_grass_medium_02_surface_color_padded",
+          "never_stream": true,
+          "mip_bias": -2
+        },
+        {
+          "parameter": "NormalMap",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_normal.T_grass_medium_02_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "OpacityMap",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_alpha.T_grass_medium_02_surface_alpha",
+          "never_stream": true,
+          "mip_bias": -2
+        },
+        {
+          "parameter": "OcclusionMap",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_ao.T_grass_medium_02_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "BaseColor",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.T_grass_medium_02_surface_color_padded",
+          "never_stream": true,
+          "mip_bias": -2
+        },
+        {
+          "parameter": "NormalMap",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_normal.T_grass_medium_02_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RoughnessMap",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_roughness.T_grass_medium_02_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "OpacityMap",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_alpha.T_grass_medium_02_surface_alpha",
+          "never_stream": true,
+          "mip_bias": -2
+        },
+        {
+          "parameter": "OcclusionMap",
+          "path": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_ao.T_grass_medium_02_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        }
+      ]
+    },
+    "M_V04Wildflowers": {
+      "expressions": 5,
+      "texture_samples": []
+    },
+    "M_TerrainV04": {
+      "expressions": 510,
+      "texture_samples": [
+        {
+          "parameter": "ForestColor0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.T_forest_leaves_02_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockNormal1",
+          "path": "/Game/Art/Textures/T_Rock_Normal.T_Rock_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowNormal1",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_normal.T_Grass004_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestNormal0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.T_forest_leaves_02_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestRoughness1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness.T_forest_leaves_02_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestAO1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_ao.T_forest_leaves_02_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowColor0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_color.T_Grass004_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowColor1",
+          "path": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestColor1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.T_forest_leaves_02_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtColor1",
+          "path": "/Game/Art/Textures/T_Dirt_Color.T_Dirt_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockColor1",
+          "path": "/Game/Art/Textures/T_Rock_Color.T_Rock_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestNormal0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.T_forest_leaves_02_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockNormal0",
+          "path": "/Game/Art/Textures/T_Rock_Normal.T_Rock_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowRoughness1",
+          "path": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtRoughness1",
+          "path": "/Game/Art/Textures/T_Dirt_Roughness.T_Dirt_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowAO0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_ao.T_Grass004_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestAO1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_ao.T_forest_leaves_02_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoColor0",
+          "path": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowColor0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_color.T_Grass004_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowColor1",
+          "path": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestColor1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.T_forest_leaves_02_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtColor1",
+          "path": "/Game/Art/Textures/T_Dirt_Color.T_Dirt_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockColor1",
+          "path": "/Game/Art/Textures/T_Rock_Color.T_Rock_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowNormal0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_normal.T_Grass004_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowNormal1",
+          "path": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestNormal1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.T_forest_leaves_02_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtNormal1",
+          "path": "/Game/Art/Textures/T_Dirt_Normal.T_Dirt_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockNormal1",
+          "path": "/Game/Art/Textures/T_Rock_Normal.T_Rock_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoNormal0",
+          "path": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowRoughness1",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_roughness.T_Grass004_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowRoughness0",
+          "path": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestRoughness0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness.T_forest_leaves_02_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtRoughness0",
+          "path": "/Game/Art/Textures/T_Dirt_Roughness.T_Dirt_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockRoughness0",
+          "path": "/Game/Art/Textures/T_Rock_Roughness.T_Rock_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoRoughness0",
+          "path": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowAO1",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_ao.T_Grass004_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowAO0",
+          "path": "/Game/Art/Textures/T_Meadow_AO.T_Meadow_AO",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestAO0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_ao.T_forest_leaves_02_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoColor0",
+          "path": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoColor1",
+          "path": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowColor0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_color.T_Grass004_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowColor1",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_color.T_Grass004_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowColor0",
+          "path": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowColor1",
+          "path": "/Game/Art/Textures/T_Meadow_Color.T_Meadow_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestColor0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.T_forest_leaves_02_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestColor1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.T_forest_leaves_02_surface_color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtColor0",
+          "path": "/Game/Art/Textures/T_Dirt_Color.T_Dirt_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtColor1",
+          "path": "/Game/Art/Textures/T_Dirt_Color.T_Dirt_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockColor0",
+          "path": "/Game/Art/Textures/T_Rock_Color.T_Rock_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockColor1",
+          "path": "/Game/Art/Textures/T_Rock_Color.T_Rock_Color",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowNormal0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_normal.T_Grass004_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowNormal1",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_normal.T_Grass004_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowNormal0",
+          "path": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowNormal1",
+          "path": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestNormal0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.T_forest_leaves_02_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestNormal1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.T_forest_leaves_02_surface_normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtNormal0",
+          "path": "/Game/Art/Textures/T_Dirt_Normal.T_Dirt_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtNormal1",
+          "path": "/Game/Art/Textures/T_Dirt_Normal.T_Dirt_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockNormal0",
+          "path": "/Game/Art/Textures/T_Rock_Normal.T_Rock_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockNormal1",
+          "path": "/Game/Art/Textures/T_Rock_Normal.T_Rock_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoNormal0",
+          "path": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoNormal1",
+          "path": "/Game/Art/Textures/T_Meadow_Normal.T_Meadow_Normal",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowRoughness0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_roughness.T_Grass004_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowRoughness1",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_roughness.T_Grass004_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowRoughness0",
+          "path": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowRoughness1",
+          "path": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestRoughness0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness.T_forest_leaves_02_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestRoughness1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness.T_forest_leaves_02_surface_roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtRoughness0",
+          "path": "/Game/Art/Textures/T_Dirt_Roughness.T_Dirt_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "DirtRoughness1",
+          "path": "/Game/Art/Textures/T_Dirt_Roughness.T_Dirt_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockRoughness0",
+          "path": "/Game/Art/Textures/T_Rock_Roughness.T_Rock_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "RockRoughness1",
+          "path": "/Game/Art/Textures/T_Rock_Roughness.T_Rock_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoRoughness0",
+          "path": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MesoRoughness1",
+          "path": "/Game/Art/Textures/T_Meadow_Roughness.T_Meadow_Roughness",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowAO0",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_ao.T_Grass004_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "MeadowAO1",
+          "path": "/Game/Art/NatureV04/Textures/T_Grass004_surface_ao.T_Grass004_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowAO0",
+          "path": "/Game/Art/Textures/T_Meadow_AO.T_Meadow_AO",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "EarthMeadowAO1",
+          "path": "/Game/Art/Textures/T_Meadow_AO.T_Meadow_AO",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestAO0",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_ao.T_forest_leaves_02_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        },
+        {
+          "parameter": "ForestAO1",
+          "path": "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_ao.T_forest_leaves_02_surface_ao",
+          "never_stream": true,
+          "mip_bias": 0
+        }
+      ],
+      "medium_detail": {
+        "MesoWorldFrequency": 0.0012499999720603228,
+        "MesoNormalStrength": 0.4000000059604645,
+        "MesoRoughnessStrength": 0.25,
+        "MesoDesaturation": 1.0,
+        "MesoReferenceLuminance": 0.25,
+        "MesoValueContrast": 4.0
+      }
+    }
+  },
+  "errors": [],
+  "meadow_foliage_tint": [
+    0.8199999928474426,
+    1.0,
+    0.699999988079071
+  ]
+}

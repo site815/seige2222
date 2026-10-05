@@ -39,8 +39,21 @@ public:
     FVector CameraCenter=FVector::ZeroVector;
     float Zoom=3500;
     float RenderScale=6,CameraYaw=135,CameraPitch=52,CameraFov=55;
-    float DefaultZoom=3500,MinimumZoom=900;
+    float DefaultZoom=3500,MinimumZoom=120;
+    int32 DetailedTerrainResolution=1024;
+    float RollingTerrainWavelength=3200,RollingTerrainAmplitude=360;
+    float MicroTerrainWavelength=360,MicroTerrainAmplitude=18;
+    float CorePadInnerRatio=1.15f,CorePadOuterRatio=1.8f;
+    FVector2D RidgeCenter=FVector2D(1900,-1400);
+    float RidgeAngleDegrees=35,RidgeWidth=1900,RidgeLength=6500,RidgeHeight=550;
+    float RegionMapZoom=40000,OrbitYawPerPixel=.45f,OrbitPitchPerPixel=.35f;
+    FString TerrainMaterialPath=TEXT("/Game/Art/NatureV04/M_TerrainV04.M_TerrainV04");
     int32 ForestCandidates=85000,NearForestCandidates=8500;
+    int32 GroundCoverCandidates=350000;
+    float GrassScaleMin=1.f,GrassScaleMax=1.3f;
+    float MinimumCameraPitch=8,MaximumCameraPitch=80,CameraGroundClearance=160;
+    float SunIntensity=5.2f,SkyIntensity=1.3f,CloudShadowStrength=.6f;
+    FString CloudMaterialPath=TEXT("/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst");
     TMap<FString,FString> NatureAssets;
     FVector2D CursorWorld=FVector2D::ZeroVector;
     bool CursorOnWorld=false;
@@ -70,9 +83,21 @@ public:
     void RebuildTerrainHeights();
     FTransform CameraTransform() const;
     FVector2D CameraPanDirection(float Forward,float Right) const;
+    void ApplyOrbitDrag(FVector2D Pixels);
+    bool IsRegionMap() const;
+    int32 DetailedSectorIndex() const;
+    FVector2D DetailedSectorOffset() const;
+    const FSeigeSimulation* ViewedSimulation() const;
+    void FocusSector(int32 Index);
+    float WoodlandDensity(FVector2D WorldLogical) const;
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FSeigeIncrementalSectorSeamTest;
+#endif
     UPROPERTY() TObjectPtr<class ACameraActor> Camera;
     UPROPERTY() TObjectPtr<AActor> Landscape;
+    UPROPERTY() TObjectPtr<AActor> Foliage;
+    UPROPERTY() TObjectPtr<AActor> GroundCover;
     UPROPERTY() TObjectPtr<class UMaterialInterface> BaseMaterial;
     UPROPERTY() TMap<FString, TObjectPtr<AActor>> Visuals;
     UPROPERTY() TMap<FString, TObjectPtr<class UMaterialInstanceDynamic>> Materials;
@@ -89,6 +114,14 @@ private:
     AActor* Visual(const FString& Key, const FString& Kind, FVector Location, FLinearColor Color, float Size);
     void Part(AActor* Actor,const FString& Shape,FVector Offset,FVector Scale,FLinearColor Color,FRotator Rotation=FRotator::ZeroRotator);
     void CreateLandscape();
+    void RefreshEnvironment();
+    void RefreshBuildingPads();
+    FString TerrainPadSignature;
+    TMap<FString,FVector4> TerrainPadBounds;
+    void CreateFoliage();
+    void CreateGroundCover();
+    int32 RenderedSector=-1;
+    FVector2D FoliageCenter=FVector2D(1.e10,1.e10);
     double TerrainHeight(FVector2D Position) const;
     bool LoadGraphicsSettings();
     TArray<FSeigeTerrainTile> TerrainTiles;
@@ -107,7 +140,12 @@ public:
     void HandlePrimaryClick(float ScreenX,float ScreenY);
     bool ScreenRay(const FVector2D& ScreenPosition,FVector& WorldOrigin,FVector& WorldDirection) const;
     bool UpdateCursorFromScreen(float ScreenX,float ScreenY);
+    void BeginOrbitGesture(float X,float Y);
+    void OrbitGestureDelta(float X,float Y);
+    void EndOrbitGesture();
 private:
+    bool OrbitActive=false;
+    FVector2D OrbitCursor;
     TSet<FKey> ConsumedKeysUntilRelease;
 };
 
@@ -148,6 +186,10 @@ private:
     float NoticeVisibleSeconds=0;
     bool InterfaceLoaded=false,InterfaceAttempted=false;
     FString InterfaceError,Version,LastNotice;
+    FString BuildingInfoSection;
+    int32 BuildingInfoPage=0;
+    void DrawBuildingInfo(ASeigeGameMode& GameMode,float Width,float Height);
+    void DrawRegionMap(ASeigeGameMode& GameMode,float Width,float Height);
     void Box(float X,float Y,float W,float H,FLinearColor Color);
     void Label(const FString& Text,float X,float Y,float Size,FLinearColor Color=FLinearColor::White);
     void Button(const FString& Text,const FString& Action,float X,float Y,float W,float H,bool Active=false,const FString& Tooltip=TEXT(""));

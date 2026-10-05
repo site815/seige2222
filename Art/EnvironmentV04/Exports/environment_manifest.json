@@ -1,0 +1,202 @@
+{
+  "units": "centimeters",
+  "license": "CC0 natural sources and original project wildflowers; see individual records",
+  "meshes": {
+    "SM_JacarandaA": {
+      "source_asset": "jacaranda_tree",
+      "source_object": "jacaranda_tree_LOD0",
+      "fbx": "SM_JacarandaA.fbx",
+      "sha256": "b15e84c676917c0a484e8a197b8302dd1289dec66e13f9d96edeef074b637ffe",
+      "materials": [
+        "PH_jacaranda_tree_branches",
+        "PH_jacaranda_tree_trunk",
+        "PH_jacaranda_tree_leaves"
+      ],
+      "dimensions_cm": [
+        2441.704833984375,
+        1915.45751953125,
+        1946.8875732421875
+      ],
+      "triangles": 3863832,
+      "vertices": 3055019,
+      "pivot": "horizontal bounds center, ground z=0",
+      "nanite": true,
+      "shape_preservation": "PRESERVE_AREA",
+      "unreal_path": "/Game/Art/NatureV04/SM_JacarandaA",
+      "license": "CC0-1.0"
+    },
+    "SM_MeadowGrassA": {
+      "source_asset": "grass_bermuda_01",
+      "source_object": "230 authored curved tufts, seeded spatial assembly",
+      "fbx": "SM_MeadowGrassA.fbx",
+      "sha256": "4be8e83977d5a51192de9cec65587bd48d9b638af8de8efa727912a1ef764bcd",
+      "materials": [
+        "PH_grass_bermuda_01_surface"
+      ],
+      "dimensions_cm": [
+        67.84298706054688,
+        72.04228973388672,
+        27.195606231689453
+      ],
+      "triangles": 12265,
+      "vertices": 10821,
+      "pivot": "horizontal bounds center, ground z=0",
+      "nanite": true,
+      "shape_preservation": "PRESERVE_AREA",
+      "unreal_path": "/Game/Art/NatureV04/SM_MeadowGrassA",
+      "license": "CC0-1.0"
+    },
+    "SM_MeadowSwardA": {
+      "source_asset": "grass_medium_02",
+      "source_assets": [
+        "grass_medium_02",
+        "grass_bermuda_01"
+      ],
+      "source_object": "16 tall authored tufts plus 920 low Bermuda tufts; deterministic full 3D underlayer, original tall-patch bounds retained",
+      "fbx": "SM_MeadowSwardA.fbx",
+      "sha256": "d650f081365f8b2cc29f5bb192031ccec714c7b23a3964c872ed1fa93e08aada",
+      "materials": [
+        "PH_grass_medium_02_surface",
+        "PH_grass_bermuda_01_surface"
+      ],
+      "dimensions_cm": [
+        140.39905667304993,
+        143.3177411556244,
+        55.69947510957718
+      ],
+      "triangles": 77572,
+      "vertices": 68828,
+      "pivot": "horizontal bounds center, ground z=0",
+      "nanite": true,
+      "shape_preservation": "PRESERVE_AREA",
+      "unreal_path": "/Game/Art/NatureV04/SM_MeadowSwardA"
+    },
+    "SM_MeadowSwardB": {
+      "source_asset": "grass_medium_02",
+      "source_assets": [
+        "grass_medium_02",
+        "grass_bermuda_01"
+      ],
+      "source_object": "16 tall authored tufts plus 920 low Bermuda tufts; deterministic full 3D underlayer, original tall-patch bounds retained",
+      "fbx": "SM_MeadowSwardB.fbx",
+      "sha256": "57b1baa21b9cfbefd38f8abdfef49c284b5790842cfc15b6f88a71617cff1fb1",
+      "materials": [
+        "PH_grass_medium_02_surface",
+        "PH_grass_bermuda_01_surface"
+      ],
+      "dimensions_cm": [
+        136.50939464569092,
+        131.28322958946228,
+        52.48019574210048
+      ],
+      "triangles": 77572,
+      "vertices": 68828,
+      "pivot": "horizontal bounds center, ground z=0",
+      "nanite": true,
+      "shape_preservation": "PRESERVE_AREA",
+      "unreal_path": "/Game/Art/NatureV04/SM_MeadowSwardB"
+    },
+    "SM_WildflowerPatch": {
+      "source_asset": "original_meadow_wildflowers",
+      "source_object": "Seeded original curved stems, leaf surfaces and petal rosettes",
+      "license": "Original project work; project licensing applies",
+      "fbx": "SM_WildflowerPatch.fbx",
+      "sha256": "645d8823c76fef000a332aeaaa29cf6412de40cd34be65f5d2b22813b93d59fc",
+      "materials": [
+        "Original_Meadow_Stem",
+        "Original_Meadow_Leaf",
+        "Original_Meadow_Cream",
+        "Original_Meadow_Violet",
+        "Original_Meadow_Gold"
+      ],
+      "dimensions_cm": [
+        108.94388961791992,
+        91.42248916625977,
+        57.15052177361213
+      ],
+      "triangles": 3000,
+      "vertices": 2932,
+      "pivot": "horizontal bounds center, ground z=0",
+      "nanite": true,
+      "shape_preservation": "PRESERVE_AREA",
+      "unreal_path": "/Game/Art/NatureV04/SM_WildflowerPatch"
+    }
+  },
+  "materials": {
+    "PH_jacaranda_tree_branches": {
+      "source_asset": "jacaranda_tree",
+      "texture_group": "branches",
+      "foliage": false
+    },
+    "PH_jacaranda_tree_trunk": {
+      "source_asset": "jacaranda_tree",
+      "texture_group": "trunk",
+      "foliage": false
+    },
+    "PH_jacaranda_tree_leaves": {
+      "source_asset": "jacaranda_tree",
+      "texture_group": "leaves",
+      "foliage": true
+    },
+    "PH_grass_bermuda_01_surface": {
+      "source_asset": "grass_bermuda_01",
+      "texture_group": "surface",
+      "foliage": true
+    },
+    "PH_grass_medium_02_surface": {
+      "source_asset": "grass_medium_02",
+      "texture_group": "surface",
+      "foliage": true
+    },
+    "Original_Meadow_Stem": {
+      "original_tint": [
+        0.08,
+        0.13,
+        0.032,
+        1
+      ],
+      "foliage": true,
+      "source": "Original project geometry and material"
+    },
+    "Original_Meadow_Leaf": {
+      "original_tint": [
+        0.095,
+        0.19,
+        0.045,
+        1
+      ],
+      "foliage": true,
+      "source": "Original project geometry and material"
+    },
+    "Original_Meadow_Cream": {
+      "original_tint": [
+        0.68,
+        0.67,
+        0.56,
+        1
+      ],
+      "foliage": true,
+      "source": "Original project geometry and material"
+    },
+    "Original_Meadow_Violet": {
+      "original_tint": [
+        0.24,
+        0.13,
+        0.33,
+        1
+      ],
+      "foliage": true,
+      "source": "Original project geometry and material"
+    },
+    "Original_Meadow_Gold": {
+      "original_tint": [
+        0.48,
+        0.31,
+        0.048,
+        1
+      ],
+      "foliage": true,
+      "source": "Original project geometry and material"
+    }
+  }
+}

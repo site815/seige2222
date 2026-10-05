@@ -68,19 +68,52 @@ export function validateConfiguration(data) {
   version(graphics, 'Graphics/scene.json');
   number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);
   number(graphics.camera_fov, 'Graphics camera_fov', 35, 80);
-  number(graphics.camera_pitch, 'Graphics camera_pitch', 25, 75);
+  number(graphics.camera_pitch, 'Graphics camera_pitch', 5, 85);
+  number(graphics.minimum_camera_pitch, 'Graphics minimum_camera_pitch', 5, 25);
+  number(graphics.maximum_camera_pitch, 'Graphics maximum_camera_pitch', 60, 85);
+  if (graphics.camera_pitch < graphics.minimum_camera_pitch || graphics.camera_pitch > graphics.maximum_camera_pitch) fail('Graphics default camera pitch lies outside orbit limits');
+  number(graphics.camera_ground_clearance_cm, 'Graphics camera_ground_clearance_cm', 100, 500);
+  number(graphics.sun_intensity, 'Graphics sun_intensity', .1, 20);
+  number(graphics.sky_intensity, 'Graphics sky_intensity', .1, 5);
+  number(graphics.cloud_shadow_strength, 'Graphics cloud_shadow_strength', 0, 1);
   number(graphics.camera_yaw, 'Graphics camera_yaw', -360, 360);
   number(graphics.default_zoom, 'Graphics default_zoom', 900, 20000);
-  number(graphics.minimum_zoom, 'Graphics minimum_zoom', 300, 2000);
+  number(graphics.minimum_zoom, 'Graphics minimum_zoom', 60, 2000);
+  if (![512, 1024].includes(graphics.detailed_terrain_resolution)) fail('Graphics detailed_terrain_resolution must be 512 or 1024');
+  number(graphics.rolling_terrain_wavelength, 'Graphics rolling_terrain_wavelength', 1000, 10000);
+  number(graphics.rolling_terrain_amplitude, 'Graphics rolling_terrain_amplitude', 0, 1000);
+  number(graphics.micro_terrain_wavelength, 'Graphics micro_terrain_wavelength', 100, 1000);
+  number(graphics.micro_terrain_amplitude, 'Graphics micro_terrain_amplitude', 0, 50);
+  number(graphics.core_pad_inner_ratio, 'Graphics core_pad_inner_ratio', 1, 2);
+  number(graphics.core_pad_outer_ratio, 'Graphics core_pad_outer_ratio', 1.1, 4);
+  if (graphics.core_pad_outer_ratio <= graphics.core_pad_inner_ratio) fail('Graphics pad outer ratio must exceed inner ratio');
+  number(graphics.ridge_center_x, 'Graphics ridge_center_x', -90000, 90000);
+  number(graphics.ridge_center_y, 'Graphics ridge_center_y', -90000, 90000);
+  number(graphics.ridge_angle_degrees, 'Graphics ridge_angle_degrees', -360, 360);
+  number(graphics.ridge_width, 'Graphics ridge_width', 500, 10000);
+  number(graphics.ridge_length, 'Graphics ridge_length', 1000, 30000);
+  number(graphics.ridge_height, 'Graphics ridge_height', 0, 1500);
+  if (1500 + graphics.rolling_terrain_amplitude + graphics.micro_terrain_amplitude + graphics.ridge_height >= 6000) fail('Graphics relief exceeds ground-trace bounds');
   if (graphics.minimum_zoom > graphics.default_zoom) fail('Graphics minimum_zoom exceeds default_zoom');
+  if (graphics.minimum_zoom >= graphics.default_zoom * .45) fail('Graphics minimum_zoom must lie below the close-view transition');
   number(graphics.forest_candidates, 'Graphics forest_candidates', 1000, 200000, true);
   number(graphics.near_forest_candidates, 'Graphics near_forest_candidates', 100, 30000, true);
+  number(graphics.region_map_zoom, 'Graphics region_map_zoom', 20000, 90000);
+  number(graphics.orbit_yaw_degrees_per_pixel, 'Graphics orbit_yaw_degrees_per_pixel', .05, 2);
+  number(graphics.orbit_pitch_degrees_per_pixel, 'Graphics orbit_pitch_degrees_per_pixel', .05, 2);
+  number(graphics.ground_cover_candidates, 'Graphics ground_cover_candidates', 10000, 400000, true);
+  number(graphics.grass_scale_min, 'Graphics grass_scale_min', .1, 3);
+  number(graphics.grass_scale_max, 'Graphics grass_scale_max', .1, 3);
+  if (graphics.grass_scale_min > graphics.grass_scale_max) fail('Graphics grass scale range is reversed');
   const natureAssets = object(graphics.nature_assets, 'Graphics nature_assets');
-  const natureRoles = ['OakA', 'OakB', 'PineA', 'PineB', 'Shrub', 'Grass', 'RockA', 'RockB'];
+  const natureRoles = ['OakA', 'OakB', 'PineA', 'PineB', 'Shrub', 'Grass', 'GrassB', 'Wildflowers', 'RockA', 'RockB'];
   for (const role of natureRoles) text(natureAssets[role], `Graphics nature_assets.${role}`);
   if (!(data.availableAssetPackages instanceof Set)) fail('Configuration is missing its project asset index; load it with readConfiguration');
-  for (const [role, asset] of Object.entries(natureAssets)) {
+  for (const [role, asset] of Object.entries({...natureAssets, terrain_material: graphics.terrain_material, cloud_material: graphics.cloud_material})) {
     text(asset, `Graphics nature_assets.${role}`);
+    // This bundled Unreal material is explicitly included by the cooker; custom
+    // replacements must be project assets so missing packages are caught here.
+    if (role === 'cloud_material' && asset === '/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst') continue;
     if (!/^\/Game\/(?:[A-Za-z0-9_]+\/)*[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?$/.test(asset)) fail(`Graphics nature_assets.${role} must be a /Game asset path`);
     const [packageName, objectName] = asset.split('.');
     if (objectName && objectName !== packageName.split('/').at(-1)) fail(`Graphics nature_assets.${role} has a mismatched object name`);

@@ -1,0 +1,2160 @@
+{
+  "jacaranda_tree": {
+    "objects": [
+      {
+        "name": "jacaranda_tree_geometry_nodes",
+        "dimensions": [
+          24.249378204345703,
+          18.988422393798828,
+          19.505617141723633
+        ],
+        "polygons": 141418,
+        "vertices": 151320,
+        "modifiers": [
+          [
+            "NODES",
+            "jacaranda_tree_leaves_main",
+            true
+          ],
+          [
+            "NODES",
+            "jacaranda_tree_leaves_tips",
+            true
+          ]
+        ],
+        "materials": [
+          "jacaranda_tree_branches"
+        ],
+        "attributes": [
+          [
+            "radius",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "direction",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_geometry_nodes"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_a_LOD0",
+        "dimensions": [
+          1.6642662286758423,
+          1.606834888458252,
+          0.6759767532348633
+        ],
+        "polygons": 213,
+        "vertices": 294,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_branches",
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "material_index",
+            "INT",
+            "FACE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD0"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_a_LOD1",
+        "dimensions": [
+          1.6642662286758423,
+          1.6085714101791382,
+          0.6759767532348633
+        ],
+        "polygons": 144,
+        "vertices": 189,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_branches",
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "material_index",
+            "INT",
+            "FACE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD1"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_b_LOD0",
+        "dimensions": [
+          1.2437596321105957,
+          1.4234780073165894,
+          0.5894589424133301
+        ],
+        "polygons": 170,
+        "vertices": 239,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_branches",
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "material_index",
+            "INT",
+            "FACE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD0"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_b_LOD1",
+        "dimensions": [
+          1.2437596321105957,
+          1.4236900806427002,
+          0.5894589424133301
+        ],
+        "polygons": 121,
+        "vertices": 158,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_branches",
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "material_index",
+            "INT",
+            "FACE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD1"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_c_LOD0",
+        "dimensions": [
+          0.3822973370552063,
+          0.48777586221694946,
+          0.20967671275138855
+        ],
+        "polygons": 22,
+        "vertices": 36,
+        "modifiers": [
+          [
+            "NODES",
+            "Auto Smooth",
+            true
+          ]
+        ],
+        "materials": [
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD0"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_c_LOD1",
+        "dimensions": [
+          0.3826836049556732,
+          0.4832606911659241,
+          0.20840448141098022
+        ],
+        "polygons": 17,
+        "vertices": 23,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD1"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_d_LOD0",
+        "dimensions": [
+          0.4319230318069458,
+          0.869472861289978,
+          0.1685008555650711
+        ],
+        "polygons": 24,
+        "vertices": 37,
+        "modifiers": [
+          [
+            "NODES",
+            "Auto Smooth",
+            true
+          ]
+        ],
+        "materials": [
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD0"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_d_LOD1",
+        "dimensions": [
+          0.4319230318069458,
+          0.8676049709320068,
+          0.1685008555650711
+        ],
+        "polygons": 16,
+        "vertices": 22,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD1"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_e_LOD0",
+        "dimensions": [
+          0.38088008761405945,
+          0.8018404841423035,
+          0.3361065685749054
+        ],
+        "polygons": 29,
+        "vertices": 40,
+        "modifiers": [
+          [
+            "NODES",
+            "Auto Smooth",
+            true
+          ]
+        ],
+        "materials": [
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD0"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_leaves_e_LOD1",
+        "dimensions": [
+          0.38088008761405945,
+          0.8020566701889038,
+          0.3361065685749054
+        ],
+        "polygons": 21,
+        "vertices": 26,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_leaves_LOD1"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_LOD0",
+        "dimensions": [
+          24.417049407958984,
+          19.15457534790039,
+          19.468875885009766
+        ],
+        "polygons": 2234022,
+        "vertices": 3055019,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_branches",
+          "jacaranda_tree_trunk",
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "leaves_tips",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "Group",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "leaves_main",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "radius",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "branches_large",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "id",
+            "INT",
+            "POINT"
+          ],
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "direction",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "material_index",
+            "INT",
+            "FACE"
+          ],
+          [
+            "Col",
+            "BYTE_COLOR",
+            "CORNER"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_LOD0"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_LOD1",
+        "dimensions": [
+          24.417049407958984,
+          19.15457534790039,
+          19.47311019897461
+        ],
+        "polygons": 1512380,
+        "vertices": 1813490,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_trunk",
+          "jacaranda_tree_branches",
+          "jacaranda_tree_leaves"
+        ],
+        "attributes": [
+          [
+            "leaves_tips",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "Group",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "leaves_main",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "radius",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "branches_large",
+            "FLOAT",
+            "POINT"
+          ],
+          [
+            "id",
+            "INT",
+            "POINT"
+          ],
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "direction",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "sharp_edge",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "material_index",
+            "INT",
+            "FACE"
+          ],
+          [
+            "Col",
+            "BYTE_COLOR",
+            "CORNER"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_LOD1"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_trunk_LOD0",
+        "dimensions": [
+          8.85470199584961,
+          6.488614082336426,
+          10.347593307495117
+        ],
+        "polygons": 57528,
+        "vertices": 57661,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_trunk"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "Col",
+            "BYTE_COLOR",
+            "CORNER"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_trunk_LOD0"
+        ]
+      },
+      {
+        "name": "jacaranda_tree_trunk_LOD1",
+        "dimensions": [
+          8.867790222167969,
+          6.51005744934082,
+          10.355578422546387
+        ],
+        "polygons": 14392,
+        "vertices": 14439,
+        "modifiers": [],
+        "materials": [
+          "jacaranda_tree_trunk"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "uv_seam",
+            "BOOLEAN",
+            "EDGE"
+          ],
+          [
+            "Col",
+            "BYTE_COLOR",
+            "CORNER"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "jacaranda_tree_trunk_LOD1"
+        ]
+      }
+    ],
+    "materials": {
+      "jacaranda_tree_branches": [
+        {
+          "type": "TEX_IMAGE",
+          "name": "Normal",
+          "image": "//textures\\jacaranda_tree_branches_nor_gl_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Rough",
+          "image": "//textures\\jacaranda_tree_branches_rough_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Diffuse",
+          "image": "//textures\\jacaranda_tree_branches_diff_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "MAPPING",
+          "name": "Mapping",
+          "image": null,
+          "uv_attribute": "",
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "jacaranda_tree_leaves": [
+        {
+          "type": "MAPPING",
+          "name": "Mapping",
+          "image": null,
+          "uv_attribute": "",
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture",
+          "image": "//textures\\jacaranda_tree_leaves_diff_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.001",
+          "image": "//textures\\jacaranda_tree_leaves_rough_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.003",
+          "image": "//textures\\jacaranda_tree_leaves_alpha_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.002",
+          "image": "//textures\\jacaranda_tree_leaves_nor_gl_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        }
+      ],
+      "jacaranda_tree_trunk": [
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture",
+          "image": "//textures\\jacaranda_tree_trunk_diff_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.001",
+          "image": "//textures\\jacaranda_tree_trunk_rough_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.002",
+          "image": "//textures\\jacaranda_tree_trunk_nor_gl_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "MAPPING",
+          "name": "Mapping",
+          "image": null,
+          "uv_attribute": "",
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.003",
+          "image": "//textures\\jacaranda_tree_branches_diff_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.004",
+          "image": "//textures\\jacaranda_tree_branches_rough_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.005",
+          "image": "//textures\\jacaranda_tree_branches_nor_gl_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "MAPPING",
+          "name": "Mapping.001",
+          "image": null,
+          "uv_attribute": "",
+          "scale": [
+            15.0,
+            15.0,
+            15.0
+          ]
+        }
+      ]
+    },
+    "units": 1.0
+  },
+  "grass_bermuda_01": {
+    "objects": [
+      {
+        "name": "grass_bermuda_01_dead_a",
+        "dimensions": [
+          0.06773801147937775,
+          0.0843101441860199,
+          0.024741128087043762
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_dead_b",
+        "dimensions": [
+          0.07010027766227722,
+          0.05502614378929138,
+          0.04334356263279915
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_flattened_a",
+        "dimensions": [
+          0.043938048183918,
+          0.06925326585769653,
+          0.043633755296468735
+        ],
+        "polygons": 11,
+        "vertices": 18,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_dead_a",
+        "dimensions": [
+          0.06773801147937775,
+          0.0843101441860199,
+          0.024741128087043762
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_dead_b",
+        "dimensions": [
+          0.07010027766227722,
+          0.05502614378929138,
+          0.04334356263279915
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_flattened_a",
+        "dimensions": [
+          0.043938048183918,
+          0.06925326585769653,
+          0.043633755296468735
+        ],
+        "polygons": 11,
+        "vertices": 18,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_medium_a",
+        "dimensions": [
+          0.03851224482059479,
+          0.02856733277440071,
+          0.09775002300739288
+        ],
+        "polygons": 10,
+        "vertices": 16,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_medium_b",
+        "dimensions": [
+          0.051163725554943085,
+          0.021864350885152817,
+          0.0745726078748703
+        ],
+        "polygons": 4,
+        "vertices": 9,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_medium_c",
+        "dimensions": [
+          0.05698142200708389,
+          0.09161889553070068,
+          0.06667336076498032
+        ],
+        "polygons": 12,
+        "vertices": 21,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_medium_d",
+        "dimensions": [
+          0.05497361719608307,
+          0.016299284994602203,
+          0.10206569731235504
+        ],
+        "polygons": 9,
+        "vertices": 13,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_medium_e",
+        "dimensions": [
+          0.06603643298149109,
+          0.03687525540590286,
+          0.082661472260952
+        ],
+        "polygons": 14,
+        "vertices": 24,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_medium_f",
+        "dimensions": [
+          0.04070085287094116,
+          0.02610260248184204,
+          0.11300424486398697
+        ],
+        "polygons": 18,
+        "vertices": 28,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_nodes",
+        "dimensions": [
+          1.0687613487243652,
+          1.073481559753418,
+          1.0599278211593628
+        ],
+        "polygons": 512,
+        "vertices": 482,
+        "modifiers": [
+          [
+            "NODES",
+            "GeometryNodes",
+            true
+          ]
+        ],
+        "materials": [
+          "grass_bermuda_01_sphere",
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry_nodes"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_seedling_a",
+        "dimensions": [
+          0.06783504039049149,
+          0.04558120667934418,
+          0.1508864462375641
+        ],
+        "polygons": 86,
+        "vertices": 125,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_seedling_b",
+        "dimensions": [
+          0.076595239341259,
+          0.049266546964645386,
+          0.127205029129982
+        ],
+        "polygons": 82,
+        "vertices": 118,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_seedling_c",
+        "dimensions": [
+          0.037162233144044876,
+          0.04451197385787964,
+          0.09225825220346451
+        ],
+        "polygons": 76,
+        "vertices": 108,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_seedling_d",
+        "dimensions": [
+          0.06964705884456635,
+          0.08313377946615219,
+          0.1521890014410019
+        ],
+        "polygons": 158,
+        "vertices": 226,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_single_a",
+        "dimensions": [
+          0.0035752211697399616,
+          0.013696599751710892,
+          0.14941483736038208
+        ],
+        "polygons": 8,
+        "vertices": 17,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_single_b",
+        "dimensions": [
+          0.0035752211697399616,
+          0.013696597889065742,
+          0.14941483736038208
+        ],
+        "polygons": 8,
+        "vertices": 17,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_small_a",
+        "dimensions": [
+          0.07986544072628021,
+          0.02775387465953827,
+          0.03223959356546402
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_small_b",
+        "dimensions": [
+          0.08268746733665466,
+          0.03603371977806091,
+          0.04585026204586029
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_small_c",
+        "dimensions": [
+          0.053999610245227814,
+          0.041465919464826584,
+          0.055165212601423264
+        ],
+        "polygons": 10,
+        "vertices": 20,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_small_d",
+        "dimensions": [
+          0.05821169912815094,
+          0.03346908837556839,
+          0.05464456230401993
+        ],
+        "polygons": 6,
+        "vertices": 11,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_small_e",
+        "dimensions": [
+          0.028711911290884018,
+          0.017662715166807175,
+          0.09073731303215027
+        ],
+        "polygons": 6,
+        "vertices": 11,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_geometry_small_f",
+        "dimensions": [
+          0.035537708550691605,
+          0.02461286261677742,
+          0.06905271857976913
+        ],
+        "polygons": 6,
+        "vertices": 11,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_geometry"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_medium_a",
+        "dimensions": [
+          0.03851224482059479,
+          0.02856733277440071,
+          0.09775002300739288
+        ],
+        "polygons": 10,
+        "vertices": 16,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_medium_b",
+        "dimensions": [
+          0.051163725554943085,
+          0.021864350885152817,
+          0.0745726078748703
+        ],
+        "polygons": 4,
+        "vertices": 9,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_medium_c",
+        "dimensions": [
+          0.05698142200708389,
+          0.09161889553070068,
+          0.06667336076498032
+        ],
+        "polygons": 12,
+        "vertices": 21,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_medium_d",
+        "dimensions": [
+          0.05497361719608307,
+          0.016299284994602203,
+          0.10206569731235504
+        ],
+        "polygons": 9,
+        "vertices": 13,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_medium_e",
+        "dimensions": [
+          0.06603643298149109,
+          0.03687525540590286,
+          0.082661472260952
+        ],
+        "polygons": 14,
+        "vertices": 24,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_medium_f",
+        "dimensions": [
+          0.04070085287094116,
+          0.02610260248184204,
+          0.11300424486398697
+        ],
+        "polygons": 18,
+        "vertices": 28,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_seedling_a",
+        "dimensions": [
+          0.06783504039049149,
+          0.04558120667934418,
+          0.1508864462375641
+        ],
+        "polygons": 86,
+        "vertices": 125,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_seedling_b",
+        "dimensions": [
+          0.076595239341259,
+          0.049266546964645386,
+          0.127205029129982
+        ],
+        "polygons": 82,
+        "vertices": 118,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_seedling_c",
+        "dimensions": [
+          0.037162233144044876,
+          0.04451197385787964,
+          0.09225825220346451
+        ],
+        "polygons": 76,
+        "vertices": 108,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_seedling_d",
+        "dimensions": [
+          0.06964705884456635,
+          0.08313377946615219,
+          0.1521890014410019
+        ],
+        "polygons": 158,
+        "vertices": 226,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_single_a",
+        "dimensions": [
+          0.0035752211697399616,
+          0.013696599751710892,
+          0.14941483736038208
+        ],
+        "polygons": 8,
+        "vertices": 17,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_single_b",
+        "dimensions": [
+          0.0035752211697399616,
+          0.013696597889065742,
+          0.14941483736038208
+        ],
+        "polygons": 8,
+        "vertices": 17,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_small_a",
+        "dimensions": [
+          0.07986544072628021,
+          0.02775387465953827,
+          0.03223959356546402
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_small_b",
+        "dimensions": [
+          0.08268746733665466,
+          0.03603371977806091,
+          0.04585026204586029
+        ],
+        "polygons": 7,
+        "vertices": 12,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_small_c",
+        "dimensions": [
+          0.053999610245227814,
+          0.041465919464826584,
+          0.055165212601423264
+        ],
+        "polygons": 10,
+        "vertices": 20,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_small_d",
+        "dimensions": [
+          0.05821169912815094,
+          0.03346908837556839,
+          0.05464456230401993
+        ],
+        "polygons": 6,
+        "vertices": 11,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_small_e",
+        "dimensions": [
+          0.028711911290884018,
+          0.017662715166807175,
+          0.09073731303215027
+        ],
+        "polygons": 6,
+        "vertices": 11,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      },
+      {
+        "name": "grass_bermuda_01_small_f",
+        "dimensions": [
+          0.035537708550691605,
+          0.02461286261677742,
+          0.06905271857976913
+        ],
+        "polygons": 6,
+        "vertices": 11,
+        "modifiers": [],
+        "materials": [
+          "grass_bermuda_01"
+        ],
+        "attributes": [
+          [
+            "position",
+            "FLOAT_VECTOR",
+            "POINT"
+          ],
+          [
+            "UVMap",
+            "FLOAT2",
+            "CORNER"
+          ]
+        ],
+        "collection": [
+          "grass_bermuda_01_static"
+        ]
+      }
+    ],
+    "materials": {
+      "grass_bermuda_01": [
+        {
+          "type": "MAPPING",
+          "name": "Mapping",
+          "image": null,
+          "uv_attribute": "",
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture",
+          "image": "//textures\\grass_bermuda_01_diff_1k.jpg",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.001",
+          "image": "//textures\\grass_bermuda_01_rough_1k.exr",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.002",
+          "image": "//textures\\grass_bermuda_01_nor_gl_1k.exr",
+          "uv_attribute": "",
+          "scale": null
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "Image Texture.003",
+          "image": "//textures\\grass_bermuda_01_alpha_1k.png",
+          "uv_attribute": "",
+          "scale": null
+        }
+      ],
+      "grass_bermuda_01_sphere": []
+    },
+    "units": 1.0
+  }
+}

@@ -21,7 +21,7 @@ do {
     $samples.Add([pscustomobject]@{seconds=[math]::Round(((Get-Date)-$started).TotalSeconds,2);process_ids=$gameIds;tcp=$tcp.Count;udp=$udp.Count})
   }
   $launch.Refresh()
-} while(($gameProcesses.Count -gt 0 -or -not $launch.HasExited) -and ((Get-Date)-$started).TotalSeconds -lt 150)
+} while(($gameProcesses.Count -gt 0 -or -not $launch.HasExited) -and ((Get-Date)-$started).TotalSeconds -lt 240)
 if($gameProcesses.Count -gt 0){throw 'Packaged smoke did not finish before the verification timeout'}
 $reportPath=Join-Path $saveRoot $reportName
 if(-not (Test-Path -LiteralPath $reportPath)){throw "Missing $reportName"}
@@ -30,6 +30,6 @@ $result=Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
 $record=[pscustomobject]@{mode=$Mode;started=$started.ToString('o');exit_code=$launch.ExitCode;report=$result;socket_samples=$samples}
 $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $projectRoot "Saved/packaged-v$version-$Mode-verification.json")
 $record | ConvertTo-Json -Depth 8
-if(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 28))){throw 'Packaged smoke assertions failed'}
+if(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 53))){throw 'Packaged smoke assertions failed'}
 if($samples.Count -eq 0){throw 'No live process observed'}
 if(@($samples | Where-Object {$_.tcp -gt 0 -or $_.udp -gt 0}).Count -gt 0){throw 'Game opened a network endpoint'}

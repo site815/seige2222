@@ -29,7 +29,7 @@ Automatic operation does not remove physical goods or transport. Inputs and outp
 
 **Confirmed direction:** The player should be able to see worker demand and unfilled jobs, through an open-jobs or required-workers metric. Staffing should remain understandable even though assignment is automatic.
 
-**Current prototype:** The interface reports colony population/jobs and building staffing and operating status. Final presentation and explanations of allocation under scarcity remain open; check readability in the running game rather than treating the presence of a metric as sufficient.
+**Current prototype:** The interface reports colony population/jobs and building staffing and operating status. The v0.4 source adds a sectioned building dossier covering costs, health, staffing, production, local inventories, incoming cargo, repairs, weapon damage/reload/DPS, and power. Required inputs stay visible at zero stock, and unarmed/zero-power values are explicit. Initial native checks passed, but rendered readability and access to every section still require verification. Explanations of the full-game allocation policy under scarcity remain open.
 
 ## Population, throughput, and consumption
 
@@ -44,6 +44,8 @@ A populous colony and a small specialized colony should both be viable strategie
 Enabled buildings require full staffing to operate, couriers physically deliver inputs between local inventories, and damage is repaired automatically using the implemented repair inputs. Job demand drives core robot assembly and later surplus retirement, with a configurable population minimum. The assembly-input buffer reserves materials for future robots; it does not add extra robots above job demand. Retirement currently gives no resource refund. Centralized upkeep, the staffing algorithm, and these population choices are editable prototype policies, not settled robot-needs or satisfaction systems.
 
 Construction immediately spends core inventory. Construction hauling is still missing even though production inputs and outputs use physical delivery. Local AI issues the same normal construction commands and then relies on the same workers, recipes, logistics, repairs, and threats. It does not receive recurring free inventory. Independent neighbor colonies cannot yet exchange cargo or attack each other.
+
+v0.4 building defenses execute data-defined shots and reloads; operating efficiency slows reload progress. The displayed nominal DPS is derived from shot damage and reload time. All buildings currently show 0 kW usage and generation because no separate grid is simulated. These explicit statistics explain the implemented slice without selecting a final energy system or full-game combat balance.
 
 ## Decisions still needed for the full game
 

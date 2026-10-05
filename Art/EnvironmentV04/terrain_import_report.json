@@ -1,0 +1,82 @@
+{
+  "material": "/Game/Art/NatureV04/M_TerrainV04",
+  "vertex_channels": {
+    "R": "soil/path",
+    "G": "rock",
+    "B": "forest density"
+  },
+  "physical_texture_size_cm": {
+    "Meadow": 140,
+    "EarthMeadow": 300,
+    "Meso": 800,
+    "Forest": 300,
+    "Dirt": 300,
+    "Rock": 250
+  },
+  "albedo_multipliers": {
+    "Meadow": [
+      0.64,
+      0.72,
+      0.58
+    ],
+    "EarthMeadow": [
+      0.6,
+      0.7,
+      0.54
+    ],
+    "Forest": [
+      0.65,
+      0.78,
+      0.6
+    ],
+    "Dirt": [
+      0.65,
+      0.62,
+      0.57
+    ],
+    "Rock": [
+      0.64,
+      0.66,
+      0.64
+    ]
+  },
+  "soil_mask_strength": 2.8,
+  "photographic_meadow_blend": [
+    0.35,
+    0.75
+  ],
+  "terrain_textures_never_stream": [
+    "/Game/Art/NatureV04/Textures/T_Grass004_surface_ao",
+    "/Game/Art/NatureV04/Textures/T_Grass004_surface_color",
+    "/Game/Art/NatureV04/Textures/T_Grass004_surface_normal",
+    "/Game/Art/NatureV04/Textures/T_Grass004_surface_roughness",
+    "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_ao",
+    "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_color",
+    "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal",
+    "/Game/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness",
+    "/Game/Art/Textures/T_Dirt_Color",
+    "/Game/Art/Textures/T_Dirt_Normal",
+    "/Game/Art/Textures/T_Dirt_Roughness",
+    "/Game/Art/Textures/T_Meadow_AO",
+    "/Game/Art/Textures/T_Meadow_Color",
+    "/Game/Art/Textures/T_Meadow_Normal",
+    "/Game/Art/Textures/T_Meadow_Roughness",
+    "/Game/Art/Textures/T_Rock_Color",
+    "/Game/Art/Textures/T_Rock_Normal",
+    "/Game/Art/Textures/T_Rock_Roughness"
+  ],
+  "medium_detail": {
+    "source": "Poly Haven leafy_grass",
+    "size_cm": 800,
+    "base_color_use": "desaturated value modulation only, .86 to 1.14 multiplier",
+    "linear_luminance_center": 0.25,
+    "filtered_contrast": 4,
+    "normal_strength": 0.4,
+    "normal_combination": "reoriented normal mapping",
+    "roughness_blend": 0.25,
+    "suppressed_on": "forest and rock",
+    "height_displacement": false
+  },
+  "coordinates": "world XY centimetres, two contrast-preserving detail frequencies, broad continuous noise",
+  "height_map_runtime_displacement": false
+}

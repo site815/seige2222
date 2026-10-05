@@ -2,9 +2,44 @@
 
 Updated: **2026-10-05** (Asia/Seoul). Engine: Unreal Engine 5.8.3. Platform: Windows x64.
 
-## v0.3.0 delivery status
+## v0.4.0 local delivery verified
 
-**The v0.3.0 Windows Shipping package is built and verified.** Nineteen native tests passed cleanly, and the packaged interaction route completed 28 stages with zero failures and exit code 0. The package is in `Builds/v0.3.0/Windows`; `Play-seige2222.cmd` selects it. The source repository is [site815/seige2222](https://github.com/site815/seige2222); local versioned binaries are excluded from Git. The v0.2 record below is historical evidence for that version.
+**The v0.4.0 Windows Shipping package is built and verified in `Builds/v0.4.0/Windows`; the launcher selects it. Native tests passed 27 cases, and the packaged route passed all 53 stages with exit 0.** The native result comprises 26 clean successes and one success with editor background HTTP warnings, not a gameplay assertion failure. No Manor Lords visual parity or final user acceptance is claimed.
+
+The interface has resource overlays with alerts beneath, floating bottom construction, captured middle-button orbit, a cartographic region view, focused-sector detail, and complete building dossiers. Armed/unarmed and zero-power states are explicit. Rules `prototype-4.0` execute weapon shots/reloads and preserve cooldown state; **start a new scenario**, because prior-rule saves are intentionally incompatible. These prototype choices do not finalize the full game or add persistent multiplayer.
+
+On **2026-10-05**, the installed Manor Lords game's latest Autosave was loaded, paused for wide/close-ground/map inspection, and exited without saving. The user rejected the preceding flat-ground/texture pass. The resulting terrain uses a focused 1024-subdivision grid at approximately 3.52 m spacing, rolling/ridge relief, compact foundations, natural unbuilt deposits, continuous grass/soil variation, and cloud lighting. The 8–80° orbit lowers smoothly near the 120 minimum zoom while preserving the chosen angle; minimum camera ground clearance is 160 cm.
+
+Final grass patches retain their bounds and add **920 low Bermuda tufts beneath the taller swards; each of the two meshes has 77,572 source triangles**. Runtime scale is 1.0–1.3, with bounds-aware foundation clearance, 500–900 m culling, and 9×9 streamed cells using 350,000 candidates. The imported 8 m photographic material layer adds desaturated tonal variation, normals, and roughness without geometric displacement. Measured filtered luminance informed a center of 0.25 and contrast 4, retaining the 0.86–1.14 multiplier clamp. See the [grass import report](../Art/EnvironmentV04/meadow_import_report.json), [grass calibration](../Art/EnvironmentV04/meadow_calibration_report.json), and [terrain report](../Art/EnvironmentV04/terrain_import_report.json).
+
+| v0.4 check | Recorded result | Evidence and boundary |
+| --- | --- | --- |
+| Native automation | **27 passed: 26 clean + 1 with warnings; 0 failed, 0 unrun** | `Saved/Automation/v04-verified/index.json`; includes uphill/horizontal terrain picking, incremental sector-edge seams, compact pads, privacy, camera, UI, simulation, AI, and persistence. |
+| Native warning | Editor background request/retry to `google.com/generate_204` failed | `Saved/native-v04-verified.log`; warning messages were captured during HiddenNeighborTerrain, which passed. This is distinct from a gameplay failure; Shipping network observations are recorded separately below. |
+| Final rendered route | **53 stages, 0 failures** | `Saved/render-v04-delivery.log` and `Saved/PresentationSmoke.json`; final observer snapshot reports 47.2 FPS. |
+| External definitions | Configuration validation passed | Rules, AI, Interface, and ten nature roles resolve; 22 deliberately invalid Rules cases are rejected. |
+| Shipping build and packaged interaction | **Exit 0; 53 stages, 0 failures** | `Saved/package-v04.log`, `Saved/packaged-v0.4.0-UiSmoke-verification.json`; final packaged snapshot 48.83 FPS. |
+| Packaged network observation | **45 samples; all 0 TCP / 0 UDP endpoints** | Same verification JSON, sampling the launched process tree. This is bounded endpoint observation, not packet capture or proof for every possible run. |
+| Loose definition staging | **10 files matched source hashes** | `Saved/staged-v04-files.json`; Rules, AIFILES, Interface, and Graphics. |
+
+Close and middle-distance captures are materially fuller, with real hills. Distant ground remains smooth/olive and the forest remains visually uniform; the result is still below the Manor Lords reference. Retained **Shipping captures**: [colony](../Art/Previews/v04_gameplay.png), [meadow](../Art/Previews/v04_meadow.png), [terrain](../Art/Previews/v04_terrain.png), [regional map](../Art/Previews/v04_regions.png), and [weapons dossier](../Art/Previews/v04_weapons.png).
+
+| Editor-view snapshot | Earlier capture FPS | Final editor capture FPS |
+| --- | --- | --- |
+| Play | 51 | 47 |
+| Middle meadow | 45 | 34 |
+| Ground | 44 | 33 |
+| Hills | 50 | 48 |
+
+These instantaneous readings illustrate the cost of denser cover in the observed views. They are not averages, controlled comparisons, hardware benchmarks, or a minimum-FPS guarantee.
+
+Known retained limitation: circular simulation spacing can allow diagonally placed square foundations to overlap at their corners. Building-art/footprint alignment remains deferred. Incremental terrain changes preserve shared sector edges and hidden-neighbor information boundaries, with native coverage.
+
+Earlier v0.4 history is retained in logs: the 41-stage action route passed but weapons/unarmed/regional-AI captures were mistimed; the later 53-stage terrain and calibrated routes corrected them. Passing those paths did not make the rejected earlier art acceptable. The [v0.4 milestone](game-design/GRAPHICS_MILESTONE_0_4.md) records current scope and remaining release work.
+
+## Historical v0.3.0 delivery status
+
+**The v0.3.0 Windows Shipping package is built and verified.** Nineteen native tests passed cleanly, and the packaged interaction route completed 28 stages with zero failures and exit code 0. The historical package is in `Builds/v0.3.0/Windows`; the launcher selected it for that release. The source repository is [site815/seige2222](https://github.com/site815/seige2222); local versioned binaries are excluded from Git. The v0.2 record below is historical evidence for that version.
 
 ## Implemented v0.3 presentation
 
@@ -23,7 +58,7 @@ Scenario save format 2 accepts optional yaw/pitch fields. Older format-2 saves w
 | Check | Recorded result | Evidence and boundary |
 | --- | --- | --- |
 | Editor and Shipping compilation/package | Passed, package exit 0 | `Saved/build-v03-editor.log`, `Saved/package-v03.log`; standalone output in `Builds/v0.3.0/Windows`. |
-| Native automation | **19 passed, 0 failed, 0 test warnings** | `Saved/Automation/v03-final/index.json`: six simulation, four AI, three interaction, three frontend, and three camera tests. Source code did not change after this run. |
+| Native automation | **19 passed, 0 failed, 0 test warnings** | `Saved/Automation/v03-final/index.json`: six simulation, four AI, three interaction, three frontend, and three camera tests. The delivered v0.3 source did not change after this run; v0.4 is separate work. |
 | Editor rendered interaction | **28 stages, 0 failures** | `Saved/render-v03-second.log`; perspective landing, construction, selection, rotated views, and low-angle building selection. The first run's 11 failures remain in `Saved/render-v03-first.log` as diagnosis history. |
 | Packaged rendered interaction | **28 stages, 0 failures, exit 0** | `Saved/packaged-v0.3.0-UiSmoke-verification.json`; final observer scenario has two AI neighbors and seventeen center buildings. |
 | Packaged network observation | **18 samples, each 0 TCP / 0 UDP endpoints** | Same verification JSON, sampling the launched process tree during the smoke route. This bounded observation is not a packet capture or a guarantee about every possible execution. |
@@ -113,4 +148,4 @@ powershell -ExecutionPolicy Bypass -File Tools/build.ps1 -Package
 
 Native tests use UnrealEditor-Cmd with `-NullRHI`, `-ExecCmds="Automation RunTests Seige"`, `-TestExit="Automation Test Queue Empty"`, and a report export directory. Inspect test result JSON; an editor process exit code alone does not report individual test failures. Rendered verification uses `-UiSmoke -RenderOffscreen -ForceRes -ResX=1600 -ResY=900`. The flag drives test-only interactions and exits after writing its report.
 
-The build script generates a directory for the current `ProjectVersion`. The verified v0.3 package is in `Builds/v0.3.0/Windows`; `Play-seige2222.cmd` launches it and honors saved display settings. Versioned binaries remain local and are excluded from the source repository. Older packages are retained. Build output, caches, downloaded tools, and test logs are excluded from Git; source assets and their provenance are tracked.
+The build script generates a directory for the current `ProjectVersion`. The verified v0.4.0 package is in `Builds/v0.4.0/Windows`; `Play-seige2222.cmd` launches it and honors saved display settings. Start a new scenario for `prototype-4.0` rules. Versioned binaries remain local and are excluded from the source repository. Older packages are retained. Build output, caches, downloaded tools, and test logs are excluded from Git; source assets and their provenance are tracked.
