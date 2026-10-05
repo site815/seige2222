@@ -1,5 +1,5 @@
 {
-  "version": "prototype-5.0",
+  "version": "prototype-6.0",
   "resources": [
     {
       "id": "iron_ore",
@@ -9,7 +9,8 @@
         0.75,
         0.4,
         0.24
-      ]
+      ],
+      "stockpile_visual": "bulk"
     },
     {
       "id": "copper_ore",
@@ -19,7 +20,8 @@
         0.96,
         0.52,
         0.25
-      ]
+      ],
+      "stockpile_visual": "bulk"
     },
     {
       "id": "silica",
@@ -29,7 +31,8 @@
         0.4,
         0.8,
         0.95
-      ]
+      ],
+      "stockpile_visual": "bulk"
     },
     {
       "id": "carbon",
@@ -39,7 +42,8 @@
         0.31,
         0.35,
         0.44
-      ]
+      ],
+      "stockpile_visual": "bulk"
     },
     {
       "id": "alloy",
@@ -49,7 +53,8 @@
         0.7,
         0.8,
         0.87
-      ]
+      ],
+      "stockpile_visual": "ingots"
     },
     {
       "id": "conductors",
@@ -59,7 +64,8 @@
         1,
         0.65,
         0.25
-      ]
+      ],
+      "stockpile_visual": "crates"
     },
     {
       "id": "substrates",
@@ -69,7 +75,8 @@
         0.48,
         0.9,
         0.83
-      ]
+      ],
+      "stockpile_visual": "crates"
     },
     {
       "id": "circuits",
@@ -79,7 +86,8 @@
         0.46,
         1,
         0.55
-      ]
+      ],
+      "stockpile_visual": "crates"
     },
     {
       "id": "components",
@@ -89,7 +97,8 @@
         0.85,
         0.6,
         1
-      ]
+      ],
+      "stockpile_visual": "crates"
     }
   ]
 }

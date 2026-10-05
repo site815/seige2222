@@ -40,7 +40,9 @@ def sample(param,role,bias=None):
 def multiply(a,b,ap='',bp=''):
     n=node(u.MaterialExpressionMultiply);wire(a,n,'A',ap);wire(b,n,'B',bp);return n
 tint=node(u.MaterialExpressionVectorParameter,parameter_name='FoliageTint',default_value=u.LinearColor(.82,1.0,.70,1))
-albedo=multiply(sample('BaseColor','color',-2),tint,'RGB');output(albedo,u.MaterialProperty.MP_BASE_COLOR)
+# Computed derivative-based color mips retain anisotropic filtering at grazing
+# angles. Keep the existing alpha bias and coverage to preserve silhouettes.
+albedo=multiply(sample('BaseColor','color'),tint,'RGB');output(albedo,u.MaterialProperty.MP_BASE_COLOR)
 normal=sample('NormalMap','normal');output(normal,u.MaterialProperty.MP_NORMAL,'RGB')
 output(sample('RoughnessMap','roughness'),u.MaterialProperty.MP_ROUGHNESS,'R')
 output(sample('OpacityMap','alpha',-2),u.MaterialProperty.MP_OPACITY_MASK,'R')
@@ -74,7 +76,7 @@ ME.set_material_instance_vector_parameter_value(low_mi,'FoliageTint',u.LinearCol
 for param,value in (('Transmission',.75),('Thickness',.3),('MicroOcclusion',.15)):ME.set_material_instance_scalar_parameter_value(low_mi,param,value)
 ME.update_material_instance(low_mi);ED.save_loaded_asset(low_mi,False);instances.append(low_mi.get_path_name())
 report={'material':m.get_path_name(),'instance':mi.get_path_name(),'tint':[.82,1,.70],'transmission':.75,'thickness':.3,'micro_occlusion':.15,
-    'mip_bias':{'BaseColor':-2,'OpacityMap':-2},'padded_colour':textures['color'].get_path_name(),'grass_maps_never_stream':True,
+    'mip_bias':{'OpacityMap':-2},'mip_mode':{'BaseColor':'computed_derivatives','OpacityMap':'bias'},'padded_colour':textures['color'].get_path_name(),'grass_maps_never_stream':True,
     'tree_material_unchanged':True,'emissive':False,'geometry_reimported':False,'instances':instances}
 (ART/'meadow_calibration_report.json').write_text(json.dumps(report,indent=2))
 u.log('SEIGE_MEADOW_CALIBRATION_COMPLETE '+json.dumps(report))

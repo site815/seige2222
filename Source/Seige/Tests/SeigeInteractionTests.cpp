@@ -104,6 +104,34 @@ bool FSeigeMenuShortcutTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSpeedAndMenuShortcutTest, "Seige.Interaction.SpeedAndGameMenuShortcuts", InteractionFlags)
+bool FSeigeSpeedAndMenuShortcutTest::RunTest(const FString& Parameters)
+{
+    FInteractionWorld World;if(!World.Prepare(*this))return false;
+    auto& Game=*World.Game;auto& Hud=*World.Hud;
+    Hud.HandleShortcut(EKeys::Add);TestEqual(TEXT("Numpad plus selects 5x after 1x"),Game.Speed,5.f);
+    Hud.HandleShortcut(EKeys::Equals);TestEqual(TEXT("Keyboard plus selects 10x after 5x"),Game.Speed,10.f);
+    Hud.HandleShortcut(EKeys::Add);TestEqual(TEXT("Plus wraps 10x to 1x"),Game.Speed,1.f);
+    Hud.HandleShortcut(EKeys::Hyphen);TestEqual(TEXT("Keyboard minus wraps 1x to 10x"),Game.Speed,10.f);
+    Hud.HandleShortcut(EKeys::Subtract);TestEqual(TEXT("Numpad minus selects 5x after 10x"),Game.Speed,5.f);
+    Hud.HandleShortcut(EKeys::SpaceBar);TestTrue(TEXT("Space pauses without resetting speed"),Game.Paused&&Game.Speed==5);
+    Hud.HandleShortcut(EKeys::SpaceBar);TestFalse(TEXT("Space resumes the same speed"),Game.Paused);
+    Game.SelectedBuild=TEXT("sensor");Hud.HandleShortcut(EKeys::Escape);
+    TestTrue(TEXT("Escape first cancels a blueprint without opening the game menu"),Game.SelectedBuild.IsEmpty()&&!Game.MenuOpen&&Game.Screen==TEXT("playing"));
+    Hud.HandleShortcut(EKeys::Escape);
+    TestTrue(TEXT("A subsequent Escape opens the game menu"),Game.MenuOpen&&Game.Screen==TEXT("game-menu")&&Game.Paused);
+    Hud.HandleShortcut(EKeys::Add);TestEqual(TEXT("Speed shortcuts do not change a paused menu's saved speed"),Game.Speed,5.f);
+    Game.CursorOnWorld=true;Game.CursorWorld=FVector2D(700,0);const int32 Buildings=Game.Sim.Buildings.Num();
+    Hud.Ui.Scale=1;Hud.Ui.HitRegions={{FVector2D(100,100),FVector2D(200,50),TEXT("build:sensor"),TEXT("")}};
+    World.Controller->HandlePrimaryClick(150,125);
+    TestTrue(TEXT("A stale blueprint button cannot build through the game menu"),Game.SelectedBuild.IsEmpty()&&Game.Sim.Buildings.Num()==Buildings);
+    Hud.HandleShortcut(EKeys::F10);Hud.HandleShortcut(EKeys::B);TestTrue(TEXT("Build catalog opens after resuming"),Hud.Ui.BuildOpen);
+    Hud.HandleShortcut(EKeys::F10);
+    TestTrue(TEXT("F10 opens the game menu directly even from the construction catalog"),Game.MenuOpen&&!Hud.Ui.BuildOpen&&Game.Paused);
+    Hud.HandleShortcut(EKeys::Escape);TestTrue(TEXT("Escape resumes the original running state"),!Game.MenuOpen&&!Game.Paused&&Game.Speed==5);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeUiClickIsolationTest, "Seige.Interaction.UiClickIsolation", InteractionFlags)
 bool FSeigeUiClickIsolationTest::RunTest(const FString& Parameters)
 {

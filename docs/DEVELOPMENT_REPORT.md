@@ -2,9 +2,42 @@
 
 Updated: **2026-10-05** (Asia/Seoul). Engine: Unreal Engine 5.8.3. Platform: Windows x64.
 
-## v0.5.0 local delivery verified
+## v0.6.0 local delivery verified
 
-**The v0.5.0 Windows Shipping package is built and verified in `Builds/v0.5.0/Windows`; the launcher selects it. All 29 native tests passed: 28 clean successes, one success with editor background HTTP warnings, zero failed or unrun. The packaged interaction route passed all 63 stages with zero failures and exit 0.** Local verification does not claim final visual acceptance or reference-game parity. Historical v0.4 evidence follows below.
+**The v0.6.0 Windows Shipping package is built and verified in `Builds/v0.6.0/Windows`; `Play-seige2222.cmd` selects it. Start a new scenario using `prototype-6.0`.** All 34 native tests passed cleanly. The packaged interaction route passed 79 stages with zero failures and exit 0; the separate actual-display route passed four states with zero failures. This is a functional release, with native-resolution performance and reference-quality visuals still unfinished.
+
+The camera now surveys the complete home sector before the grid map blends in. Wheel zoom and map-entry/sector-selection zoom ease over rendered frames. Native borderless is the default display mode; window sizes and independent 50–100% rendering resolution are selectable, with one **Medium** quality profile. Windows high-DPI support prevents the 3840×1600 monitor being treated as a 1920×800 virtual desktop. There is no exclusive-fullscreen mode. A direct HUD **Menu**, Escape and F10 open the paused game menu; Resume restores the preceding pause state. Runtime font rendering and a cleaner main-menu composition replace enlarged bitmap text. Local speeds are **1×, 5×, 10×**, cycled with +/−; Space toggles pause.
+
+The graphics pass reduces atmospheric haze and bloom, restores anisotropic grass color filtering, and tunes temporal reconstruction and Nanite detail while retaining foliage density. Source assets and licenses remain documented. Static review shows clearer terrain and text, but does not establish elimination of moving grass shimmer or Manor Lords quality parity. See [Graphics Performance 0.6](game-design/GRAPHICS_PERFORMANCE_0_6.md) for Epic references, local engine-source findings and measured tradeoffs.
+
+Couriers show their actual cargo and visible exterior loading stops. Representative workers fetch tools and work around buildings when staffing, supplies and operating conditions allow it. Outdoor inventory uses raw piles, ingots and crates; indoor inventory stays inside. Construction retains real reservation and physical delivery before worker assembly; delivered visual stacks shrink as material is installed. Courier/bug movement and construction interpolate every rendered frame between authoritative 20 Hz simulation ticks. This does not change transport speed, production rates, AI rules or building costs, and it does not introduce independent pathfinding for every robot.
+
+| v0.6 check | Recorded result | Evidence and boundary |
+| --- | --- | --- |
+| Full native automation | **34 clean passed; 0 warnings, failed or unrun** | `Saved/Automation/v06-final/index.json`; includes camera survey/easing, menu pause/save, 1/5/10 shortcuts, interpolation by entity ID, exterior work/stock placement and operating gates. |
+| External definitions | Configuration and **32 negative Rules cases** passed | Rules, AI, Interface and Graphics validation. All nine packaged JSON files match source SHA-256 hashes. |
+| Shipping package and interaction | **Exit 0; 79 stages, 0 failures** | `Saved/package-v06.log`, `Saved/packaged-v0.6.0-UiSmoke-verification.json`; representative 1× courier movement changed on 831 frames between fixed ticks. This is functional evidence, not a human motion-quality or FPS guarantee. |
+| Packaged network observation | **84 samples; all 0 TCP/UDP endpoints** | Launched game process tree during the interaction route; bounded endpoint observation, not packet capture or every possible run. |
+| Actual display changes | **4 states, 0 failures** | [Retained Shipping report](../Art/EnvironmentV06/display-shipping.json): native 3840×1600 borderless, 1280×720 windowed, windowed at 75% rendering, then restored native/100%; Medium retained. No saved display preferences overwritten. |
+| Runtime visual review | Menu, settings, survey, construction, stockyards and grass inspected | [Main menu](../Art/Previews/v06_main.png), [settings](../Art/Previews/v06_settings.png), [survey](../Art/Previews/v06_sector_survey.png), [construction](../Art/Previews/v06_construction.png), [stockyards](../Art/Previews/v06_stockyards.png), [ground](../Art/Previews/v06_ground.png). Captures are from the 1600×900 interaction route; display assertions come from the separate actual-window test. |
+
+Final Shipping timings on the RTX 4070 Ti SUPER / Ryzen 7 9800X3D, the same Medium profile at 100% rendering, one run per resolution:
+
+| View | 3840×1600 mean FPS | 1600×900 mean FPS |
+| --- | ---: | ---: |
+| Colony | 26.96 | 107.17 |
+| Meadow | 20.11 | 80.06 |
+| Ground | 20.25 | 79.55 |
+| Hills | 23.78 | 80.89 |
+| Boundary | 35.06 | 145.45 |
+
+Each view has at least four seconds of warmup followed by five seconds of complete frame intervals in a paused fresh colony with empty neighbors. These are fixed-view graphics measurements, not minimum FPS or a busy-colony simulation benchmark. [Native report](../Art/EnvironmentV06/benchmark-shipping-native.json) and [1600×900 report](../Art/EnvironmentV06/benchmark-shipping-medium.json) retain settings, mean frame time and p95. Lower render resolution is available without changing HUD resolution; **native ultrawide remains slow**. The earlier editor profile experiments observed 25–40% gains at native resolution, but changed multiple settings and do not establish equal-quality gains against v0.5.
+
+The [v0.6 verification record](verification/v0.6.0.json) retains executable/definition hashes and test counts. Full generated logs and local binaries remain outside Git. No separate Shipping save/load roundtrip or occupied-service-bay acceptance test is claimed; native tests cover persistence. Exterior worker/tool and material counts are representative, and crowded stockyards are not a global collision/pathfinding system. Construction refunds, full morale/revolt, fleets, cross-colony logistics and persistent multiplayer remain later work.
+
+## Historical v0.5.0 local delivery verified
+
+**The v0.5.0 Windows Shipping package was built and verified in `Builds/v0.5.0/Windows`; the launcher selected it for that release. All 29 native tests passed: 28 clean successes, one success with editor background HTTP warnings, zero failed or unrun. The packaged interaction route passed all 63 stages with zero failures and exit 0.** Local verification does not claim final visual acceptance or reference-game parity. Historical v0.4 evidence follows below.
 
 Construction now reserves uncommitted core stock at order time without consuming it immediately. Tagged couriers deliver the complete bill to a site's separate inventory, then assigned robot builders perform timed work. Completion consumes those materials into the structure. Until then, the site does not produce, repair, sense or fire. Site progress, deliveries in transit, pauses and maintenance state survive save/load; invalid snapshots are validated separately before replacing live state.
 

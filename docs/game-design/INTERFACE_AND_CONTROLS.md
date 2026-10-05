@@ -2,7 +2,7 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-Interface direction and the boundary between player decisions and automatic simulation. The floating-bottom construction layout supersedes the earlier top-only requirement. The v0.5 Shipping route completed 63 stages with zero failures, including construction, camera, terrain selection and building information; broader human usability review remains separate.
+Interface direction and the boundary between player decisions and automatic simulation. The floating-bottom construction layout supersedes the earlier top-only requirement. The v0.6 menu, display, and speed revision passed **34 clean native tests**, the **79-stage Shipping interaction route with zero failures and exit code 0**, and all **four Shipping native-display states with zero failures**. The earlier v0.5 Shipping route completed 63 stages with zero failures, including construction, camera, terrain selection and building information. Automated checks do not establish exhaustive human usability.
 
 ## Interface references
 
@@ -27,6 +27,55 @@ Hover and keyboard behavior must preserve ordinary world controls. Interface cli
 
 The displayed version must match the delivered build's version. The v0.3 package passed its 28-stage rendered interaction route, including menus, construction shortcuts, and perspective world clicks. This does not establish exhaustive human usability or completed visual polish.
 
+## Main menu and game menu — v0.6
+
+**Confirmed user requirements:** Use a polished main menu over the actual landscaped 3D scene, with restrained typography, clear hierarchy, and consistent navigation. The main menu offers Begin a colony, Load colony, Settings, Credits, and Exit game. Multiplayer is labelled as coming later. Menu title, eyebrow, and tagline are editable in `Interface/ui.json`.
+
+The current title is **SEIGE 2222**. Its heading uses a runtime font rendered at the actual display size. A continuous vertex-gradient scrim replaces the overlapping translucent strips that produced visible vertical seams. Actual 1280×720 and 3840×1600 development and final Shipping captures confirm the sharp title, continuous gradient, and unclipped navigation. Ordinary labels also render at their final pixel size, with matching font measurements for wrapping and deposit-label widths. Final Shipping captures of the main menu, scenario, construction catalog, credits, game menu, and settings show crisp text contained within its panels. The 1600×900 forced interaction capture is layout evidence; its Settings "Native" label does not establish the monitor's native resolution.
+
+The floating gameplay dock and landing survey expose a direct **Menu** button. **F10** opens or closes the game menu directly, including from the construction catalog or a game-menu subpage. **Escape** first cancels a blueprint, backs out of a construction category or overlay, or clears selection; with those dismissed, it toggles the game menu. Right click cancels/backtracks local placement and overlays without opening the game menu. Escape from Settings or Credits returns to the menu that opened that page.
+
+The game menu offers Resume, Save colony, Load colony, Settings, Credits, Return to main menu, and Exit game. Saving is unavailable before landing. Opening the game menu pauses both the local colony and its independently simulated neighbors. Closing it restores the earlier paused/running state and selected speed. Its Settings and Credits pages retain that pause. Saving from the game menu records the pause state from before the menu opened; loading restores the saved state and closes the menu.
+
+Main menu, scenario setup, and human landing survey also suspend the local simulation. Construction and Colony overlays continue to run time. These are local prototype controls; they do not define time control on a persistent server.
+
+## Display and local speed — v0.6
+
+**Confirmed user requirements and current implementation:**
+
+- A normal first launch uses **borderless**, filling the monitor at its native resolution. Existing exclusive-fullscreen preferences are converted to borderless; the interface provides no exclusive-fullscreen mode.
+- **Windowed** is selectable. Its resolution selector offers 1280×720, 1600×900, 1920×1080, 2560×1440, and 3840×2160 when they fit the desktop. The window choice is retained separately from the borderless monitor size.
+- **3D render resolution** is independent of window/display resolution. It defaults to 100%, has 50–100% controls in ten-percentage-point steps, and shows the effective width and height in pixels. Menus and text remain at full display resolution.
+- **Medium** is the sole graphics quality label. It is a custom, externally configured preset in `Graphics/scene.json`, with selected lighting, landscape, texture, and antialiasing settings. It is not an exposed choice among Unreal's generic Low/High/Epic presets. Applying a display or render-resolution change preserves this custom profile.
+- Local playback speeds are **1×, 5×, and 10×**. The speed button and **+** cycle forward; **−** cycles backward. Main-keyboard and numeric-keypad variants work. **Space** pauses/resumes without changing the selected speed. The supported list is stored in `Interface/ui.json`; legacy saved 3× playback migrates to 5×.
+
+Normal display preferences persist locally. Automated `-UiSmoke`, `-GraphicsBenchmark`, and `-ForceRes` runs leave the player's display preferences untouched and retain their explicitly requested capture size. The separate `-DisplaySmoke -NoSaveDisplay` route applies actual borderless/windowed and render-resolution changes, but the `NoSaveDisplay` guard suppresses preference saves and display config writes. It is a verification path, not a player-facing option.
+
+**Verified development and final Shipping display routes:** On a 3840×1600 monitor using Windows 200% display scaling, both routes passed all four actual viewport checks with zero failures:
+
+| State | Display pixels | 3D render scale | Effective render pixels |
+| --- | --- | --- | --- |
+| Native borderless | 3840×1600 | 100% | 3840×1600 |
+| Windowed | 1280×720 | 100% | 1280×720 |
+| Reduced rendering in the same window | 1280×720 | 75% | 960×540 |
+| Restored native borderless | 3840×1600 | 100% | 3840×1600 |
+
+The custom Medium shadow quality remained active in every state. High-DPI game mode is enabled in `DefaultEngine.ini`, including unattended verification. This corrected the earlier DPI-unaware desktop report of 1920×800 at 200% scaling. The final packaged result is retained in the [Shipping display report](../../Art/EnvironmentV06/display-shipping.json), with a local copy at `Saved/DisplaySmoke-v0.6.0.json`. Its fresh display captures are under `%LOCALAPPDATA%/seige2222/Saved/Screenshots/Review-v06/display_*.png`. Earlier development evidence remains in `Saved/DisplaySmoke.json` and `Saved/Screenshots/Review-v06`.
+
+| Control | Action |
+| --- | --- |
+| Menu button / F10 | Open or close the game menu |
+| Escape | Cancel/backtrack local UI first, then toggle the game menu |
+| Space | Pause/resume local simulation |
+| + / − | Cycle 1×, 5×, and 10× forward/backward |
+| F5 / F9 | Save/load a running colony; also available through the game menu |
+| B | Open construction; category and blueprint shortcuts follow |
+| WASD / arrows | Pan relative to camera yaw |
+| Q / E; middle drag | Rotate; rotate and tilt |
+| Wheel / Home | Zoom; return to the command core view |
+
+Native regression coverage includes direct menu access, pausing center and neighbor simulations, returning from Settings/Credits, saving the pre-menu pause state, loading from the menu, pre-landing resume and F9 load, speed keys, restoring the main-menu backdrop, and rejection of stale blueprint actions through the menu. The latest rebuilt headless run passed all **34 tests cleanly**, with **zero warnings, failures, or unrun tests**. This supersedes the earlier run containing an engine HTTP connectivity-probe warning. The report is `Saved/Automation/v06-final`. The final Shipping interaction route completed all **79 stages with zero failures**, including game-menu pause/restoration, settings, speeds, map transitions, and service activity; its report also counted 831 courier-motion frames between simulation ticks at 1×. Packaged captures and the report are under `%LOCALAPPDATA%/seige2222/Saved`. The separate Shipping native-display check also passed all four states, as recorded above.
+
 ## Perspective camera revision
 
 **Confirmed v0.3 direction:** The world uses a rotatable, tiltable perspective camera. Panning follows the camera's yaw; clicks and construction previews must intersect the visible terrain in front of the camera. Camera motion must not turn a UI action into a world command or accept a point behind the camera.
@@ -36,6 +85,8 @@ Delivered v0.3 bindings use Q/E to rotate, middle-mouse drag to rotate/tilt, WAS
 **Latest v0.4 request:** The middle/third mouse button should orbit responsively like the reference; the prior sensitivity was too low. The implementation captures pointer motion, uses editable sensitivity, and restores the pointer on release. Current configured limits are 8–80° pitch, minimum zoom 120 logical units, and 160 cm camera-to-ground clearance. At close zoom, the view smoothly lowers while retaining the user's orbit angle for zoom-out. Native tests cover clearance and angle restoration; final feel, gesture behavior, and appearance remain under rendered review.
 
 Zooming out should lead to a less detailed regional map. Zooming/focusing into a sector should reveal that area's detailed environment. The current source uses a 3×3 cartographic survey with selectable sectors; it suppresses world construction while on the map, and human deployment remains limited to the home sector. This is a viewing transition, not cross-sector movement or colony ownership. See [Graphics and Interface Milestone 0.4](GRAPHICS_MILESTONE_0_4.md).
+
+**v0.6 revision:** Wheel zoom, Home, the Regions button, and player-triggered sector focus ease toward their requested zoom. The cartographic overlay fades in across the configured transition band rather than replacing the world abruptly; a whole-sector survey remains a 3D view below that band. Input and map visibility use the displayed zoom, and projected world labels follow the actual camera. Scenario initialization, loaded-camera restoration, and direct setup/test calls can establish a view immediately; the `FocusSector` API uses its smooth-transition option for UI and controller actions. Maximum zoom and transition limits remain editable graphics parameters. Regional viewing continues to respect ownership and sensor boundaries.
 
 ## Colony controls
 

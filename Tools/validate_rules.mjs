@@ -33,7 +33,7 @@ export function validateRules(d) {
   for (const n of names) { object(d[n],n); str(d[n].version,`${n}.version`); if(d[n].version !== d.resources.version) fail('Rule file versions differ'); }
   const resources = catalog(d.resources.resources,'resources');
   if (!resources.size) fail('Resource catalog cannot be empty');
-  for (const r of resources.values()) { str(r.name,`${r.id}.name`); num(r.tier,`${r.id}.tier`,0,true); color(r.color,`${r.id}.color`); }
+  for (const r of resources.values()) { str(r.name,`${r.id}.name`); num(r.tier,`${r.id}.tier`,0,true); color(r.color,`${r.id}.color`); if(!['bulk','ingots','crates'].includes(r.stockpile_visual)) fail(`${r.id}: invalid stockpile_visual`); }
   const amounts = (v,n) => { object(v,n); for(const [id,a] of Object.entries(v)) { if(!resources.has(id)) fail(`${n} references unknown resource ${id}`); num(a,`${n}.${id}`); } };
   const recipes = catalog(d.recipes.recipes,'recipes');
   for (const r of recipes.values()) { num(r.seconds,`${r.id}.seconds`,0,false,true); amounts(r.inputs,`${r.id}.inputs`); amounts(r.outputs,`${r.id}.outputs`); if(sum(r.inputs)<=0) fail(`${r.id} needs positive inputs`); }
@@ -46,6 +46,7 @@ export function validateRules(d) {
     for(const k of ['health','footprint','storage_capacity','construction_seconds']) num(b[k],`${b.id}.${k}`,0,false,true);
     num(b.construction_workers,`${b.id}.construction_workers`,1,true);num(b.robot_support_capacity,`${b.id}.robot_support_capacity`,0,true);
     num(b.staffing_priority,`${b.id}.staffing_priority`,0,true);
+    if(!['indoor','outdoor'].includes(b.inventory_presentation)||!['extraction','assembly','handling','inspection','service'].includes(b.worker_activity)) fail(`${b.id}: invalid presentation metadata`);
     for(const k of ['sensor_range','attack_range','damage_per_shot','reload_seconds','extract_rate','power_usage_kw','power_generation_kw']) num(b[k],`${b.id}.${k}`);
     str(b.weapon_name,`${b.id}.weapon_name`,true);
     const armed=b.damage_per_shot>0;
@@ -132,6 +133,9 @@ function selfTest(source) {
     ['unimplemented power demand',d=>d.buildings.buildings[0].power_usage_kw=1],
     ['nonfinite derived DPS',d=>{d.buildings.buildings[0].damage_per_shot=Number.MAX_VALUE;d.buildings.buildings[0].reload_seconds=.1;}],
     ['instant construction',d=>d.buildings.buildings[1].construction_seconds=0],
+    ['unknown stockpile geometry',d=>d.resources.resources[0].stockpile_visual='magic'],
+    ['unknown inventory location',d=>d.buildings.buildings[0].inventory_presentation='nowhere'],
+    ['unknown workforce activity',d=>d.buildings.buildings[0].worker_activity='unbounded_patrol'],
     ['fractional builders',d=>d.buildings.buildings[1].construction_workers=1.5],
     ['negative support',d=>d.buildings.buildings[0].robot_support_capacity=-1],
     ['missing landing kit',d=>d.scenario.scenario.starting_deployment_materials={}],

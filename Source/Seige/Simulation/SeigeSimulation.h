@@ -3,7 +3,7 @@
 
 struct FSeigeResourceDef
 {
-    FString Id, Name;
+    FString Id, Name, StockpileVisual;
     FLinearColor Color = FLinearColor::White;
     int32 Tier = 0;
 };
@@ -24,6 +24,7 @@ struct FSeigeBuildingDef
     double DamagePerShot = 0, ReloadSeconds = 0, PowerUsageKW = 0, PowerGenerationKW = 0;
     double ConstructionSeconds = 1;
     int32 ConstructionWorkers = 1, RobotSupportCapacity = 0, StaffingPriority = 0;
+    FString InventoryPresentation, WorkerActivity;
 };
 struct FSeigeBuilding
 {
@@ -96,6 +97,7 @@ public:
     double FixedStepSeconds() const;
     double ConstructionAvailable(const FString& Resource) const;
     double OperatingEfficiency() const { return WorkforceEfficiency; }
+    bool HasActiveWork(const FSeigeBuilding& Building) const;
     TArray<FSeigeBuildingInfoRow> BuildingInfo(const FString& DefinitionId, int32 BuildingId = 0, double CentimetersPerUnit = 1) const;
 
     TMap<FString, FSeigeResourceDef> Resources;

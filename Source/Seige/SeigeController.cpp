@@ -73,7 +73,7 @@ void ASeigeController::PlayerTick(float Dt)
     auto* UI=Cast<ASeigeHUD>(GetHUD());
     bool Consumed=false;
     for(auto It=ConsumedKeysUntilRelease.CreateIterator();It;++It)if(!IsInputKeyDown(*It))It.RemoveCurrent();
-    TArray<FKey> Keys={EKeys::Escape,EKeys::RightMouseButton,EKeys::SpaceBar,EKeys::F5,EKeys::F9};
+    TArray<FKey> Keys={EKeys::Escape,EKeys::RightMouseButton,EKeys::SpaceBar,EKeys::F5,EKeys::F9,EKeys::F10,EKeys::Add,EKeys::Subtract,EKeys::Equals,EKeys::Hyphen};
     for(TCHAR Letter=TEXT('A');Letter<=TEXT('Z');++Letter)Keys.Add(FKey(FName(*FString::Chr(Letter))));
     for(const FKey& Key:Keys)if(WasInputKeyJustPressed(Key))
     {
@@ -102,15 +102,15 @@ void ASeigeController::PlayerTick(float Dt)
         {
             float X=0,Y=0;FString Action;
             if(G->IsRegionMap()&&UI&&GetMousePosition(X,Y))Action=UI->Ui.HitTest(X,Y);
-            if(Action.StartsWith(TEXT("focus-sector:")))G->FocusSector(FCString::Atoi(*Action.Mid(13)));
+            if(Action.StartsWith(TEXT("focus-sector:")))G->FocusSector(FCString::Atoi(*Action.Mid(13)),true);
             else G->Zoom=FMath::Max(G->MinimumZoom,G->Zoom*.88f);
         }
-        if(WasInputKeyJustPressed(EKeys::MouseScrollDown))G->Zoom=FMath::Min(static_cast<float>(G->Sim.WorldHalfSize*12),G->Zoom*1.12f);
+        if(WasInputKeyJustPressed(EKeys::MouseScrollDown))G->Zoom=FMath::Min(G->MaximumZoom,G->Zoom*1.12f);
     }
     const double Limit=G->Sim.WorldHalfSize*2.8;
     G->CameraCenter.X=FMath::Clamp(G->CameraCenter.X,-Limit,Limit);G->CameraCenter.Y=FMath::Clamp(G->CameraCenter.Y,-Limit,Limit);
     if(!Blocked&&WasInputKeyJustPressed(EKeys::Home)){G->CameraCenter=FVector(G->HomePosition(),0);G->Zoom=G->DefaultZoom;G->CameraYaw=135;G->CameraPitch=52;}
-    G->UpdateCamera();
+    G->UpdateCamera(Dt);
     if(PlayerCameraManager)PlayerCameraManager->UpdateCamera(Dt);
     float X=0,Y=0;G->CursorOnWorld=false;
     if(!OrbitActive&&GetMousePosition(X,Y)){UpdateCursorFromScreen(X,Y);if(WasInputKeyJustPressed(EKeys::LeftMouseButton))HandlePrimaryClick(X,Y);}

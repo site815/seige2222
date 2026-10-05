@@ -14,6 +14,10 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/GameViewportClient.h"
 #include "SceneView.h"
+#include "Styling/CoreStyle.h"
+#include "GlobalRenderResources.h"
+#include "EngineFontServices.h"
+#include "Fonts/FontMeasure.h"
 
 namespace {
 const FLinearColor Ink(.023f,.029f,.033f,.93f),Panel(.043f,.052f,.057f,.95f),Raised(.105f,.124f,.133f,.99f);
@@ -22,6 +26,20 @@ constexpr float TopHeight=80;
 bool Contains(const FSeigeButton& R,float X,float Y) {return X>=R.Position.X&&X<=R.Position.X+R.Size.X&&Y>=R.Position.Y&&Y<=R.Position.Y+R.Size.Y;}
 bool OutcomeModal(const ASeigeGameMode& G) {return !G.Ready||(!G.Observer&&(G.Sim.Escaped||G.Sim.Failed||(G.Sim.Won&&!G.WinAcknowledged)));}
 FString ResourceName(const FSeigeSimulation& S,const FString& Id) {const auto* R=S.Resources.Find(Id);return R?R->Name:Id;}
+TSharedPtr<FSlateFontMeasure> HudFontMeasure()
+{
+    if(!GEngine||!GEngine->GetLargeFont()||GEngine->GetLargeFont()->FontCacheType!=EFontCacheType::Runtime||!FEngineFontServices::IsInitialized())return nullptr;
+    return FEngineFontServices::Get().GetFontMeasure();
+}
+FSlateFontInfo HudFont(float LogicalHeight,float UiScale,const FSlateFontMeasure& Measure)
+{
+    UFont* Font=GEngine->GetLargeFont();FSlateFontInfo Info=Font->GetLegacySlateFontInfo();Info.FontObject=Font;
+    const FVector2D Base=Measure.Measure(FStringView(TEXT("Ag")),Info);
+    // Preserve the existing logical line height, but ask Slate to rasterize at
+    // the final pixel size instead of enlarging the legacy 10-point glyphs.
+    Info.Size=FMath::Max(1.f,Info.Size*LogicalHeight*UiScale/FMath::Max(float(Base.Y),1.f));
+    return Info;
+}
 }
 FString FSeigeUiState::HitTest(float SX,float SY) const
 {
@@ -60,6 +78,15 @@ bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
     TArray<FSeigeSummaryResource> Summary;const TArray<TSharedPtr<FJsonValue>>* SummaryRows=nullptr;
     if(!Root->TryGetArrayField(TEXT("summary_resources"),SummaryRows)){Error=TEXT("Interface summary resources are missing");return false;}
     for(const auto& Row:*SummaryRows){const auto O=Row->AsObject();FSeigeSummaryResource R;if(!O||!O->TryGetStringField(TEXT("resource"),R.Resource)||!O->TryGetStringField(TEXT("label"),R.Label)){Error=TEXT("Invalid summary resource entry");return false;}Summary.Add(R);}
+    const TSharedPtr<FJsonObject>* Frontend=nullptr;
+    if(Root->TryGetObjectField(TEXT("frontend"),Frontend))
+    {(*Frontend)->TryGetStringField(TEXT("title"),Ui.Title);(*Frontend)->TryGetStringField(TEXT("eyebrow"),Ui.Eyebrow);(*Frontend)->TryGetStringField(TEXT("tagline"),Ui.Tagline);}
+    const TArray<TSharedPtr<FJsonValue>>* Speeds=nullptr;
+    if(Root->TryGetArrayField(TEXT("simulation_speeds"),Speeds))
+    {
+        TArray<int32> Values;for(const auto& Item:*Speeds){double Number=0;if(!Item->TryGetNumber(Number)||(Number!=1&&Number!=5&&Number!=10)||Values.Contains(int32(Number))){Error=TEXT("Simulation speeds must contain 1, 5 and 10 once each");return false;}Values.Add(int32(Number));}
+        Values.Sort();if(Values.Num()!=3){Error=TEXT("Simulation speeds must contain 1, 5 and 10");return false;}Ui.SpeedSteps=MoveTemp(Values);
+    }
     Ui.Categories=MoveTemp(Parsed);Ui.Credits=MoveTemp(Credits);Ui.SummaryResources=MoveTemp(Summary);InterfaceLoaded=true;InterfaceAttempted=true;Error.Empty();return true;
 }
 bool ASeigeHUD::BlocksCameraKeys() const{return Ui.BuildOpen||Ui.ColonyOpen;}
@@ -67,20 +94,31 @@ bool ASeigeHUD::IsPointerOverUI() const{float X=0,Y=0;const auto* PC=GetOwningPl
 bool ASeigeHUD::HandleShortcut(const FKey& K){auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;return G?ProcessShortcut(K,*G):false;}
 bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
 {
+    G.GameSpeeds=Ui.SpeedSteps;
+    if(Key==EKeys::F10){Ui.CloseMenus();G.ToggleGameMenu();return true;}
+    if(Key==EKeys::Escape||Key==EKeys::RightMouseButton)
+    {
+        if(!G.SelectedBuild.IsEmpty()){G.SelectedBuild.Empty();return true;}
+        if(Ui.BuildOpen&&Ui.GroupFocused){Ui.GroupFocused=false;return true;}
+        if(Ui.BuildOpen||Ui.ColonyOpen||!Ui.HoverPanel.IsEmpty()){Ui.CloseMenus();return true;}
+        if(G.SelectedId){G.SelectedId=0;return true;}
+        if(Key==EKeys::RightMouseButton)return G.Screen==TEXT("playing")||G.Screen==TEXT("landing");
+        Ui.CloseMenus();
+        if(G.Screen==TEXT("settings")||G.Screen==TEXT("credits"))G.ShowScreen(G.ReturnScreen);
+        else if(G.MenuOpen||G.Screen==TEXT("playing")||G.Screen==TEXT("landing"))G.ToggleGameMenu();
+        else if(G.Screen!=TEXT("main"))G.ReturnToMainMenu();
+        return true;
+    }
     if(G.Screen!=TEXT("playing"))
     {
-        if(Key==EKeys::Escape){Ui.CloseMenus();if(G.Screen==TEXT("settings")||G.Screen==TEXT("credits"))G.ShowScreen(G.ReturnScreen);else if(G.Screen!=TEXT("main"))G.ReturnToMainMenu();return true;}
+        if(G.MenuOpen&&(Key==EKeys::F5||Key==EKeys::F9)){if(Key==EKeys::F9||G.MenuReturnScreen==TEXT("playing"))ExecuteAction(Key==EKeys::F5?TEXT("save"):TEXT("load"),G);return true;}
         if(G.Screen==TEXT("landing"))return false;
         if(G.Screen==TEXT("main")){if(Key==EKeys::S)G.ShowScreen(TEXT("scenario"));else if(Key==EKeys::L||Key==EKeys::F9)G.LoadGame();else if(Key==EKeys::C){G.ReturnScreen=TEXT("main");G.ShowScreen(TEXT("credits"));}}
         return true;
     }
-    if(Key==EKeys::Escape||Key==EKeys::RightMouseButton)
-    {
-        if(Ui.BuildOpen&&Ui.GroupFocused){Ui.GroupFocused=false;return true;}
-        if(Ui.BuildOpen||Ui.ColonyOpen||!Ui.HoverPanel.IsEmpty()){Ui.CloseMenus();return true;}
-        G.SelectedBuild.Empty();G.SelectedId=0;return true;
-    }
     if(OutcomeModal(G))return true;
+    if(Key==EKeys::Add||Key==EKeys::Equals){G.CycleGameSpeed(1);return true;}
+    if(Key==EKeys::Subtract||Key==EKeys::Hyphen){G.CycleGameSpeed(-1);return true;}
     if(Key==EKeys::F5){LastNotice.Empty();G.SaveGame();return true;}if(Key==EKeys::F9){LastNotice.Empty();G.LoadGame();Ui.CloseMenus();return true;}if(Key==EKeys::SpaceBar){G.Paused=!G.Paused;return true;}
     if(Key==EKeys::B)
     {
@@ -108,7 +146,7 @@ bool ASeigeHUD::ProcessClick(float X,float Y,ASeigeGameMode& G)
     {
         if(!Action.IsEmpty())
         {
-            if(Action.StartsWith(TEXT("focus-sector:"))||Action==TEXT("region-map")||Action.StartsWith(TEXT("screen:"))||Action.StartsWith(TEXT("slot:"))||Action.StartsWith(TEXT("quality:"))||Action==TEXT("start-scenario")||Action==TEXT("main-menu")||Action==TEXT("back-screen")||Action==TEXT("load")||Action==TEXT("fullscreen")||Action==TEXT("exit"))ExecuteAction(Action,G);
+            if(Action.StartsWith(TEXT("focus-sector:"))||Action==TEXT("region-map")||Action.StartsWith(TEXT("screen:"))||Action.StartsWith(TEXT("slot:"))||Action.StartsWith(TEXT("render-scale:"))||Action.StartsWith(TEXT("window-resolution:"))||Action.StartsWith(TEXT("display:"))||Action==TEXT("start-scenario")||Action==TEXT("main-menu")||Action==TEXT("back-screen")||Action==TEXT("load")||Action==TEXT("save")||Action==TEXT("fullscreen")||Action==TEXT("game-menu")||Action==TEXT("resume-game")||Action==TEXT("exit"))ExecuteAction(Action,G);
             return true;
         }
         return G.Screen!=TEXT("landing");
@@ -126,16 +164,20 @@ bool ASeigeHUD::ProcessClick(float X,float Y,ASeigeGameMode& G)
 }
 bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
 {
+    if(A==TEXT("game-menu")){Ui.CloseMenus();G.ToggleGameMenu();return true;}
+    if(A==TEXT("resume-game")){Ui.CloseMenus();G.ResumeGameMenu();return true;}
     if(A.StartsWith(TEXT("screen:"))){G.ReturnScreen=G.Screen;Ui.CloseMenus();G.ShowScreen(A.RightChop(7));return true;}
     if(A.StartsWith(TEXT("slot:"))){G.CycleScenarioSlot(FCString::Atoi(*A.RightChop(5)));return true;}
-    if(A.StartsWith(TEXT("quality:"))){G.SetGraphicsQuality(FCString::Atoi(*A.RightChop(8)));return true;}
+    if(A.StartsWith(TEXT("render-scale:"))){G.SetRenderResolutionPercent(G.RenderResolutionPercent+FCString::Atof(*A.RightChop(13)));return true;}
+    if(A.StartsWith(TEXT("window-resolution:"))){G.CycleWindowResolution(FCString::Atoi(*A.RightChop(18)));return true;}
     if(A==TEXT("fullscreen")){G.SetFullscreen(!G.Fullscreen);return true;}
+    if(A.StartsWith(TEXT("display:"))){G.SetFullscreen(A==TEXT("display:borderless"));return true;}
     if(A==TEXT("start-scenario")){Ui.CloseMenus();G.StartScenario();return true;}
     if(A==TEXT("main-menu")){Ui.CloseMenus();G.ReturnToMainMenu();return true;}
     if(A==TEXT("back-screen")){Ui.CloseMenus();G.ShowScreen(G.ReturnScreen);return true;}
     if(A==TEXT("exit")){if(auto* PC=GetOwningPlayerController())PC->ConsoleCommand(TEXT("quit"));return true;}
-    if(A==TEXT("region-map")){Ui.CloseMenus();G.SelectedBuild.Empty();G.SelectedId=0;G.Zoom=G.Sim.WorldHalfSize*12;G.CameraCenter=FVector::ZeroVector;G.UpdateCamera();return true;}
-    if(A.StartsWith(TEXT("focus-sector:"))){const int32 Index=FCString::Atoi(*A.RightChop(13));if(G.Screen!=TEXT("landing")||Index==4){Ui.CloseMenus();G.FocusSector(Index);}return true;}
+    if(A==TEXT("region-map")){Ui.CloseMenus();G.SelectedBuild.Empty();G.SelectedId=0;G.Zoom=G.MaximumZoom;G.CameraCenter=FVector::ZeroVector;return true;}
+    if(A.StartsWith(TEXT("focus-sector:"))){const int32 Index=FCString::Atoi(*A.RightChop(13));if(G.Screen!=TEXT("landing")||Index==4){Ui.CloseMenus();G.FocusSector(Index,true);}return true;}
     if(A==TEXT("build-menu"))return ProcessShortcut(EKeys::B,G);
     if(A==TEXT("colony-menu")){const bool Open=!Ui.ColonyOpen;Ui.CloseMenus();Ui.ColonyOpen=Open;return true;}
     if(A.StartsWith(TEXT("group:"))){Ui.Category=A.RightChop(6);Ui.GroupFocused=true;return true;}
@@ -152,18 +194,34 @@ bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
         if(G.Sim.BuildMenu.Contains(Id)){G.SelectedBuild=Id;G.SelectedId=0;Ui.CloseMenus();G.Notice=TEXT("Place ")+G.Sim.BuildingDefs[Id].Name+TEXT(". Right-click or Esc cancels.");}
         return true;
     }
-    if(A==TEXT("pause"))G.Paused=!G.Paused;else if(A==TEXT("speed"))G.Speed=G.Speed==1?3:1;
-    else if(A==TEXT("save")){LastNotice.Empty();G.SaveGame();Ui.CloseMenus();}else if(A==TEXT("load")){LastNotice.Empty();G.LoadGame();Ui.CloseMenus();}
+    if(A==TEXT("pause"))G.Paused=!G.Paused;else if(A==TEXT("speed")){G.GameSpeeds=Ui.SpeedSteps;G.CycleGameSpeed();}
+    else if(A==TEXT("save")){if(G.Screen!=TEXT("playing")&&(!G.MenuOpen||G.MenuReturnScreen!=TEXT("playing")))return true;LastNotice.Empty();const bool WasPaused=G.Paused;if(G.MenuOpen)G.Paused=G.PauseBeforeMenu;G.SaveGame();if(G.MenuOpen)G.Paused=WasPaused;Ui.CloseMenus();}else if(A==TEXT("load")){LastNotice.Empty();G.LoadGame();Ui.CloseMenus();}
     else if(A==TEXT("reset")){G.ResetColony();Ui.CloseMenus();}else if(A==TEXT("continue"))G.WinAcknowledged=true;
     else if(A==TEXT("toggle")&&!G.Observer&&!G.IsRegionMap()&&G.DetailedSectorIndex()==4)G.Sim.ToggleBuilding(G.SelectedId);
     else if(A==TEXT("escape")&&!G.Observer){G.Sim.LaunchShuttle();Ui.CloseMenus();G.Notice=TEXT("Shuttle launched with only cargo already aboard.");}
     return true;
 }
-void ASeigeHUD::Box(float X,float Y,float W,float H,FLinearColor C){if(Canvas)DrawRect(C,X*Scale,Y*Scale,W*Scale,H*Scale);}
+void ASeigeHUD::Box(float X,float Y,float W,float H,FLinearColor C){C.A*=DrawOpacity;if(Canvas)DrawRect(C,X*Scale,Y*Scale,W*Scale,H*Scale);}
 void ASeigeHUD::Label(const FString& Value,float X,float Y,float Size,FLinearColor C)
 {
-    if(!Canvas||!GEngine)return;float TW=0,TH=0;Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),TW,TH);
+    if(!Canvas||!GEngine)return;C.A*=DrawOpacity;
+    if(const auto Measure=HudFontMeasure())
+    {
+        FCanvasTextItem Item(FVector2D(X*Scale,Y*Scale),FText::FromString(Value),HudFont(Size,Scale,*Measure),C);
+        Item.DisableShadow();Canvas->DrawItem(Item);return;
+    }
+    float TW=0,TH=0;Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),TW,TH);
     DrawText(Value,C,X*Scale,Y*Scale,GEngine->GetLargeFont(),Size/FMath::Max(TH,1.f)*Scale,false);
+}
+FVector2D ASeigeHUD::MeasureLabel(const FString& Value,float Size) const
+{
+    if(!Canvas||!GEngine||Scale<=0)return FVector2D::ZeroVector;
+    if(const auto Measure=HudFontMeasure())
+    {
+        const FVector2D Pixels=Measure->Measure(Value,HudFont(Size,Scale,*Measure));return Pixels/Scale;
+    }
+    float TW=0,TH=0,BW=0,BH=0;Canvas->StrLen(GEngine->GetLargeFont(),Value,TW,TH);Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),BW,BH);
+    return FVector2D(TW,TH)*(Size/FMath::Max(BH,1.f));
 }
 void ASeigeHUD::Region(const FString& A,float X,float Y,float W,float H,const FString& Tip){Ui.HitRegions.Add({FVector2D(X,Y),FVector2D(W,H),A,Tip});}
 void ASeigeHUD::Frame(float X,float Y,float W,float H){Box(X+3,Y+5,W,H,FLinearColor(0,0,0,.28f));Box(X,Y,W,H,Panel);Box(X,Y,W,1,FLinearColor(.43f,.47f,.46f,.7f));Box(X,Y+H-1,W,1,FLinearColor(.24f,.29f,.29f,.7f));Region(TEXT("panel"),X,Y,W,H);}
@@ -176,8 +234,7 @@ void ASeigeHUD::Button(const FString& Value,const FString& A,float X,float Y,flo
 TArray<FString> ASeigeHUD::WrapLines(const FString& Value,float Width,float Size) const
 {
     TArray<FString> Lines;if(!Canvas||!GEngine)return Lines;TArray<FString> Words;Value.ParseIntoArray(Words,TEXT(" "),true);FString Line;
-    float BW=0,BH=0;Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),BW,BH);const float FS=Size/FMath::Max(BH,1.f);
-    for(const FString& Word:Words){const FString Candidate=Line.IsEmpty()?Word:Line+TEXT(" ")+Word;float TW=0,TH=0;Canvas->StrLen(GEngine->GetLargeFont(),Candidate,TW,TH);if(TW*FS>Width&&!Line.IsEmpty()){Lines.Add(Line);Line=Word;}else Line=Candidate;}
+    for(const FString& Word:Words){const FString Candidate=Line.IsEmpty()?Word:Line+TEXT(" ")+Word;if(MeasureLabel(Candidate,Size).X>Width&&!Line.IsEmpty()){Lines.Add(Line);Line=Word;}else Line=Candidate;}
     if(!Line.IsEmpty())Lines.Add(Line);return Lines;
 }
 void ASeigeHUD::Wrapped(const FString& Value,float X,float& Y,float Width,float Size,FLinearColor C)
@@ -225,19 +282,70 @@ void ASeigeHUD::Description(const FSeigeBuildingDef& D,ASeigeGameMode& G,float X
 bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
 {
     if(G.Screen==TEXT("playing")||G.Screen==TEXT("landing"))return false;
-    Ui.CloseMenus();Box(0,0,W,H,FLinearColor(.025f,.033f,.027f,.91f));Region(TEXT("frontend"),0,0,W,H);
-    Label(TEXT("seige2222"),30,22,29,Gold);Label(FString::Printf(TEXT("v%s / %.0f FPS"),*Version,SmoothedFps),32,63,13,Muted);
-    if(G.Screen==TEXT("main"))
+    Ui.CloseMenus();Region(TEXT("frontend"),0,0,W,H);
+    const bool Navigation=G.Screen==TEXT("main")||G.Screen==TEXT("game-menu");
+    Box(0,0,W,H,FLinearColor(.018f,.026f,.028f,Navigation?.25f:.52f));
+    if(Navigation)
     {
-        const float X=W/2-230,Y=H/2-222;
-        Label(TEXT("FIRST LANDING"),X,Y-60,34,Text);Label(TEXT("Build a colony. Sustain it. Defend it."),X,Y-12,16,Muted);
-        Button(TEXT("Single player"),TEXT("screen:scenario"),X,Y+40,460,51);
-        Button(TEXT("Load single-player colony"),TEXT("load"),X,Y+98,460,51);
-        Button(TEXT("Multiplayer  /  Coming soon"),TEXT("unavailable"),X,Y+156,460,51);
-        Button(TEXT("Credits"),TEXT("screen:credits"),X,Y+214,460,51);
-        Button(TEXT("Settings"),TEXT("screen:settings"),X,Y+272,460,51);
-        Button(TEXT("Exit"),TEXT("exit"),X,Y+330,460,51);
-        float TY=Y+408;if(!G.Notice.IsEmpty())Wrapped(G.Notice,X,TY,460,14,Muted);
+        // Shared triangle edges interpolate alpha continuously, without the
+        // dark seams caused by overlapping translucent rectangles.
+        const float FadeW=FMath::Min(840.f,W*.57f);
+        TArray<FCanvasUVTri> Gradient;Gradient.Reserve(32);
+        for(int32 I=0;I<16;++I)
+        {
+            const float T0=I/16.f,T1=(I+1)/16.f,X0=T0*FadeW*Scale,X1=T1*FadeW*Scale;
+            const FLinearColor C0(.017f,.027f,.031f,.84f*(1-T0)*(1-T0)),C1(.017f,.027f,.031f,.84f*(1-T1)*(1-T1));
+            FCanvasUVTri A,B;
+            A.V0_Pos=FVector2D(X0,0);A.V1_Pos=FVector2D(X1,0);A.V2_Pos=FVector2D(X0,H*Scale);
+            A.V0_Color=C0;A.V1_Color=C1;A.V2_Color=C0;
+            B.V0_Pos=A.V1_Pos;B.V1_Pos=FVector2D(X1,H*Scale);B.V2_Pos=A.V2_Pos;
+            B.V0_Color=C1;B.V1_Color=C1;B.V2_Color=C0;
+            Gradient.Add(A);Gradient.Add(B);
+        }
+        FCanvasTriangleItem Scrim(Gradient,GWhiteTexture);Scrim.BlendMode=SE_BLEND_Translucent;Canvas->DrawItem(Scrim);
+        const float X=88,Y=H*.135f,MW=370;
+        Label(G.Screen==TEXT("main")?Ui.Eyebrow:TEXT("COLONY / GAME MENU"),X,Y,14,Gold);
+        Box(X,Y+30,54,2,Gold);
+        // Cache glyphs at their final pixel size, instead of magnifying the
+        // engine's small bitmap font for a large menu heading.
+        FSlateFontInfo TitleFont=FCoreStyle::GetDefaultFontStyle(TEXT("Bold"),(G.Screen==TEXT("main")?52.f:30.f)*Scale);
+        TitleFont.FontObject=GEngine->GetLargeFont();
+        FCanvasTextItem TitleItem(FVector2D(X*Scale,(Y+56)*Scale),FText::FromString(G.Screen==TEXT("main")?Ui.Title:TEXT("A moment of quiet.")),TitleFont,Text);
+        TitleItem.DisableShadow();Canvas->DrawItem(TitleItem);
+        float TY=Y+143;
+        Wrapped(G.Screen==TEXT("main")?Ui.Tagline:TEXT("The simulation is paused while this menu is open."),X,TY,430,19,Muted);
+        float NY=Y+213;
+        auto Item=[&](const FString& Name,const FString& Action,bool Primary=false,bool Enabled=true)
+        {
+            float MX=0,MY=0;const auto* PC=GetOwningPlayerController();
+            const bool Hover=Enabled&&PC&&PC->GetMousePosition(MX,MY)&&MX/Scale>=X&&MX/Scale<X+MW&&MY/Scale>=NY&&MY/Scale<NY+48;
+            if(Primary){Box(X,NY,MW,48,FLinearColor(.69f,.73f,.62f,Hover?.27f:.16f));Box(X,NY,3,48,Gold);}
+            else if(Hover){Box(X,NY,MW,48,FLinearColor(.6f,.69f,.67f,.10f));Box(X,NY,2,48,Gold);}
+            Label(Name,X+16,NY+15,17,Enabled?(Primary?Gold:Text):Muted);
+            Label(Primary?TEXT(">"):Hover?TEXT("+"):TEXT(""),X+MW-31,NY+15,17,Gold);
+            Box(X+16,NY+48,MW-32,1,FLinearColor(.71f,.77f,.72f,.13f));
+            if(Enabled)Region(Action,X,NY,MW,49);NY+=57;
+        };
+        if(G.Screen==TEXT("main"))
+        {
+            Item(TEXT("Begin a colony"),TEXT("screen:scenario"),true);
+            Item(TEXT("Load colony"),TEXT("load"));Item(TEXT("Settings"),TEXT("screen:settings"));
+            Item(TEXT("Credits"),TEXT("screen:credits"));Item(TEXT("Exit game"),TEXT("exit"));
+            Label(TEXT("MULTIPLAYER / COMING LATER"),X+16,NY+19,11,Muted);
+            Label(TEXT("BUILD. SUSTAIN. DEFEND."),W-360,H-127,14,Gold);
+            Label(TEXT("Robot industry in an untamed landscape."),W-360,H-99,14,Text);
+            Label(TEXT("Single player / Entirely offline"),W-360,H-73,12,Muted);
+        }
+        else
+        {
+            Item(TEXT("Resume                         Esc / F10"),TEXT("resume-game"),true);
+            Item(TEXT("Save colony                            F5"),TEXT("save"),false,G.MenuReturnScreen==TEXT("playing"));
+            Item(TEXT("Load colony                            F9"),TEXT("load"));
+            Item(TEXT("Settings"),TEXT("screen:settings"));Item(TEXT("Credits"),TEXT("screen:credits"));
+            Item(TEXT("Return to main menu"),TEXT("main-menu"));Item(TEXT("Exit game"),TEXT("exit"));
+        }
+        if(!G.Notice.IsEmpty()){float Note=H-100;Wrapped(G.Notice,X,Note,570,12,Muted);}
+        Label(FString::Printf(TEXT("seige2222 / v%s"),*Version),X,H-42,11,Muted);
     }
     else if(G.Screen==TEXT("scenario"))
     {
@@ -264,12 +372,34 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
     }
     else if(G.Screen==TEXT("settings"))
     {
-        const float X=W/2-370,Y=H/2-200;Frame(X,Y,740,420);Label(TEXT("SETTINGS"),X+28,Y+26,28,Gold);
-        Label(TEXT("Graphics quality"),X+28,Y+96,18,Text);
-        const TArray<FString> Names={TEXT("Low"),TEXT("Medium"),TEXT("High"),TEXT("Ultra")};
-        for(int32 I=0;I<4;++I)Button(Names[I],TEXT("quality:")+FString::FromInt(I),X+28+I*174,Y+135,164,46,G.GraphicsQuality==I);
-        Label(TEXT("Display mode"),X+28,Y+225,18,Text);Button(G.Fullscreen?TEXT("Fullscreen"):TEXT("Windowed"),TEXT("fullscreen"),X+300,Y+213,410,46,G.Fullscreen);
-        Button(TEXT("Back"),TEXT("back-screen"),X+28,Y+335,684,46);
+        const float X=W/2-440,Y=H/2-302;Frame(X,Y,880,604);
+        Label(TEXT("DISPLAY & GRAPHICS"),X+32,Y+26,27,Text);Label(TEXT("Shape your view of the colony."),X+32,Y+67,14,Muted);
+        const float LX=X+32,RX=X+372;
+        Label(TEXT("Quality"),LX,Y+124,18,Text);Label(TEXT("Medium"),RX,Y+121,23,Gold);
+        Label(TEXT("Calibrated lighting and landscape detail"),RX,Y+154,13,Muted);
+        Box(LX,Y+185,816,1,FLinearColor(.35f,.42f,.4f,.45f));
+        Label(TEXT("Display mode"),LX,Y+216,18,Text);
+        Button(TEXT("Borderless"),TEXT("display:borderless"),RX,Y+202,221,45,G.Fullscreen);
+        Button(TEXT("Windowed"),TEXT("display:windowed"),RX+231,Y+202,213,45,!G.Fullscreen);
+        const FIntPoint Display=G.DisplayResolution();
+        Label(G.Fullscreen?TEXT("Monitor resolution"):TEXT("Window resolution"),LX,Y+278,17,Text);
+        if(G.Fullscreen)Label(FString::Printf(TEXT("%d x %d / Native"),Display.X,Display.Y),RX,Y+278,17,Gold);
+        else
+        {
+            Button(TEXT("<"),TEXT("window-resolution:-1"),RX,Y+264,43,44);
+            Label(FString::Printf(TEXT("%d x %d"),G.WindowResolution.X,G.WindowResolution.Y),RX+72,Y+278,17,Gold);
+            Button(TEXT(">"),TEXT("window-resolution:1"),RX+401,Y+264,43,44);
+        }
+        Box(LX,Y+330,816,1,FLinearColor(.35f,.42f,.4f,.45f));
+        Label(TEXT("3D render resolution"),LX,Y+365,18,Text);
+        Button(TEXT("-"),TEXT("render-scale:-10"),RX,Y+349,43,44);
+        Label(FString::Printf(TEXT("%.0f%%"),G.RenderResolutionPercent),RX+76,Y+362,20,Gold);
+        Button(TEXT("+"),TEXT("render-scale:10"),RX+171,Y+349,43,44);
+        const FIntPoint Render=G.EffectiveRenderResolution();
+        Label(FString::Printf(TEXT("%d x %d pixels"),Render.X,Render.Y),RX+240,Y+365,16,Text);
+        Label(TEXT("100% uses native pixels. Lower values reduce GPU work."),LX,Y+414,14,Muted);
+        Label(TEXT("Menus and text stay at full display resolution."),LX,Y+441,14,Muted);
+        Button(TEXT("Back"),TEXT("back-screen"),LX,Y+522,816,45);
     }
     else if(G.Screen==TEXT("credits"))
     {
@@ -327,7 +457,7 @@ void ASeigeHUD::DrawRegionMap(ASeigeGameMode& G,float W,float H)
     Frame(X-9,Y-9,Size+18,Size+18);Ui.HitRegions.Last().Action=TEXT("region-surface");Box(X,Y,Size,Size,FLinearColor(.63f,.62f,.54f,1));
     const double Edge=G.Sim.WorldHalfSize*3;
     auto Map=[&](FVector2D P){return FVector2D(X+(P.X+Edge)/(Edge*2)*Size,Y+(P.Y+Edge)/(Edge*2)*Size);};
-    auto Line=[&](FVector2D A,FVector2D B,FLinearColor C,float Thick=1.f){DrawLine(A.X*Scale,A.Y*Scale,B.X*Scale,B.Y*Scale,C,Thick*Scale);};
+    auto Line=[&](FVector2D A,FVector2D B,FLinearColor C,float Thick=1.f){C.A*=DrawOpacity;DrawLine(A.X*Scale,A.Y*Scale,B.X*Scale,B.Y*Scale,C,Thick*Scale);};
     for(int32 J=0;J<34;++J)for(int32 I=0;I<34;++I)
     {
         // Stable jitter breaks the symbol lattice without inventing different woods.
@@ -409,7 +539,8 @@ void ASeigeHUD::DrawHUD()
     if(DrawFrontend(*G,W,H))return;
     const bool RegionMap=G->IsRegionMap();const auto* Viewed=G->ViewedSimulation();const bool Readable=Viewed&&(G->Observer||G->DetailedSectorIndex()==4);const FSeigeSimulation& Local=Readable?*Viewed:G->Sim;const FVector2D SectorOffset=G->DetailedSectorOffset();
     if(RegionMap){Ui.BuildOpen=false;Ui.GroupFocused=false;G->SelectedBuild.Empty();}
-    if(RegionMap)DrawRegionMap(*G,W,H);
+    const float MapAlpha=G->RegionMapAlpha();
+    if(MapAlpha>0){DrawOpacity=MapAlpha;DrawRegionMap(*G,W,H);DrawOpacity=1;if(!RegionMap)Ui.HitRegions.Reset();}
     auto WorldLine=[&](FVector A,FVector B,FLinearColor C,float Thickness){FVector2D P,Q;if(RegionMap||!PC||!PC->ProjectWorldLocationToScreen(A,P)||!PC->ProjectWorldLocationToScreen(B,Q))return;if(P.Y/Scale>TopHeight&&Q.Y/Scale>TopHeight)DrawLine(P.X,P.Y,Q.X,Q.Y,C,Thickness*Scale);};
     auto Ground=[&](FVector2D P,float Lift){return G->RenderPosition(P,Lift);};
     auto Circle=[&](FVector2D Center,double Radius,FLinearColor C){for(int32 I=0;I<64;++I){const double A=I*UE_TWO_PI/64,B=(I+1)*UE_TWO_PI/64;WorldLine(Ground(Center+FVector2D(FMath::Cos(A),FMath::Sin(A))*Radius,12),Ground(Center+FVector2D(FMath::Cos(B),FMath::Sin(B))*Radius,12),C,1.4f);}};
@@ -438,7 +569,7 @@ void ASeigeHUD::DrawHUD()
             }
         }
     }
-    const FTransform LabelView=G->CameraTransform();
+    const FTransform LabelView=G->CameraTransform(G->CameraViewZoom());
     const bool LabelCameraMoved=!LabelCameraPosition.Equals(LabelView.GetLocation(),.1)||!LabelCameraRotation.Equals(LabelView.Rotator(),.01)||!LabelViewport.Equals(FVector2D(W,H),.1);
     LabelStillSeconds=LabelCameraMoved?0:FMath::Min(1.f,LabelStillSeconds+Dt);
     LabelCameraPosition=LabelView.GetLocation();LabelCameraRotation=LabelView.Rotator();LabelViewport=FVector2D(W,H);
@@ -462,8 +593,7 @@ void ASeigeHUD::DrawHUD()
         {
             const float SX=M.Position.X,SY=M.Position.Y;
             Box(SX-7,SY-7,14,14,R->Color);Box(SX-4,SY-4,8,8,Panel);
-            float TW=0,TH=0,BW=0,BH=0;Canvas->StrLen(GEngine->GetLargeFont(),R->Name,TW,TH);Canvas->StrLen(GEngine->GetLargeFont(),TEXT("Ag"),BW,BH);
-            const float LW=FMath::Max(94.f,TW*15/FMath::Max(BH,1.f)+16),LH=29;
+            const float LW=FMath::Max(94.f,float(MeasureLabel(R->Name,15).X)+16),LH=29;
             auto& State=DepositLabels.FindOrAdd(M.Key);
             FVector2D At=M.Position+State.Offset;
             auto Fits=[&](FVector2D P)
@@ -505,7 +635,7 @@ void ASeigeHUD::DrawHUD()
         const float LandingW=900,LandingX=(W-LandingW)*.5f;Frame(LandingX,14,LandingW,62);
         Label(RegionMap?TEXT("CHOOSE YOUR HOME SECTOR"):TEXT("CHOOSE YOUR COMMAND CORE LOCATION"),LandingX+20,25,18,Gold);
         Label(RegionMap?TEXT("Click the center sector to survey it in detail. Time is paused."):TEXT("The world is paused. Click valid ground to land and begin."),LandingX+20,50,14,Text);
-        Button(TEXT("Main menu"),TEXT("main-menu"),W-176,18,152,49);
+        Button(TEXT("Menu"),TEXT("game-menu"),W-176,18,152,49,false,TEXT("Esc / F10 opens the game menu."));
         Button(RegionMap?TEXT("Survey home sector"):TEXT("Regional map"),RegionMap?TEXT("focus-sector:4"):TEXT("region-map"),W/2-120,H-76,240,50);
         const float NoticeHeight=DrawNotice(*G,W,H);
         FString Why;if(!RegionMap&&G->CursorOnWorld&&!G->CanLand(G->CursorWorld,Why)){float TY=102+NoticeHeight;Wrapped(Why,W/2-300,TY,600,15,Gold);}return;
@@ -539,7 +669,7 @@ void ASeigeHUD::DrawHUD()
     Summary(TEXT("logistics"),TEXT("IN TRANSIT"),Readable?FString::Printf(TEXT("%d couriers"),Local.Couriers.Num()):TEXT("Unavailable"),490,150,Text);
     Summary(TEXT("threats"),TEXT("NEXT ALIEN PULSE"),Readable?FString::Printf(TEXT("%.0f seconds"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):TEXT("Unavailable"),640,210,Gold);
     Summary(TEXT("objective"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("OBSERVATION"):TEXT("FIRST LANDING"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("Read only"):G->Sim.Won?TEXT("Complete"):TEXT("Objectives"),850,190,Green);
-    const float DockW=570,DockX=(W-DockW)*.5f,DockY=H-75;
+    const float DockW=666,DockX=(W-DockW)*.5f,DockY=H-75;
     Frame(DockX,DockY,DockW,60);
     auto DockButton=[&](const FString& Name,const FString& A,const FString& Visual,float X,float Width,bool Active)
     {
@@ -552,6 +682,7 @@ void ASeigeHUD::DrawHUD()
     Label(FString::Printf(TEXT("%02d:%02d"),int32(G->Sim.Time)/60,int32(G->Sim.Time)%60),DockX+347,DockY+13,19,Text);Label(TEXT("LOCAL TIME"),DockX+348,DockY+39,8,Muted);
     Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+430,DockY+6,76,48,G->Paused);
     Button(FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+511,DockY+6,53,48,G->Speed>1);
+    Button(TEXT("Menu"),TEXT("game-menu"),DockX+570,DockY+6,90,48,false,TEXT("Esc / F10 opens the game menu. Space pauses; + / - changes speed."));
     if(!Readable)Ui.HoverPanel.Empty();
     if(Readable&&PreviousHover.StartsWith(TEXT("summary:"))&&!Ui.BuildOpen&&!Ui.ColonyOpen)Ui.HoverPanel=PreviousHover.RightChop(8);else if(!PreviousHover.StartsWith(TEXT("hover-panel:")))Ui.HoverPanel.Empty();
     if(!G->Ready)

@@ -65,9 +65,20 @@ export function validateConfiguration(data) {
   version(ai, 'AIFILES/colony_ai.json');
   version(developed, 'AIFILES/developed_start.json');
   version(ui, 'Interface/ui.json');
+  if ('frontend' in ui) {
+    const frontend = object(ui.frontend, 'UI frontend');
+    for (const key of ['title', 'eyebrow', 'tagline']) if (key in frontend) text(frontend[key], `UI frontend ${key}`);
+  }
+  if ('simulation_speeds' in ui) {
+    const speeds = array(ui.simulation_speeds, 'UI simulation_speeds', 3, 3);
+    if (new Set(speeds).size !== 3 || !speeds.every(value => [1, 5, 10].includes(value))) fail('UI simulation_speeds must contain 1, 5 and 10 once each');
+  }
   version(graphics, 'Graphics/scene.json');
   number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);
   number(graphics.nanite_max_pixels_per_edge, 'Graphics nanite_max_pixels_per_edge', .5, 4);
+  number(graphics.nanite_survey_pixels_per_edge, 'Graphics nanite_survey_pixels_per_edge', .5, 4);
+  number(graphics.nanite_survey_start_zoom, 'Graphics nanite_survey_start_zoom', 5000, 60000);
+  number(graphics.nanite_survey_end_zoom, 'Graphics nanite_survey_end_zoom', 10000, 200000);
   number(graphics.camera_fov, 'Graphics camera_fov', 35, 80);
   number(graphics.camera_pitch, 'Graphics camera_pitch', 5, 85);
   number(graphics.minimum_camera_pitch, 'Graphics minimum_camera_pitch', 5, 25);
@@ -77,9 +88,19 @@ export function validateConfiguration(data) {
   number(graphics.sun_intensity, 'Graphics sun_intensity', .1, 20);
   number(graphics.sky_intensity, 'Graphics sky_intensity', .1, 5);
   number(graphics.cloud_shadow_strength, 'Graphics cloud_shadow_strength', 0, 1);
+  number(graphics.sun_source_angle, 'Graphics sun_source_angle', .1, 5);
+  number(graphics.cloud_shadow_resolution_scale, 'Graphics cloud_shadow_resolution_scale', .25, 2);
+  if (typeof graphics.sky_realtime_capture !== 'boolean') fail('Graphics sky_realtime_capture must be boolean');
+  number(graphics.fog_density, 'Graphics fog_density', 0, .01);
+  number(graphics.fog_start_distance_m, 'Graphics fog_start_distance_m', 0, 10000);
+  number(graphics.atmosphere_mie_scale, 'Graphics atmosphere_mie_scale', 0, 2);
+  number(graphics.atmosphere_aerial_perspective_scale, 'Graphics atmosphere_aerial_perspective_scale', 0, 3);
+  number(graphics.bloom_intensity, 'Graphics bloom_intensity', 0, 1);
   number(graphics.camera_yaw, 'Graphics camera_yaw', -360, 360);
   number(graphics.default_zoom, 'Graphics default_zoom', 900, 20000);
   number(graphics.minimum_zoom, 'Graphics minimum_zoom', 60, 2000);
+  number(graphics.maximum_zoom, 'Graphics maximum_zoom', 180000, 720000);
+  number(graphics.camera_zoom_response, 'Graphics camera_zoom_response', 1, 30);
   if (![512, 1024].includes(graphics.detailed_terrain_resolution)) fail('Graphics detailed_terrain_resolution must be 512 or 1024');
   number(graphics.rolling_terrain_wavelength, 'Graphics rolling_terrain_wavelength', 1000, 10000);
   number(graphics.rolling_terrain_amplitude, 'Graphics rolling_terrain_amplitude', 0, 1000);
@@ -104,7 +125,19 @@ export function validateConfiguration(data) {
   if(typeof graphics.grass_distance_field_lighting !== 'boolean') fail('Graphics grass_distance_field_lighting must be boolean');
   number(graphics.neighboring_forest_candidates_per_sector, 'Graphics neighboring_forest_candidates_per_sector', 0, 12000, true);
   if(typeof graphics.neighboring_forest_shadow !== 'boolean') fail('Graphics neighboring_forest_shadow must be boolean');
-  number(graphics.region_map_zoom, 'Graphics region_map_zoom', 20000, 90000);
+  number(graphics.region_map_zoom, 'Graphics region_map_zoom', 60000, 240000);
+  number(graphics.region_map_transition_width, 'Graphics region_map_transition_width', 5000, 60000);
+  if (graphics.region_map_zoom - graphics.region_map_transition_width / 2 < 60000 || graphics.region_map_zoom + graphics.region_map_transition_width / 2 >= graphics.maximum_zoom) fail('Graphics region transition must follow the sector overview and end before maximum zoom');
+  if (graphics.nanite_survey_pixels_per_edge < graphics.nanite_max_pixels_per_edge || graphics.nanite_survey_start_zoom < graphics.default_zoom || graphics.nanite_survey_end_zoom <= graphics.nanite_survey_start_zoom || graphics.nanite_survey_end_zoom > graphics.region_map_zoom - graphics.region_map_transition_width / 2) fail('Invalid Nanite survey transition');
+  const medium = object(graphics.medium_profile, 'Graphics medium_profile');
+  const quality = object(medium.quality_groups, 'Medium quality_groups');
+  const mediumGroups = ['ViewDistance', 'AntiAliasing', 'Shadow', 'GlobalIllumination', 'Reflection', 'PostProcess', 'Texture', 'Effects', 'Foliage', 'Shading', 'Landscape'];
+  if (Object.keys(quality).length !== mediumGroups.length) fail('Invalid Medium quality groups');
+  for (const key of mediumGroups) number(quality[key], `Medium quality ${key}`, 0, 3, true);
+  const rendering = object(medium.render_settings, 'Medium render_settings');
+  const ranges = [['r.TSR.History.ScreenPercentage', 100, 200, false], ['r.TSR.ThinGeometryDetection', 0, 1, true], ['r.TSR.ThinGeometryDetection.Coverage.ShadingRange', 0, 3, true], ['r.TSR.Velocity.WeightClampingSampleCount', 1, 8, false], ['r.Tonemapper.Sharpen', 0, 1, false], ['r.MaxAnisotropy', 4, 16, true]];
+  if (Object.keys(rendering).length !== ranges.length) fail('Invalid Medium rendering settings');
+  for (const [key, min, max, integer] of ranges) number(rendering[key], `Medium rendering ${key}`, min, max, integer);
   number(graphics.orbit_yaw_degrees_per_pixel, 'Graphics orbit_yaw_degrees_per_pixel', .05, 2);
   number(graphics.orbit_pitch_degrees_per_pixel, 'Graphics orbit_pitch_degrees_per_pixel', .05, 2);
   number(graphics.ground_cover_candidates, 'Graphics ground_cover_candidates', 10000, 400000, true);

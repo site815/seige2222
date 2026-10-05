@@ -2,7 +2,12 @@
 
 bool ASeigeGameMode::IsRegionMap() const
 {
-    return (Screen==TEXT("playing")||Screen==TEXT("landing"))&&Zoom>=RegionMapZoom;
+    return (Screen==TEXT("playing")||Screen==TEXT("landing"))&&CameraViewZoom()>=RegionMapZoom;
+}
+float ASeigeGameMode::RegionMapAlpha() const
+{
+    if(Screen!=TEXT("playing")&&Screen!=TEXT("landing"))return 0;
+    return FMath::SmoothStep(RegionMapZoom-RegionMapTransitionWidth*.5f,RegionMapZoom+RegionMapTransitionWidth*.5f,CameraViewZoom());
 }
 int32 ASeigeGameMode::DetailedSectorIndex() const
 {
@@ -23,7 +28,7 @@ const FSeigeSimulation* ASeigeGameMode::ViewedSimulation() const
     for(const auto& N:Neighbors)if(N.Index==Index)return &N.Sim;
     return nullptr;
 }
-void ASeigeGameMode::FocusSector(int32 Index)
+void ASeigeGameMode::FocusSector(int32 Index,bool SmoothTransition)
 {
     if(Index<0||Index>8||(Screen==TEXT("landing")&&Index!=4))return;
     CameraCenter=FVector(FVector2D(Index%3-1,Index/3-1)*Sim.WorldHalfSize*2,0);
@@ -31,7 +36,9 @@ void ASeigeGameMode::FocusSector(int32 Index)
     else if(Observer)for(const auto& N:Neighbors)if(N.Index==Index)for(const auto& B:N.Sim.Buildings)
         if(const auto* D=N.Sim.Definition(B))if(D->Role==TEXT("core")){CameraCenter=FVector(B.Position+N.Offset,0);break;}
     Zoom=DefaultZoom*2;SelectedId=0;SelectedBuild.Empty();
-    UpdateCamera();
+    // User map navigation uses the same damped zoom as the wheel. Direct setup
+    // calls retain their deterministic snap for loading and verification.
+    if(!SmoothTransition)UpdateCamera();
 }
 void ASeigeGameMode::ApplyOrbitDrag(FVector2D Pixels)
 {

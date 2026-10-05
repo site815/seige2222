@@ -4,6 +4,7 @@
 #include "GameFramework/HUD.h"
 #include "GameFramework/PlayerController.h"
 #include "Simulation/SeigeSimulation.h"
+#include "Simulation/SeigeRenderInterpolation.h"
 #include "SeigeGameMode.generated.h"
 
 class FSeigeScenarioAI;
@@ -39,15 +40,17 @@ public:
     FVector CameraCenter=FVector::ZeroVector;
     float Zoom=3500;
     float RenderScale=6,CameraYaw=135,CameraPitch=52,CameraFov=55;
-    float NaniteMaxPixelsPerEdge=1.5f;
-    float DefaultZoom=3500,MinimumZoom=120;
+    float NaniteMaxPixelsPerEdge=3.f;
+    float NaniteSurveyPixelsPerEdge=3,NaniteSurveyStartZoom=7000,NaniteSurveyEndZoom=50000;
+    float DefaultZoom=3500,MinimumZoom=120,MaximumZoom=360000;
+    float CameraZoomResponse=9,RenderedZoom=-1;
     int32 DetailedTerrainResolution=1024;
     float RollingTerrainWavelength=3200,RollingTerrainAmplitude=360;
     float MicroTerrainWavelength=360,MicroTerrainAmplitude=18;
     float CorePadInnerRatio=1.15f,CorePadOuterRatio=1.8f;
     FVector2D RidgeCenter=FVector2D(1900,-1400);
     float RidgeAngleDegrees=35,RidgeWidth=1900,RidgeLength=6500,RidgeHeight=550;
-    float RegionMapZoom=40000,OrbitYawPerPixel=.22f,OrbitPitchPerPixel=.18f;
+    float RegionMapZoom=180000,RegionMapTransitionWidth=40000,OrbitYawPerPixel=.22f,OrbitPitchPerPixel=.18f;
     FString TerrainMaterialPath=TEXT("/Game/Art/NatureV04/M_TerrainV04.M_TerrainV04");
     int32 ForestCandidates=85000,NearForestCandidates=8500;
     int32 GroundCoverCandidates=350000;
@@ -59,6 +62,11 @@ public:
     bool NeighborForestShadows=false;
     float MinimumCameraPitch=8,MaximumCameraPitch=80,CameraGroundClearance=160;
     float SunIntensity=5.2f,SkyIntensity=1.3f,CloudShadowStrength=.6f;
+    float SunSourceAngle=.6f,CloudShadowResolutionScale=1;
+    float FogDensity=0,FogStartDistanceMeters=1000,AtmosphereMieScale=.2f,AtmosphereAerialPerspectiveScale=.15f,BloomIntensity=.03f;
+    bool SkyRealtimeCapture=false;
+    TMap<FString,int32> MediumQualityGroups;
+    TMap<FString,float> MediumRenderSettings;
     FString CloudMaterialPath=TEXT("/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst");
     TMap<FString,FString> NatureAssets;
     FVector2D CursorWorld=FVector2D::ZeroVector;
@@ -66,8 +74,13 @@ public:
     FString Screen=TEXT("main"),ReturnScreen=TEXT("main");
     TArray<FString> ScenarioSlots;
     TArray<FSeigeNeighbor> Neighbors;
-    bool Observer=false,Fullscreen=false;
-    int32 GraphicsQuality=2;
+    bool Observer=false,Fullscreen=true;
+    int32 GraphicsQuality=1;
+    bool MenuOpen=false,PauseBeforeMenu=false;
+    FString MenuReturnScreen=TEXT("playing");
+    float RenderResolutionPercent=100;
+    FIntPoint WindowResolution=FIntPoint(1600,900);
+    TArray<int32> GameSpeeds={1,5,10};
     void ShowScreen(const FString& NewScreen);
     void StartScenario();
     void ConfirmLanding(FVector2D Position);
@@ -75,26 +88,38 @@ public:
     void ReturnToMainMenu();
     void SetGraphicsQuality(int32 Quality);
     void SetFullscreen(bool Enabled);
+    void ToggleGameMenu();
+    void ResumeGameMenu();
+    void InitializeDisplaySettings();
+    void SetRenderResolutionPercent(float Percent);
+    void CycleWindowResolution(int32 Direction);
+    FIntPoint EffectiveRenderResolution() const;
+    FIntPoint DisplayResolution() const;
+    void CycleGameSpeed(int32 Direction=1);
+    bool IsSupportedGameSpeed(double Value) const;
     bool CanLand(FVector2D Position,FString& Reason) const;
     FVector2D HomePosition() const;
     void ClickWorld();
     void ResetColony();
     void SaveGame();
     void LoadGame();
-    void UpdateCamera();
+    void UpdateCamera(float DeltaSeconds=0);
+    void ApplyMediumPreset();
+    float CameraViewZoom() const;
+    float RegionMapAlpha() const;
     double GroundHeight(FVector2D Position) const;
     FVector RenderPosition(FVector2D Position,float HeightOffset=0) const;
     bool TraceGroundRay(const FVector& Origin,const FVector& Direction,FVector& Hit) const;
     bool SelectBuildingRay(const FVector& Origin,const FVector& Direction);
     void RebuildTerrainHeights();
-    FTransform CameraTransform() const;
+    FTransform CameraTransform(float ZoomOverride=-1) const;
     FVector2D CameraPanDirection(float Forward,float Right) const;
     void ApplyOrbitDrag(FVector2D Pixels);
     bool IsRegionMap() const;
     int32 DetailedSectorIndex() const;
     FVector2D DetailedSectorOffset() const;
     const FSeigeSimulation* ViewedSimulation() const;
-    void FocusSector(int32 Index);
+    void FocusSector(int32 Index,bool SmoothTransition=false);
     float WoodlandDensity(FVector2D WorldLogical) const;
 private:
 #if WITH_DEV_AUTOMATION_TESTS
@@ -113,6 +138,7 @@ private:
     bool GraphicsSettingsValid=true;
     int32 PresentationSmokeStage=0,SmokeFailures=0;
     void RunPresentationSmoke();
+    void RunDisplaySmoke();
     void RunGraphicsBenchmark(float DeltaSeconds);
     TSharedPtr<FSeigeScenarioAI> CenterBrain;
     FString DataDirectory(const TCHAR* Folder) const;
@@ -139,6 +165,16 @@ private:
     void SyncConstructionVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
     void SetConstructionReveal(AActor* Actor,double Progress);
     void SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
+    TMap<int32,FSeigeRenderSnapshot> PresentationSnapshots;
+    void CaptureSimulationPresentation();
+    void ResetSimulationPresentation();
+    const FSeigeRenderSnapshot* PresentationSnapshot(const FSeigeSimulation& Colony) const;
+    double PresentationAlpha() const;
+    double RenderSimulationTime(const FSeigeSimulation& Colony) const;
+    double RenderConstructionProgress(const FSeigeSimulation& Colony,const FSeigeBuilding& Building) const;
+    void SyncWorkerVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
+    void SyncInventoryVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
+    void SyncStockpile(const FSeigeResourceDef& Resource,double Amount,FVector2D Position,const FString& Key,TSet<FString>& Live);
 };
 
 UCLASS()
@@ -175,6 +211,8 @@ struct FSeigeUiState
     TArray<FSeigeMenuGroup> Categories;
     TArray<FSeigeCredit> Credits;
     TArray<FSeigeSummaryResource> SummaryResources;
+    FString Title=TEXT("SEIGE"),Eyebrow=TEXT("FIRST LANDING"),Tagline=TEXT("A foothold in the wilderness.");
+    TArray<int32> SpeedSteps={1,5,10};
     TArray<FSeigeButton> HitRegions;
     FString HitTest(float ScreenX,float ScreenY) const;
     void CloseMenus();
@@ -195,6 +233,7 @@ public:
     FSeigeUiState Ui;
 private:
     float Scale=1;
+    float DrawOpacity=1;
     float SmoothedFps=0;
     float NoticeVisibleSeconds=0;
     bool InterfaceLoaded=false,InterfaceAttempted=false;
@@ -210,6 +249,7 @@ private:
     void DrawRegionMap(ASeigeGameMode& GameMode,float Width,float Height);
     void Box(float X,float Y,float W,float H,FLinearColor Color);
     void Label(const FString& Text,float X,float Y,float Size,FLinearColor Color=FLinearColor::White);
+    FVector2D MeasureLabel(const FString& Text,float Size) const;
     void Button(const FString& Text,const FString& Action,float X,float Y,float W,float H,bool Active=false,const FString& Tooltip=TEXT(""));
     void Region(const FString& Action,float X,float Y,float W,float H,const FString& Tooltip=TEXT(""));
     void Wrapped(const FString& Text,float X,float& Y,float Width,float Size,FLinearColor Color);

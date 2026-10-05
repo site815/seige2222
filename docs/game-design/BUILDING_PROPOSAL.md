@@ -4,6 +4,10 @@
 
 **Assistant proposal for discussion.** This is a candidate building catalog for a robotic colony. Established functions are identified separately from proposed names, facilities, recipes, and numerical values. The [first playable scope](FIRST_PLAYABLE_SCOPE.md) records the smaller implementation being developed.
 
+## v0.6 presentation metadata
+
+The current source adds explicit indoor/outdoor inventory location and worker-activity presentation to each implemented building. Construction sites show physically delivered stock outside the footprint, aggregate builders and a rising structure. Completed extraction/assembly workplaces show existing assigned workers at exterior stations; their tools stop when real operating conditions fail. This does not add population, individual pathfinding or new production rates. Bulk materials, ingots and crates use separate resource metadata. The v0.6 editor compiled; 34 native tests and the 79-stage editor route passed. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) tracks evidence.
+
 ## Current v0.5 implementation alongside this proposal
 
 The broader catalog below remains proposed. The current user requirement adds physically supplied worker construction, an initial shuttle-deployed command core and a robot charging/maintenance facility. Source implements these with external construction costs, durations, builder counts and support capacities. The `robot_service_bay` is in Logistics with the B, L, C shortcut, one operating job and local component upkeep. Capacity is usable only after construction and staffing. It is an abstract automatic charging/service system; no battery-meter or kW-grid model is implied.

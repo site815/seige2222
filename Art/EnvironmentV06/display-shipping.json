@@ -1,0 +1,49 @@
+{
+	"failures": 0,
+	"states": [
+		{
+			"state": "borderless",
+			"valid": true,
+			"mode": 1,
+			"width": 3840,
+			"height": 1600,
+			"expected_width": 3840,
+			"expected_height": 1600,
+			"render_percent": 100,
+			"shadow_quality": 2
+		},
+		{
+			"state": "windowed",
+			"valid": true,
+			"mode": 2,
+			"width": 1280,
+			"height": 720,
+			"expected_width": 1280,
+			"expected_height": 720,
+			"render_percent": 100,
+			"shadow_quality": 2
+		},
+		{
+			"state": "render75",
+			"valid": true,
+			"mode": 2,
+			"width": 1280,
+			"height": 720,
+			"expected_width": 1280,
+			"expected_height": 720,
+			"render_percent": 75,
+			"shadow_quality": 2
+		},
+		{
+			"state": "restored",
+			"valid": true,
+			"mode": 1,
+			"width": 3840,
+			"height": 1600,
+			"expected_width": 3840,
+			"expected_height": 1600,
+			"render_percent": 100,
+			"shadow_quality": 2
+		}
+	]
+}

@@ -44,7 +44,13 @@ ASeigeGameMode::ASeigeGameMode()
 void ASeigeGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    if(!LoadGraphicsSettings()){GraphicsSettingsValid=false;Notice=Error;Screen=TEXT("main");return;}
+    if(!LoadGraphicsSettings())
+    {
+        GraphicsSettingsValid=false;Notice=Error;Screen=TEXT("main");
+        if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark"))||FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke")))
+        {UE_LOG(LogTemp,Error,TEXT("Automated presentation cannot start: %s"),*Error);FPlatformMisc::RequestExitWithStatus(false,1);}
+        return;
+    }
     BaseMaterial=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Art/M_Colony.M_Colony"));
     if(!BaseMaterial) BaseMaterial=LoadObject<UMaterialInterface>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
     Camera=GetWorld()->SpawnActor<ACameraActor>();
@@ -60,7 +66,7 @@ void ASeigeGameMode::BeginPlay()
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionRadius=true;
     Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionRadius=120;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_BloomIntensity=true;
-    Camera->GetCameraComponent()->PostProcessSettings.BloomIntensity=.15f;
+    Camera->GetCameraComponent()->PostProcessSettings.BloomIntensity=BloomIntensity;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureApplyPhysicalCameraExposure=true;
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureApplyPhysicalCameraExposure=false;
     if(auto* PC=UGameplayStatics::GetPlayerController(this,0)) PC->SetViewTarget(Camera);
@@ -70,17 +76,19 @@ void ASeigeGameMode::BeginPlay()
     SunComponent->SetMobility(EComponentMobility::Movable);
     SunComponent->ForwardShadingPriority=1;
     SunComponent->SetAtmosphereSunLight(true);
-    SunComponent->LightSourceAngle=2.0f;
+    SunComponent->LightSourceAngle=SunSourceAngle;
     SunComponent->bCastCloudShadows=true;
     SunComponent->CloudShadowStrength=CloudShadowStrength;
     SunComponent->CloudShadowOnSurfaceStrength=CloudShadowStrength;
     SunComponent->CloudShadowExtent=10;
-    SunComponent->CloudShadowMapResolutionScale=2;
+    SunComponent->CloudShadowMapResolutionScale=CloudShadowResolutionScale;
     SunComponent->DynamicShadowDistanceMovableLight=120000;
     Sun->GetLightComponent()->MarkRenderStateDirty();
     Sun->GetLightComponent()->SetLightColor(FLinearColor(1,.985f,.955f));
     auto* Atmosphere=GetWorld()->SpawnActor<AActor>();
     auto* AtmosphereComponent=NewObject<USkyAtmosphereComponent>(Atmosphere);
+    AtmosphereComponent->SetMieScatteringScale(AtmosphereMieScale);
+    AtmosphereComponent->SetAerialPespectiveViewDistanceScale(AtmosphereAerialPerspectiveScale);
     Atmosphere->SetRootComponent(AtmosphereComponent); AtmosphereComponent->RegisterComponent();
     if(auto* CloudMaterial=LoadObject<UMaterialInterface>(nullptr,*CloudMaterialPath,nullptr,LOAD_NoWarn))
     {
@@ -93,19 +101,21 @@ void ASeigeGameMode::BeginPlay()
     auto* Sky=GetWorld()->SpawnActor<ASkyLight>();
     Sky->GetLightComponent()->SetMobility(EComponentMobility::Movable);
     Sky->GetLightComponent()->SetIntensity(SkyIntensity);
-    Sky->GetLightComponent()->SetRealTimeCaptureEnabled(true);
-    auto* Fog=GetWorld()->SpawnActor<AExponentialHeightFog>();
-    Fog->GetComponent()->SetFogDensity(.0025f);
-    Fog->GetComponent()->SetFogHeightFalloff(.15f);
-    Fog->GetComponent()->SetFogInscatteringColor(FLinearColor(.45f,.52f,.58f));
-    Fog->GetComponent()->SetStartDistance(45000);
+    Sky->GetLightComponent()->SetRealTimeCaptureEnabled(SkyRealtimeCapture);
+    // The current scenario has fixed sun/time. Capture its ambient environment
+    // once rather than continuously recapturing a static lighting setup.
+    if(!SkyRealtimeCapture)Sky->GetLightComponent()->RecaptureSky();
+    if(FogDensity>0)
+    {
+        auto* Fog=GetWorld()->SpawnActor<AExponentialHeightFog>();
+        Fog->GetComponent()->SetFogDensity(FogDensity);
+        Fog->GetComponent()->SetFogHeightFalloff(.15f);
+        Fog->GetComponent()->SetFogInscatteringColor(FLinearColor(.45f,.52f,.58f));
+        Fog->GetComponent()->SetStartDistance(FogStartDistanceMeters*100.f);
+    }
     ResetColony();
     ReturnToMainMenu(); Zoom=DefaultZoom;
-    if(auto* Settings=UGameUserSettings::GetGameUserSettings())
-    {
-        GraphicsQuality=FMath::Clamp(Settings->GetOverallScalabilityLevel(),0,3);
-        Fullscreen=Settings->GetFullscreenMode()!=EWindowMode::Windowed;
-    }
+    InitializeDisplaySettings();
     if(FParse::Param(FCommandLine::Get(),TEXT("PrototypeSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("PrototypeScreenshot")))
     {
         Screen=TEXT("landing");
@@ -126,6 +136,7 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
         const double Step=Sim.FixedStepSeconds(); Accumulator+=FMath::Min(DeltaSeconds,.25f)*Speed;
         while(Accumulator>=Step)
         {
+            CaptureSimulationPresentation();
             if(Observer&&CenterBrain) CenterBrain->Tick(Sim,Step); else Sim.Tick(Step);
             for(auto& N:Neighbors) if(N.Brain) N.Brain->Tick(N.Sim,Step);
             Accumulator-=Step;
@@ -136,6 +147,7 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
     SyncVisuals();
     if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark")))RunGraphicsBenchmark(DeltaSeconds);
     if(FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))) RunPresentationSmoke();
+    if(FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke"))) RunDisplaySmoke();
     if(!ScreenshotRequested && RenderClock>8 && FParse::Param(FCommandLine::Get(),TEXT("PrototypeScreenshot")))
     {
         ScreenshotRequested=true;
@@ -225,11 +237,16 @@ AActor* ASeigeGameMode::Visual(const FString& Key,const FString& Kind,FVector Lo
 void ASeigeGameMode::SyncVisuals()
 {
     if(!FApp::CanEverRender()) return;
-    if(IsRegionMap()){for(auto& V:Visuals)V.Value->SetActorHiddenInGame(true);return;}
+    if(RegionMapAlpha()>=1.f){for(auto& V:Visuals)V.Value->SetActorHiddenInGame(true);return;}
     TSet<FString> Live;
+    const bool SceneVisible=(MenuOpen||Screen==TEXT("playing")||Screen==TEXT("landing"));
     auto Sync=[&](FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,bool Show)
     {
         if(!Show) return;
+        const auto* Snapshot=PresentationSnapshot(Colony);
+        const FSeigeRenderSnapshot EmptySnapshot;
+        const FSeigeRenderSnapshot& RenderState=Snapshot?*Snapshot:EmptySnapshot;
+        const double Alpha=PresentationAlpha(),AnimationTime=RenderSimulationTime(Colony);
         for(const auto& B:Colony.Buildings)
         {
             if(B.Health<=0) continue;
@@ -243,27 +260,44 @@ void ASeigeGameMode::SyncVisuals()
             Visual(Key,Kind,RenderPosition(P),D->Color,D->Footprint*2.f*RenderScale);
             SyncConstructionVisuals(Colony,B,*D,P,Key,Live);
             SyncServiceVisuals(Colony,B,P,Key,Live);
+            SyncInventoryVisuals(Colony,B,*D,P,Key,Live);
+            SyncWorkerVisuals(Colony,B,*D,P,Key,Live);
         }
         for(const auto& C:Colony.Couriers)
         {
-            const FVector2D P=C.Position+Offset;
+            const FVector2D LocalP=RenderState.CourierAtLoadingPorts(Colony,C,Alpha,75./FMath::Max(RenderScale,1.f));
+            const FVector2D P=LocalP+Offset;
+            if(!Observer&&!Offset.IsNearlyZero()&&!Sim.IsVisible(C.Position+Offset))continue;
             if(!Observer&&!Offset.IsNearlyZero()&&!Sim.IsVisible(P)) continue;
             const FString Key=Prefix+FString::Printf(TEXT("courier_%d"),C.Id); Live.Add(Key);
-            auto* A=Visual(Key,TEXT("Robot"),RenderPosition(P,18+FMath::Sin(RenderClock*4+C.Id)*5),Mint,110);
-            if(const auto* B=Colony.FindBuilding(C.TargetId)) A->SetActorRotation(FVector(B->Position-C.Position,0).Rotation());
+            auto* A=Visual(Key,TEXT("Robot"),RenderPosition(P,34+FMath::Sin(AnimationTime*4+C.Id)*3),Mint,110);
+            if(const auto* B=Colony.FindBuilding(C.TargetId)) A->SetActorRotation(FVector(B->Position-LocalP,0).Rotation());
+            if(!A->ActorHasTag(TEXT("PhysicalCargo")))
+            {
+                const auto* Resource=Colony.Resources.Find(C.Resource);
+                Part(A,TEXT("Cube"),FVector(-6,0,5),FVector(.58,.52,.32),Resource?Resource->Color:Mint);
+                TArray<UStaticMeshComponent*> Parts;A->GetComponents(Parts);Parts.Last()->ComponentTags.Add(TEXT("PhysicalCargo"));
+                Part(A,TEXT("Cube"),FVector(-6,-27,5),FVector(.12,.02,.32),C.ForConstruction?FLinearColor(.85,.52,.12):FLinearColor(.18,.22,.24));
+                A->Tags.Add(TEXT("PhysicalCargo"));
+            }
+            TArray<UStaticMeshComponent*> Parts;A->GetComponents(Parts);
+            for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("PhysicalCargo")))Part->SetRelativeScale3D(FVector(.58,.52,.32*FMath::Clamp(C.Amount/8.,.12,1.)));
         }
         for(const auto& E:Colony.Enemies)
         {
-            const FVector2D P=E.Position+Offset;
+            const FVector2D LocalP=Snapshot?Snapshot->Enemy(E,Alpha):E.Position;
+            const FVector2D P=LocalP+Offset;
+            if(!Observer&&!Sim.IsVisible(E.Position+Offset))continue;
             if(!Observer&&!Sim.IsVisible(P)) continue;
             const FString Key=Prefix+FString::Printf(TEXT("enemy_%d"),E.Id); Live.Add(Key);
             auto* A=Visual(Key,TEXT("Bug"),RenderPosition(P),FLinearColor(.4f,.08f,.17f),210);
             FVector2D Target=Colony.Buildings.IsEmpty()?FVector2D::ZeroVector:Colony.Buildings[0].Position;
-            A->SetActorRotation(FVector(Target-E.Position,0).Rotation());
+            A->SetActorRotation(FVector(Target-LocalP,0).Rotation());
         }
     };
-    Sync(Sim,FVector2D::ZeroVector,TEXT("home_"),Screen!=TEXT("landing")&&DetailedSectorIndex()==4);
-    for(auto& N:Neighbors) Sync(N.Sim,N.Offset,FString::Printf(TEXT("zone_%d_"),N.Index),DetailedSectorIndex()==N.Index);
+    const bool AwaitingLanding=Screen==TEXT("landing")||(MenuOpen&&MenuReturnScreen==TEXT("landing"));
+    Sync(Sim,FVector2D::ZeroVector,TEXT("home_"),SceneVisible&&!AwaitingLanding&&DetailedSectorIndex()==4);
+    for(auto& N:Neighbors) Sync(N.Sim,N.Offset,FString::Printf(TEXT("zone_%d_"),N.Index),SceneVisible&&DetailedSectorIndex()==N.Index);
     SyncPlacementGhost(Live);
     for(auto It=Visuals.CreateIterator();It;++It) if(!Live.Contains(It.Key()))
     {

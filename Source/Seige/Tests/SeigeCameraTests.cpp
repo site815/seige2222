@@ -220,6 +220,21 @@ bool FSeigeCompactBuildingPadTest::RunTest(const FString& Parameters)
 {
     FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
     if(!G.Sim.SetInitialCorePosition(FVector2D(613,487),G.Error)){AddError(G.Error);return false;}
+    const auto& ReservedCore=G.Sim.Buildings[0];const double CoreFootprint=G.Sim.Definition(ReservedCore)->Footprint;
+    TArray<FVector2D> LandingSamples;for(double X:{-1.,0.,1.})for(double Y:{-1.,0.,1.})LandingSamples.Add(ReservedCore.Position+FVector2D(X,Y)*CoreFootprint);
+    G.Screen=TEXT("landing");G.RebuildTerrainHeights();TArray<double> LandingHeights;
+    for(const auto& P:LandingSamples)LandingHeights.Add(G.GroundHeight(P));
+    auto CheckUndeployedBackdrop=[&](const FString& Screen,bool Menu)
+    {
+        G.Screen=Screen;G.MenuOpen=Menu;G.MenuReturnScreen=TEXT("landing");G.RebuildTerrainHeights();
+        for(int32 I=0;I<LandingSamples.Num();++I)
+            TestTrue(*FString::Printf(TEXT("Undeployed %s backdrop preserves natural landing terrain"),*Screen),FMath::Abs(G.GroundHeight(LandingSamples[I])-LandingHeights[I])<.001);
+    };
+    CheckUndeployedBackdrop(TEXT("main"),false);CheckUndeployedBackdrop(TEXT("settings"),false);
+    CheckUndeployedBackdrop(TEXT("game-menu"),true);CheckUndeployedBackdrop(TEXT("settings"),true);
+    G.MenuOpen=false;G.Screen=TEXT("playing");G.RebuildTerrainHeights();double LandedChange=0;
+    for(int32 I=0;I<LandingSamples.Num();++I)LandedChange=FMath::Max(LandedChange,FMath::Abs(G.GroundHeight(LandingSamples[I])-LandingHeights[I]));
+    TestTrue(TEXT("The confirmed time-zero core creates a real foundation, so the backdrop regression is meaningful"),LandedChange>.1);
     G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
     if(!G.Sim.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-713,319),G.Error))
     {AddError(G.Error);return false;}
@@ -357,6 +372,54 @@ bool FSeigeHiddenTerrainTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Unknown neighbor core cannot leave a detectable terrain plateau"),FMath::IsNearlyEqual(Empty,G.GroundHeight(P),.001));
     G.Observer=true;G.RebuildTerrainHeights();
     TestTrue(TEXT("Observer's known core uses the building plateau"),FMath::Abs(Empty-G.GroundHeight(P))>.1);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSurveyZoomTest,"Seige.Camera.SurveyAndSmoothZoom",CameraFlags)
+bool FSeigeSurveyZoomTest::RunTest(const FString& Parameters)
+{
+    FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    G.CameraCenter=FVector::ZeroVector;G.CameraYaw=135;G.CameraPitch=52;
+    G.Zoom=G.DefaultZoom;G.UpdateCamera();
+    const float Start=G.RenderedZoom;G.Zoom=150000;
+    G.UpdateCamera(1.f/60);
+    TestTrue(TEXT("One zoom frame moves toward the requested view without jumping"),G.RenderedZoom>Start&&G.RenderedZoom<G.Zoom);
+    float Last=G.RenderedZoom;
+    for(int32 I=0;I<180;++I)
+    {
+        G.UpdateCamera(1.f/60);
+        TestTrue(TEXT("Survey zoom approaches monotonically without overshoot"),G.RenderedZoom>=Last-.1f&&G.RenderedZoom<=G.Zoom+.1f);
+        Last=G.RenderedZoom;
+    }
+    TestTrue(TEXT("Damped zoom converges to the survey target"),FMath::IsNearlyEqual(G.RenderedZoom,G.Zoom,2.f));
+    auto RunAtRate=[&](int32 Rate)
+    {
+        G.Zoom=G.DefaultZoom;G.UpdateCamera();G.Zoom=150000;
+        for(int32 I=0;I<Rate;++I)G.UpdateCamera(1.f/Rate);
+        return G.RenderedZoom;
+    };
+    const float At30=RunAtRate(30),At144=RunAtRate(144);
+    TestTrue(TEXT("Zoom response is consistent at 30 and 144 frames per second"),FMath::Abs(At30-At144)<5.f);
+    G.Zoom=150000;G.UpdateCamera();
+    TestFalse(TEXT("The whole-sector survey remains a 3D view"),G.IsRegionMap());
+    TestEqual(TEXT("The map overlay does not obscure the sector survey"),G.RegionMapAlpha(),0.f);
+    // Project the four actual terrain corners into the analytic 16:9 frustum.
+    // The whole-zone requirement must hold at the normal diagonal orbit.
+    const FTransform Camera=G.CameraTransform();const FVector Eye=Camera.GetLocation();
+    const FVector Forward=Camera.GetRotation().GetForwardVector(),Right=Camera.GetRotation().GetRightVector(),Up=Camera.GetRotation().GetUpVector();
+    const double HalfWidth=FMath::Tan(FMath::DegreesToRadians(G.CameraFov*.5)),HalfHeight=HalfWidth*9./16.;
+    for(double X:{-G.Sim.WorldHalfSize,G.Sim.WorldHalfSize})for(double Y:{-G.Sim.WorldHalfSize,G.Sim.WorldHalfSize})
+    {
+        const FVector Ray=G.RenderPosition(FVector2D(X,Y))-Eye;const double Depth=FVector::DotProduct(Ray,Forward);
+        TestTrue(TEXT("Every sector corner fits inside the pre-map survey view"),Depth>0&&FMath::Abs(FVector::DotProduct(Ray,Right))<Depth*HalfWidth&&FMath::Abs(FVector::DotProduct(Ray,Up))<Depth*HalfHeight);
+    }
+    G.Zoom=G.RegionMapZoom-G.RegionMapTransitionWidth*.25f;G.UpdateCamera();const float Before=G.RegionMapAlpha();
+    G.Zoom=G.RegionMapZoom;G.UpdateCamera();const float Middle=G.RegionMapAlpha();
+    G.Zoom=G.RegionMapZoom+G.RegionMapTransitionWidth*.25f;G.UpdateCamera();const float After=G.RegionMapAlpha();
+    TestTrue(TEXT("Cartographic view fades in progressively across the transition"),Before>0&&Before<Middle&&Middle<After&&After<1);
+    G.Zoom=G.MaximumZoom;G.UpdateCamera();
+    TestTrue(TEXT("The wide end is a fully interactive cartographic view"),G.IsRegionMap()&&G.RegionMapAlpha()==1);
+    G.Zoom=G.MinimumZoom;G.UpdateCamera();
+    TestEqual(TEXT("Explicit camera resets snap to the requested zoom"),G.RenderedZoom,G.MinimumZoom);
     return true;
 }
 #endif

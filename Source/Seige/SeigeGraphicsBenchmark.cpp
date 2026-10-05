@@ -67,12 +67,24 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     if(View<0)
     {
         if(RenderClock<2)return;
-        // Boot CSV capture and ordinary launches can resolve different saved
-        // user settings. Pin the benchmark only; never persist these levels.
+        // Pin the single Medium profile and full resolution independently of
+        // saved user choices. The opt-in old-profile run is diagnostic only.
         Scalability::FQualityLevels BenchmarkQuality;
-        BenchmarkQuality.SetFromSingleQualityLevel(3);
+        const bool OldEpic=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkV05Epic"));
+        if(OldEpic)
+        {
+            BenchmarkQuality.SetFromSingleQualityLevel(3);
+        }
+        else BenchmarkQuality=Scalability::GetQualityLevels();
         BenchmarkQuality.ResolutionQuality=100.f;
         Scalability::SetQualityLevels(BenchmarkQuality,true);
+        // Reapply the profile's additional settings after the quality groups:
+        // TextureQuality resets r.MaxAnisotropy to its built-in value of 8.
+        if(!OldEpic)ApplyMediumPreset();
+        if(OldEpic)for(const auto& Setting:{TPair<const TCHAR*,float>(TEXT("r.TSR.ThinGeometryDetection"),0),TPair<const TCHAR*,float>(TEXT("r.TSR.Velocity.WeightClampingSampleCount"),4),TPair<const TCHAR*,float>(TEXT("r.Tonemapper.Sharpen"),0),TPair<const TCHAR*,float>(TEXT("r.MaxAnisotropy"),8)})
+            if(auto* Variable=IConsoleManager::Get().FindConsoleVariable(Setting.Key))Variable->Set(Setting.Value,ECVF_SetByConsole);
+        if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkDisableThinGeometry")))
+            if(auto* Thin=IConsoleManager::Get().FindConsoleVariable(TEXT("r.TSR.ThinGeometryDetection")))Thin->Set(0,ECVF_SetByConsole);
         // The explicit diagnostic restores the original geometry target even
         // when ordinary play uses a different external project default.
         if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNaniteBaseline")))
@@ -125,6 +137,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         TSharedPtr<FJsonObject> Row=MakeShared<FJsonObject>();double Sum=0;
         for(double MS:Frames)Sum+=MS;Frames.Sort();
         Row->SetStringField(TEXT("view"),Views[View].Name);Row->SetNumberField(TEXT("samples"),Frames.Num());
+        Row->SetNumberField(TEXT("displayed_zoom"),CameraViewZoom());
+        if(const auto* Edge=IConsoleManager::Get().FindConsoleVariable(TEXT("r.Nanite.MaxPixelsPerEdge")))Row->SetNumberField(TEXT("nanite_max_pixels_per_edge"),Edge->GetFloat());
         Row->SetNumberField(TEXT("sample_seconds"),Sum/1000);
         Row->SetNumberField(TEXT("mean_fps"),Sum>0?Frames.Num()*1000/Sum:0);
         Row->SetNumberField(TEXT("mean_frame_ms"),Frames.Num()?Sum/Frames.Num():0);
@@ -161,6 +175,13 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetBoolField(TEXT("diagnostic_nanite_baseline"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNaniteBaseline")));
     Report->SetBoolField(TEXT("grass_distance_field_lighting"),GrassDistanceFieldLighting);
     Report->SetNumberField(TEXT("ground_cover_candidates"),GroundCoverCandidates);
+    Report->SetStringField(TEXT("profile"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkV05Epic"))?TEXT("v0.5 Epic reference"):TEXT("Medium"));
+    Report->SetBoolField(TEXT("sky_realtime_capture"),SkyRealtimeCapture);
+    Report->SetNumberField(TEXT("fog_density"),FogDensity);
+    Report->SetNumberField(TEXT("atmosphere_mie_scale"),AtmosphereMieScale);
+    Report->SetNumberField(TEXT("atmosphere_aerial_perspective_scale"),AtmosphereAerialPerspectiveScale);
+    Report->SetNumberField(TEXT("sun_source_angle"),SunSourceAngle);
+    Report->SetNumberField(TEXT("cloud_shadow_resolution_scale"),CloudShadowResolutionScale);
     Report->SetBoolField(TEXT("diagnostic_sward_hidden"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkHideSward")));
     int32 Width=0,Height=0;if(auto* PC=UGameplayStatics::GetPlayerController(this,0))PC->GetViewportSize(Width,Height);
     Report->SetNumberField(TEXT("width"),Width);Report->SetNumberField(TEXT("height"),Height);Report->SetStringField(TEXT("engine"),FEngineVersion::Current().ToString());
@@ -168,8 +189,9 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     for(const TCHAR* CVar:{TEXT("sg.ResolutionQuality"),TEXT("sg.ViewDistanceQuality"),TEXT("sg.AntiAliasingQuality"),TEXT("sg.ShadowQuality"),TEXT("sg.GlobalIlluminationQuality"),TEXT("sg.ReflectionQuality"),TEXT("sg.PostProcessQuality"),TEXT("sg.TextureQuality"),TEXT("sg.EffectsQuality"),TEXT("sg.FoliageQuality"),TEXT("sg.ShadingQuality"),TEXT("sg.LandscapeQuality"),TEXT("r.ScreenPercentage"),TEXT("r.ScreenPercentage.Default.Desktop.Mode"),TEXT("r.SecondaryScreenPercentage.GameViewport"),TEXT("r.Nanite.MaxPixelsPerEdge"),TEXT("r.Nanite.PrimaryRaster.TimeBudgetMs"),TEXT("r.VSync"),TEXT("t.MaxFPS"),TEXT("r.DynamicRes.OperationMode")})
         if(const auto* Variable=IConsoleManager::Get().FindConsoleVariable(CVar))Quality->SetNumberField(CVar,Variable->GetFloat());
     Quality->SetNumberField(TEXT("runtime_resolution_quality"),Scalability::GetQualityLevels().ResolutionQuality);
+    for(const auto& Pair:MediumRenderSettings)if(const auto* Variable=IConsoleManager::Get().FindConsoleVariable(*Pair.Key))Quality->SetNumberField(Pair.Key,Variable->GetFloat());
     Report->SetObjectField(TEXT("quality"),Quality);
-    Report->SetStringField(TEXT("method"),TEXT("Wall frame timings; benchmark-only Epic quality level 3 and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then paused with eight empty neighbors; at least 4s warmup after synchronous view setup, then at least 5s of complete frame intervals; screenshot requested on a later frame after sampling and completed before advancing camera."));
+    Report->SetStringField(TEXT("method"),TEXT("Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then paused with eight empty neighbors; at least 4s warmup after synchronous view setup, then at least 5s of complete frame intervals; screenshot requested on a later frame after sampling and completed before advancing camera."));
     FString Json;FJsonSerializer::Serialize(Report.ToSharedRef(),TJsonWriterFactory<TCHAR,TPrettyJsonPrintPolicy<TCHAR>>::Create(&Json));
     if(!FFileHelper::SaveStringToFile(Json,*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("GraphicsBenchmark-")+Name+TEXT(".json"))))
     {UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK report write failed"));FPlatformMisc::RequestExitWithStatus(false,1);return;}

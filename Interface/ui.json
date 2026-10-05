@@ -1,5 +1,11 @@
 {
   "version": 1,
+  "frontend": {
+    "title": "SEIGE 2222",
+    "eyebrow": "FIRST LANDING",
+    "tagline": "A foothold in the wilderness."
+  },
+  "simulation_speeds": [1, 5, 10],
   "summary_resources": [
     {
       "resource": "alloy",

@@ -28,9 +28,13 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     Add(TEXT("Overview"),TEXT("Operating efficiency"),N(Fraction*100)+TEXT("%")+(B?TEXT(""):TEXT(" at full staffing and upkeep")));
     Add(TEXT("Overview"),TEXT("Footprint radius"),Metres(D.Footprint));
     Add(TEXT("Overview"),TEXT("Sensor range"),Metres(D.SensorRange));
+    FString Activity=D.WorkerActivity;if(!Activity.IsEmpty())Activity[0]=FChar::ToUpper(Activity[0]);
+    Add(TEXT("Overview"),TEXT("Worker activity"),Activity);
     Add(TEXT("Overview"),TEXT("Construction cost"),Amounts(D.Cost));
     Add(TEXT("Overview"),TEXT("Construction payment"),D.Role==TEXT("core")?TEXT("Deployment kit physically carried by the landing shuttle"):TEXT("Reserved at core; couriers deliver before worker construction"));
     Add(TEXT("Overview"),TEXT("Construction duration"),N(D.ConstructionSeconds)+TEXT(" s with ")+FString::FromInt(D.ConstructionWorkers)+TEXT(" builders at full efficiency"));
+    Add(TEXT("Resources"),TEXT("Stock location"),D.InventoryPresentation==TEXT("outdoor")?TEXT("Outdoor stockyard"):TEXT("Inside the building"));
+    if(B&&B->IsConstructing)Add(TEXT("Resources"),TEXT("Delivered materials"),TEXT("Includes material already installed. Stacks shrink as construction progresses."));
     if(B){Add(TEXT("Overview"),TEXT("Construction progress"),N(B->ConstructionProgress*100)+TEXT("%"));Add(TEXT("Overview"),TEXT("Assigned builders"),FString::FromInt(B->Builders));}
 
     const bool Armed=D.DamagePerShot>0;

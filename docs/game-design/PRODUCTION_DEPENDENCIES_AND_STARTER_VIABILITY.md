@@ -8,6 +8,10 @@ Actual Unreal prototype development is now authorized. The narrower chain being 
 
 Separate [resource proposals](RESOURCE_PROPOSAL.md) and [building proposals](BUILDING_PROPOSAL.md) develop candidate catalog revisions. The tables here review the original catalog and its dependencies; they are not a competing confirmed specification. Where candidate chains differ, their selection remains open.
 
+## v0.6 presentation boundary
+
+The v0.6 source changes resource/building presentation metadata and interpolated visible work, not costs, throughput, construction time, workforce capacity or AI plans. Couriers remain the only physical inter-building material transfer; stockpile and worker animations cannot award resources. Construction still requires a full delivered bill before timed work. Static validation passes 32 negative cases. The v0.6 editor compiled; 34 native tests passed cleanly (zero warnings, failed or unrun) and its 79-stage editor interaction route passed with zero failures. The v0.6 Shipping interaction route also passed 79 stages with zero failures and exit 0, recording 831 courier-motion frames between fixed ticks at 1× speed (`Saved/packaged-v0.6.0-UiSmoke-verification.json`). The v0.5 viability results below remain version-specific historical evidence.
+
 ## v0.5 concrete bootstrap in source
 
 The prototype now uses a finite, physically carried core deployment kit, operating stock and starting robots. Core deployment precedes normal operation. The starter core supports enough population to keep its jobs filled while two robots construct the first charging/service bay. The completed bay adds population capacity and consumes local delivered maintenance components. Both native and static rule loading validate that some buildable support expansion can be constructed and staffed within starter capacity.

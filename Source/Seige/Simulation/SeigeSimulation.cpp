@@ -135,6 +135,7 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
         const FObject O = V->AsObject(); FSeigeResourceDef R;
         if (!StringField(O, TEXT("id"), R.Id, Error) || !StringField(O, TEXT("name"), R.Name, Error) || !IntegerField(O, TEXT("tier"), R.Tier, 0, Error) || !ColorField(O, R.Color, Error)) return false;
         if (R.Id.IsEmpty() || Resources.Contains(R.Id)) { Error = TEXT("Duplicate or empty resource ID: ") + R.Id; return false; }
+        if(!StringField(O,TEXT("stockpile_visual"),R.StockpileVisual,Error) || (R.StockpileVisual!=TEXT("bulk")&&R.StockpileVisual!=TEXT("ingots")&&R.StockpileVisual!=TEXT("crates"))) {Error=TEXT("Invalid resource stockpile_visual: ")+R.Id;return false;}
         Resources.Add(R.Id, R);
     }
     if (Resources.IsEmpty()) { Error = TEXT("Resource catalog is empty"); return false; }
@@ -154,6 +155,9 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error)
         if (!StringField(O, TEXT("id"), B.Id, Error) || !StringField(O, TEXT("name"), B.Name, Error) || !StringField(O, TEXT("category"), B.Category, Error) || !StringField(O, TEXT("role"), B.Role, Error) || !StringField(O, TEXT("description"), B.Description, Error) || !StringField(O, TEXT("visual"), B.Visual, Error) || !StringField(O, TEXT("recipe"), B.Recipe, Error) || !StringField(O, TEXT("extract_resource"), B.ExtractResource, Error) || !ColorField(O, B.Color, Error) || !Amounts(O, TEXT("cost"), B.Cost, Resources, Error)) return false;
         if (!IntegerField(O, TEXT("jobs"), B.Jobs, 0, Error) || !Numeric(O, TEXT("health"), B.Health, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("footprint"), B.Footprint, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("storage_capacity"), B.StorageCapacity, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("sensor_range"), B.SensorRange, 0, Error) || !Numeric(O, TEXT("attack_range"), B.AttackRange, 0, Error) || !Numeric(O, TEXT("extract_rate"), B.ExtractRate, 0, Error) || !StringField(O,TEXT("weapon_name"),B.WeaponName,Error) || !Numeric(O,TEXT("damage_per_shot"),B.DamagePerShot,0,Error) || !Numeric(O,TEXT("reload_seconds"),B.ReloadSeconds,0,Error) || !Numeric(O,TEXT("power_usage_kw"),B.PowerUsageKW,0,Error) || !Numeric(O,TEXT("power_generation_kw"),B.PowerGenerationKW,0,Error)) return false;
         if (!Numeric(O,TEXT("construction_seconds"),B.ConstructionSeconds,UE_DOUBLE_SMALL_NUMBER,Error) || !IntegerField(O,TEXT("construction_workers"),B.ConstructionWorkers,1,Error) || !IntegerField(O,TEXT("robot_support_capacity"),B.RobotSupportCapacity,0,Error) || !IntegerField(O,TEXT("staffing_priority"),B.StaffingPriority,0,Error)) return false;
+        if(!StringField(O,TEXT("inventory_presentation"),B.InventoryPresentation,Error)||!StringField(O,TEXT("worker_activity"),B.WorkerActivity,Error))return false;
+        const TArray<FString> Activities={TEXT("extraction"),TEXT("assembly"),TEXT("handling"),TEXT("inspection"),TEXT("service")};
+        if((B.InventoryPresentation!=TEXT("outdoor")&&B.InventoryPresentation!=TEXT("indoor"))||!Activities.Contains(B.WorkerActivity)){Error=TEXT("Invalid building presentation metadata: ")+B.Id;return false;}
         if (Sum(B.Cost)>B.StorageCapacity || (B.Role!=TEXT("core") && B.Role!=TEXT("service") && B.RobotSupportCapacity>0)) {Error=TEXT("Invalid construction storage or support role: ")+B.Id;return false;}
         const bool Armed=B.DamagePerShot>0;
         if (O->HasField(TEXT("damage_per_second")) || (Armed && (B.WeaponName.IsEmpty() || B.ReloadSeconds<=0 || B.AttackRange<=0)) || (!Armed && (!B.WeaponName.IsEmpty() || B.ReloadSeconds!=0 || B.AttackRange!=0)))
@@ -462,6 +466,21 @@ void FSeigeSimulation::StepPopulation(double Seconds)
         }
         UpdateSupport();
     }
+}
+bool FSeigeSimulation::HasActiveWork(const FSeigeBuilding& B) const
+{
+    const auto* D=Definition(B);
+    if(!Policy||!D||B.Health<=0||B.IsConstructing||!B.Enabled||WorkFraction(B)<=0)return false;
+    if(!D->ExtractResource.IsEmpty())return Occupied(B)<D->StorageCapacity-UE_DOUBLE_SMALL_NUMBER;
+    if(!D->Recipe.IsEmpty())
+    {
+        const auto& Recipe=Recipes[D->Recipe];
+        return HasAmounts(B.Inventory,Recipe.Inputs)&&Occupied(B)-Sum(Recipe.Inputs)+Sum(Recipe.Outputs)<=D->StorageCapacity+UE_DOUBLE_SMALL_NUMBER;
+    }
+    if(B.DefId==CoreDefinition)return Population<FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))))&&Population<RobotSupportCapacity&&HasSpendable(B,Recipes[TextRule(TEXT("population_recipe"))].Inputs);
+    if(D->Role==TEXT("service"))return B.SupportedRobots>0&&B.MaintenanceSupplied;
+    if(D->Role==TEXT("storage"))return Sum(B.Inventory)>0;
+    return true; // Online sensors/defenses may still be inspected between actions.
 }
 void FSeigeSimulation::StepProduction(double Seconds)
 {

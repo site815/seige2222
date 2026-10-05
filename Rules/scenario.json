@@ -1,5 +1,5 @@
 {
-  "version": "prototype-5.0",
+  "version": "prototype-6.0",
   "scenario": {
     "title": "seige2222 - First Landing",
     "core_definition": "command_core",

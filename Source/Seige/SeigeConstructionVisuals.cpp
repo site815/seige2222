@@ -115,7 +115,7 @@ void ASeigeGameMode::SetConstructionReveal(AActor* Actor,double Progress)
 void ASeigeGameMode::SyncConstructionVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live)
 {
     const bool Core=Building.DefId==Colony.CoreDefinition;
-    const double Progress=Building.IsConstructing?FMath::Clamp(Building.ConstructionProgress,0.,1.):1.;
+    const double Progress=Building.IsConstructing?FMath::Clamp(RenderConstructionProgress(Colony,Building),0.,1.):1.;
     const double Reveal=Core?Smooth((Progress-.18)/.82):Progress;
     const double Size=Definition.Footprint*2*RenderScale;
     AActor* Body=Visuals.FindRef(Key).Get();if(!Body)return;
@@ -167,41 +167,40 @@ void ASeigeGameMode::SyncConstructionVisuals(const FSeigeSimulation& Colony,cons
     GhostMaterials(Plan,ConstructionMaterial(FLinearColor(.12f,.42f,.36f)));
 
     TArray<FString> Resources;Definition.Cost.GetKeys(Resources);Resources.Sort();
-    const int32 StackCount=Core?2:FMath::Min(3,Resources.Num());
-    for(int32 I=0;I<StackCount;++I)
+    for(int32 I=0;I<Resources.Num();++I)
     {
-        const double Ratio=Core?1-Progress:FMath::Clamp(Building.ConstructionMaterials.FindRef(Resources[I])/FMath::Max(Definition.Cost.FindRef(Resources[I]),.001),0.,1.);
-        const FString StackKey=Key+FString::Printf(TEXT("_stock_%d"),I);Live.Add(StackKey);
-        const FVector2D StackPosition=WorldPosition+FVector2D((I-1)*Definition.Footprint*.38,-Definition.Footprint*.74);
-        AActor* Stack=Visuals.FindRef(StackKey).Get();
-        if(!Stack)
-        {
-            Stack=PresentationActor(GetWorld(),RenderPosition(StackPosition));Visuals.Add(StackKey,Stack);
-            Part(Stack,TEXT("Cube"),FVector(0,0,6),FVector(.9,.65,.12),Steel);
-            const auto* Resource=Core?nullptr:Colony.Resources.Find(Resources[I]);
-            const FLinearColor Color=Resource?Resource->Color:FLinearColor(.5f,.6f,.61f);
-            for(int32 Level=0;Level<4;++Level)Part(Stack,TEXT("Cube"),FVector(0,0,23+Level*27),FVector(.72,.52,.23),Color);
-        }
-        Stack->SetActorLocation(RenderPosition(StackPosition));Stack->SetActorHiddenInGame(false);
-        TArray<UStaticMeshComponent*> Pieces;Stack->GetComponents(Pieces);
-        for(int32 Piece=1;Piece<Pieces.Num();++Piece)Pieces[Piece]->SetVisibility(Piece<=FMath::CeilToInt(Ratio*4));
+        if(Core&&Progress<.30)continue; // The deployment kit is still aboard the descending shuttle.
+        // Site inventory is committed material, including the fraction already
+        // incorporated into the rising structure; only its uninstalled fraction
+        // remains on the ground. Never show an undelivered required material.
+        const double Amount=Building.ConstructionMaterials.FindRef(Resources[I])*(1-Progress);
+        const FVector2D StackPosition=WorldPosition+FVector2D((I%3-1)*FMath::Max(48.,Definition.Footprint*.65),-Definition.Footprint-65.-(I/3)*65.);
+        if(!Observer&&DetailedSectorIndex()!=4&&!Sim.IsVisible(StackPosition))continue;
+        if(const auto* Resource=Colony.Resources.Find(Resources[I]))SyncStockpile(*Resource,Amount,StackPosition,Key+TEXT("_stock_")+Resources[I],Live);
     }
-    const int32 Workers=FMath::Clamp(Building.Builders,0,4);
+    const int32 Workers=Core&&Progress<.30?0:FMath::Clamp(Building.Builders,0,4);
+    const double Time=RenderSimulationTime(Colony);
     for(int32 I=0;I<Workers;++I)
     {
-        const double Phase=Colony.Time*.23+I*UE_PI*.5;
-        FVector2D Perimeter(FMath::Cos(Phase),FMath::Sin(Phase));
-        Perimeter/=FMath::Max(FMath::Abs(Perimeter.X),FMath::Abs(Perimeter.Y));
-        const FVector2D Position=WorldPosition+Perimeter*Definition.Footprint*1.1;
+        const double Side=I%2?1.:-1.;
+        const FVector2D Station=WorldPosition+FVector2D(Side*(Definition.Footprint+32),(-.65+.45*I)*Definition.Footprint);
+        const FVector2D Tools=WorldPosition+FVector2D(Side*(Definition.Footprint+62),-Definition.Footprint-48);
+        const double Phase=FMath::Fmod(Time+I*2.4,10.)/10.;
+        const double Travel=Phase<.15?Smooth(Phase/.15):Phase<.25?1:Phase<.4?1-Smooth((Phase-.25)/.15):0;
+        const FVector2D Position=FMath::Lerp(Station,Tools,Travel);
+        if(!Observer&&DetailedSectorIndex()!=4&&!Sim.IsVisible(Position))continue;
         const FString WorkerKey=Key+FString::Printf(TEXT("_builder_%d"),I);Live.Add(WorkerKey);
         auto* Worker=Visual(WorkerKey,TEXT("Robot"),RenderPosition(Position,4),Safety,95);
-        Worker->SetActorRotation(FVector(WorldPosition-Position,0).Rotation());
+        Worker->SetActorRotation(FVector(Travel>.01?(Phase<.25?Tools-Station:Station-Tools):WorldPosition-Position,0).Rotation());
         if(!Worker->ActorHasTag(TEXT("ConstructionTool")))
         {
             Part(Worker,TEXT("Cube"),FVector(38,0,38),FVector(.36,.12,.12),Steel);
             Part(Worker,TEXT("Sphere"),FVector(57,0,38),FVector(.055),BuildMint);
+            TArray<UStaticMeshComponent*> Parts;Worker->GetComponents(Parts);if(Parts.Num()>1)Parts[Parts.Num()-2]->ComponentTags.Add(TEXT("ConstructionTool"));
             Worker->Tags.Add(TEXT("ConstructionTool"));
         }
+        TArray<UStaticMeshComponent*> Parts;Worker->GetComponents(Parts);
+        for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("ConstructionTool")))Part->SetRelativeRotation(FRotator(Phase>=.4?FMath::Sin(Time*8+I)*16:0,0,0));
     }
 }
 
@@ -227,6 +226,10 @@ void ASeigeGameMode::SyncServiceVisuals(const FSeigeSimulation& Colony,const FSe
             TArray<UStaticMeshComponent*> Parts;Robot->GetComponents(Parts);if(Parts.Num())Parts.Last()->ComponentTags.Add(TEXT("ServiceStatusLamp"));
         }
         TArray<UStaticMeshComponent*> Parts;Robot->GetComponents(Parts);
-        for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("ServiceStatusLamp")))Part->SetMaterial(0,Material(Building.MaintenanceSupplied?BuildMint:Safety));
+        for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("ServiceStatusLamp")))
+        {
+            Part->SetMaterial(0,Material(Building.MaintenanceSupplied?BuildMint:Safety));
+            Part->SetRelativeScale3D(FVector(.09+.01*FMath::Sin(RenderSimulationTime(Colony)*2+I)));
+        }
     }
 }

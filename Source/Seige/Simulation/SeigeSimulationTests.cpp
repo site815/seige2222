@@ -56,7 +56,7 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
     FFileHelper::LoadFileToString(GoodRecipes,*FPaths::Combine(TestRules(),TEXT("recipes.json")));
     FFileHelper::LoadFileToString(GoodBuildings,*FPaths::Combine(TestRules(),TEXT("buildings.json")));
     FFileHelper::SaveStringToFile(GoodRecipes,*FPaths::Combine(BadRules,TEXT("recipes.json")));
-    for(int32 Case=0;Case<8;++Case)
+    for(int32 Case=0;Case<10;++Case)
     {
         TSharedPtr<FJsonObject> Document;FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(GoodBuildings),Document);
         const auto Core=Document->GetArrayField(TEXT("buildings"))[0]->AsObject();
@@ -68,6 +68,8 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
         if(Case==5)Core->SetNumberField(TEXT("construction_seconds"),0);
         if(Case==6)Core->SetNumberField(TEXT("construction_workers"),0);
         if(Case==7)Core->SetNumberField(TEXT("robot_support_capacity"),1);
+        if(Case==8)Core->SetStringField(TEXT("inventory_presentation"),TEXT("nowhere"));
+        if(Case==9)Core->SetStringField(TEXT("worker_activity"),TEXT("unbounded_patrol"));
         FString Invalid;FJsonSerializer::Serialize(Document.ToSharedRef(),TJsonWriterFactory<>::Create(&Invalid));
         FFileHelper::SaveStringToFile(Invalid,*FPaths::Combine(BadRules,TEXT("buildings.json")));
         TestFalse(*FString::Printf(TEXT("Runtime rejects invalid weapon/power/construction/support variant %d"),Case),S.Initialize(BadRules,Error));
@@ -317,6 +319,27 @@ bool FSeigeRobotSupportTest::RunTest(const FString& Parameters)
     S.ToggleBuilding(BayId);
     TestEqual(TEXT("Disabling a bay removes its usable capacity"),S.RobotSupportCapacity,CoreCapacity);
     TestTrue(TEXT("Unsupported robots remain and operate at shortage efficiency"),S.SupportedPopulation<S.Population&&S.OperatingEfficiency()<1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeVisibleWorkGatesTest,"Seige.Simulation.VisibleWorkUsesOperatingGates",TestFlags)
+bool FSeigeVisibleWorkGatesTest::RunTest(const FString& Parameters)
+{
+    FString Error;FSeigeSimulation S;if(!Deploy(S,Error)){AddError(Error);return false;}
+    TestFalse(TEXT("Idle core does not mime manufacturing robots"),S.HasActiveWork(S.Buildings[0]));
+    const FSeigeBuildingDef* D=nullptr;
+    for(const auto& Pair:S.BuildingDefs)if(Pair.Value.Role==TEXT("processor")){D=&Pair.Value;break;}
+    if(!TestNotNull(TEXT("Current rules contain a processor"),D))return false;
+    FSeigeBuilding B;B.DefId=D->Id;B.Health=D->Health;B.Workers=D->Jobs;
+    TestFalse(TEXT("No local inputs means exterior tools stay idle"),S.HasActiveWork(B));
+    B.Inventory=S.Recipes[D->Recipe].Inputs;
+    TestTrue(TEXT("Real locally supplied staffed production allows work animation"),S.HasActiveWork(B));
+    const FString Stock=B.Inventory.CreateConstIterator().Key();B.Inventory[Stock]=D->StorageCapacity*2;
+    TestFalse(TEXT("Full output storage also stops work animation"),S.HasActiveWork(B));
+    B.Inventory=S.Recipes[D->Recipe].Inputs;B.IsConstructing=true;
+    TestFalse(TEXT("Construction site never shows operating workforce"),S.HasActiveWork(B));
+    B.IsConstructing=false;B.Enabled=false;
+    TestFalse(TEXT("Disabled production stays idle"),S.HasActiveWork(B));
     return true;
 }
 #endif

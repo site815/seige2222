@@ -1,0 +1,122 @@
+{
+  "material": "/Game/Art/NatureV04/M_V04Grass.M_V04Grass",
+  "before": {
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_0": {
+      "parameter": "BaseColor",
+      "mip_mode": "<TextureMipValueMode.TMVM_MIP_BIAS: 2>",
+      "constant_mip_value": -2,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.T_grass_medium_02_surface_color_padded"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_1": {
+      "parameter": "NormalMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_normal.T_grass_medium_02_surface_normal"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_3": {
+      "parameter": "OpacityMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_MIP_BIAS: 2>",
+      "constant_mip_value": -2,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_alpha.T_grass_medium_02_surface_alpha"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_4": {
+      "parameter": "OcclusionMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_ao.T_grass_medium_02_surface_ao"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_5": {
+      "parameter": "BaseColor",
+      "mip_mode": "<TextureMipValueMode.TMVM_MIP_BIAS: 2>",
+      "constant_mip_value": -2,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.T_grass_medium_02_surface_color_padded"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_6": {
+      "parameter": "NormalMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_normal.T_grass_medium_02_surface_normal"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_7": {
+      "parameter": "RoughnessMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_roughness.T_grass_medium_02_surface_roughness"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_8": {
+      "parameter": "OpacityMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_MIP_BIAS: 2>",
+      "constant_mip_value": -2,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_alpha.T_grass_medium_02_surface_alpha"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_9": {
+      "parameter": "OcclusionMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_ao.T_grass_medium_02_surface_ao"
+    }
+  },
+  "after": {
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_0": {
+      "parameter": "BaseColor",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": 0,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.T_grass_medium_02_surface_color_padded"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_1": {
+      "parameter": "NormalMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_normal.T_grass_medium_02_surface_normal"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_3": {
+      "parameter": "OpacityMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_MIP_BIAS: 2>",
+      "constant_mip_value": -2,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_alpha.T_grass_medium_02_surface_alpha"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_4": {
+      "parameter": "OcclusionMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_ao.T_grass_medium_02_surface_ao"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_5": {
+      "parameter": "BaseColor",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": 0,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.T_grass_medium_02_surface_color_padded"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_6": {
+      "parameter": "NormalMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_normal.T_grass_medium_02_surface_normal"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_7": {
+      "parameter": "RoughnessMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_roughness.T_grass_medium_02_surface_roughness"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_8": {
+      "parameter": "OpacityMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_MIP_BIAS: 2>",
+      "constant_mip_value": -2,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_alpha.T_grass_medium_02_surface_alpha"
+    },
+    "/Game/Art/NatureV04/M_V04Grass.M_V04Grass:MaterialExpressionTextureSampleParameter2D_9": {
+      "parameter": "OcclusionMap",
+      "mip_mode": "<TextureMipValueMode.TMVM_NONE: 0>",
+      "constant_mip_value": -1,
+      "texture": "/Game/Art/NatureV04/Textures/T_grass_medium_02_surface_ao.T_grass_medium_02_surface_ao"
+    }
+  },
+  "opacity_clip_value": 0.33000001311302185,
+  "opacity_unchanged": true,
+  "texture_files_changed": false,
+  "geometry_changed": false,
+  "tree_materials_changed": false,
+  "rendered_review_pending": true,
+  "purpose": "Restore derivative-based BaseColor mips and anisotropic filtering; preserve masked silhouettes."
+}

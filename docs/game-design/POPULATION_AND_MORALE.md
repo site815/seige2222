@@ -4,6 +4,10 @@
 
 The current robotic population scope, population-serving commodities, growth, and the earlier needs and morale ideas that require adaptation.
 
+## v0.6 visible population boundary
+
+Current source displays aggregate examples of existing builders, operating workers and supported service robots. Exterior tool-fetch/workstation cycles are presentation, not extra population or an independent worker simulation. Real staffing and supplies determine whether work is active, and interpolated simulation time freezes animations when paused. Capacity, growth, maintenance and retirement rates are unchanged. The v0.6 editor compiled; all 34 native tests passed cleanly (zero warnings, failed or unrun), and the 79-stage editor route passed with zero failures, including 413 interpolated courier-motion frames at 1×. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; older release evidence remains version-specific.
+
 ## v0.5 robot services — current implementation
 
 The user now requires a robot charging/maintenance building analogous to housing. The source implements a service bay with a real population-support capacity and a staffed operating requirement. The core supports the initial crew, so the player can establish the first bay before expansion. Exact capacities, worker counts, construction duration and upkeep remain external prototype values in `Rules/buildings.json` and `Rules/policies.json`.

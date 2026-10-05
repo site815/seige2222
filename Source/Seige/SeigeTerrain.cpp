@@ -9,6 +9,14 @@
 
 namespace
 {
+bool HidePendingHomeFoundation(const ASeigeGameMode& G)
+{
+    if(G.Observer)return false;
+    if(G.Screen==TEXT("landing")||(G.MenuOpen&&G.MenuReturnScreen==TEXT("landing")))return true;
+    // The initial scenario reserves a core before a human chooses its site.
+    // Main/settings backdrops must not turn that reservation into a graded pad.
+    return G.Sim.Time<=UE_DOUBLE_SMALL_NUMBER&&G.Screen!=TEXT("playing")&&!(G.MenuOpen&&G.MenuReturnScreen==TEXT("playing"));
+}
 struct FHeightPad
 {
     FVector2D Position;
@@ -27,7 +35,7 @@ struct FPreparedTerrain
         RidgeCos=FMath::Cos(Angle);RidgeSin=FMath::Sin(Angle);
         auto AddColony=[&](const FSeigeSimulation& Colony,FVector2D Offset,int32 Index)
         {
-            if(Index<0||Index>8||(Index==4&&G.Screen==TEXT("landing")))return;
+            if(Index<0||Index>8||(Index==4&&HidePendingHomeFoundation(G)))return;
             for(const auto& B:Colony.Buildings)
             {
                 const FVector2D P=B.Position+Offset;
@@ -177,7 +185,7 @@ TArray<FDirtPatch> PrepareDirt(const ASeigeGameMode& G)
     const FVector2D Offset=G.DetailedSectorOffset();
     if(const auto* Colony=G.ViewedSimulation())
     {
-        if(G.Screen!=TEXT("landing"))for(const auto& B:Colony->Buildings)
+        if(G.DetailedSectorIndex()!=4||!HidePendingHomeFoundation(G))for(const auto& B:Colony->Buildings)
             if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.Sim.IsVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))
             {
                 const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
@@ -367,7 +375,7 @@ TArray<FSceneryClearance> VisibleClearances(const ASeigeGameMode& G)
 {
     TArray<FSceneryClearance> Areas;const auto* Colony=G.ViewedSimulation();if(!Colony)return Areas;
     const FVector2D Offset=G.DetailedSectorOffset();
-    if(G.Screen!=TEXT("landing"))for(const auto& B:Colony->Buildings)
+    if(G.DetailedSectorIndex()!=4||!HidePendingHomeFoundation(G))for(const auto& B:Colony->Buildings)
         if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.Sim.IsVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->Footprint,true});
     for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
     return Areas;
@@ -418,7 +426,7 @@ const FName SwardTag(TEXT("seige_sward"));
 void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
 {
     if(!Actor)return;
-    const FVector CameraPosition=G.CameraTransform().GetLocation();
+    const FVector CameraPosition=G.CameraTransform(G.CameraViewZoom()).GetLocation();
     const double Distance=G.GrassShadowDistanceMeters*100.;
     TArray<UHierarchicalInstancedStaticMeshComponent*> Components;Actor->GetComponents(Components);
     for(auto* Component:Components)
@@ -561,7 +569,7 @@ void ASeigeGameMode::CreateGroundCover()
 }
 void ASeigeGameMode::RefreshEnvironment()
 {
-    if(!FApp::CanEverRender())return;const bool Map=IsRegionMap();
+    if(!FApp::CanEverRender())return;const bool Map=RegionMapAlpha()>=1;
     if(!Map)
     {
         if(RenderedSector!=DetailedSectorIndex()){SelectedId=0;SelectedBuild.Empty();CreateLandscape();}

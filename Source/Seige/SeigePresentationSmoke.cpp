@@ -16,7 +16,26 @@
 void ASeigeGameMode::RunPresentationSmoke()
 {
     if(!FParse::Param(FCommandLine::Get(),TEXT("UiSmoke")))return;
-    static const double Times[]={2,3,4,5,7,8,10,11,12,13,14.5,16,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,78,80,84,86,90,92,96,98,100,102,104,106,108,114,116,138,158,160};
+    static const double Times[]={2,3,4,5,7,8,10,11,12,13,14.5,16,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,78,80,84,86,90,92,96,98,100,102,104,106,108,114,116,138,158,160,162,163,165,166,167,168,169,170,173,174,176,177,179,180,183,186};
+    static double MenuTime=0;
+    static TWeakObjectPtr<ASeigeGameMode> MotionOwner;
+    static TMap<int32,FVector> LastCourierPositions;
+    static double LastMotionTime=-1;
+    static int32 MotionFramesBetweenTicks=0;
+    if(MotionOwner.Get()!=this){MotionOwner=this;LastCourierPositions.Reset();LastMotionTime=-1;MotionFramesBetweenTicks=0;}
+    if(Screen==TEXT("playing")&&!Paused&&Speed==1&&!Observer)
+    {
+        bool MovedBetweenTicks=false;TMap<int32,FVector> Current;
+        for(const auto& Courier:Sim.Couriers)if(const auto* Actor=Visuals.FindRef(FString::Printf(TEXT("home_courier_%d"),Courier.Id)).Get())
+        {
+            const FVector Position=Actor->GetActorLocation();Current.Add(Courier.Id,Position);
+            if(const auto* Previous=LastCourierPositions.Find(Courier.Id))
+                MovedBetweenTicks|=Sim.Time==LastMotionTime&&!Position.Equals(*Previous,.001);
+        }
+        if(MovedBetweenTicks)++MotionFramesBetweenTicks;
+        LastCourierPositions=MoveTemp(Current);LastMotionTime=Sim.Time;
+    }
+    else{LastCourierPositions.Reset();LastMotionTime=-1;}
     if(PresentationSmokeStage>=UE_ARRAY_COUNT(Times)||RenderClock<Times[PresentationSmokeStage])return;
     const int32 Stage=PresentationSmokeStage++;
     auto* Controller=Cast<ASeigeController>(UGameplayStatics::GetPlayerController(this,0));
@@ -28,7 +47,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     };
     auto Capture=[&](const TCHAR* Name)
     {
-        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v05"));
+        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v06"));
         if(!Require(IFileManager::Get().MakeDirectory(*Directory,true),TEXT("Could not create screenshot directory")))return;
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Name)+TEXT(".png")),true,false);
         UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CAPTURE %s stage=%d screen=%s"),Name,Stage,*Screen);
@@ -123,7 +142,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 29: Capture(TEXT("weapons"));break;
     case 30: ClickAction(TEXT("info-section:Power"));break;
     case 31: Capture(TEXT("power"));break;
-    case 32: ClickAction(TEXT("region-map"));Require(IsRegionMap(),TEXT("Region dock did not open cartographic view"));break;
+    case 32: ClickAction(TEXT("region-map"));Require(Zoom==MaximumZoom,TEXT("Region dock must begin zooming into cartographic view"));break;
     case 33: Capture(TEXT("regional_ai"));break;
     case 34: ClickAction(TEXT("focus-sector:0"));break;
     case 35:
@@ -172,7 +191,12 @@ void ASeigeGameMode::RunPresentationSmoke()
         Zoom=DefaultZoom;UpdateCamera();
         if(Hud){Hud->HandleShortcut(EKeys::B);Hud->HandleShortcut(EKeys::L);Hud->HandleShortcut(EKeys::C);}
         Require(SelectedBuild==TEXT("robot_service_bay"),TEXT("B L C must select robot service hub"));
-        if(Controller)Controller->SetMouseLocation(950,450);
+        if(Controller)
+        {
+            if(Controller->PlayerCameraManager)Controller->PlayerCameraManager->UpdateCamera(0);
+            FVector2D GhostPixel;
+            if(Controller->ProjectWorldLocationToScreen(RenderPosition(FVector2D(700,500)),GhostPixel))Controller->SetMouseLocation(FMath::RoundToInt(GhostPixel.X),FMath::RoundToInt(GhostPixel.Y));
+        }
         CursorOnWorld=true;CursorWorld=FVector2D(700,500);SyncVisuals();
         Require(Visuals.Contains(TEXT("placement_robot_service_bay")),TEXT("Service blueprint must display a mesh ghost"));Capture(TEXT("service_ghost"));break;
     case 59:
@@ -188,13 +212,50 @@ void ASeigeGameMode::RunPresentationSmoke()
         Require(Sim.Buildings.Num()==2&&!Sim.Buildings.Last().IsConstructing,TEXT("Delivered materials and workers must finish the service hub"));
         Require(Sim.RobotSupportCapacity==24,TEXT("Completed service hub must expand robot support capacity"));ClickAction(TEXT("info-section:Maintenance"));Capture(TEXT("service_complete"));break;
     case 62:
+        if(Hud)Hud->HandleShortcut(EKeys::F10);MenuTime=Sim.Time;
+        Require(MenuOpen&&Screen==TEXT("game-menu")&&Paused,TEXT("F10 must open the paused game menu directly"));break;
+    case 63:
+        Require(Sim.Time==MenuTime,TEXT("The local scenario must stop while its game menu is open"));Capture(TEXT("game_menu"));break;
+    case 64: SetRenderResolutionPercent(100);ClickAction(TEXT("screen:settings"));Require(Screen==TEXT("settings")&&MenuOpen,TEXT("Game menu must expose settings"));break;
+    case 65: Capture(TEXT("settings"));break;
+    case 66:
+        ClickAction(TEXT("render-scale:-10"));Require(RenderResolutionPercent==90,TEXT("Rendering resolution control must decrease independently of display mode"));
+        ClickAction(TEXT("render-scale:10"));Require(RenderResolutionPercent==100,TEXT("Rendering resolution control must restore native rendering"));break;
+    case 67: ClickAction(TEXT("back-screen"));Require(Screen==TEXT("game-menu"),TEXT("Settings Back must return to the in-game menu"));break;
+    case 68:
+        if(Hud)Hud->HandleShortcut(EKeys::F10);
+        Require(!MenuOpen&&Screen==TEXT("playing")&&!Paused,TEXT("Closing the game menu must restore the earlier running state"));break;
+    case 69:
+        Speed=1;
+        if(Hud)
+        {
+            Hud->HandleShortcut(EKeys::Add);Require(Speed==5,TEXT("Plus must select 5x after 1x"));
+            Hud->HandleShortcut(EKeys::Add);Require(Speed==10,TEXT("Plus must select 10x after 5x"));
+            Hud->HandleShortcut(EKeys::Add);Require(Speed==1,TEXT("Plus must wrap 10x to 1x"));
+            Hud->HandleShortcut(EKeys::Subtract);Require(Speed==10,TEXT("Minus must cycle speed backwards"));
+            Hud->HandleShortcut(EKeys::Subtract);Hud->HandleShortcut(EKeys::Subtract);Hud->HandleShortcut(EKeys::SpaceBar);
+        }
+        Require(Paused&&Speed==1,TEXT("Space pauses without losing the chosen speed"));break;
+    case 70: SelectedId=0;CameraCenter=FVector::ZeroVector;CameraYaw=135;CameraPitch=52;Zoom=150000;UpdateCamera();break;
+    case 71:
+        Require(!IsRegionMap()&&RegionMapAlpha()==0,TEXT("Whole-sector survey must remain an unobscured 3D view"));Capture(TEXT("sector_survey"));break;
+    case 72: Zoom=RegionMapZoom+RegionMapTransitionWidth*.25f;UpdateCamera();break;
+    case 73:
+        Require(RegionMapAlpha()>0&&RegionMapAlpha()<1,TEXT("The grid map must blend into the landscape"));Capture(TEXT("map_transition"));break;
+    case 74: Zoom=MaximumZoom;UpdateCamera();break;
+    case 75: Require(IsRegionMap()&&RegionMapAlpha()==1,TEXT("The outer zoom must reach the full map"));Capture(TEXT("full_map"));break;
+    case 76: FocusSector(4);CameraCenter=FVector(700,500,0);Zoom=1800;UpdateCamera();Paused=false;break;
+    case 77: Capture(TEXT("service_work"));break;
+    case 78:
     {
         Require(Ready&&!Observer&&Neighbors.Num()==0&&Screen==TEXT("playing"),TEXT("Final construction scenario state is invalid"));
+        Require(MotionFramesBetweenTicks>10,TEXT("Visible 1x courier movement must update between fixed simulation ticks"));
         const float Dt=GetWorld()?GetWorld()->GetDeltaSeconds():0;
         auto Report=MakeShared<FJsonObject>();Report->SetBoolField(TEXT("ready"),Ready);Report->SetNumberField(TEXT("failures"),SmokeFailures);
         Report->SetBoolField(TEXT("observer"),Observer);Report->SetNumberField(TEXT("neighbors"),Neighbors.Num());Report->SetNumberField(TEXT("buildings"),Sim.Buildings.Num());
         Report->SetNumberField(TEXT("fps"),Dt>0?1.0/Dt:0);Report->SetNumberField(TEXT("presentation_seconds"),RenderClock);Report->SetNumberField(TEXT("simulation_seconds"),Sim.Time);
         Report->SetStringField(TEXT("screen"),Screen);Report->SetNumberField(TEXT("completed_stages"),PresentationSmokeStage);
+        Report->SetNumberField(TEXT("courier_motion_frames_between_ticks_at_1x"),MotionFramesBetweenTicks);
         FString Json;const FString Filename=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("PresentationSmoke.json"));
         if(!FJsonSerializer::Serialize(Report,TJsonWriterFactory<>::Create(&Json))||!FFileHelper::SaveStringToFile(Json,*Filename,FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
         {++SmokeFailures;UE_LOG(LogTemp,Error,TEXT("UI_SMOKE_ASSERT could not save presentation report"));}

@@ -6,6 +6,9 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/IConsoleManager.h"
+#include "Scalability.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 
 bool ASeigeGameMode::LoadGraphicsSettings()
 {
@@ -26,18 +29,31 @@ bool ASeigeGameMode::LoadGraphicsSettings()
     float Forest=0,NearForest=0,GroundCandidates=0,TerrainResolution=0,RidgeX=0,RidgeY=0,NeighborForest=0;
     if(!Read(TEXT("world_centimeters_per_unit"),1,20,RenderScale)||
        !Read(TEXT("nanite_max_pixels_per_edge"),.5,4,NaniteMaxPixelsPerEdge)||
+       !Read(TEXT("nanite_survey_pixels_per_edge"),.5,4,NaniteSurveyPixelsPerEdge)||
+       !Read(TEXT("nanite_survey_start_zoom"),5000,60000,NaniteSurveyStartZoom)||
+       !Read(TEXT("nanite_survey_end_zoom"),10000,200000,NaniteSurveyEndZoom)||
        !Read(TEXT("camera_fov"),35,80,CameraFov)||!Read(TEXT("camera_pitch"),5,85,CameraPitch)||
        !Read(TEXT("minimum_camera_pitch"),5,25,MinimumCameraPitch)||!Read(TEXT("maximum_camera_pitch"),60,85,MaximumCameraPitch)||
        !Read(TEXT("camera_ground_clearance_cm"),100,500,CameraGroundClearance)||
        !Read(TEXT("sun_intensity"),.1,20,SunIntensity)||!Read(TEXT("sky_intensity"),.1,5,SkyIntensity)||
        !Read(TEXT("cloud_shadow_strength"),0,1,CloudShadowStrength)||
+       !Read(TEXT("sun_source_angle"),.1,5,SunSourceAngle)||
+       !Read(TEXT("cloud_shadow_resolution_scale"),.25,2,CloudShadowResolutionScale)||
+       !Read(TEXT("fog_density"),0,.01,FogDensity)||
+       !Read(TEXT("fog_start_distance_m"),0,10000,FogStartDistanceMeters)||
+       !Read(TEXT("atmosphere_mie_scale"),0,2,AtmosphereMieScale)||
+       !Read(TEXT("atmosphere_aerial_perspective_scale"),0,3,AtmosphereAerialPerspectiveScale)||
+       !Read(TEXT("bloom_intensity"),0,1,BloomIntensity)||
        !Read(TEXT("camera_yaw"),-360,360,CameraYaw)||!Read(TEXT("default_zoom"),900,20000,DefaultZoom)||
        !Read(TEXT("minimum_zoom"),60,2000,MinimumZoom)||!Read(TEXT("forest_candidates"),1000,200000,Forest)||
+       !Read(TEXT("maximum_zoom"),180000,720000,MaximumZoom)||
+       !Read(TEXT("camera_zoom_response"),1,30,CameraZoomResponse)||
        !Read(TEXT("near_forest_candidates"),100,30000,NearForest)||
        !Read(TEXT("grass_shadow_distance_m"),0,500,GrassShadowDistanceMeters)||
        !Read(TEXT("grass_programmable_distance_m"),0,900,GrassProgrammableDistanceMeters)||
        !Read(TEXT("neighboring_forest_candidates_per_sector"),0,12000,NeighborForest)||
-       !Read(TEXT("region_map_zoom"),20000,90000,RegionMapZoom)||
+       !Read(TEXT("region_map_zoom"),60000,240000,RegionMapZoom)||
+       !Read(TEXT("region_map_transition_width"),5000,60000,RegionMapTransitionWidth)||
        !Read(TEXT("orbit_yaw_degrees_per_pixel"),.05,2,OrbitYawPerPixel)||
        !Read(TEXT("orbit_pitch_degrees_per_pixel"),.05,2,OrbitPitchPerPixel)||
        !Read(TEXT("ground_cover_candidates"),10000,400000,GroundCandidates)||
@@ -59,10 +75,15 @@ bool ASeigeGameMode::LoadGraphicsSettings()
     {Error=TEXT("Invalid cloud material path");return false;}
     if(CameraPitch<MinimumCameraPitch||CameraPitch>MaximumCameraPitch){Error=TEXT("Default camera pitch lies outside orbit limits");return false;}
     if(MinimumZoom>DefaultZoom){Error=TEXT("Minimum camera zoom exceeds default zoom");return false;}
+    if(RegionMapZoom-RegionMapTransitionWidth*.5f<60000||RegionMapZoom+RegionMapTransitionWidth*.5f>=MaximumZoom)
+    {Error=TEXT("Region map transition must follow the sector overview and end before maximum zoom");return false;}
+    if(NaniteSurveyPixelsPerEdge<NaniteMaxPixelsPerEdge||NaniteSurveyStartZoom<DefaultZoom||NaniteSurveyEndZoom<=NaniteSurveyStartZoom||NaniteSurveyEndZoom>RegionMapZoom-RegionMapTransitionWidth*.5f)
+    {Error=TEXT("Invalid Nanite survey transition");return false;}
     if(MinimumZoom>=DefaultZoom*.45f){Error=TEXT("Minimum camera zoom must lie below the close-view transition");return false;}
     if(FMath::FloorToFloat(Forest)!=Forest||FMath::FloorToFloat(NearForest)!=NearForest||FMath::FloorToFloat(GroundCandidates)!=GroundCandidates||FMath::FloorToFloat(NeighborForest)!=NeighborForest){Error=TEXT("Vegetation candidate counts must be integers");return false;}
     if(!Root->TryGetBoolField(TEXT("neighboring_forest_shadow"),NeighborForestShadows)){Error=TEXT("Invalid neighboring forest shadow flag");return false;}
     if(!Root->TryGetBoolField(TEXT("grass_distance_field_lighting"),GrassDistanceFieldLighting)){Error=TEXT("Invalid grass distance-field lighting flag");return false;}
+    if(!Root->TryGetBoolField(TEXT("sky_realtime_capture"),SkyRealtimeCapture)){Error=TEXT("Invalid realtime sky capture flag");return false;}
     NeighborForestCandidates=static_cast<int32>(NeighborForest);
     if(GrassScaleMin>GrassScaleMax){Error=TEXT("Minimum grass scale exceeds maximum");return false;}
     if(TerrainResolution!=512&&TerrainResolution!=1024){Error=TEXT("Detailed terrain resolution must be 512 or 1024");return false;}
@@ -79,6 +100,37 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         if(!(*Assets)->TryGetStringField(Key,Path)||!Path.StartsWith(TEXT("/Game/"))){Error=TEXT("Missing or invalid nature asset path: ")+Key;return false;}
         NatureAssets.Add(Key,Path);
     }
+    const TSharedPtr<FJsonObject>* Profile=nullptr;
+    if(!Root->TryGetObjectField(TEXT("medium_profile"),Profile)){Error=TEXT("Missing Medium graphics profile");return false;}
+    MediumQualityGroups.Reset();MediumRenderSettings.Reset();
+    const TSharedPtr<FJsonObject>* Groups=nullptr;
+    if(!(*Profile)->TryGetObjectField(TEXT("quality_groups"),Groups)||(*Groups)->Values.Num()!=11){Error=TEXT("Invalid Medium quality groups");return false;}
+    for(const TCHAR* Key:{TEXT("ViewDistance"),TEXT("AntiAliasing"),TEXT("Shadow"),TEXT("GlobalIllumination"),TEXT("Reflection"),TEXT("PostProcess"),TEXT("Texture"),TEXT("Effects"),TEXT("Foliage"),TEXT("Shading"),TEXT("Landscape")})
+    {
+        double Value=0;
+        if(!(*Groups)->TryGetNumberField(Key,Value)||!FMath::IsFinite(Value)||Value<0||Value>3||Value!=FMath::FloorToDouble(Value))
+        {Error=TEXT("Invalid Medium quality group: ")+FString(Key);return false;}
+        MediumQualityGroups.Add(Key,static_cast<int32>(Value));
+    }
+    const TSharedPtr<FJsonObject>* Settings=nullptr;
+    if(!(*Profile)->TryGetObjectField(TEXT("render_settings"),Settings)||(*Settings)->Values.Num()!=6){Error=TEXT("Invalid Medium rendering settings");return false;}
+    struct FSettingRange{const TCHAR* Name;double Min,Max;bool Integer;};
+    for(const auto& Range:{FSettingRange{TEXT("r.TSR.History.ScreenPercentage"),100,200,false},FSettingRange{TEXT("r.TSR.ThinGeometryDetection"),0,1,true},FSettingRange{TEXT("r.TSR.ThinGeometryDetection.Coverage.ShadingRange"),0,3,true},FSettingRange{TEXT("r.TSR.Velocity.WeightClampingSampleCount"),1,8,false},FSettingRange{TEXT("r.Tonemapper.Sharpen"),0,1,false},FSettingRange{TEXT("r.MaxAnisotropy"),4,16,true}})
+    {
+        double Value=0;
+        if(!(*Settings)->TryGetNumberField(Range.Name,Value)||!FMath::IsFinite(Value)||Value<Range.Min||Value>Range.Max||(Range.Integer&&Value!=FMath::FloorToDouble(Value)))
+        {Error=TEXT("Invalid Medium rendering setting: ")+FString(Range.Name);return false;}
+        MediumRenderSettings.Add(Range.Name,Value);
+    }
+    // Opt-in benchmark controls recreate the previous lighting setup before
+    // BeginPlay creates its components. They never write player preferences.
+    if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkV05Epic")))
+    {
+        NaniteMaxPixelsPerEdge=1.5f;
+        FogDensity=.0025f;FogStartDistanceMeters=450;AtmosphereMieScale=1;AtmosphereAerialPerspectiveScale=1;
+        BloomIntensity=.15f;SunSourceAngle=2;CloudShadowResolutionScale=2;SkyRealtimeCapture=true;
+    }
+    if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkRealtimeSky")))SkyRealtimeCapture=true;
     if(auto* NaniteEdge=IConsoleManager::Get().FindConsoleVariable(TEXT("r.Nanite.MaxPixelsPerEdge")))
     {
         // External project data must not override higher-priority command-line,
@@ -86,7 +138,23 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         if((NaniteEdge->GetFlags()&ECVF_SetByMask)<=ECVF_SetByProjectSetting)
             NaniteEdge->Set(NaniteMaxPixelsPerEdge,ECVF_SetByProjectSetting);
     }
-    Zoom=DefaultZoom;return true;
+    Zoom=DefaultZoom;RenderedZoom=-1;return true;
+}
+void ASeigeGameMode::ApplyMediumPreset()
+{
+    auto Levels=Scalability::GetQualityLevels();const float Resolution=Levels.ResolutionQuality>0?Levels.ResolutionQuality:100.f;
+    Levels.SetFromSingleQualityLevel(2);Levels.ResolutionQuality=Resolution;
+    auto Quality=[&](const TCHAR* Key,int32 Fallback){const int32* Found=MediumQualityGroups.Find(Key);return Found?*Found:Fallback;};
+    Levels.ViewDistanceQuality=Quality(TEXT("ViewDistance"),2);Levels.AntiAliasingQuality=Quality(TEXT("AntiAliasing"),3);
+    Levels.ShadowQuality=Quality(TEXT("Shadow"),2);Levels.GlobalIlluminationQuality=Quality(TEXT("GlobalIllumination"),2);
+    Levels.ReflectionQuality=Quality(TEXT("Reflection"),2);Levels.PostProcessQuality=Quality(TEXT("PostProcess"),2);
+    Levels.TextureQuality=Quality(TEXT("Texture"),3);Levels.EffectsQuality=Quality(TEXT("Effects"),2);
+    Levels.FoliageQuality=Quality(TEXT("Foliage"),3);Levels.ShadingQuality=Quality(TEXT("Shading"),2);Levels.LandscapeQuality=Quality(TEXT("Landscape"),2);
+    Scalability::SetQualityLevels(Levels,true);
+    for(const auto& Pair:MediumRenderSettings)if(auto* Variable=IConsoleManager::Get().FindConsoleVariable(*Pair.Key))
+        // These complete the custom scalability profile. Keeping the same
+        // priority avoids rejected group reapplication when display options change.
+        if((Variable->GetFlags()&ECVF_SetByMask)<=ECVF_SetByScalability)Variable->Set(Pair.Value,ECVF_SetByScalability);
 }
 FVector ASeigeGameMode::RenderPosition(FVector2D P,float Offset) const
 {
@@ -97,13 +165,18 @@ FVector2D ASeigeGameMode::CameraPanDirection(float Forward,float Right) const
     const double Angle=FMath::DegreesToRadians(CameraYaw);
     return FVector2D(FMath::Cos(Angle)*Forward-FMath::Sin(Angle)*Right,FMath::Sin(Angle)*Forward+FMath::Cos(Angle)*Right).GetClampedToMaxSize(1);
 }
-FTransform ASeigeGameMode::CameraTransform() const
+float ASeigeGameMode::CameraViewZoom() const
+{
+    return FMath::Clamp(Camera&&RenderedZoom>=0?RenderedZoom:Zoom,MinimumZoom,MaximumZoom);
+}
+FTransform ASeigeGameMode::CameraTransform(float ZoomOverride) const
 {
     const FVector Target=RenderPosition(FVector2D(CameraCenter),70);
-    const double Distance=FMath::Clamp(double(Zoom),double(MinimumZoom),Sim.WorldHalfSize*12)*RenderScale/(2*FMath::Tan(FMath::DegreesToRadians(CameraFov*.5)));
+    const double ViewZoom=FMath::Clamp(double(ZoomOverride>=0?ZoomOverride:Zoom),double(MinimumZoom),double(MaximumZoom));
+    const double Distance=ViewZoom*RenderScale/(2*FMath::Tan(FMath::DegreesToRadians(CameraFov*.5)));
     // Close zoom lowers the view gradually to show actual ground detail. The
     // chosen orbit angle remains intact, returning as the camera pulls back.
-    const double CloseBlend=FMath::SmoothStep(double(MinimumZoom),double(DefaultZoom)*.45,double(Zoom));
+    const double CloseBlend=FMath::SmoothStep(double(MinimumZoom),double(DefaultZoom)*.45,ViewZoom);
     const double Pitch=FMath::Lerp(double(MinimumCameraPitch),double(FMath::Clamp(CameraPitch,MinimumCameraPitch,MaximumCameraPitch)),CloseBlend);
     const FRotator Aim(-Pitch,CameraYaw,0);
     FVector Position=Target-Aim.Vector()*Distance;
@@ -112,11 +185,29 @@ FTransform ASeigeGameMode::CameraTransform() const
         Position.Z=FMath::Max(Position.Z,GroundHeight(Logical)*RenderScale+CameraGroundClearance);
     return FTransform((Target-Position).Rotation(),Position);
 }
-void ASeigeGameMode::UpdateCamera()
+void ASeigeGameMode::UpdateCamera(float DeltaSeconds)
 {
+    Zoom=FMath::Clamp(Zoom,MinimumZoom,MaximumZoom);
+    if(DeltaSeconds<=0||!FMath::IsFinite(RenderedZoom)||RenderedZoom<MinimumZoom)RenderedZoom=Zoom;
+    else
+    {
+        const float Alpha=1-FMath::Exp(-CameraZoomResponse*FMath::Clamp(DeltaSeconds,0.f,.25f));
+        RenderedZoom=FMath::Exp(FMath::Lerp(FMath::Loge(RenderedZoom),FMath::Loge(Zoom),Alpha));
+        if(FMath::Abs(RenderedZoom-Zoom)<=FMath::Max(.01f,Zoom*.00001f))RenderedZoom=Zoom;
+    }
     if(!Camera)return;
-    Camera->SetActorTransform(CameraTransform());
+    Camera->SetActorTransform(CameraTransform(RenderedZoom));
     Camera->GetCameraComponent()->SetFieldOfView(CameraFov);
+    // Keep the detailed ground view unchanged. Broad surveys allow a coarser
+    // Nanite screen-space target without dropping any grass/tree instances.
+    static IConsoleVariable* Edge=IConsoleManager::Get().FindConsoleVariable(TEXT("r.Nanite.MaxPixelsPerEdge"));
+    if(Edge)
+        if((Edge->GetFlags()&ECVF_SetByMask)<=ECVF_SetByProjectSetting)
+        {
+            const float Alpha=FMath::SmoothStep(NaniteSurveyStartZoom,NaniteSurveyEndZoom,RenderedZoom);
+            const float Target=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkV05Epic"))?NaniteMaxPixelsPerEdge:FMath::Lerp(NaniteMaxPixelsPerEdge,NaniteSurveyPixelsPerEdge,Alpha);
+            if(!FMath::IsNearlyEqual(Edge->GetFloat(),Target,.005f))Edge->Set(Target,ECVF_SetByProjectSetting);
+        }
 }
 bool ASeigeGameMode::TraceGroundRay(const FVector& WorldOrigin,const FVector& WorldDirection,FVector& Hit) const
 {

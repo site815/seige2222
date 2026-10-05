@@ -17,7 +17,7 @@ bool WriteObject(const TSharedPtr<FJsonObject>& Object,const FString& Filename)
 }
 void ASeigeGameMode::SaveGame()
 {
-    if(!Ready||Screen!=TEXT("playing")) { Notice=TEXT("Begin a scenario before saving."); return; }
+    if(!Ready||(Screen!=TEXT("playing")&&!(MenuOpen&&MenuReturnScreen==TEXT("playing")))) { Notice=TEXT("Begin a scenario before saving."); return; }
     const FString Generation=FGuid::NewGuid().ToString(EGuidFormats::Digits);
     const FString Directory=FPaths::Combine(SaveRoot(),TEXT("Scenarios"),Generation);
     if(!IFileManager::Get().MakeDirectory(*Directory,true)) { Notice=TEXT("Could not create the save directory."); return; }
@@ -49,7 +49,7 @@ void ASeigeGameMode::LoadGame()
     FString Raw;
     TSharedPtr<FJsonObject> Metadata;
     const FString Filename=FPaths::Combine(SaveRoot(),TEXT("Scenario.json"));
-    if(!FFileHelper::LoadFileToString(Raw,*Filename)) { Notice=TEXT("No saved scenario yet. Start Single player, then save from the Colony menu."); return; }
+    if(!FFileHelper::LoadFileToString(Raw,*Filename)) { Notice=TEXT("No saved scenario yet. Start Single player, then save from Menu [Esc / F10]."); return; }
     if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Metadata)||!Metadata.IsValid()) { Notice=TEXT("The scenario save is unreadable."); return; }
     double Format=0,CameraX=0,CameraY=0,StoredZoom=0,StoredSpeed=1;
     // Format-2 saves from the orthographic release have no orbit angles. Give them
@@ -63,7 +63,7 @@ void ASeigeGameMode::LoadGame()
        !Metadata->TryGetArrayField(TEXT("slots"),Slots)||Slots->Num()!=9||!Metadata->TryGetArrayField(TEXT("neighbor_ai"),Fingerprints)||
        !Metadata->TryGetStringField(TEXT("center_ai"),CenterFingerprint)||!Metadata->TryGetNumberField(TEXT("camera_x"),CameraX)||!FMath::IsFinite(CameraX)||
        !Metadata->TryGetNumberField(TEXT("camera_y"),CameraY)||!FMath::IsFinite(CameraY)||!Metadata->TryGetNumberField(TEXT("zoom"),StoredZoom)||!FMath::IsFinite(StoredZoom)||
-       !Metadata->TryGetNumberField(TEXT("speed"),StoredSpeed)||(StoredSpeed!=1&&StoredSpeed!=3)||!Metadata->TryGetBoolField(TEXT("paused"),StoredPaused)||
+       !Metadata->TryGetNumberField(TEXT("speed"),StoredSpeed)||!IsSupportedGameSpeed(StoredSpeed==3?5:StoredSpeed)||!Metadata->TryGetBoolField(TEXT("paused"),StoredPaused)||
        !Metadata->TryGetBoolField(TEXT("objective_acknowledged"),StoredAcknowledged)) { Notice=TEXT("Scenario save metadata is invalid."); return; }
     if((Metadata->HasField(TEXT("camera_yaw"))&&(!Metadata->TryGetNumberField(TEXT("camera_yaw"),StoredYaw)||!FMath::IsFinite(StoredYaw)||StoredYaw < -360||StoredYaw > 360))||
        (Metadata->HasField(TEXT("camera_pitch"))&&(!Metadata->TryGetNumberField(TEXT("camera_pitch"),StoredPitch)||!FMath::IsFinite(StoredPitch)||StoredPitch < MinimumCameraPitch||StoredPitch > MaximumCameraPitch)))
@@ -109,8 +109,10 @@ void ASeigeGameMode::LoadGame()
     Visuals.Empty();
     for(auto It=Materials.CreateIterator();It;++It)if(It.Key().StartsWith(TEXT("construction_original_")))It.RemoveCurrent();
     Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewBrain); Neighbors=MoveTemp(NewNeighbors); ScenarioSlots=MoveTemp(NewSlots);
-    Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=0; SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed; WinAcknowledged=StoredAcknowledged;
+    Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=0; SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed==3?5:StoredSpeed; WinAcknowledged=StoredAcknowledged;
+    ResetSimulationPresentation();
     CameraCenter=FVector(FMath::Clamp(CameraX,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),FMath::Clamp(CameraY,-Sim.WorldHalfSize*2.8,Sim.WorldHalfSize*2.8),0);
-    Zoom=FMath::Clamp(StoredZoom,double(MinimumZoom),Sim.WorldHalfSize*12); CameraYaw=StoredYaw; CameraPitch=StoredPitch; Screen=TEXT("playing");
+    Zoom=FMath::Clamp(StoredZoom,double(MinimumZoom),double(MaximumZoom)); CameraYaw=StoredYaw; CameraPitch=StoredPitch; Screen=TEXT("playing");
+    MenuOpen=false;
     CreateLandscape(); SyncVisuals(); UpdateCamera(); Notice=TEXT("Scenario restored, including all AI neighbors.");
 }
