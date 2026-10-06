@@ -2,7 +2,7 @@
 
 [Design index](README.md) · [Resource rules](RESOURCES_AND_INDUSTRY.md) · [Product and recipe proposal](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md)
 
-**Confirmed direction plus provisional balancing.** The latest user choices supersede the earlier twelve-raw-material proposal and four-material starter guarantee. The v0.8 source now implements this catalog; current engine and packaged verification are pending. Numerical recipes, prices and operating rates remain provisional.
+**Confirmed direction plus provisional balancing.** The latest user choices supersede the earlier twelve-raw-material proposal and four-material starter guarantee. The v0.8 release implements this catalog. The v0.8.1 single-mine and grouped-HUD revision has compiled and been staged; package boot and four display states passed. The final v0.8.1 Shipping executable passed 117 interaction stages, boot/offline checks and four display states; reconciled native coverage contains 88 unique clean results. The [v0.8.1 verification record](../verification/v0.8.1.json) identifies the exact evidence and retained limitations. Numerical recipes, prices and operating rates remain provisional.
 
 ## Confirmed resource pool and placement
 
@@ -45,6 +45,12 @@ The colony remains robotic and the interface calls its population workers. Organ
 | External account | Galactic Credit | Used at the external trading port; not a material unit or local construction input. |
 
 Battery equipment is a physical manufactured item; its stored electrical energy is a separate grid state. Manufacturing an empty battery must not manufacture charge. Battery mass, capacity, efficiency, throughput and lifetime are proposed balance fields, not implied by selecting storage.
+
+## Deposit extraction and resource presentation
+
+**Confirmed v0.8.1 direction:** One **Extraction Mine** blueprint handles all eight raw types. Its placement binds it to the underlying deposit; that resource determines output, rather than a manually chosen mining recipe. The prototype permits one live mine per deposit and stores the binding in save data. Per-resource rates, construction cost, workers, storage and energy remain editable definitions; staffing alone cannot bypass the extraction rate.
+
+The resource HUD separates **Credits**, **Energy**, **Raw materials**, **Basic production** and **Adv production**. All eight raw types are visible even when the home region lacks a deposit. Basic and advanced products are separate from the worker-status row; stored workers remain physical counted cargo but are displayed with workforce controls. The group hover panel explains each item’s units and the difference between owned stock and locally spendable inventory. [Interface and Controls](INTERFACE_AND_CONTROLS.md) records the exact current grouping and shortcut **B, R, M**. The final v0.8.1 Shipping executable passed 117 interaction stages, boot/offline checks and four display states; reconciled native coverage contains 88 unique clean results. The [v0.8.1 verification record](../verification/v0.8.1.json) identifies the exact evidence and retained limitations.
 
 ## Proposed viability approach
 

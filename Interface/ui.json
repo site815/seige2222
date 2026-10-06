@@ -10,20 +10,6 @@
     5,
     10
   ],
-  "summary_resources": [
-    {
-      "resource": "alloy",
-      "label": "Alloy"
-    },
-    {
-      "resource": "circuits",
-      "label": "Cir"
-    },
-    {
-      "resource": "components",
-      "label": "Comp"
-    }
-  ],
   "credits": [
     {
       "heading": "Design & development",
@@ -51,39 +37,11 @@
       "id": "extraction",
       "name": "Extraction",
       "shortcut": "R",
-      "description": "Each region contains three standard and two rare deposits. Extract only where the matching deposit exists.",
+      "description": "One Extraction Mine fits any deposit. Its output is fixed by the resource beneath the site.",
       "entries": [
         {
-          "definition": "extract_water",
-          "shortcut": "W"
-        },
-        {
-          "definition": "extract_iron_ore",
+          "definition": "extraction_mine",
           "shortcut": "M"
-        },
-        {
-          "definition": "extract_silica",
-          "shortcut": "S"
-        },
-        {
-          "definition": "extract_carbon",
-          "shortcut": "K"
-        },
-        {
-          "definition": "extract_copper_ore",
-          "shortcut": "R"
-        },
-        {
-          "definition": "extract_radioactive_ore",
-          "shortcut": "U"
-        },
-        {
-          "definition": "extract_crystalline",
-          "shortcut": "C"
-        },
-        {
-          "definition": "extract_hydrocarbons",
-          "shortcut": "H"
         }
       ]
     },
@@ -228,6 +186,120 @@
         {
           "definition": "mech_factory",
           "shortcut": "H"
+        }
+      ]
+    }
+  ],
+  "resource_groups": [
+    {
+      "id": "credits",
+      "label": "Credits",
+      "entries": []
+    },
+    {
+      "id": "energy",
+      "label": "Energy",
+      "entries": []
+    },
+    {
+      "id": "raw",
+      "label": "Raw materials",
+      "entries": [
+        {
+          "resource": "water",
+          "label": "Water"
+        },
+        {
+          "resource": "iron_ore",
+          "label": "Metal ore"
+        },
+        {
+          "resource": "silica",
+          "label": "Silica"
+        },
+        {
+          "resource": "carbon",
+          "label": "Biomass"
+        },
+        {
+          "resource": "copper_ore",
+          "label": "Rare metals"
+        },
+        {
+          "resource": "radioactive_ore",
+          "label": "Radioactives"
+        },
+        {
+          "resource": "crystalline",
+          "label": "Crystals"
+        },
+        {
+          "resource": "hydrocarbons",
+          "label": "Hydrocarbons"
+        }
+      ]
+    },
+    {
+      "id": "basic",
+      "label": "Basic production",
+      "entries": [
+        {
+          "resource": "alloy",
+          "label": "Alloys"
+        },
+        {
+          "resource": "conductors",
+          "label": "Conductors"
+        },
+        {
+          "resource": "substrates",
+          "label": "Ind. glass"
+        },
+        {
+          "resource": "fuel",
+          "label": "Fuel"
+        },
+        {
+          "resource": "plastic",
+          "label": "Plastic"
+        },
+        {
+          "resource": "organic_food",
+          "label": "Organic food"
+        }
+      ]
+    },
+    {
+      "id": "advanced",
+      "label": "Adv production",
+      "entries": [
+        {
+          "resource": "circuits",
+          "label": "Circuits"
+        },
+        {
+          "resource": "components",
+          "label": "Worker parts"
+        },
+        {
+          "resource": "batteries",
+          "label": "Batteries"
+        },
+        {
+          "resource": "ai_chips",
+          "label": "AI chips"
+        },
+        {
+          "resource": "fusion_reactors",
+          "label": "Fusion units"
+        },
+        {
+          "resource": "shells",
+          "label": "Shells"
+        },
+        {
+          "resource": "missiles",
+          "label": "Missiles"
         }
       ]
     }

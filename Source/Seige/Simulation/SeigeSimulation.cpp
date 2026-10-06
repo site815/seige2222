@@ -181,9 +181,9 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error,
     for (const auto& V : *Values)
     {
         const FObject O = V->AsObject(); FSeigeBuildingDef B;
-        if (!StringField(O, TEXT("id"), B.Id, Error) || !StringField(O, TEXT("name"), B.Name, Error) || !StringField(O, TEXT("category"), B.Category, Error) || !StringField(O, TEXT("role"), B.Role, Error) || !StringField(O, TEXT("description"), B.Description, Error) || !StringField(O, TEXT("visual"), B.Visual, Error) || !StringField(O, TEXT("recipe"), B.Recipe, Error) || !StringField(O, TEXT("extract_resource"), B.ExtractResource, Error) || !ColorField(O, B.Color, Error) || !Amounts(O, TEXT("cost"), B.Cost, Resources, Error)) return false;
+        if (!StringField(O, TEXT("id"), B.Id, Error) || !StringField(O, TEXT("name"), B.Name, Error) || !StringField(O, TEXT("category"), B.Category, Error) || !StringField(O, TEXT("role"), B.Role, Error) || !StringField(O, TEXT("description"), B.Description, Error) || !StringField(O, TEXT("visual"), B.Visual, Error) || !StringField(O, TEXT("recipe"), B.Recipe, Error) || !Amounts(O,TEXT("extraction_rates"),B.ExtractionRates,Resources,Error) || !ColorField(O, B.Color, Error) || !Amounts(O, TEXT("cost"), B.Cost, Resources, Error)) return false;
         if(!Numeric(O,TEXT("reserved_footprint"),B.ReservedFootprint,UE_DOUBLE_SMALL_NUMBER,Error)||!PositionField(O,TEXT("access_port"),B.AccessPort,Error)||!O->TryGetBoolField(TEXT("deployment_defense"),B.DeploymentDefense))return false;
-        if (!IntegerField(O, TEXT("jobs"), B.Jobs, 0, Error) || !Numeric(O, TEXT("health"), B.Health, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("footprint"), B.Footprint, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("storage_capacity"), B.StorageCapacity, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("sensor_range"), B.SensorRange, 0, Error) || !Numeric(O, TEXT("attack_range"), B.AttackRange, 0, Error) || !Numeric(O, TEXT("extract_rate"), B.ExtractRate, 0, Error) || !StringField(O,TEXT("weapon_name"),B.WeaponName,Error) || !Numeric(O,TEXT("damage_per_shot"),B.DamagePerShot,0,Error) || !Numeric(O,TEXT("reload_seconds"),B.ReloadSeconds,0,Error) || !Numeric(O,TEXT("power_usage_kw"),B.PowerUsageKW,0,Error) || !Numeric(O,TEXT("power_generation_kw"),B.PowerGenerationKW,0,Error)) return false;
+        if (!IntegerField(O, TEXT("jobs"), B.Jobs, 0, Error) || !Numeric(O, TEXT("health"), B.Health, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("footprint"), B.Footprint, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("storage_capacity"), B.StorageCapacity, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("sensor_range"), B.SensorRange, 0, Error) || !Numeric(O, TEXT("attack_range"), B.AttackRange, 0, Error) || !StringField(O,TEXT("weapon_name"),B.WeaponName,Error) || !Numeric(O,TEXT("damage_per_shot"),B.DamagePerShot,0,Error) || !Numeric(O,TEXT("reload_seconds"),B.ReloadSeconds,0,Error) || !Numeric(O,TEXT("power_usage_kw"),B.PowerUsageKW,0,Error) || !Numeric(O,TEXT("power_generation_kw"),B.PowerGenerationKW,0,Error)) return false;
         if (!Numeric(O,TEXT("construction_seconds"),B.ConstructionSeconds,UE_DOUBLE_SMALL_NUMBER,Error) || !IntegerField(O,TEXT("construction_workers"),B.ConstructionWorkers,1,Error) || !IntegerField(O,TEXT("robot_support_capacity"),B.RobotSupportCapacity,0,Error) || !IntegerField(O,TEXT("staffing_priority"),B.StaffingPriority,0,Error)) return false;
         if(!StringField(O,TEXT("inventory_presentation"),B.InventoryPresentation,Error)||!StringField(O,TEXT("worker_activity"),B.WorkerActivity,Error))return false;
         const TArray<FString> Activities={TEXT("extraction"),TEXT("assembly"),TEXT("handling"),TEXT("inspection"),TEXT("service")};
@@ -202,9 +202,11 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error,
         B.DamagePerSecond=Armed?B.DamagePerShot/B.ReloadSeconds:0;
         if (!FMath::IsFinite(B.DamagePerSecond)) {Error=TEXT("Weapon DPS is nonfinite: ")+B.Id;return false;}
         const TArray<FString> Roles = {TEXT("core"), TEXT("extractor"), TEXT("processor"), TEXT("storage"), TEXT("sensor"), TEXT("defense"),TEXT("service"),TEXT("generator"),TEXT("battery"),TEXT("trade"),TEXT("worker_factory"),TEXT("vehicle_factory"),TEXT("wall")};
-        if (B.Id.IsEmpty() || BuildingDefs.Contains(B.Id) || !Roles.Contains(B.Role) || (!B.Recipe.IsEmpty() && !Recipes.Contains(B.Recipe)) || (!B.ExtractResource.IsEmpty() && !Resources.Contains(B.ExtractResource))) { Error = TEXT("Invalid building definition: ") + B.Id; return false; }
+        if (B.Id.IsEmpty() || BuildingDefs.Contains(B.Id) || !Roles.Contains(B.Role) || (!B.Recipe.IsEmpty() && !Recipes.Contains(B.Recipe))) { Error = TEXT("Invalid building definition: ") + B.Id; return false; }
+        if(O->HasField(TEXT("extract_resource"))||O->HasField(TEXT("extract_rate"))){Error=TEXT("Use extraction_rates for deposit-selected mining");return false;}
+        for(const auto& Rate:B.ExtractionRates)if(Rate.Value<=0||Resources[Rate.Key].Class==TEXT("manufactured")||Resources[Rate.Key].Discrete){Error=TEXT("Extraction requires positive rates for raw deposits: ")+B.Id;return false;}
         if (B.Role == TEXT("core")) ++CoreDefinitions;
-        if ((B.Role == TEXT("extractor")) != (!B.ExtractResource.IsEmpty() && B.ExtractRate > 0) || (B.Role == TEXT("processor")) != (!B.Recipe.IsEmpty()&&B.Role!=TEXT("worker_factory")&&B.Role!=TEXT("core"))) { Error = TEXT("Building role/capability mismatch: ") + B.Id; return false; }
+        if ((B.Role == TEXT("extractor")) != (!B.ExtractionRates.IsEmpty()) || (B.Role == TEXT("processor")) != (!B.Recipe.IsEmpty()&&B.Role!=TEXT("worker_factory")&&B.Role!=TEXT("core"))) { Error = TEXT("Building role/capability mismatch: ") + B.Id; return false; }
         if (!B.Recipe.IsEmpty() && ((Sum(Recipes[B.Recipe].Outputs) <= 0 && Recipes[B.Recipe].WorkerOutput == 0) || InventoryLitres(Recipes[B.Recipe].Inputs) > B.StorageCapacity || InventoryLitres(Recipes[B.Recipe].Outputs) > B.StorageCapacity)) { Error = TEXT("Recipe does not fit building storage: ") + B.Id; return false; }
         BuildingDefs.Add(B.Id, B);
     }
@@ -275,7 +277,7 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error,
     RulesFingerprint=FMD5::HashAnsiString(*(RulesFingerprint+Combat.GetFingerprint()));
     for(const auto& P:BuildingDefs){const auto& D=P.Value;if(!D.NextUpgrade.IsEmpty()&&(!BuildingDefs.Contains(D.NextUpgrade)||BuildingDefs[D.NextUpgrade].Role!=D.Role||BuildingDefs[D.NextUpgrade].ReservedFootprint!=D.ReservedFootprint||BuildingDefs[D.NextUpgrade].Family!=D.Family||BuildingDefs[D.NextUpgrade].Level!=D.Level+1||(D.Role!=TEXT("core")&&BuildingDefs[D.NextUpgrade].Footprint!=D.Footprint)||D.UpgradeCost.IsEmpty())){Error=TEXT("Invalid in-place building upgrade");return false;}}
     TSet<FString> Renewable;
-    for (const FSeigeNode& N : Nodes) for (const FString& Id : BuildMenu) if (BuildingDefs[Id].ExtractResource == N.Resource) Renewable.Add(N.Resource);
+    for (const FSeigeNode& N : Nodes) for (const FString& Id : BuildMenu) if (BuildingDefs[Id].ExtractionRates.Contains(N.Resource)) Renewable.Add(N.Resource);
     // A working external trade port exchanges physically exported local goods for missing types.
     if(!Trade.Prices.IsEmpty()&&!Renewable.IsEmpty())for(const auto& P:Trade.Prices)Renewable.Add(P.Key);
     int32 Previous = -1;
@@ -326,7 +328,7 @@ bool FSeigeSimulation::CanSetInitialCorePosition(FVector2D Position, FString& Er
     {
         double ExtractorRadius = 0;
         for (const FString& Id : BuildMenu)
-            if (BuildingDefs[Id].ExtractResource == Node.Resource) ExtractorRadius = FMath::Max(ExtractorRadius, BuildingDefs[Id].ReservedFootprint);
+            if (BuildingDefs[Id].ExtractionRates.Contains(Node.Resource)) ExtractorRadius = FMath::Max(ExtractorRadius, BuildingDefs[Id].ReservedFootprint);
         if (FMath::Abs(Position.X-Node.Position.X)<Radius+ExtractorRadius+Number(TEXT("minimum_build_spacing"))&&FMath::Abs(Position.Y-Node.Position.Y)<Radius+ExtractorRadius+Number(TEXT("minimum_build_spacing")))
         { Error = TEXT("The command core would obstruct a resource deposit"); return false; }
     }
@@ -339,6 +341,24 @@ bool FSeigeSimulation::SetInitialCorePosition(FVector2D Position, FString& Error
 }
 FString FSeigeSimulation::TextRule(const FString& Key) const { return Policy->GetStringField(Key); }
 const FSeigeBuildingDef* FSeigeSimulation::Definition(const FSeigeBuilding& B) const { return BuildingDefs.Find(B.DefId); }
+const FSeigeNode* FSeigeSimulation::ExtractionNode(const FString& Id,FVector2D Position) const
+{
+    const auto* D=BuildingDefs.Find(Id);if(!Policy||!D||D->Role!=TEXT("extractor"))return nullptr;
+    const FSeigeNode* Best=nullptr;double Distance=FMath::Square(Number(TEXT("extractor_snap_distance")));
+    for(const auto& Node:Nodes)if(D->ExtractionRates.Contains(Node.Resource))
+    {
+        const double Candidate=FVector2D::DistSquared(Position,Node.Position);
+        if(Candidate<Distance||(Candidate==Distance&&(!Best||Node.Id<Best->Id))){Best=&Node;Distance=Candidate;}
+    }
+    return Best;
+}
+FString FSeigeSimulation::ExtractionResource(const FSeigeBuilding& B) const
+{
+    const auto* Node=ExtractionNode(B.DefId,B.Position);
+    return Node&&Node->Id==B.DepositId?Node->Resource:FString();
+}
+double FSeigeSimulation::ExtractionRate(const FSeigeBuilding& B) const
+{const auto* D=Definition(B);return D?D->ExtractionRates.FindRef(ExtractionResource(B)):0;}
 FSeigeBuilding* FSeigeSimulation::FindBuilding(int32 Id) { return Buildings.FindByPredicate([Id](const FSeigeBuilding& B){return B.Id == Id;}); }
 const FSeigeBuilding* FSeigeSimulation::FindBuilding(int32 Id) const { return Buildings.FindByPredicate([Id](const FSeigeBuilding& B){return B.Id == Id;}); }
 FSeigeBuilding* FSeigeSimulation::Core() { return Buildings.FindByPredicate([this](const FSeigeBuilding& B){return B.DefId == CoreDefinition;}); }
@@ -431,14 +451,11 @@ bool FSeigeSimulation::CanPlaceBuilding(const FString& Id, FVector2D P, FString&
     {Error=TEXT("Move the vehicle outside this reserved plot first");return false;}
     for(const auto& R:Roads)if(R.Health>0)
     {const FString Tier=R.IsConstructing?R.TargetTier:R.Tier;const double Width=TransportTiers[Tier].WidthMeters*.5/MetersPerWorldUnit();const FVector2D Delta=R.B-R.A;const double T=FMath::Clamp(FVector2D::DotProduct(P-R.A,Delta)/Delta.SizeSquared(),0.,1.);const FVector2D Nearest=R.A+Delta*T;if(FMath::Abs(P.X-Nearest.X)<D->ReservedFootprint+Width && FMath::Abs(P.Y-Nearest.Y)<D->ReservedFootprint+Width){Error=TEXT("Reserved plot would obstruct a road corridor");return false;}}
-    if (!D->ExtractResource.IsEmpty())
+    if (D->Role==TEXT("extractor"))
     {
-        const FSeigeNode* Selected = nullptr; double Best = Number(TEXT("extractor_snap_distance"));
-        for (const FSeigeNode& N : Nodes)
-        { const double Distance = FVector2D::Distance(P, N.Position); if (N.Resource == D->ExtractResource && Distance <= Best) { Selected = &N; Best = Distance; } }
-        if (!Selected) { Error = TEXT("Place this extractor on its matching resource deposit"); return false; }
-        for (const FSeigeBuilding& B : Buildings)
-            if (B.Health > 0 && Definition(B)->ExtractResource == D->ExtractResource && FVector2D::Distance(B.Position, Selected->Position) <= Number(TEXT("extractor_snap_distance"))) { Error = TEXT("This deposit already has an extractor"); return false; }
+        const FSeigeNode* Selected=ExtractionNode(Id,P);
+        if(!Selected){Error=TEXT("Place the Extraction Mine on a supported resource deposit");return false;}
+        for(const auto& B:Buildings)if(B.Health>0&&B.DepositId==Selected->Id){Error=TEXT("This deposit already has an Extraction Mine");return false;}
     }
     for(const auto& Cost:D->Cost)if(ConstructionAvailable(Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value)
     { Error = TEXT("Insufficient unreserved construction materials"); return false; }
@@ -449,6 +466,7 @@ bool FSeigeSimulation::PlaceBuilding(const FString& Id, FVector2D P, FString& Er
     if (!CanPlaceBuilding(Id, P, Error)) return false;
     const FSeigeBuildingDef& D = BuildingDefs[Id];
     FSeigeBuilding B; B.Id = NextId++; B.DefId = Id; B.Position = P; B.Health = D.Health; B.Status = TEXT("Construction materials reserved; awaiting couriers");
+    if(const auto* Node=ExtractionNode(Id,P))B.DepositId=Node->Id;
     B.SelectedRecipe=D.Recipe.IsEmpty()?(D.AllowedRecipes.IsEmpty()?FString():D.AllowedRecipes[0]):D.Recipe;
     B.WorkerExportTarget=D.Role==TEXT("trade")?int32(Number(TEXT("default_port_worker_reserve_target"))):0;
     B.IsConstructing=true;B.ConstructionProgress=0;B.BuilderPosition=BuildingAccessPoint(*Core());
@@ -578,7 +596,7 @@ bool FSeigeSimulation::HasActiveWork(const FSeigeBuilding& B) const
 {
     const auto* D=Definition(B);
     if(!Policy||!D||B.Health<=0||B.IsConstructing||!B.Enabled||WorkFraction(B)<=0)return false;
-    if(!D->ExtractResource.IsEmpty())return Occupied(B)<D->StorageCapacity-UE_DOUBLE_SMALL_NUMBER;
+    if(D->Role==TEXT("extractor"))return !ExtractionResource(B).IsEmpty()&&Occupied(B)<D->StorageCapacity-UE_DOUBLE_SMALL_NUMBER;
     if(B.DisassemblyCommitted)return true;
     const FString RecipeId=ActiveProductionRecipe(B);
     if(!RecipeId.IsEmpty())
@@ -610,12 +628,14 @@ void FSeigeSimulation::StepProduction(double Seconds)
         if (!B.Enabled) { B.Status = TEXT("Disabled (repairs remain automatic)"); continue; }
         const double Fraction = WorkFraction(B);
         if (Fraction <= 0) { B.Status = Energy.Fraction(B.Id)<=0?TEXT("Waiting for road-grid power"):TEXT("Waiting for workers"); continue; }
-        if (!D.ExtractResource.IsEmpty())
+        if (D.Role==TEXT("extractor"))
         {
-            const double Room = FMath::Max(0.0, D.StorageCapacity - Occupied(B));
-            const double Produced = FMath::Min(Room/Resources[D.ExtractResource].LitresPerUnit, D.ExtractRate * Seconds * Fraction);
-            B.Inventory.FindOrAdd(D.ExtractResource) += Produced;
-            B.Status = Room <= UE_DOUBLE_SMALL_NUMBER ? TEXT("Storage full; waiting for courier") : TEXT("Extracting");
+            const FString Resource=ExtractionResource(B);
+            if(Resource.IsEmpty()){B.Status=TEXT("No valid bound deposit");continue;}
+            const double Room=FMath::Max(0.0,D.StorageCapacity-Occupied(B));
+            const double Produced=FMath::Min(Room/Resources[Resource].LitresPerUnit,ExtractionRate(B)*Seconds*Fraction);
+            B.Inventory.FindOrAdd(Resource)+=Produced;
+            B.Status=Room<=UE_DOUBLE_SMALL_NUMBER?TEXT("Storage full; waiting for courier"):TEXT("Extracting ")+Resources[Resource].Name;
         }
         else if(!ActiveProductionRecipe(B).IsEmpty())StepRecipe(B,Seconds);
         else if (D.Role==TEXT("core")||D.Role==TEXT("worker_factory")) B.Status=TEXT("Worker target satisfied; production idle");
@@ -819,7 +839,7 @@ double FSeigeSimulation::FixedStepSeconds() const { return Policy ? Number(TEXT(
 bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
 {
     if (!Policy) { Error = TEXT("Cannot save before rules are initialized"); return false; }
-    FObject O = MakeShared<FJsonObject>(); O->SetNumberField(TEXT("save_format"), 5);
+    FObject O = MakeShared<FJsonObject>(); O->SetNumberField(TEXT("save_format"), 6);
     O->SetNumberField(TEXT("generation_seed"),GenerationSeed);O->SetNumberField(TEXT("credits"),Credits);FObject Grid=MakeShared<FJsonObject>();Energy.Save(Grid);O->SetObjectField(TEXT("energy"),Grid);Companions.Save(O);Combat.Save(O);Walls.Save(O);
     O->SetNumberField(TEXT("worker_surplus_target"),WorkerSurplusTarget);O->SetNumberField(TEXT("workers_disassembled"),WorkersDisassembled);O->SetNumberField(TEXT("worker_store_clock"),WorkerStoreClock);O->SetNumberField(TEXT("worker_reactivate_clock"),WorkerReactivateClock);
     O->SetStringField(TEXT("rules_version"), RulesVersion); O->SetStringField(TEXT("rules_fingerprint"), RulesFingerprint);
@@ -832,7 +852,7 @@ bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
     TArray<TSharedPtr<FJsonValue>> A;
     for (const FSeigeBuilding& B : Buildings)
     {
-        FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),B.Id); V->SetStringField(TEXT("definition"),B.DefId); V->SetStringField(TEXT("status"),B.Status); WritePosition(V,B.Position);
+        FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),B.Id); V->SetStringField(TEXT("definition"),B.DefId);V->SetNumberField(TEXT("deposit_id"),B.DepositId); V->SetStringField(TEXT("status"),B.Status); WritePosition(V,B.Position);
         V->SetNumberField(TEXT("health"),B.Health); V->SetNumberField(TEXT("progress"),B.Progress); V->SetBoolField(TEXT("enabled"),B.Enabled); V->SetObjectField(TEXT("inventory"),JsonAmounts(B.Inventory));
         V->SetBoolField(TEXT("is_constructing"),B.IsConstructing);V->SetNumberField(TEXT("construction_progress"),B.ConstructionProgress);
         WriteCrew(V,B);V->SetObjectField(TEXT("construction_materials"),JsonAmounts(B.ConstructionMaterials));V->SetBoolField(TEXT("maintenance_supplied"),B.MaintenanceSupplied);
@@ -864,7 +884,7 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
     if (!Policy) { Error = TEXT("Initialize rules before loading a colony"); return false; }
     FObject O; FString Raw, Version, Fingerprint; double Format = 0;
     if (!ReadJson(Filename,O,Raw,Error) || !Numeric(O,TEXT("save_format"),Format,1,Error,true) || !StringField(O,TEXT("rules_version"),Version,Error) || !StringField(O,TEXT("rules_fingerprint"),Fingerprint,Error)) return false;
-    if (Format != 5 || Version != RulesVersion || Fingerprint != RulesFingerprint) { Error = TEXT("Save is incompatible with this rule version or edited rule files. Start a new colony."); return false; }
+    if (Format != 6 || Version != RulesVersion || Fingerprint != RulesFingerprint) { Error = TEXT("Save is incompatible with Extraction Mine rules (save format 6) or edited rule files. The existing save was not changed; start a new colony."); return false; }
     // Parse into a temporary simulation: a corrupt save must never damage the running colony.
     FSeigeSimulation Candidate = *this;
     // Version 8 construction and route state intentionally require a new-format save.
@@ -898,6 +918,7 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
         if(!StringField(V,TEXT("upgrade_target"),B.UpgradeTarget,Error)||!Amounts(V,TEXT("previous_level_materials"),B.PreviousLevelMaterials,Resources,Error)||!V->TryGetBoolField(TEXT("production_committed"),B.ProductionCommitted)||!Amounts(V,TEXT("production_inputs"),B.ProductionInputs,Resources,Error)||!Numeric(V,TEXT("production_reserved_litres"),B.ProductionReservedLitres,0,Error)||!Numeric(V,TEXT("battery_kwh"),B.BatteryEnergyKWh,0,Error))return false;
         if((!B.UpgradeTarget.IsEmpty()&&(!B.IsConstructing||B.UpgradeTarget!=BuildingDefs[B.DefId].NextUpgrade||!BuildingDefs.Contains(B.UpgradeTarget)))||B.BatteryEnergyKWh>Energy.Definition(B.DefId)->BatteryCapacityKWh+1.e-8){Error=TEXT("Invalid upgrade or battery state");return false;}
         const auto& Def=BuildingDefs[B.DefId];
+        if(!IntegerField(V,TEXT("deposit_id"),B.DepositId,0,Error)||(Def.Role==TEXT("extractor"))!=(B.DepositId>0)){Error=TEXT("Invalid saved Extraction Mine deposit binding");return false;}
         if(!StringField(V,TEXT("selected_recipe"),B.SelectedRecipe,Error)||!StringField(V,TEXT("committed_recipe"),B.CommittedRecipe,Error)||!IntegerField(V,TEXT("worker_export_target"),B.WorkerExportTarget,0,Error)||B.WorkerExportTarget>100000||!IntegerField(V,TEXT("disassembly_queued"),B.DisassemblyQueued,0,Error)||!V->TryGetBoolField(TEXT("disassembly_committed"),B.DisassemblyCommitted)||!Numeric(V,TEXT("disassembly_progress"),B.DisassemblyProgress,0,Error)||!Numeric(V,TEXT("disassembly_reserved_litres"),B.DisassemblyReservedLitres,0,Error)){Error=TEXT("Invalid saved production/workforce state");return false;}
         TArray<FString> Allowed=Def.AllowedRecipes;if(!Def.Recipe.IsEmpty())Allowed.AddUnique(Def.Recipe);
         if((!B.SelectedRecipe.IsEmpty()&&!Allowed.Contains(B.SelectedRecipe))||(B.WorkerExportTarget>0&&!Trade.Definition(B.DefId))){Error=TEXT("Invalid selected recipe or trade worker reserve");return false;}
@@ -944,6 +965,13 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
     FSeigeResourceGenerationSettings GenSettings;const auto Gen=Scenario->GetObjectField(TEXT("resource_generation"));GenSettings.StandardCount=int32(Gen->GetNumberField(TEXT("standard_count")));GenSettings.RareCount=int32(Gen->GetNumberField(TEXT("rare_count")));GenSettings.InnerAreaFraction=Gen->GetNumberField(TEXT("inner_area_fraction"));GenSettings.MinimumSeparationHalfSizeFraction=Gen->GetNumberField(TEXT("minimum_separation_half_size_fraction"));TArray<FSeigeNode> ExpectedNodes;
     if(!GenerateSeigeResourceNodes(Resources,Candidate.GenerationSeed,WorldHalfSize,ExpectedNodes,Error,GenSettings)||ExpectedNodes.Num()!=Candidate.Nodes.Num()){Error=TEXT("Saved deposits disagree with generation seed");return false;}
     for(int I=0;I<ExpectedNodes.Num();++I)if(ExpectedNodes[I].Resource!=Candidate.Nodes[I].Resource||!ExpectedNodes[I].Position.Equals(Candidate.Nodes[I].Position,1.e-8)){Error=TEXT("Saved deposit identity or position altered");return false;}
+    TSet<int32> OccupiedDeposits;
+    for(const auto& B:Candidate.Buildings)if(B.DepositId>0)
+    {
+        const auto* Node=Candidate.ExtractionNode(B.DefId,B.Position);
+        if(!Node||Node->Id!=B.DepositId||(B.Health>0&&OccupiedDeposits.Contains(B.DepositId))){Error=TEXT("Saved mine has an invalid or duplicate deposit binding");return false;}
+        if(B.Health>0)OccupiedDeposits.Add(B.DepositId);
+    }
     if (!ArrayField(O,TEXT("couriers"),A,Error)) return false;
     for (const auto& Value : *A)
     {

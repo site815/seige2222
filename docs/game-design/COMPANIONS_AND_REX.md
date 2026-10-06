@@ -6,7 +6,7 @@
 
 **Confirmed direction, implemented in v0.8 source:** Rex is the colony's named dog companion. He walks autonomously, consumes actual local organic food, and provides a capped local morale benefit while fed. The player can optionally view the world through Rex and walk him directly. This does not add individual worker or combat-unit control. Other animals are deferred.
 
-The revised likeness is an original Blender interpretation guided by the user's private reference photographs. The retained [import report](../../Art/CompanionDog/import_report.json) records the mesh, skeleton and clips. Final runtime appearance and expanded packaged acceptance remain pending; successful import and Blender previews alone do not establish those results.
+The revised likeness is an original Blender interpretation guided by the user's private reference photographs. The retained [import report](../../Art/CompanionDog/import_report.json) records the mesh, skeleton and clips. The v0.8.1 packaged route passed feeding/control interactions. Runtime captures still show a stylized interpretation with likeness/contact limits; successful import and those gameplay checks do not establish photorealistic appearance.
 
 ## Food and local morale
 

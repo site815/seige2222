@@ -4,7 +4,7 @@
 
 This document records the confirmed local setup flow and the current prototype implementation. It does not turn its finite map, AI presets, or numerical balance into final full-game rules.
 
-**v0.8 source revision; release verification pending:** Workers deploy through the current external construction phases and durations. The core reserves nine times its initial body area and keeps defense/sensing during deployment. Local playback includes Paused/1×/5×/10×; new scenarios begin at 1×, while the automated construction/economy route uses 10×. Current `prototype-8.0` Rules include physical access-port routing and road tiers. Current format-5 saves intentionally reject earlier scenarios. See [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md).
+**Current v0.8.1 source:** Workers deploy through the current external construction phases and durations. The core reserves nine times its initial body area and keeps defense/sensing during deployment. Local playback includes Paused/1×/5×/10×; new scenarios begin at 1×, while the automated construction/economy route uses 10×. Rules `prototype-8.1` replace the eight resource-specific extractors with one deposit-bound Extraction Mine and retain physical access-port routing and road tiers. Format-6 saves intentionally reject earlier scenarios. The revision has compiled and been staged; package boot and four display states passed, and the final 117-stage Shipping route passed. Reconciled native results are 88 unique clean passes; see the [v0.8.1 record](../verification/v0.8.1.json). See [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md).
 
 ## Starting a scenario
 
@@ -30,7 +30,7 @@ The default setup is one player center and eight empty neighbors. Before a human
 
 The switches are available only before starting a scenario. The live interface shows **Disabled** instead of a pulse countdown when periodic attacks are OFF; the pressure details show both choices. These options do not introduce privateers or any other threat system.
 
-Format-3 save snapshots and neighborhood metadata require both strict boolean settings. Loading restores them rather than adopting current setup choices. Missing, non-boolean or inconsistent settings are rejected before replacing the active scenario. The older v0.7 missing-pair default applied only to its compatible format-2 saves and is not a v0.8 migration path. Rules and AI fingerprint checks remain mandatory. Disabled schedules spawn no bugs and accumulate no delayed attacks.
+Current format-6 save snapshots and neighborhood metadata require both strict boolean settings. Loading restores them rather than adopting current setup choices. Missing, non-boolean or inconsistent settings are rejected before replacing the active scenario. The older v0.7 missing-pair default applied only to its compatible format-2 saves and is not a current migration path. Rules and AI fingerprint checks remain mandatory. Disabled schedules spawn no bugs and accumulate no delayed attacks.
 
 ## Map and information
 
@@ -60,9 +60,9 @@ The v0.8 controller also constructs paid road-grid connections and uses external
 
 Only active, unpaused play advances the colony simulations. Main menu, setup, landing, settings, and credits stop their clocks. Settings use the calibrated Medium preset with render resolution and windowed/native-borderless selection; the game menu preserves the previous pause state when returning to play. Observer mode supports camera movement, pause, and saving while disabling player construction and colony commands.
 
-Local scenario saves include every occupied colony, scenario selections, camera, speed, pause state, and AI configuration fingerprints. Loading validates all snapshots before replacing the active scenario. AI cadence derives from saved simulation time; it has no separate hidden timer. Changed Rules or AI definitions invalidate incompatible saves. v0.8 requires bounded yaw/pitch fields in format-5 metadata. Restart scenarios to apply gameplay definition changes, and restart the application after interface or graphics edits. Live reload and general gameplay-save migration are not implemented.
+Local scenario saves include every occupied colony, scenario selections, camera, speed, pause state, and AI configuration fingerprints. Loading validates all snapshots before replacing the active scenario. AI cadence derives from saved simulation time; it has no separate hidden timer. Changed Rules or AI definitions invalidate incompatible saves. v0.8.1 requires bounded yaw/pitch fields in format-6 metadata. Restart scenarios to apply gameplay definition changes, and restart the application after interface or graphics edits. Live reload and general gameplay-save migration are not implemented.
 
-v0.8 requires **format 5** for both neighborhood metadata and colony snapshots. It persists generated nodes/seeds, accounts, batteries, recipe transactions, shipments and Rex in addition to roads, routes, construction, maintenance and weapons. Camera angles, bounded position/zoom, supported nonzero speed, pause and threat flags are required. Earlier-rule/format saves are intentionally rejected with a new-scenario diagnostic; no optional camera fallback bypasses compatibility.
+v0.8.1 requires **format 6** for both neighborhood metadata and colony snapshots. It persists mine-to-deposit bindings, generated nodes/seeds, accounts, batteries, recipe transactions, shipments and Rex in addition to roads, routes, construction, maintenance and weapons. Camera angles, bounded position/zoom, supported nonzero speed, pause and threat flags are required. Earlier-rule/format saves are intentionally rejected with a new-scenario diagnostic; no optional camera fallback bypasses compatibility.
 
 These single-player controls do not establish how a future persistent multiplayer world pauses, simulates offline colonies, or transfers a relocating core.
 

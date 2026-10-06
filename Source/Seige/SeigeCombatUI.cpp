@@ -61,7 +61,7 @@ void ASeigeHUD::DrawCombatInfo(ASeigeGameMode& G,float W,float H)
     const auto* Fleet=C.Fleets.FindByPredicate([&](const auto& F){return F.Id==G.SelectedFleetId;});
     if(!C.FindVehicle(OutfitVehicleId)||C.FindVehicle(OutfitVehicleId)->Health<=0||C.FindVehicle(OutfitVehicleId)->Evacuated){OutfitVehicleId=0;for(const auto& V:C.Vehicles)if(V.Health>0&&!V.Evacuated){OutfitVehicleId=V.Id;break;}}
     const auto* Vehicle=C.FindVehicle(OutfitVehicleId);
-    const float X=24,Y=104,PW=450,PH=FMath::Min(640.f,H-Y-96.f);Frame(X,Y,PW,PH);
+    const float X=24,Y=Ui.ContentTop,PW=450,PH=FMath::Min(640.f,H-Y-96.f);Frame(X,Y,PW,PH);
     Label(TEXT("FLEETS & EQUIPMENT"),X+18,Y+18,18,Gold);Button(TEXT("x"),TEXT("combat:close"),X+PW-44,Y+9,32,30);
     Button(TEXT("Fleets"),TEXT("combat:tab:fleet"),X+18,Y+52,132,34,CombatTab==TEXT("fleet"));
     Button(TEXT("Chassis"),TEXT("combat:tab:factory"),X+158,Y+52,132,34,CombatTab==TEXT("factory"));

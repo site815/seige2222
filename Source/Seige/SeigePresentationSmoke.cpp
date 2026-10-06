@@ -31,12 +31,13 @@ void ASeigeGameMode::RunPresentationSmoke()
     static bool ServiceGhostCaptured=false;
     static double ServiceGhostReadySince=-1;
     static int32 PreActionCapturedStage=INDEX_NONE;
+    static bool CommandSelectionReframed=false;
     static int32 BeforeWallBuildings=0,BeforeFactoryJobs=0;static double BeforeWallAlloy=0,BeforePlanAlloy=0,BeforePlanEnergy=0;
     static TWeakObjectPtr<ASeigeGameMode> MotionOwner;
     static TMap<int32,FVector> LastCourierPositions;
     static double LastMotionTime=-1;
     static int32 MotionFramesBetweenTicks=0;
-    if(MotionOwner.Get()!=this){MotionOwner=this;LastCourierPositions.Reset();LastMotionTime=-1;MotionFramesBetweenTicks=0;LastStageTime=WalkDistance=WalkSeconds=0;LastSimulationPositions.Reset();TestRoadId=SolarId=TradePortId=ExtractorId=0;SmokeLanding=ExportPosition=RexBefore=FVector2D::ZeroVector;ExportResource.Empty();ImportResource.Empty();ExportOrdered=ImportOrdered=false;PreparationCaptured=ServiceGhostCaptured=false;ServiceGhostReadySince=-1;PreActionCapturedStage=INDEX_NONE;AssertionFailures.Reset();}
+    if(MotionOwner.Get()!=this){MotionOwner=this;LastCourierPositions.Reset();LastMotionTime=-1;MotionFramesBetweenTicks=0;LastStageTime=WalkDistance=WalkSeconds=0;LastSimulationPositions.Reset();TestRoadId=SolarId=TradePortId=ExtractorId=0;SmokeLanding=ExportPosition=RexBefore=FVector2D::ZeroVector;ExportResource.Empty();ImportResource.Empty();ExportOrdered=ImportOrdered=false;PreparationCaptured=ServiceGhostCaptured=false;ServiceGhostReadySince=-1;PreActionCapturedStage=INDEX_NONE;CommandSelectionReframed=false;AssertionFailures.Reset();}
     if(Screen==TEXT("playing")&&!Paused&&Speed==1&&!Observer)
     {
         bool MovedBetweenTicks=false;TMap<int32,FVector> Current;
@@ -134,6 +135,14 @@ void ASeigeGameMode::RunPresentationSmoke()
         // placement and its camera change happen in a later rendered frame.
         LastStageTime=RenderClock;return;
     }
+    if(Stage==88&&!CommandSelectionReframed)
+    {
+        // The road inspection camera can leave the core behind the resource
+        // cards. Pan home and let the real HUD redraw before selecting it;
+        // retain the ordinary world/UI hit-test guard below.
+        CameraCenter=FVector(HomePosition(),0);Zoom=DefaultZoom;UpdateCamera();
+        CommandSelectionReframed=true;LastStageTime=RenderClock;return;
+    }
     const TCHAR* PreActionCapture=Stage==23?TEXT("closeup"):Stage==25?TEXT("rotated"):
         Stage==89?TEXT("command_controls"):Stage==90?TEXT("rex_selected"):nullptr;
     if(PreActionCapture&&PreActionCapturedStage!=Stage)
@@ -150,6 +159,7 @@ void ASeigeGameMode::RunPresentationSmoke()
         const auto* Region=Hud->Ui.HitRegions.FindByPredicate([&](const FSeigeButton& R){return R.Action==Action;});
         if(!Region){++SmokeFailures;AssertionFailures.Add(FString::Printf(TEXT("Stage %d: missing action %s on %s"),Stage,*Action,*Screen));UE_LOG(LogTemp,Error,TEXT("UI_SMOKE_ASSERT stage=%d: Missing cached action %s on %s"),Stage,*Action,*Screen);return false;}
         const FVector2D Point=(Region->Position+Region->Size*.5)*Hud->Ui.Scale;
+        Controller->SetMouseLocation(FMath::RoundToInt(Point.X),FMath::RoundToInt(Point.Y));
         Controller->HandlePrimaryClick(Point.X,Point.Y);
         return true;
     };
@@ -166,6 +176,7 @@ void ASeigeGameMode::RunPresentationSmoke()
         if(!Require(Hit,TEXT("Perspective screen ray did not hit terrain")))return;
         if(!Require(FVector2D::Distance(CursorWorld,Position)<.2,TEXT("Perspective terrain pick did not roundtrip")))return;
         if(!Require(Hud->Ui.HitTest(Pixel.X,Pixel.Y).IsEmpty(),TEXT("World placement target is covered by cached UI; settle UI before clicking")))return;
+        Controller->SetMouseLocation(FMath::RoundToInt(Pixel.X),FMath::RoundToInt(Pixel.Y));
         Controller->HandlePrimaryClick(Pixel.X,Pixel.Y);
         UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CLICK stage=%d screen=%s cursor=%s buildings=%d selected=%d notice=%s"),Stage,*Screen,*CursorWorld.ToString(),Sim.Buildings.Num(),SelectedId,*Notice);
     };
@@ -223,7 +234,7 @@ void ASeigeGameMode::RunPresentationSmoke()
         {
             FVector RayOrigin,RayDirection;
             Require(Controller->ScreenRay(RoofPixel,RayOrigin,RayDirection)&&SelectBuildingRay(RayOrigin,RayDirection),TEXT("Visible building geometry did not answer a selection ray"));
-            SelectedId=0;Controller->HandlePrimaryClick(RoofPixel.X,RoofPixel.Y);Require(SelectedId==Sim.Buildings[0].Id,TEXT("Clicking the parked command shuttle at low tilt did not select it"));
+            SelectedId=0;Controller->SetMouseLocation(FMath::RoundToInt(RoofPixel.X),FMath::RoundToInt(RoofPixel.Y));Controller->HandlePrimaryClick(RoofPixel.X,RoofPixel.Y);Require(SelectedId==Sim.Buildings[0].Id,TEXT("Clicking the parked command shuttle at low tilt did not select it"));
         }
         SelectedId=0;CameraYaw=135;CameraPitch=52;Zoom=DefaultZoom;UpdateCamera();Capture(TEXT("placed"));break;
     }
@@ -451,8 +462,8 @@ void ASeigeGameMode::RunPresentationSmoke()
         Require(TradePortId&&PowerConnected(TradePortId),TEXT("Completed trading port must share the road grid"));SelectedId=TradePortId;
         CameraCenter=FVector(Sim.FindBuilding(TradePortId)?Sim.FindBuilding(TradePortId)->Position:HomePosition(),0);Zoom=2400;UpdateCamera();Capture(TEXT("trading_port"));break;
     case 99:
-        SelectedId=0;Require(Sim.PlaceBuilding(TEXT("extract_")+ExportResource,ExportPosition,Error),TEXT("A matching local extractor must be built from actual generated deposits"));
-        if(Sim.Buildings.Last().DefId==TEXT("extract_")+ExportResource)ExtractorId=Sim.Buildings.Last().Id;
+        SelectedId=0;Require(Sim.PlaceBuilding(TEXT("extraction_mine"),ExportPosition,Error),TEXT("The Extraction Mine must bind to an actual generated deposit"));
+        if(Sim.Buildings.Last().DefId==TEXT("extraction_mine"))ExtractorId=Sim.Buildings.Last().Id;
         Require(ExtractorId>0,TEXT("Local export source was not queued"));break;
     case 100:
         Require(ExtractorId&&PowerConnected(ExtractorId)&&Sim.ConstructionAvailable(ExportResource)>=10,TEXT("Paid extractor must produce saleable local goods"));
@@ -530,4 +541,13 @@ void ASeigeGameMode::RunPresentationSmoke()
     }
     default: break;
     }
+    // Shipping logging is disabled. Keep bounded, explicit progress evidence
+    // so a failed input step is observable before the long paid-economy route
+    // finishes. This is diagnostic only and never changes simulation state.
+    auto Progress=MakeShared<FJsonObject>();Progress->SetStringField(TEXT("scope"),TEXT("in_progress"));
+    Progress->SetNumberField(TEXT("completed_stages"),PresentationSmokeStage);Progress->SetNumberField(TEXT("failures"),SmokeFailures);
+    Progress->SetNumberField(TEXT("presentation_seconds"),RenderClock);Progress->SetStringField(TEXT("screen"),Screen);
+    TArray<TSharedPtr<FJsonValue>> Messages;for(const auto& Message:AssertionFailures)Messages.Add(MakeShared<FJsonValueString>(Message));Progress->SetArrayField(TEXT("assertion_failures"),Messages);
+    FString ProgressJson;if(FJsonSerializer::Serialize(Progress,TJsonWriterFactory<>::Create(&ProgressJson)))
+        FFileHelper::SaveStringToFile(ProgressJson,*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("PresentationSmokeProgress.json")),FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 }

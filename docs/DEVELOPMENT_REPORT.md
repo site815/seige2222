@@ -2,9 +2,41 @@
 
 Updated: **2026-10-06** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
 
-## Locally verified v0.8.0 prototype
+## Current locally verified v0.8.1 prototype
 
-**Local verification is complete.** Version 0.8 combines the resource/energy/trade economy, physical construction and Rex with tiered facilities, worker replication and storage, walls, configurable vehicles and fleets. The launcher now opens v0.8.0; v0.7.0 remains available. [The machine-readable record](verification/v0.8.0.json) identifies the executable and scope of each check. Known terrain artifacts, stylized Rex artwork and native-resolution performance limits remain.
+Version **0.8.1** includes the five resource HUD groups, unified Extraction Mine and grass performance changes. **Start a new scenario:** saves use format 6 and `prototype-8.1` Rules/AI fingerprints. The [verification record](verification/v0.8.1.json) identifies the final executable, completed checks, superseded failures and limitations.
+
+- **HUD:** Credits, Energy, Raw materials, Basic production and Adv production have separate cards and detailed group hover panels. Workforce controls stay beneath them; version/FPS remain top left. A passive hover no longer swallows the next uncovered world click.
+- **Extraction:** One **Extraction Mine** binds to its underlying deposit, uses its resource-specific external rate and enforces one living mine per node. Save/load validates deposit identity atomically. The catalog has **52 building definitions, 28 ordinary blueprints, 31 UI entries including tools, 22 cargo types and 14 recipes**.
+- **Grass:** Hybrid patches have **33,632 triangles**, down from 77,572, with sixteen photographic tall tufts and four original opaque blade beds. Existing CC0 sources, bounds and ground pivots remain recorded. Trees keep their 500–700 m handoff.
+- **Streaming/rendering:** Actual nearby detail and visible cells take priority, with resumable uploads and reused contact fitting. The authored work target is **4 ms**, with a 32-cell ceiling; individual engine calls may exceed it. Medium uses a 15–35 m grass handoff, Nanite edge target 6, and directional shadows at 4 rays × 2 samples.
+
+| Check | Result | Scope |
+| --- | --- | --- |
+| Final Shipping build | BuildCookRun **35.04 s**, successful | Executable SHA-256 below |
+| External definitions | Rules **86 negative cases**; configuration, combat, AI and UI checks passed | Definition validation is separate from gameplay |
+| Staging | **17/17** source/staged JSON byte hashes match | Exact bytes preserve save fingerprints |
+| Native tests | **88 unique clean latest results**, zero warnings/failures/unrun | Full run plus four fixture and two click reruns, merged by full test name |
+| Shipping gameplay | **117 stages, zero assertions, exit 0** | Ordinary timed construction/economy at 10×; separate 1× walking probe |
+| Offline observation | **980** gameplay and **8** boot samples with zero TCP/UDP endpoints | Bounded process-tree observations, not packet capture |
+| Display | **4/4** states passed | Native borderless, windowed, 75% rendering and restored borderless |
+| Isolated graphics | Static/orbit/travel completed at **3840×1600, Medium, 100%, 10×** | Fresh core, empty neighbors and short samples; not a loaded-colony stress test |
+
+Final executable SHA-256: `0A8AB4BC5772C3DC49434D68E8ABF138F76E2C670469EAC943B9D3E557E436B7`. Build log: `Saved/package-v081.log`. The launcher selects `Builds/v0.8.1/Windows/Seige.exe`; older packages and saves remain intact.
+
+Static view means range from **37.49 to 48.56 FPS**. Ground measures **37.49 FPS static** and **40.60 FPS orbit**. Matched v0.8 comparisons, moving-camera frame times and visibility backlog are in the [graphics report](game-design/GRAPHICS_PERFORMANCE_0_8.md). Sector crossing still rebuilds terrain/forest synchronously and can hitch. Mesh, handoff and shadow quality changed together; gains are not an equal-quality isolated optimization claim. Residual terrain patterns, foliage handoffs and stylized Rex artwork remain. No sustained 60 FPS or Manor Lords parity is claimed.
+
+The final record preserves the first candidate's **117-stage / 14-assertion failure** instead of treating exit 0 as success. Corrected HUD dispatch passes two native click regressions; test-camera framing and synthetic-pointer positioning were repaired in the harness. The intervening F9 route was interrupted and is not counted as a completed pass. Native reconciliation similarly retains three original `placement_index` fixture failures, superseded by their later clean runs; overlapping totals are not added.
+
+**Known startup risk:** the preceding F9 executable had one GPU crash at zero seconds, device-removed reason `-2005270522`, without DRED breadcrumbs. Its unchanged retry passed all display states; the final executable also passed its fresh display check. No root cause or verified crash fix is established. Selected diagnostics and a hash remain in the record; raw crash XML is private local evidence. No OS or driver changes were made.
+
+**Newly reported limits queued for v0.9:** couriers are not yet individual members of the worker population, and a numerical contact-radius edge case can stall melee enemies. The 117-stage checkpoint did not cover those newly identified defects. The next implementation replaces aggregate worker bodies and adds focused combat regressions.
+
+## Historical locally verified v0.8.0 prototype
+
+All implementation and verification statements in this section describe the retained **v0.8.0** checkpoint, not the current v0.8.1 candidate.
+
+**Local verification is complete.** Version 0.8 combines the resource/energy/trade economy, physical construction and Rex with tiered facilities, worker replication and storage, walls, configurable vehicles and fleets. Its versioned package is retained alongside v0.7.0. [The machine-readable record](verification/v0.8.0.json) identifies the executable and scope of each check. Known terrain artifacts, stylized Rex artwork and native-resolution performance limits remain.
 
 Current saves use **format 5** and matching `prototype-8.0` Rules/AI fingerprints. Prior saves are intentionally incompatible. The gameplay package completed **117 Shipping stages with zero failures and exit 0**, with **828 endpoint samples all zero TCP/UDP**. Native reconciliation now contains **84 unique clean results**, including final terrain/placement and configurable-budget checks. The 117-stage executable predates the final rendering and configurable-validation changes. The final package passed its boot/offline check and all four display states, and completed isolated static/orbit measurements. At **3840×1600, Medium, 100% rendering**, view means range from **30.5 to 48.9 FPS**, so this prototype does not sustain 60 FPS.
 
@@ -28,7 +60,7 @@ The catalog contains **22 cargo types, 14 recipes and 59 building definitions**:
 | Native gameplay and UI | **84 unique clean latest results**, zero failures/warnings/unrun | Combined full and focused reports; overlapping totals are not added |
 | Rendered interaction | **117 stages, zero failures, exit 0** | Earlier A081430D executable, before final rendering and configurable-validation changes |
 | Paid bootstrap and controls | Road grids, raw export, missing-standard import, worker/port targets, wall preview/cancel, chassis/module material requests and Rex controls passed | Finite stock and ordinary construction; not proof of every seed |
-| Final Shipping package | **BuildCookRun 40.41 s, exit 0**; **17/17** authoritative JSON files match staging | Final executable 784B4CFA; launcher now selects v0.8.0 |
+| Final Shipping package | **BuildCookRun 40.41 s, exit 0**; **17/17** authoritative JSON files match staging | Historical v0.8.0 executable 784B4CFA |
 | Final boot and display | Ready, exit 0; **8 zero-endpoint samples**; **4/4** display states passed | Short boot plus bounded endpoint observations, separate from the earlier full route |
 | Final graphics | Native static/orbit benchmarks completed; **30.5–48.9 mean FPS** across views | GPU-bound samples; residual soil patterns, bare grass patches and stylized Rex remain |
 | Publication tracking | Git history and delivery message | Kept separate from this local verification record |
@@ -77,4 +109,4 @@ Native automation uses UnrealEditor-Cmd with `-NullRHI`, `-ExecCmds="Automation 
 
 Rendered verification uses `-UiSmoke -RenderOffscreen -ForceRes -ResX=1600 -ResY=900` and writes captures plus `PresentationSmoke.json`. `Tools/verify_packaged.ps1` requires the expected **117 completed stages** and zero failures. Display verification separately exercises native borderless, 1280×720 windowed, 75% rendering and restoration without saving test preferences. Native-resolution graphics benchmarks remain separate from interaction-route FPS snapshots.
 
-The build script creates a directory for `ProjectVersion`. Versioned binaries, tools, caches and generated logs remain local; source assets and provenance are tracked. The verified v0.7 package is retained at `Builds/v0.7.0/Windows`; `Play-seige2222.cmd` now launches the locally verified v0.8.0 package.
+The build script creates a directory for `ProjectVersion`. Versioned binaries, tools, caches and generated logs remain local; source assets and provenance are tracked. Retained releases live under `Builds/<version>/Windows`; `Play-seige2222.cmd` selects the delivery version named by the launcher itself.

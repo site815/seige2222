@@ -23,7 +23,7 @@ void ASeigeGameMode::SaveGame()
     const FString Directory=FPaths::Combine(SaveRoot(),TEXT("Scenarios"),Generation);
     if(!IFileManager::Get().MakeDirectory(*Directory,true)) { Notice=TEXT("Could not create the save directory."); return; }
     if(!Sim.Save(FPaths::Combine(Directory,TEXT("center.json")),Error)) { Notice=Error; return; }
-    auto Metadata=MakeShared<FJsonObject>(); Metadata->SetNumberField(TEXT("format"),5); Metadata->SetStringField(TEXT("generation"),Generation);
+    auto Metadata=MakeShared<FJsonObject>(); Metadata->SetNumberField(TEXT("format"),6); Metadata->SetStringField(TEXT("generation"),Generation);
     const FVector SavedFocus=CompanionView?SavedColonyCamera:CameraCenter;
     Metadata->SetNumberField(TEXT("camera_x"),SavedFocus.X); Metadata->SetNumberField(TEXT("camera_y"),SavedFocus.Y);
     Metadata->SetNumberField(TEXT("camera_yaw"),CompanionView?SavedColonyYaw:CameraYaw); Metadata->SetNumberField(TEXT("camera_pitch"),CompanionView?SavedColonyPitch:CameraPitch);
@@ -61,8 +61,8 @@ void ASeigeGameMode::LoadGame()
     bool StoredPaused=false,StoredAcknowledged=false,StoredBackgroundBugs=true,StoredPeriodicAttacks=true;
     const TArray<TSharedPtr<FJsonValue>>* Slots=nullptr; const TArray<TSharedPtr<FJsonValue>>* Fingerprints=nullptr;
     FGuid GenerationId;
-    if(!Metadata->HasTypedField<EJson::Number>(TEXT("format"))||!Metadata->TryGetNumberField(TEXT("format"),Format)||Format!=5)
-    {Notice=TEXT("This scenario save is incompatible with version 0.8. Start a new scenario.");return;}
+    if(!Metadata->HasTypedField<EJson::Number>(TEXT("format"))||!Metadata->TryGetNumberField(TEXT("format"),Format)||Format!=6)
+    {Notice=TEXT("This scenario save is incompatible with version 0.8.1 (Extraction Mine saves). The existing save was not changed; start a new scenario.");return;}
     for(const TCHAR* Field:{TEXT("camera_x"),TEXT("camera_y"),TEXT("zoom"),TEXT("speed")})
         if(!Metadata->HasTypedField<EJson::Number>(Field)){Notice=TEXT("Scenario save metadata is invalid.");return;}
     if(!Metadata->TryGetStringField(TEXT("generation"),Generation)||!FGuid::ParseExact(Generation,EGuidFormats::Digits,GenerationId)||

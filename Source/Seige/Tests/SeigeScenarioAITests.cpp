@@ -129,7 +129,7 @@ bool FSeigeAIGuardServiceTest::RunTest(const FString& Parameters)
     const FString Config=AIOutput(TEXT("compact-coverage"));
     // A one-sensor paid plan isolates placement from long industrial preparation.
     if(!WriteAIConfig(Config,TEXT("colony_ai.json"),[](auto Object)
-    {auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),TEXT("sensor"));Target->SetNumberField(TEXT("count"),1);Object->SetArrayField(TEXT("build_targets"),{MakeShared<FJsonValueObject>(Target)});}))return false;
+    {auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),TEXT("sensor"));Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),0);Object->SetArrayField(TEXT("build_targets"),{MakeShared<FJsonValueObject>(Target)});}))return false;
     if(!Brain.Initialize(Colony,AIRules(),Config,false,Error,false,false)){AddError(Error);return false;}
     FString Raw;TSharedPtr<FJsonObject> Plan;if(!FFileHelper::LoadFileToString(Raw,*FPaths::Combine(Config,TEXT("colony_ai.json")))||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Plan))return false;
     const double Cadence=Plan->GetNumberField(TEXT("decision_interval_seconds"));
@@ -166,7 +166,7 @@ bool FSeigeAISupportRecoveryTest::RunTest(const FString& Parameters)
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     const FString Config=AIOutput(TEXT("support-recovery"));
     if(!WriteAIConfig(Config,TEXT("colony_ai.json"),[](auto Object)
-    {TArray<TSharedPtr<FJsonValue>> Targets;for(const TCHAR* Id:{TEXT("worker_factory"),TEXT("robot_service_bay")}){auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),Id);Target->SetNumberField(TEXT("count"),1);Targets.Add(MakeShared<FJsonValueObject>(Target));}Object->SetArrayField(TEXT("build_targets"),Targets);}))return false;
+    {TArray<TSharedPtr<FJsonValue>> Targets;for(const TCHAR* Id:{TEXT("worker_factory"),TEXT("robot_service_bay")}){auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),Id);Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),Targets.Num());Targets.Add(MakeShared<FJsonValueObject>(Target));}Object->SetArrayField(TEXT("build_targets"),Targets);}))return false;
     if(!Brain.Initialize(Colony,AIRules(),Config,false,Error,false,false)){AddError(Error);return false;}
     Colony.Tick(Colony.Definition(Colony.Buildings[0])->ConstructionSeconds+Colony.FixedStepSeconds());
     const FVector2D Home=Colony.Buildings[0].Position;
@@ -193,7 +193,7 @@ bool FSeigeAISupportRecoveryTest::RunTest(const FString& Parameters)
     if(!Service)return false;
     const int32 ServiceId=Service->Id;
     FSeigeSimulation Outage=Colony;FSeigeScenarioAI RecoveryBrain=Brain;
-    FSeigeAIBuildTarget LaterExpansion;LaterExpansion.Definition=TEXT("robot_service_bay");LaterExpansion.Count=2;RecoveryBrain.Targets.Add(LaterExpansion);
+    FSeigeAIBuildTarget LaterExpansion;LaterExpansion.Definition=TEXT("robot_service_bay");LaterExpansion.Count=2;LaterExpansion.PlacementIndex=RecoveryBrain.Targets.Num();RecoveryBrain.Targets.Add(LaterExpansion);
     for(auto& Road:Outage.Roads)Outage.DamageRoad(Road.Id,Road.MaxHealth);
     Outage.Tick(Outage.FixedStepSeconds());
     TestTrue(TEXT("Disconnected living support creates an actual operating-capacity outage"),Outage.RobotSupportCapacity<Outage.TotalJobs);
@@ -266,7 +266,7 @@ bool FSeigeAIGenericTradeRecoveryTest::RunTest(const FString& Parameters)
     {Colony.Tick(1);if(Colony.RobotSupportCapacity>=Colony.TotalJobs)break;}
     TestTrue(TEXT("Service fixture is physically connected to the command power grid"),Colony.IsRoadGridConnected(Colony.Buildings[0].Id,Colony.Buildings[3].Id));
     TestTrue(TEXT("The core produced the additional service worker instead of a staffing grant"),Colony.Population>Colony.Definition(Colony.Buildings[0])->Jobs);
-    Brain.Targets.Empty();for(const TCHAR* Id:{TEXT("alloy_refinery"),TEXT("component_works")}){FSeigeAIBuildTarget Target;Target.Definition=Id;Target.Count=1;Brain.Targets.Add(Target);}
+    Brain.Targets.Empty();for(const TCHAR* Id:{TEXT("alloy_refinery"),TEXT("component_works")}){FSeigeAIBuildTarget Target;Target.Definition=Id;Target.Count=1;Target.PlacementIndex=Brain.Targets.Num();Brain.Targets.Add(Target);}
     TestTrue(TEXT("Funding fixture has adequate genuine support capacity"),Colony.RobotSupportCapacity>=Colony.TotalJobs);
     FSeigeSimulation Waiting=Colony;
     if(!Waiting.PlaceBuilding(TEXT("alloy_refinery"),Home+FVector2D(-1400,1400),Error)){AddError(Error);return false;}
@@ -352,7 +352,7 @@ bool FSeigeAIIncrementalPreparationTest::RunTest(const FString& Parameters)
 {
     const FString Config=AIOutput(TEXT("incremental-preparation"));
     if(!WriteAIConfig(Config,TEXT("colony_ai.json"),[](auto Object)
-    {auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),TEXT("sensor"));Target->SetNumberField(TEXT("count"),1);Object->SetArrayField(TEXT("build_targets"),{MakeShared<FJsonValueObject>(Target)});Object->SetNumberField(TEXT("decision_interval_seconds"),10);}))return false;
+    {auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),TEXT("sensor"));Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),0);Object->SetArrayField(TEXT("build_targets"),{MakeShared<FJsonValueObject>(Target)});Object->SetNumberField(TEXT("decision_interval_seconds"),10);}))return false;
     FString Error;FSeigeSimulation Synchronous,Incremental;FSeigeScenarioAI SyncBrain,FrameBrain;
     if(!SyncBrain.BeginInitialize(Synchronous,AIRules(),Config,true,Error,false,false)||!FrameBrain.BeginInitialize(Incremental,AIRules(),Config,true,Error,false,false)){AddError(Error);return false;}
     // Independent pre-incremental reference: one whole ten-second Tick call,

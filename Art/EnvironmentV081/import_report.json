@@ -1,0 +1,24 @@
+{
+  "SM_MeadowSwardV081A": {
+    "path": "/Game/Art/NatureV081/SM_MeadowSwardV081A.SM_MeadowSwardV081A",
+    "triangles": 33632,
+    "dimensions_cm": [
+      140.3990707397461,
+      143.3177490234375,
+      55.69947814941406
+    ],
+    "nanite": true,
+    "materials_reused": true
+  },
+  "SM_MeadowSwardV081B": {
+    "path": "/Game/Art/NatureV081/SM_MeadowSwardV081B.SM_MeadowSwardV081B",
+    "triangles": 33632,
+    "dimensions_cm": [
+      136.50940704345703,
+      131.28323364257812,
+      52.480194091796875
+    ],
+    "nanite": true,
+    "materials_reused": true
+  }
+}

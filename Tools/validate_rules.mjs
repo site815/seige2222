@@ -57,7 +57,10 @@ export function validateRules(d) {
   const roles = ['core','extractor','processor','storage','sensor','defense','service','generator','battery','trade','worker_factory','vehicle_factory','wall'];
   for (const b of buildings.values()) {
     for(const k of ['name','category','role','description','visual']) str(b[k],`${b.id}.${k}`);
-    for(const k of ['recipe','extract_resource']) str(b[k],`${b.id}.${k}`,true);
+    str(b.recipe,`${b.id}.recipe`,true);
+    amounts(b.extraction_rates,`${b.id}.extraction_rates`);
+    if('extract_resource' in b || 'extract_rate' in b)fail(`${b.id}: use deposit-selected extraction_rates`);
+    for(const [id,rate] of Object.entries(b.extraction_rates))if(rate<=0||resources.get(id).class==='manufactured'||resources.get(id).discrete)fail(`${b.id}: mine rates require positive raw-resource outputs`);
     if(!roles.includes(b.role)) fail(`Unsupported building role ${b.role}`);
     if(!['full_staff','proportional'].includes(b.workforce_mode))fail(`${b.id}: invalid workforce policy`);
     str(b.family,`${b.id}.family`);num(b.level,`${b.id}.level`,1,true);if(b.level>3)fail(`${b.id}: building level exceeds three`);
@@ -69,7 +72,7 @@ export function validateRules(d) {
     num(b.construction_workers,`${b.id}.construction_workers`,1,true);num(b.robot_support_capacity,`${b.id}.robot_support_capacity`,0,true);
     num(b.staffing_priority,`${b.id}.staffing_priority`,0,true);
     if(!['indoor','outdoor'].includes(b.inventory_presentation)||!['extraction','assembly','handling','inspection','service'].includes(b.worker_activity)) fail(`${b.id}: invalid presentation metadata`);
-    for(const k of ['sensor_range','attack_range','damage_per_shot','reload_seconds','extract_rate','power_usage_kw','power_generation_kw']) num(b[k],`${b.id}.${k}`);
+    for(const k of ['sensor_range','attack_range','damage_per_shot','reload_seconds','power_usage_kw','power_generation_kw']) num(b[k],`${b.id}.${k}`);
     str(b.weapon_name,`${b.id}.weapon_name`,true);
     const armed=b.damage_per_shot>0;
     if('damage_per_second' in b || (armed && (!b.weapon_name || b.reload_seconds<=0 || b.attack_range<=0)) || (!armed && (b.weapon_name || b.reload_seconds!==0 || b.attack_range!==0))) fail(`${b.id} weapon fields disagree; DPS is derived from shot damage and reload`);
@@ -81,7 +84,7 @@ export function validateRules(d) {
     if(volume(b.cost)>b.storage_capacity || (!['core','service'].includes(b.role)&&b.robot_support_capacity>0)) fail(`${b.id} invalid construction storage or support role`);
     if(b.recipe && !recipes.has(b.recipe)) fail(`${b.id} references unknown recipe`);
     if(b.extract_resource && !resources.has(b.extract_resource)) fail(`${b.id} references unknown extraction resource`);
-    if((b.role==='extractor') !== !!(b.extract_resource && b.extract_rate>0) || (b.role==='processor') !== !!b.recipe) fail(`${b.id} role and capability disagree`);
+    if((b.role==='extractor') !== !!Object.keys(b.extraction_rates).length || (b.role==='processor') !== !!b.recipe) fail(`${b.id} role and capability disagree`);
     for(const id of new Set([...b.allowed_recipes,...(b.recipe?[b.recipe]:[])])){const r=recipes.get(id);if(volume(r.inputs)*b.recipe_input_multiplier>b.storage_capacity||volume(r.outputs)+r.worker_output*workerCargo.litres_per_unit>b.storage_capacity)fail(`${b.id} recipe does not fit storage`);if(r.worker_output>0&&!b.stores_inactive_workers)fail(`${b.id}: worker production needs physical berth storage`);}
     if(b.stores_inactive_workers&&b.storage_capacity<workerCargo.litres_per_unit)fail(`${b.id}: no room for one inactive worker`);
     if(b.role==='worker_factory'&&(!b.allowed_recipes.length||b.allowed_recipes.some(id=>recipes.get(id).worker_output<=0)))fail(`${b.id}: worker factory needs worker recipes`);
@@ -151,7 +154,7 @@ export function validateRules(d) {
   // A region exports a local raw and imports missing raw types through its paid trading port.
   // This checks catalogue reachability; native AI tests verify physical bootstrap and trading.
   const available=new Set(Object.keys(expectedRaw));
-  for(const id of available)if(!menu.some(b=>buildings.get(b).extract_resource===id))fail(`No buildable extractor for ${id}`);
+  for(const id of available)if(!menu.some(b=>(buildings.get(b).extraction_rates[id]??0)>0))fail(`No buildable extractor for ${id}`);
   const usableRecipes=[...new Set([...buildings.values()].filter(b=>menu.includes(b.id)||b.role==='core').flatMap(b=>[...b.allowed_recipes,...(b.recipe?[b.recipe]:[])]))].map(id=>recipes.get(id));
   for(let old=-1;old!==available.size;) { old=available.size; for(const r of usableRecipes) if(Object.keys(r.inputs).every(id=>available.has(id))){for(const id of Object.keys(r.outputs)) available.add(id);if(r.worker_output>0)available.add(workerCargo.id);} }
   for(const id of [...Object.keys(recipes.get(p.population_recipe).inputs),p.upkeep_resource,p.repair_resource,p.objective_resource]) if(!available.has(id)) fail(`No renewable recipe path to ${id}`);
@@ -247,6 +250,13 @@ function selfTest(source) {
     ['invalid port',d=>d.buildings.buildings[0].access_port=[0,0]],
     ['cyclic roads',d=>d.transport.transport.tiers[0].next_tier=d.transport.transport.initial_tier],
     ['invalid stages',d=>d.policies.policies.construction_stages[0].end=2],
+    ['missing extraction rates',d=>delete d.buildings.buildings.find(b=>b.role==='extractor').extraction_rates],
+    ['empty mine coverage',d=>d.buildings.buildings.find(b=>b.role==='extractor').extraction_rates={}],
+    ['zero extraction rate',d=>d.buildings.buildings.find(b=>b.role==='extractor').extraction_rates.water=0],
+    ['unknown extracted resource',d=>d.buildings.buildings.find(b=>b.role==='extractor').extraction_rates.unknown=1],
+    ['manufactured extraction',d=>d.buildings.buildings.find(b=>b.role==='extractor').extraction_rates.components=1],
+    ['nonmine extraction',d=>d.buildings.buildings[0].extraction_rates.water=1],
+    ['missing raw mine coverage',d=>delete d.buildings.buildings.find(b=>b.role==='extractor').extraction_rates.water],
     ['negative transport capacity', d=>d.policies.policies.courier_capacity=-1],
     ['fractional job count',d=>d.buildings.buildings[1].jobs=.5],
     ['unknown recipe input',d=>d.recipes.recipes[0].inputs.unknown=1],

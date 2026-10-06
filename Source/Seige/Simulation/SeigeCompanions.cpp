@@ -7,9 +7,9 @@
 
 namespace
 {
-void Point(const TSharedPtr<FJsonObject>& O,const TCHAR* Key,FVector2D P)
+void CompanionJsonPoint(const TSharedPtr<FJsonObject>& O,const TCHAR* Key,FVector2D P)
 {O->SetArrayField(Key,{MakeShared<FJsonValueNumber>(P.X),MakeShared<FJsonValueNumber>(P.Y)});}
-bool Point(const TSharedPtr<FJsonObject>& O,const TCHAR* Key,FVector2D& P,double Bound)
+bool CompanionJsonPoint(const TSharedPtr<FJsonObject>& O,const TCHAR* Key,FVector2D& P,double Bound)
 {
     const TArray<TSharedPtr<FJsonValue>>* A=nullptr;double X=0,Y=0;
     if(!O->TryGetArrayField(Key,A)||A->Num()!=2||!(*A)[0]->TryGetNumber(X)||!(*A)[1]->TryGetNumber(Y)||!FMath::IsFinite(X)||!FMath::IsFinite(Y)||FMath::Abs(X)>Bound||FMath::Abs(Y)>Bound)return false;
@@ -132,11 +132,11 @@ bool FSeigeCompanionSystem::Save(const TSharedPtr<FJsonObject>& Object) const
     TArray<TSharedPtr<FJsonValue>> List;
     for(const auto& D:Dogs)
     {
-        auto O=MakeShared<FJsonObject>();O->SetNumberField(TEXT("id"),D.Id);Point(O,TEXT("position"),D.Position);Point(O,TEXT("home"),D.Home);Point(O,TEXT("target"),D.Target);
+        auto O=MakeShared<FJsonObject>();O->SetNumberField(TEXT("id"),D.Id);CompanionJsonPoint(O,TEXT("position"),D.Position);CompanionJsonPoint(O,TEXT("home"),D.Home);CompanionJsonPoint(O,TEXT("target"),D.Target);
         O->SetNumberField(TEXT("fed_until"),D.FedUntil);O->SetNumberField(TEXT("next_meal"),D.NextMeal);O->SetNumberField(TEXT("rest_until"),D.RestUntil);O->SetNumberField(TEXT("heading"),D.Heading);
         O->SetNumberField(TEXT("distance_walked_meters"),D.DistanceWalked);O->SetNumberField(TEXT("food_consumed_kg"),D.FoodConsumedKg);O->SetBoolField(TEXT("evacuated"),D.Evacuated);
         O->SetNumberField(TEXT("next_waypoint"),D.NextWaypoint);TArray<TSharedPtr<FJsonValue>> Route;
-        for(const auto& P:D.Route){auto V=MakeShared<FJsonObject>();Point(V,TEXT("p"),P);Route.Add(MakeShared<FJsonValueObject>(V));}O->SetArrayField(TEXT("route"),Route);
+        for(const auto& P:D.Route){auto V=MakeShared<FJsonObject>();CompanionJsonPoint(V,TEXT("p"),P);Route.Add(MakeShared<FJsonValueObject>(V));}O->SetArrayField(TEXT("route"),Route);
         List.Add(MakeShared<FJsonValueObject>(O));
     }
     State->SetArrayField(TEXT("dogs"),List);Object->SetObjectField(TEXT("companions"),State);return true;
@@ -150,13 +150,13 @@ bool FSeigeCompanionSystem::Load(const TSharedPtr<FJsonObject>& Object,const FSe
     for(const auto& V:*List)
     {
         const auto O=V->AsObject();FSeigeCompanion D;double Id=0,Next=0;const TArray<TSharedPtr<FJsonValue>>* Route=nullptr;
-        if(!O||!Number(O,TEXT("id"),Id,1,1)||!Point(O,TEXT("position"),D.Position,Sim.WorldHalfSize*3)||!Point(O,TEXT("home"),D.Home,Sim.WorldHalfSize*3)||!Point(O,TEXT("target"),D.Target,Sim.WorldHalfSize*3)||
+        if(!O||!Number(O,TEXT("id"),Id,1,1)||!CompanionJsonPoint(O,TEXT("position"),D.Position,Sim.WorldHalfSize*3)||!CompanionJsonPoint(O,TEXT("home"),D.Home,Sim.WorldHalfSize*3)||!CompanionJsonPoint(O,TEXT("target"),D.Target,Sim.WorldHalfSize*3)||
            !Number(O,TEXT("fed_until"),D.FedUntil,0,Sim.Time+FedDurationSeconds+1)||!Number(O,TEXT("next_meal"),D.NextMeal,0,Sim.Time+MealIntervalSeconds+1)||!Number(O,TEXT("rest_until"),D.RestUntil,0,Sim.Time+RestSeconds+1)||
            !Number(O,TEXT("heading"),D.Heading,-180,180)||!Number(O,TEXT("distance_walked_meters"),D.DistanceWalked,0,1.e12)||!Number(O,TEXT("food_consumed_kg"),D.FoodConsumedKg,0,1.e12)||
            !O->HasTypedField<EJson::Boolean>(TEXT("evacuated"))||!O->TryGetBoolField(TEXT("evacuated"),D.Evacuated)||!O->TryGetArrayField(TEXT("route"),Route)||Route->Num()>4096||!Number(O,TEXT("next_waypoint"),Next,0,Route->Num())||Next!=FMath::FloorToDouble(Next))
         {Error=TEXT("Invalid saved dog companion");return false;}
         D.Id=int32(Id);D.NextWaypoint=int32(Next);
-        for(const auto& Waypoint:*Route){FVector2D P;auto W=Waypoint->AsObject();if(!W||!Point(W,TEXT("p"),P,Sim.WorldHalfSize*3)){Error=TEXT("Invalid companion route");return false;}D.Route.Add(P);}
+        for(const auto& Waypoint:*Route){FVector2D P;auto W=Waypoint->AsObject();if(!W||!CompanionJsonPoint(W,TEXT("p"),P,Sim.WorldHalfSize*3)){Error=TEXT("Invalid companion route");return false;}D.Route.Add(P);}
         New.Add(D);
     }
     Dogs=MoveTemp(New);Clock=Time;Random.Initialize(int32(Seed));ControlledId=0;ControlDirection=FVector2D::ZeroVector;Error.Empty();return true;

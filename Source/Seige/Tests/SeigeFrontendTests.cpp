@@ -193,7 +193,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Scenario slot configuration restores"),G.ScenarioSlots[0],FString(TEXT("starting")));
     TestTrue(TEXT("Camera focus, orbit, zoom, speed, pause and objective acknowledgment restore"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Zoom==27000&&G.CameraYaw==224&&G.CameraPitch==67&&G.Speed==5&&G.Paused&&G.WinAcknowledged);
     TSharedPtr<FJsonObject> Metadata;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(MetadataText),Metadata)){AddError(TEXT("Could not read emitted metadata"));return false;}
-    TestEqual(TEXT("Neighborhood saves use strict version-5 metadata"),Metadata->GetNumberField(TEXT("format")),5.);
+    TestEqual(TEXT("Neighborhood saves use strict version-6 metadata"),Metadata->GetNumberField(TEXT("format")),6.);
     const auto Fingerprints=Metadata->GetArrayField(TEXT("neighbor_ai"));
     if(!TestTrue(TEXT("Metadata contains neighbor identities"),Fingerprints.Num()>0))return false;
     Fingerprints[0]->AsObject()->SetStringField(TEXT("ai"),TEXT("corrupted-fingerprint"));
@@ -250,8 +250,8 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
         for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected strict metadata preserves each neighbor"),StateText(N.Sim,TEXT("strict-neighbor-rejected-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
     }
     auto CloseView=FreshMetadata();if(!CloseView)return false;CloseView->SetNumberField(TEXT("zoom"),1200);
-    if(!TestTrue(TEXT("Valid close-view format-5 fixture is written"),WriteMetadata(CloseView)))return false;
-    G.LoadGame();TestTrue(TEXT("Complete format-5 saves restore a valid close camera"),G.Notice.Contains(TEXT("Scenario restored"))&&G.Zoom==1200&&G.CameraYaw==224&&G.CameraPitch==67);
+    if(!TestTrue(TEXT("Valid close-view format-6 fixture is written"),WriteMetadata(CloseView)))return false;
+    G.LoadGame();TestTrue(TEXT("Complete format-6 saves restore a valid close camera"),G.Notice.Contains(TEXT("Scenario restored"))&&G.Zoom==1200&&G.CameraYaw==224&&G.CameraPitch==67);
     return true;
 }
 

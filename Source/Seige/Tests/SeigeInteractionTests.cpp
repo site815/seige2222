@@ -97,6 +97,46 @@ bool FSeigeCommandShuttlePickTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeResourceHudTest,"Seige.Interaction.ResourceGroupsAndHoverControls",InteractionFlags)
+bool FSeigeResourceHudTest::RunTest(const FString& Parameters)
+{
+    FInteractionWorld W;if(!W.Prepare(*this))return false;auto& H=*W.Hud;auto& G=*W.Game;
+    TestEqual(TEXT("Five resource groups load from external UI data"),H.Ui.ResourceGroups.Num(),5);
+    TSet<FString> Shown;
+    for(const auto& Group:H.Ui.ResourceGroups)for(const auto& Entry:Group.Entries)
+    {
+        TestFalse(TEXT("A physical material is shown in only one group"),Shown.Contains(Entry.Resource));Shown.Add(Entry.Resource);
+        const auto* R=G.Sim.Resources.Find(Entry.Resource);if(!TestNotNull(TEXT("Each displayed material has real unit metadata"),R))return false;
+        TestFalse(TEXT("Hover quantities have explicit units"),R->Unit.IsEmpty());
+    }
+    for(const auto& Resource:G.Sim.Resources)if(Resource.Key!=TEXT("stored_workers"))TestTrue(TEXT("Every raw material and manufactured product is visible"),Shown.Contains(Resource.Key));
+    TestFalse(TEXT("Stored workers remain in workforce controls"),Shown.Contains(TEXT("stored_workers")));
+    for(const FVector2D View:{FVector2D(1280,720),FVector2D(1600,900),FVector2D(3840,1600)})
+    {
+        H.Ui.Scale=FMath::Min(View.X/1600.,View.Y/900.);const auto Cards=H.Ui.ResourceCardBounds(View.X/H.Ui.Scale);
+        TestEqual(TEXT("All display sizes retain five separate cards"),Cards.Num(),5);H.Ui.HitRegions.Reset();
+        for(int32 I=0;I<Cards.Num();++I)
+        {
+            const auto& B=Cards[I];TestTrue(TEXT("Resource card stays inside the visible viewport"),B.Min.X*H.Ui.Scale>=0&&B.Max.X*H.Ui.Scale<=View.X&&B.Max.Y*H.Ui.Scale<View.Y);
+            if(I)TestTrue(TEXT("Neighbor cards have an actual gap"),Cards[I-1].Max.X<B.Min.X);
+            H.Ui.HitRegions.Add({B.Min,B.GetSize(),TEXT("summary:")+H.Ui.ResourceGroups[I].Id,TEXT("")});
+            const auto Center=B.GetCenter()*H.Ui.Scale;
+            TestEqual(TEXT("Physical mouse coordinates resolve the right scaled card"),H.Ui.HitTest(Center.X,Center.Y),TEXT("summary:")+H.Ui.ResourceGroups[I].Id);
+        }
+    }
+    H.Ui.Scale=.8f;H.Ui.HoverPanel=TEXT("workforce");
+    H.Ui.HitRegions={{FVector2D(200,162),FVector2D(425,462),TEXT("hover-panel:workforce"),TEXT("")},{FVector2D(220,500),FVector2D(40,34),TEXT("command:reserve-more"),TEXT("")}};
+    H.Ui.UpdateHoverPanel(240*.8f,516*.8f,true);
+    TestEqual(TEXT("Crossing onto a child button keeps the workforce panel open"),H.Ui.HoverPanel,FString(TEXT("workforce")));
+    const int32 Target=G.Sim.WorkerSurplusTarget;H.ProcessClick(240*.8f,516*.8f,G);
+    TestEqual(TEXT("The retained reserve button still executes without a canvas"),G.Sim.WorkerSurplusTarget,Target+1);
+    H.Ui.UpdateHoverPanel(240*.8f,516*.8f,false);TestTrue(TEXT("Hidden or unowned economy closes stale details"),H.Ui.HoverPanel.IsEmpty());
+    H.Ui.HoverPanel=TEXT("workforce");H.Ui.UpdateHoverPanel(20,20,true);TestTrue(TEXT("Leaving the panel closes the hover surface"),H.Ui.HoverPanel.IsEmpty());
+    H.HandleShortcut(EKeys::B);H.HandleShortcut(EKeys::R);H.HandleShortcut(EKeys::M);
+    TestEqual(TEXT("One extraction shortcut selects the deposit-driven mine"),G.SelectedBuild,FString(TEXT("extraction_mine")));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeControllerClickTest, "Seige.Interaction.ControllerClickBetweenDraws", InteractionFlags)
 bool FSeigeControllerClickTest::RunTest(const FString& Parameters)
 {
@@ -106,17 +146,25 @@ bool FSeigeControllerClickTest::RunTest(const FString& Parameters)
     const int32 CoreId = Game.Sim.Buildings[0].Id;
     Game.CursorOnWorld = true;
     Game.CursorWorld = Game.Sim.Buildings[0].Position;
+    auto& Hud = *World.Hud;
+    Hud.Ui.Scale = 1;
+    Hud.Ui.HoverPanel = TEXT("group:raw");
+    Hud.Ui.HitRegions = {{FVector2D(100,180),FVector2D(425,300),TEXT("hover-panel:group:raw"),TEXT("")}};
 
     // Uses the same controller handler as PlayerTick, not a simulation-only shortcut.
     // The original release crashed here by reading Canvas->SizeY between DrawHUD calls.
     World.Controller->HandlePrimaryClick(900, 500);
-    TestEqual(TEXT("Click between render passes reaches world selection without a canvas"), Game.SelectedId, CoreId);
+    TestEqual(TEXT("Uncovered click dismisses resource hover and selects the world between render passes"), Game.SelectedId, CoreId);
+    TestTrue(TEXT("World selection closes passive resource details"), Hud.Ui.HoverPanel.IsEmpty());
 
     const int32 Before = Game.Sim.Buildings.Num();
     Game.SelectedBuild = TEXT("sensor");
     Game.CursorWorld = FVector2D(1100, 0);
+    Hud.Ui.HoverPanel = TEXT("item:iron_ore");
+    World.Controller->HandlePrimaryClick(150, 220);
+    TestEqual(TEXT("The drawn hover panel still blocks construction beneath it"), Game.Sim.Buildings.Num(), Before);
     World.Controller->HandlePrimaryClick(900, 500);
-    TestEqual(TEXT("The normal controller click places a selected blueprint"), Game.Sim.Buildings.Num(), Before + 1);
+    TestEqual(TEXT("One uncovered controller click closes resource details and places the selected blueprint"), Game.Sim.Buildings.Num(), Before + 1);
     TestEqual(TEXT("Placement used the selected building definition"), Game.Sim.Buildings.Last().DefId, FString(TEXT("sensor")));
 
     Game.CursorOnWorld = false;

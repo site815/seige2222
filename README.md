@@ -2,11 +2,11 @@
 
 A single-player Unreal Engine colony builder: establish an industry of robotic workers in an Earth-like wilderness, move physical materials, and defend the colony. Detailed futuristic industry contrasts with the natural landscape.
 
-**v0.8.0 playable build.** The current source includes the resource economy, shared power, physical construction, Rex, tiered facilities, worker replication/storage, walls, outfittable vehicles and fleets. External definitions pass **79 negative Rules cases** and the full configuration/combat checks. The **117-stage Shipping** gameplay checkpoint passed without failures, including corrected command-shuttle selection and developed-neighbor preparation. Subsequent rendering and configurable-budget changes passed affected native tests; the final package passed startup, offline and four display checks. The [development report](docs/DEVELOPMENT_REPORT.md) and [verification record](docs/verification/v0.8.0.json) identify each tested revision.
+**v0.8.1 playable build.** Five resource HUD groups, one deposit-bound Extraction Mine, lighter meadow assets and prioritized scenery streaming are included. Rules validation passes **86 negative cases**; reconciled native coverage has **88 unique clean results**. The final Shipping executable passed **117 interaction stages**, startup/offline checks and **four display states**. The [development report](docs/DEVELOPMENT_REPORT.md) and [verification record](docs/verification/v0.8.1.json) retain exact evidence and earlier failed attempts.
 
-Launch **v0.8.0** with `Play-seige2222.cmd`, which opens `Builds/v0.8.0/Windows/Seige.exe`. Start a new scenario; older saves are incompatible. The retained v0.7 package remains available for its older saves. Final v0.8 static views averaged **30.5–48.1 FPS** at 3840×1600, Medium, 100% render resolution and 10× simulation on the test machine; this is not a sustained-60-FPS claim or a crowded-colony stress test.
+Launch **v0.8.1** with `Play-seige2222.cmd`, which opens `Builds/v0.8.1/Windows/Seige.exe`. **Start a new scenario:** save format 6 and the consolidated mine catalog are incompatible with older saves. Earlier versioned packages and saves remain intact. Final static views averaged **37.5–48.6 FPS** at 3840×1600, Medium, 100% rendering and 10× simulation on the test machine. Region crossing still hitches, and an earlier candidate had one unexplained GPU startup crash; see the [graphics report](docs/game-design/GRAPHICS_PERFORMANCE_0_8.md). This is not sustained 60 FPS or Manor Lords visual parity.
 
-## Current v0.8 gameplay
+## Current gameplay
 
 **Scenario and landing.** Configure a 3×3 neighborhood with eight Empty, Starting AI or Developed AI neighbors. The center can be Player or AI observation. Background bugs and periodic invasions are independently configurable, both initially enabled. Player landing pauses the scenario while deposits are surveyed and the command site is chosen. New gameplay begins at **1×**; test orchestration uses 10× without granting materials or changing construction durations.
 
@@ -14,7 +14,9 @@ Developed choices prepare their paid construction history on a progress screen. 
 
 Every region, including empty regions, contains **three distinct standard and two distinct rare deposits**, seeded within a centered square covering 75% of its area. The standard pool is water, metal ore, silica and biomass; the rare pool is rare metals, radioactive ore, crystalline material and hydrocarbons. Empty regions have no invented core or workforce. Each rendered sector is 3.6×3.6 km; later resource and hostile intelligence respects sensor coverage.
 
-**Physical economy.** A finite landed kit starts with **zero Galactic credits**. Establish extraction near a real deposit, connect roads, solar generation, worker support and a trading port, then export available goods to buy missing inputs. Trading ports have three levels, prices and timed physical shipments; one Galactic credit is anchored to the value of one kilogram of gold. It is an external-trade account, not a shared inventory. Raw and manufactured goods use kg or L, storage uses litres, workers are indivisible cargo counts, and grid electricity uses kWh.
+**Physical economy.** A finite landed kit starts with **zero Galactic credits**. One **Extraction Mine** blueprint works on all eight raw resource types; its output is bound to the actual deposit under the placed building. Only one living mine may occupy a deposit. Connect roads, solar generation, worker support and a trading port, then export available goods to buy missing inputs. Trading ports have three levels, prices and timed physical shipments; one Galactic credit is anchored to the value of one kilogram of gold. It is an external-trade account, not a shared inventory. Raw and manufactured goods use kg or L, storage uses litres, workers are indivisible cargo counts, and grid electricity uses kWh.
+
+The top HUD separates **Credits**, **Energy**, **Raw materials**, **Basic production**, and **Adv production**. Hover a group for full names, stock units and storage/transit details. Workforce controls remain in the smaller status row; version and FPS remain at the top left.
 
 Connected completed roads share generation and batteries. Passive loads consume energy over time; production commits its actual local ingredients and transaction energy, including multi-output recipes. Chains produce construction alloys, conductors, industrial glass, fuel, plastic, organic food, circuits, robotic parts, batteries, AI chips and fusion assemblies. Quantities, prices, durations and efficiencies remain provisional external balance.
 
@@ -46,6 +48,7 @@ The floating HUD shows resources, alerts and building dossiers: workers, storage
 | Home | Return to the colony view |
 | B, then R / I / L / D | Construction: extraction / industry / logistics / defense |
 | Category, displayed letter | Choose a blueprint |
+| B, R, M | Extraction Mine; select a real raw deposit |
 | Left click / right click | Select or place / cancel construction targeting |
 | B, L, R / B, L, U | Road / upgrade road |
 | B, L, W | Wall plan: click joints, E flips inside, Enter commits, Backspace undoes, Delete removes a selected joint |
@@ -57,7 +60,7 @@ The floating HUD shows resources, alerts and building dossiers: workers, storage
 | Selected own platform/factory | Fleets, chassis and hardpoints |
 | Rex view | Mouse look; Escape returns to the colony camera; F10 opens Menu |
 
-Current saves use **format 5** with matching `prototype-8.0` Rules and AI fingerprints. **Start a new v0.8 scenario; earlier saves are incompatible.** Loading validates all colony snapshots and metadata before replacing live state. Shipping saves live in `%LOCALAPPDATA%/seige2222/Saved/SaveGames`; editor saves use the project's `Saved/SaveGames`. Saving from Rex's view retains the colony camera for later loading. Keep the v0.7 package for its compatible older scenarios.
+Current source saves use **format 6** with matching `prototype-8.1` Rules and AI fingerprints. **Start a new v0.8.1 scenario; earlier saves are incompatible.** Loading validates all colony snapshots, deposit bindings and metadata before replacing live state. Shipping saves live in `%LOCALAPPDATA%/seige2222/Saved/SaveGames`; editor saves use the project's `Saved/SaveGames`. Saving from Rex's view retains the colony camera for later loading. Earlier saves and versioned packages are preserved.
 
 Settings offer one **Medium** profile, native-resolution borderless **Full window**, and selectable **Windowed** sizes. There is no exclusive fullscreen. Render resolution is independently adjustable from 50–100%; UI text remains native. Full-resolution rendering uses TAA and reduced resolution uses TSR. Display choices persist locally. Persistent multiplayer, remote player extraction, a general inter-colony trading economy and full relocation/scavenging remain later work.
 
@@ -65,7 +68,7 @@ Settings offer one **Medium** profile, native-resolution borderless **Full windo
 
 `Rules/` owns resources, recipes, buildings, policies, scenario generation, transport, energy, external trade, companions, walls, combat, weapons and chassis. `AIFILES/` owns AI timing, construction priorities and finite developed-start preparation. `Interface/ui.json` owns categories, shortcuts, summaries and credits. `Graphics/scene.json` owns visual scale, camera behavior, scenery, lighting and the Medium profile. Supported definition edits require a restart/new compatible scenario; new mechanisms still need code.
 
-Packaged loose definitions are staged beside the executable under `seige2222/Binaries/Win64`. No runtime account or server is required; HTTP, discovery and telemetry plugins are disabled for Shipping. The successful 117-stage gameplay checkpoint recorded zero TCP/UDP endpoints in **828 live process-tree samples**. Development/editor services and source publishing are separate from game runtime.
+Packaged loose definitions are staged beside the executable under `seige2222/Binaries/Win64`. No runtime account or server is required; HTTP, discovery and telemetry plugins are disabled for Shipping. The successful 117-stage gameplay checkpoint recorded zero TCP/UDP endpoints in **980 live process-tree samples**. Development/editor services and source publishing are separate from game runtime.
 
 Windows build requirements: Unreal Engine 5.8, Visual Studio C++ tools, Windows SDK and Node.js. Install Git LFS before cloning and run `git lfs pull` for tracked large source assets. Open `seige2222.uproject` for editor development, or run:
 
@@ -79,7 +82,7 @@ The build script validates definitions and creates a versioned Shipping director
 
 ## Art and design records
 
-The environment combines recorded CC0 Poly Haven/ambientCG assets with original Blender geometry, photographic ground layers and streamed vegetation. [Third-party provenance](Art/THIRD_PARTY_ASSETS.md), [v0.8 surface/canopy records](Art/EnvironmentV08/README.md), [industrial source](Art/Source/Seige_Industry_Architecture.blend), [construction assets](Art/Construction/README.md) and [Rex provenance](Art/CompanionDog/TEXTURE_PROVENANCE.md) retain sources and authorship. No reference-game assets or private photo pixels are included.
+The environment combines recorded CC0 Poly Haven/ambientCG assets with original Blender geometry, photographic ground layers and streamed vegetation. [Third-party provenance](Art/THIRD_PARTY_ASSETS.md), [v0.8 surface/canopy records](Art/EnvironmentV08/README.md), [v0.8.1 meadow and streaming records](Art/EnvironmentV081/README.md), [industrial source](Art/Source/Seige_Industry_Architecture.blend), [construction assets](Art/Construction/README.md) and [Rex provenance](Art/CompanionDog/TEXTURE_PROVENANCE.md) retain sources and authorship. No reference-game assets or private photo pixels are included.
 
 Visual quality does **not** claim Manor Lords parity. Terrain repetition, foliage transitions, animation contact and native-resolution performance remain review targets. Imports and test passes alone do not establish finished art. Historical runtime captures and measurements are linked from the [historical development archive](docs/DEVELOPMENT_HISTORY_0_2_TO_0_7.md).
 

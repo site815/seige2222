@@ -20,6 +20,7 @@
 #include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 #include "Scalability.h"
+#include "Engine/Engine.h"
 
 namespace
 {
@@ -60,12 +61,16 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     static FString Name;
     static TArray<double> Frames;
     static TArray<double> GameTimes,RenderTimes,RhiTimes,GpuTimes;
-    static bool Orbit=false,SimpleTerrain=false;
+    static bool Orbit=false,Travel=false,SimpleTerrain=false;
     static double MotionStarted=0;
     static double ViewSetupStarted=0,SynchronousSetupSeconds=0,SceneryReadySeconds=0;
     static int32 InitialPendingSceneryCells=0;
     static int32 PendingSceneryAtSampleStart=0,MaxPendingSceneryCells=0;
     static double PendingSceneryCellSum=0;
+    static int32 MaxPendingVisible=0,MaxPendingNear=0,FramesWithPendingVisible=0;
+    static int32 InitialPendingVisible=-1,InitialPendingNear=-1;
+    static double InitialVisibleReadySeconds=-1,InitialNearReadySeconds=-1;
+    static double ConsecutiveVisiblePendingSeconds=0,MaxConsecutiveVisiblePendingSeconds=0;
     static int32 SimpleTerrainComponents=0;
     static TArray<TSharedPtr<FJsonValue>> Results;
 #if CSV_PROFILER
@@ -94,6 +99,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             }
         }
         Orbit=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkOrbit"));
+        Travel=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkTravel"));
         SimpleTerrain=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkSimpleTerrain"));
         SimpleTerrainComponents=0;
         for(TCHAR& C:Name)if(!FChar::IsAlnum(C)&&C!=TEXT('-')&&C!=TEXT('_'))C=TEXT('_');
@@ -146,6 +152,16 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             }
         }
     };
+    auto ObserveInitialCoverage=[&](double CurrentTime)
+    {
+        // Null state reports zero counters, so zero is meaningful only after
+        // CreateGroundCover has initialized its residency/scheduling state.
+        if(!SceneryStream.IsValid())return;
+        const int32 Visible=PendingVisibleSceneryCells(),Near=PendingNearSceneryCells();
+        if(InitialPendingVisible<0){InitialPendingVisible=Visible;InitialPendingNear=Near;}
+        if(Visible==0&&InitialVisibleReadySeconds<0)InitialVisibleReadySeconds=CurrentTime-ViewSetupStarted;
+        if(Near==0&&InitialNearReadySeconds<0)InitialNearReadySeconds=CurrentTime-ViewSetupStarted;
+    };
     auto BeginView=[&]()
     {
         ViewSetupStarted=FPlatformTime::Seconds();
@@ -161,6 +177,10 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         SynchronousSetupSeconds=Started-ViewSetupStarted;SceneryReadySeconds=0;
         InitialPendingSceneryCells=PendingSceneryCells();
         PendingSceneryAtSampleStart=MaxPendingSceneryCells=0;PendingSceneryCellSum=0;
+        MaxPendingVisible=MaxPendingNear=FramesWithPendingVisible=0;
+        InitialPendingVisible=InitialPendingNear=-1;InitialVisibleReadySeconds=InitialNearReadySeconds=-1;
+        ConsecutiveVisiblePendingSeconds=MaxConsecutiveVisiblePendingSeconds=0;
+        ObserveInitialCoverage(Started);
     };
     if(View<0)
     {
@@ -217,6 +237,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         View=SelectedView==INDEX_NONE?0:SelectedView;BeginView();
         return;
     }
+    if(View<UE_ARRAY_COUNT(Views)&&(Phase==EPhase::AwaitScenery||Phase==EPhase::Warmup))ObserveInitialCoverage(Now);
     if(View<UE_ARRAY_COUNT(Views)&&(Phase==EPhase::AwaitScenery||(!Orbit&&Phase==EPhase::Warmup&&!IsSceneryStreamingReady())))
     {
         Phase=EPhase::AwaitScenery;
@@ -268,6 +289,13 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     {
         if(Now-Started>=4)
         {
+            // Opt-in GPU pass breakdown. This diagnostic run is not used as a
+            // performance baseline because capture itself can stall the GPU.
+            if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkGPUProfile")))
+            {
+                if(auto* ShowUI=IConsoleManager::Get().FindConsoleVariable(TEXT("r.ProfileGPU.ShowUI")))ShowUI->Set(0,ECVF_SetByConsole);
+                if(GEngine)GEngine->Exec(GetWorld(),TEXT("profilegpu"));
+            }
             Phase=EPhase::Sample;Started=Previous=Now;
             PendingSceneryAtSampleStart=PendingSceneryCells();
             CSV_EVENT_GLOBAL(TEXT("SEIGE_BENCH_SAMPLE_BEGIN:%s"),Views[View].Name);
@@ -276,7 +304,14 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     }
     if(Phase==EPhase::Sample)
     {
-        if(!Orbit&&!IsSceneryStreamingReady())
+        if(Travel)
+        {
+            // Survey translation at36m/s deliberately crosses multiple54m
+            // streaming cells. Keep all generated work inside normal budgets.
+            CameraCenter=Views[View].Center+FVector((Now-Started)*3600./RenderScale,0,0);
+            UpdateCamera();ApplySwardDiagnostic();
+        }
+        if(!Orbit&&!Travel&&!IsSceneryStreamingReady())
         {
             UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK %s scenery became incomplete during sampling (%d cells pending)"),Views[View].Name,PendingSceneryCells());
             View=UE_ARRAY_COUNT(Views);FPlatformMisc::RequestExitWithStatus(false,1);return;
@@ -287,6 +322,14 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             Frames.Add(FrameMS);
             const int32 Pending=PendingSceneryCells();
             PendingSceneryCellSum+=Pending;MaxPendingSceneryCells=FMath::Max(MaxPendingSceneryCells,Pending);
+            const int32 Visible=PendingVisibleSceneryCells(),Near=PendingNearSceneryCells();
+            MaxPendingVisible=FMath::Max(MaxPendingVisible,Visible);MaxPendingNear=FMath::Max(MaxPendingNear,Near);
+            if(Visible>0)
+            {
+                ++FramesWithPendingVisible;ConsecutiveVisiblePendingSeconds+=FrameMS*.001;
+                MaxConsecutiveVisiblePendingSeconds=FMath::Max(MaxConsecutiveVisiblePendingSeconds,ConsecutiveVisiblePendingSeconds);
+            }
+            else ConsecutiveVisiblePendingSeconds=0;
             // Latest completed engine counters may lag the current camera by
             // one or more frames. Zero means unavailable, never zero-cost GPU.
             auto AddCycles=[](TArray<double>& Out,uint32 Cycles){if(Cycles>0)Out.Add(FPlatformTime::ToMilliseconds(Cycles));};
@@ -309,7 +352,28 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         Row->SetNumberField(TEXT("pending_scenery_cells_max"),MaxPendingSceneryCells);
         Row->SetNumberField(TEXT("pending_scenery_cells_mean"),Frames.Num()?PendingSceneryCellSum/Frames.Num():0);
         Row->SetNumberField(TEXT("pending_scenery_cells_at_sample_end"),PendingSceneryCells());
+        Row->SetNumberField(TEXT("pending_visible_cells_max"),MaxPendingVisible);
+        Row->SetNumberField(TEXT("pending_near_cells_max"),MaxPendingNear);
+        Row->SetNumberField(TEXT("frames_with_pending_visible_cells"),FramesWithPendingVisible);
+        Row->SetNumberField(TEXT("max_consecutive_visible_pending_seconds"),MaxConsecutiveVisiblePendingSeconds);
+        Row->SetBoolField(TEXT("initial_visibility_counters_available"),InitialPendingVisible>=0);
+        Row->SetNumberField(TEXT("initial_pending_visible_cells"),InitialPendingVisible);
+        Row->SetNumberField(TEXT("initial_pending_near_cells"),InitialPendingNear);
+        Row->SetBoolField(TEXT("initial_visible_coverage_ready"),InitialVisibleReadySeconds>=0);
+        Row->SetBoolField(TEXT("initial_near_coverage_ready"),InitialNearReadySeconds>=0);
+        if(InitialVisibleReadySeconds>=0)
+        {
+            Row->SetNumberField(TEXT("initial_visible_ready_wall_seconds"),InitialVisibleReadySeconds);
+            Row->SetNumberField(TEXT("initial_visible_wait_seconds"),FMath::Max(0.,InitialVisibleReadySeconds-SynchronousSetupSeconds));
+        }
+        if(InitialNearReadySeconds>=0)
+        {
+            Row->SetNumberField(TEXT("initial_near_ready_wall_seconds"),InitialNearReadySeconds);
+            Row->SetNumberField(TEXT("initial_near_wait_seconds"),FMath::Max(0.,InitialNearReadySeconds-SynchronousSetupSeconds));
+        }
         if(const auto* Edge=IConsoleManager::Get().FindConsoleVariable(TEXT("r.Nanite.MaxPixelsPerEdge")))Row->SetNumberField(TEXT("nanite_max_pixels_per_edge"),Edge->GetFloat());
+        for(const TCHAR* CVar:{TEXT("r.Shadow.Virtual.SMRT.RayCountDirectional"),TEXT("r.Shadow.Virtual.SMRT.SamplesPerRayDirectional")})
+            if(const auto* Value=IConsoleManager::Get().FindConsoleVariable(CVar))Row->SetNumberField(CVar,Value->GetInt());
         Row->SetNumberField(TEXT("sample_seconds"),Sum/1000);
         Row->SetNumberField(TEXT("mean_fps"),Sum>0?Frames.Num()*1000/Sum:0);
         Row->SetNumberField(TEXT("mean_frame_ms"),Frames.Num()?Sum/Frames.Num():0);
@@ -351,15 +415,17 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetStringField(TEXT("selected_view"),SelectedView==INDEX_NONE?TEXT("all"):Views[SelectedView].Name);
     Report->SetNumberField(TEXT("schema_version"),4);
     Report->SetNumberField(TEXT("simulation_speed"),Speed);Report->SetNumberField(TEXT("simulation_seconds"),Sim.Time);
-    Report->SetStringField(TEXT("camera_mode"),Orbit?TEXT("orbit"):TEXT("static"));
+    Report->SetStringField(TEXT("camera_mode"),Travel?TEXT("travel"):Orbit?TEXT("orbit"):TEXT("static"));
+    Report->SetNumberField(TEXT("travel_meters_per_second"),Travel?36:0);
     Report->SetStringField(TEXT("camera_path_version"),TEXT("five-views-v1"));
     Report->SetNumberField(TEXT("orbit_degrees_per_second"),Orbit?72:0);
     Report->SetNumberField(TEXT("orbit_pitch_amplitude_degrees"),Orbit?8:0);
     Report->SetNumberField(TEXT("warmup_seconds"),4);Report->SetNumberField(TEXT("sample_seconds_per_view"),5);
     Report->SetStringField(TEXT("warmup_policy"),TEXT("initial-scenery-ready-then-4s-settling"));
-    Report->SetStringField(TEXT("streaming_sample_policy"),Orbit?TEXT("Orbit includes live camera-driven streaming; pending cells reported, no sample reset."):TEXT("Static samples require complete scenery."));
+    Report->SetStringField(TEXT("streaming_sample_policy"),Travel?TEXT("Travel includes live camera-driven streaming at 36m/s; visible/near backlog and pending duration reported, no sample reset."):Orbit?TEXT("Orbit includes live camera-driven streaming; pending cells reported, no sample reset."):TEXT("Static samples require complete scenery."));
     Report->SetNumberField(TEXT("scenery_readiness_timeout_seconds"),120);
     Report->SetBoolField(TEXT("diagnostic_simple_terrain"),SimpleTerrain);
+    Report->SetBoolField(TEXT("diagnostic_gpu_profile"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkGPUProfile")));
     Report->SetStringField(TEXT("thread_timing_method"),TEXT("Latest completed RenderTimer counters exclude idle; GPU uses RHIGetGPUFrameCycles(0). Counters can lag camera samples, and repeated GPU readback values are not de-duplicated. Zero counters are omitted and availability/sample counts reported. These distributions are bottleneck evidence, not synchronized CPU/GPU frame traces."));
     Report->SetNumberField(TEXT("grass_shadow_distance_m"),GrassShadowDistanceMeters);
     Report->SetNumberField(TEXT("grass_programmable_distance_m"),GrassProgrammableDistanceMeters);
@@ -460,13 +526,13 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     int32 Width=0,Height=0;if(auto* PC=UGameplayStatics::GetPlayerController(this,0))PC->GetViewportSize(Width,Height);
     Report->SetNumberField(TEXT("width"),Width);Report->SetNumberField(TEXT("height"),Height);Report->SetStringField(TEXT("engine"),FEngineVersion::Current().ToString());
     auto Quality=MakeShared<FJsonObject>();
-    for(const TCHAR* CVar:{TEXT("sg.ResolutionQuality"),TEXT("sg.ViewDistanceQuality"),TEXT("sg.AntiAliasingQuality"),TEXT("sg.ShadowQuality"),TEXT("sg.GlobalIlluminationQuality"),TEXT("sg.ReflectionQuality"),TEXT("sg.PostProcessQuality"),TEXT("sg.TextureQuality"),TEXT("sg.EffectsQuality"),TEXT("sg.FoliageQuality"),TEXT("sg.ShadingQuality"),TEXT("sg.LandscapeQuality"),TEXT("r.ScreenPercentage"),TEXT("r.ScreenPercentage.Default.Desktop.Mode"),TEXT("r.SecondaryScreenPercentage.GameViewport"),TEXT("r.Nanite.MaxPixelsPerEdge"),TEXT("r.Nanite.PrimaryRaster.TimeBudgetMs"),TEXT("r.VSync"),TEXT("t.MaxFPS"),TEXT("r.DynamicRes.OperationMode")})
+    for(const TCHAR* CVar:{TEXT("sg.ResolutionQuality"),TEXT("sg.ViewDistanceQuality"),TEXT("sg.AntiAliasingQuality"),TEXT("sg.ShadowQuality"),TEXT("sg.GlobalIlluminationQuality"),TEXT("sg.ReflectionQuality"),TEXT("sg.PostProcessQuality"),TEXT("sg.TextureQuality"),TEXT("sg.EffectsQuality"),TEXT("sg.FoliageQuality"),TEXT("sg.ShadingQuality"),TEXT("sg.LandscapeQuality"),TEXT("r.ScreenPercentage"),TEXT("r.ScreenPercentage.Default.Desktop.Mode"),TEXT("r.SecondaryScreenPercentage.GameViewport"),TEXT("r.Nanite.MaxPixelsPerEdge"),TEXT("r.Nanite.PrimaryRaster.TimeBudgetMs"),TEXT("r.Shadow.Virtual.SMRT.RayCountDirectional"),TEXT("r.Shadow.Virtual.SMRT.SamplesPerRayDirectional"),TEXT("r.VSync"),TEXT("t.MaxFPS"),TEXT("r.DynamicRes.OperationMode")})
         if(const auto* Variable=IConsoleManager::Get().FindConsoleVariable(CVar))Quality->SetNumberField(CVar,Variable->GetFloat());
     Quality->SetNumberField(TEXT("runtime_resolution_quality"),Scalability::GetQualityLevels().ResolutionQuality);
     for(const auto& Pair:MediumRenderSettings)if(const auto* Variable=IConsoleManager::Get().FindConsoleVariable(*Pair.Key))Quality->SetNumberField(Pair.Key,Variable->GetFloat());
     if(const auto* Method=IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))Quality->SetNumberField(TEXT("r.AntiAliasingMethod"),Method->GetInt());
     Report->SetObjectField(TEXT("quality"),Quality);
-    Report->SetStringField(TEXT("method"),TEXT("Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then runs at10x with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit samples include camera-driven streaming and report pending-cell mean/max/start/end without resetting; static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded."));
+    Report->SetStringField(TEXT("method"),TEXT("Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then runs at10x with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit and travel samples include camera-driven streaming without resetting; travel translates 36m/s. Both report pending-cell counts and visible/near backlogs, including longest consecutive visible backlog. Initial visible/near-ready times use initialized CPU residency counters and are recorded before the full-ready wait; they are not GPU upload fences or pixel coverage. Static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded."));
     FString Json;FJsonSerializer::Serialize(Report.ToSharedRef(),TJsonWriterFactory<TCHAR,TPrettyJsonPrintPolicy<TCHAR>>::Create(&Json));
     if(!FFileHelper::SaveStringToFile(Json,*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("GraphicsBenchmark-")+Name+TEXT(".json"))))
     {UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK report write failed"));FPlatformMisc::RequestExitWithStatus(false,1);return;}

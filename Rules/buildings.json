@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.0",
+  "version": "prototype-8.1",
   "buildings": [
     {
       "id": "command_core",
@@ -18,8 +18,6 @@
       "footprint": 240,
       "storage_capacity": 40000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 2500,
       "attack_range": 2200,
       "color": [
@@ -78,14 +76,15 @@
       "recipe_energy_multiplier": 4,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "proportional"
+      "workforce_mode": "proportional",
+      "extraction_rates": {}
     },
     {
-      "id": "extract_iron_ore",
-      "name": "Metal ore extractor",
+      "id": "extraction_mine",
+      "name": "Extraction Mine",
       "category": "resource",
       "role": "extractor",
-      "description": "Extracts metal ore at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
+      "description": "Extracts the resource in its local deposit. One mine per deposit; workers, connected road-grid power and local cargo storage are required.",
       "visual": "extractor",
       "cost": {
         "alloy": 12,
@@ -96,14 +95,12 @@
       "footprint": 115,
       "storage_capacity": 160,
       "recipe": "",
-      "extract_resource": "iron_ore",
-      "extract_rate": 1,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
-        0.57,
-        0.36,
-        0.25
+        0.56,
+        0.61,
+        0.56
       ],
       "weapon_name": "",
       "damage_per_shot": 0,
@@ -125,172 +122,23 @@
       "next_upgrade": "",
       "upgrade_cost": {},
       "level": 1,
-      "family": "extract_iron_ore",
+      "family": "extraction_mine",
       "allowed_recipes": [],
       "recipe_time_multiplier": 1,
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
-    },
-    {
-      "id": "extract_copper_ore",
-      "name": "Rare metals extractor",
-      "category": "resource",
-      "role": "extractor",
-      "description": "Extracts rare metals at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
-      "visual": "extractor",
-      "cost": {
-        "alloy": 12,
-        "circuits": 3
-      },
-      "jobs": 2,
-      "health": 250,
-      "footprint": 115,
-      "storage_capacity": 160,
-      "recipe": "",
-      "extract_resource": "copper_ore",
-      "extract_rate": 1,
-      "sensor_range": 0,
-      "attack_range": 0,
-      "color": [
-        0.7,
-        0.46,
-        0.27
-      ],
-      "weapon_name": "",
-      "damage_per_shot": 0,
-      "reload_seconds": 0,
-      "power_usage_kw": 0,
-      "power_generation_kw": 0,
-      "construction_seconds": 600,
-      "construction_workers": 2,
-      "robot_support_capacity": 0,
-      "staffing_priority": 4,
-      "inventory_presentation": "outdoor",
-      "worker_activity": "extraction",
-      "reserved_footprint": 115,
-      "access_port": [
-        1,
-        0
-      ],
-      "deployment_defense": false,
-      "next_upgrade": "",
-      "upgrade_cost": {},
-      "level": 1,
-      "family": "extract_copper_ore",
-      "allowed_recipes": [],
-      "recipe_time_multiplier": 1,
-      "recipe_energy_multiplier": 1,
-      "recipe_input_multiplier": 1,
-      "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
-    },
-    {
-      "id": "extract_silica",
-      "name": "Silica extractor",
-      "category": "resource",
-      "role": "extractor",
-      "description": "Extracts silica at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
-      "visual": "extractor",
-      "cost": {
-        "alloy": 12,
-        "circuits": 3
-      },
-      "jobs": 2,
-      "health": 250,
-      "footprint": 115,
-      "storage_capacity": 160,
-      "recipe": "",
-      "extract_resource": "silica",
-      "extract_rate": 1,
-      "sensor_range": 0,
-      "attack_range": 0,
-      "color": [
-        0.76,
-        0.8,
-        0.77
-      ],
-      "weapon_name": "",
-      "damage_per_shot": 0,
-      "reload_seconds": 0,
-      "power_usage_kw": 0,
-      "power_generation_kw": 0,
-      "construction_seconds": 600,
-      "construction_workers": 2,
-      "robot_support_capacity": 0,
-      "staffing_priority": 4,
-      "inventory_presentation": "outdoor",
-      "worker_activity": "extraction",
-      "reserved_footprint": 115,
-      "access_port": [
-        1,
-        0
-      ],
-      "deployment_defense": false,
-      "next_upgrade": "",
-      "upgrade_cost": {},
-      "level": 1,
-      "family": "extract_silica",
-      "allowed_recipes": [],
-      "recipe_time_multiplier": 1,
-      "recipe_energy_multiplier": 1,
-      "recipe_input_multiplier": 1,
-      "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
-    },
-    {
-      "id": "extract_carbon",
-      "name": "Biomass extractor",
-      "category": "resource",
-      "role": "extractor",
-      "description": "Extracts biomass at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
-      "visual": "extractor",
-      "cost": {
-        "alloy": 12,
-        "circuits": 3
-      },
-      "jobs": 2,
-      "health": 250,
-      "footprint": 115,
-      "storage_capacity": 160,
-      "recipe": "",
-      "extract_resource": "carbon",
-      "extract_rate": 1,
-      "sensor_range": 0,
-      "attack_range": 0,
-      "color": [
-        0.32,
-        0.49,
-        0.25
-      ],
-      "weapon_name": "",
-      "damage_per_shot": 0,
-      "reload_seconds": 0,
-      "power_usage_kw": 0,
-      "power_generation_kw": 0,
-      "construction_seconds": 600,
-      "construction_workers": 2,
-      "robot_support_capacity": 0,
-      "staffing_priority": 4,
-      "inventory_presentation": "outdoor",
-      "worker_activity": "extraction",
-      "reserved_footprint": 115,
-      "access_port": [
-        1,
-        0
-      ],
-      "deployment_defense": false,
-      "next_upgrade": "",
-      "upgrade_cost": {},
-      "level": 1,
-      "family": "extract_carbon",
-      "allowed_recipes": [],
-      "recipe_time_multiplier": 1,
-      "recipe_energy_multiplier": 1,
-      "recipe_input_multiplier": 1,
-      "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {
+        "iron_ore": 1,
+        "copper_ore": 1,
+        "silica": 1,
+        "carbon": 1,
+        "water": 1,
+        "radioactive_ore": 1,
+        "crystalline": 1,
+        "hydrocarbons": 1
+      }
     },
     {
       "id": "alloy_refinery",
@@ -308,8 +156,6 @@
       "footprint": 172.5,
       "storage_capacity": 70,
       "recipe": "smelt_alloy",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -343,7 +189,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "conductor_works",
@@ -361,8 +208,6 @@
       "footprint": 172.5,
       "storage_capacity": 70,
       "recipe": "draw_conductors",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -396,7 +241,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "substrate_works",
@@ -414,8 +260,6 @@
       "footprint": 172.5,
       "storage_capacity": 70,
       "recipe": "make_substrates",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -449,7 +293,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "circuit_works",
@@ -467,8 +312,6 @@
       "footprint": 172.5,
       "storage_capacity": 70,
       "recipe": "make_circuits",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -502,7 +345,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "component_works",
@@ -520,8 +364,6 @@
       "footprint": 172.5,
       "storage_capacity": 70,
       "recipe": "make_components",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -555,7 +397,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "sensor",
@@ -573,8 +416,6 @@
       "footprint": 65,
       "storage_capacity": 70,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 1700,
       "attack_range": 0,
       "color": [
@@ -608,7 +449,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "turret",
@@ -627,8 +469,6 @@
       "footprint": 90,
       "storage_capacity": 200,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -666,7 +506,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "depot",
@@ -684,8 +525,6 @@
       "footprint": 210,
       "storage_capacity": 450,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -719,7 +558,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "robot_service_bay",
@@ -738,8 +578,6 @@
       "footprint": 210,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -773,219 +611,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "full_staff"
-    },
-    {
-      "id": "extract_water",
-      "name": "Water extractor",
-      "category": "resource",
-      "role": "extractor",
-      "description": "Extracts water at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
-      "visual": "extractor",
-      "cost": {
-        "alloy": 12,
-        "circuits": 3
-      },
-      "jobs": 2,
-      "health": 250,
-      "footprint": 115,
-      "storage_capacity": 160,
-      "recipe": "",
-      "extract_resource": "water",
-      "extract_rate": 1,
-      "sensor_range": 0,
-      "attack_range": 0,
-      "color": [
-        0.24,
-        0.62,
-        0.9
-      ],
-      "weapon_name": "",
-      "damage_per_shot": 0,
-      "reload_seconds": 0,
-      "power_usage_kw": 0,
-      "power_generation_kw": 0,
-      "construction_seconds": 600,
-      "construction_workers": 2,
-      "robot_support_capacity": 0,
-      "staffing_priority": 4,
-      "inventory_presentation": "outdoor",
-      "worker_activity": "extraction",
-      "reserved_footprint": 115,
-      "access_port": [
-        1,
-        0
-      ],
-      "deployment_defense": false,
-      "next_upgrade": "",
-      "upgrade_cost": {},
-      "level": 1,
-      "family": "extract_water",
-      "allowed_recipes": [],
-      "recipe_time_multiplier": 1,
-      "recipe_energy_multiplier": 1,
-      "recipe_input_multiplier": 1,
-      "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
-    },
-    {
-      "id": "extract_radioactive_ore",
-      "name": "Radioactive ore extractor",
-      "category": "resource",
-      "role": "extractor",
-      "description": "Extracts radioactive ore at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
-      "visual": "extractor",
-      "cost": {
-        "alloy": 12,
-        "circuits": 3
-      },
-      "jobs": 2,
-      "health": 250,
-      "footprint": 115,
-      "storage_capacity": 160,
-      "recipe": "",
-      "extract_resource": "radioactive_ore",
-      "extract_rate": 1,
-      "sensor_range": 0,
-      "attack_range": 0,
-      "color": [
-        0.57,
-        0.64,
-        0.27
-      ],
-      "weapon_name": "",
-      "damage_per_shot": 0,
-      "reload_seconds": 0,
-      "power_usage_kw": 0,
-      "power_generation_kw": 0,
-      "construction_seconds": 600,
-      "construction_workers": 2,
-      "robot_support_capacity": 0,
-      "staffing_priority": 4,
-      "inventory_presentation": "outdoor",
-      "worker_activity": "extraction",
-      "reserved_footprint": 115,
-      "access_port": [
-        1,
-        0
-      ],
-      "deployment_defense": false,
-      "next_upgrade": "",
-      "upgrade_cost": {},
-      "level": 1,
-      "family": "extract_radioactive_ore",
-      "allowed_recipes": [],
-      "recipe_time_multiplier": 1,
-      "recipe_energy_multiplier": 1,
-      "recipe_input_multiplier": 1,
-      "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
-    },
-    {
-      "id": "extract_crystalline",
-      "name": "Crystalline material extractor",
-      "category": "resource",
-      "role": "extractor",
-      "description": "Extracts crystalline material at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
-      "visual": "extractor",
-      "cost": {
-        "alloy": 12,
-        "circuits": 3
-      },
-      "jobs": 2,
-      "health": 250,
-      "footprint": 115,
-      "storage_capacity": 160,
-      "recipe": "",
-      "extract_resource": "crystalline",
-      "extract_rate": 1,
-      "sensor_range": 0,
-      "attack_range": 0,
-      "color": [
-        0.54,
-        0.38,
-        0.7
-      ],
-      "weapon_name": "",
-      "damage_per_shot": 0,
-      "reload_seconds": 0,
-      "power_usage_kw": 0,
-      "power_generation_kw": 0,
-      "construction_seconds": 600,
-      "construction_workers": 2,
-      "robot_support_capacity": 0,
-      "staffing_priority": 4,
-      "inventory_presentation": "outdoor",
-      "worker_activity": "extraction",
-      "reserved_footprint": 115,
-      "access_port": [
-        1,
-        0
-      ],
-      "deployment_defense": false,
-      "next_upgrade": "",
-      "upgrade_cost": {},
-      "level": 1,
-      "family": "extract_crystalline",
-      "allowed_recipes": [],
-      "recipe_time_multiplier": 1,
-      "recipe_energy_multiplier": 1,
-      "recipe_input_multiplier": 1,
-      "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
-    },
-    {
-      "id": "extract_hydrocarbons",
-      "name": "Hydrocarbons extractor",
-      "category": "resource",
-      "role": "extractor",
-      "description": "Extracts hydrocarbons at a fixed rate from one matching deposit; requires road-grid power and local cargo storage.",
-      "visual": "extractor",
-      "cost": {
-        "alloy": 12,
-        "circuits": 3
-      },
-      "jobs": 2,
-      "health": 250,
-      "footprint": 115,
-      "storage_capacity": 160,
-      "recipe": "",
-      "extract_resource": "hydrocarbons",
-      "extract_rate": 1,
-      "sensor_range": 0,
-      "attack_range": 0,
-      "color": [
-        0.28,
-        0.25,
-        0.22
-      ],
-      "weapon_name": "",
-      "damage_per_shot": 0,
-      "reload_seconds": 0,
-      "power_usage_kw": 0,
-      "power_generation_kw": 0,
-      "construction_seconds": 600,
-      "construction_workers": 2,
-      "robot_support_capacity": 0,
-      "staffing_priority": 4,
-      "inventory_presentation": "outdoor",
-      "worker_activity": "extraction",
-      "reserved_footprint": 115,
-      "access_port": [
-        1,
-        0
-      ],
-      "deployment_defense": false,
-      "next_upgrade": "",
-      "upgrade_cost": {},
-      "level": 1,
-      "family": "extract_hydrocarbons",
-      "allowed_recipes": [],
-      "recipe_time_multiplier": 1,
-      "recipe_energy_multiplier": 1,
-      "recipe_input_multiplier": 1,
-      "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "solar_array",
@@ -1003,8 +630,6 @@
       "footprint": 210,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1042,7 +667,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "battery_bank",
@@ -1061,8 +687,6 @@
       "footprint": 210,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1096,7 +720,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "trading_port",
@@ -1115,8 +740,6 @@
       "footprint": 210,
       "storage_capacity": 450,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1154,7 +777,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "trading_port_2",
@@ -1173,8 +797,6 @@
       "footprint": 210,
       "storage_capacity": 900,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1212,7 +834,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "trading_port_3",
@@ -1231,8 +854,6 @@
       "footprint": 210,
       "storage_capacity": 1500,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1266,7 +887,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "biofuel_refinery",
@@ -1284,8 +906,6 @@
       "footprint": 172.5,
       "storage_capacity": 160,
       "recipe": "refine_biofuel",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1319,7 +939,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "fuel_refinery",
@@ -1337,8 +958,6 @@
       "footprint": 172.5,
       "storage_capacity": 160,
       "recipe": "refine_hydrocarbons",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1372,7 +991,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "food_producer",
@@ -1390,8 +1010,6 @@
       "footprint": 172.5,
       "storage_capacity": 160,
       "recipe": "make_organic_food",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1425,7 +1043,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "battery_works",
@@ -1443,8 +1062,6 @@
       "footprint": 172.5,
       "storage_capacity": 160,
       "recipe": "make_batteries",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1478,7 +1095,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "ai_chip_works",
@@ -1497,8 +1115,6 @@
       "footprint": 172.5,
       "storage_capacity": 160,
       "recipe": "make_ai_chips",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1532,7 +1148,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "fusion_reactor_works",
@@ -1551,8 +1168,6 @@
       "footprint": 172.5,
       "storage_capacity": 160,
       "recipe": "make_fusion_reactors",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1586,7 +1201,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "fuel_generator",
@@ -1605,8 +1221,6 @@
       "footprint": 210,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1640,7 +1254,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "command_core_2",
@@ -1659,8 +1274,6 @@
       "footprint": 480,
       "storage_capacity": 60000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 2500,
       "attack_range": 2200,
       "color": [
@@ -1719,7 +1332,8 @@
       "recipe_energy_multiplier": 4,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "proportional"
+      "workforce_mode": "proportional",
+      "extraction_rates": {}
     },
     {
       "id": "command_core_3",
@@ -1738,8 +1352,6 @@
       "footprint": 720,
       "storage_capacity": 80000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 2500,
       "attack_range": 2200,
       "color": [
@@ -1793,7 +1405,8 @@
       "recipe_energy_multiplier": 4,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "proportional"
+      "workforce_mode": "proportional",
+      "extraction_rates": {}
     },
     {
       "id": "solar_array_2",
@@ -1811,8 +1424,6 @@
       "footprint": 210,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1850,7 +1461,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "solar_array_3",
@@ -1868,8 +1480,6 @@
       "footprint": 210,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1903,7 +1513,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "vehicle_factory",
@@ -1922,8 +1533,6 @@
       "footprint": 260,
       "storage_capacity": 2000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -1961,7 +1570,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "vehicle_factory_2",
@@ -1980,8 +1590,6 @@
       "footprint": 260,
       "storage_capacity": 6000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2019,7 +1627,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "vehicle_factory_3",
@@ -2038,8 +1647,6 @@
       "footprint": 260,
       "storage_capacity": 40000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2073,7 +1680,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "tank_factory",
@@ -2092,8 +1700,6 @@
       "footprint": 260,
       "storage_capacity": 2000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2131,7 +1737,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "tank_factory_2",
@@ -2150,8 +1757,6 @@
       "footprint": 260,
       "storage_capacity": 6000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2189,7 +1794,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "tank_factory_3",
@@ -2208,8 +1814,6 @@
       "footprint": 260,
       "storage_capacity": 40000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2243,7 +1847,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "mech_factory",
@@ -2262,8 +1867,6 @@
       "footprint": 260,
       "storage_capacity": 2000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2301,7 +1904,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "mech_factory_2",
@@ -2320,8 +1924,6 @@
       "footprint": 260,
       "storage_capacity": 6000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2359,7 +1961,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "mech_factory_3",
@@ -2378,8 +1981,6 @@
       "footprint": 260,
       "storage_capacity": 40000,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2413,7 +2014,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "worker_factory",
@@ -2432,8 +2034,6 @@
       "footprint": 210,
       "storage_capacity": 300,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2469,7 +2069,8 @@
       "recipe_energy_multiplier": 0.5,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "ammunition_works",
@@ -2488,8 +2089,6 @@
       "footprint": 172.5,
       "storage_capacity": 240,
       "recipe": "make_shells",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -2526,7 +2125,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "turret_2",
@@ -2545,8 +2145,6 @@
       "footprint": 90,
       "storage_capacity": 500,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2584,7 +2182,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "turret_3",
@@ -2603,8 +2202,6 @@
       "footprint": 90,
       "storage_capacity": 1600,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2638,7 +2235,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "kinetic_tower",
@@ -2657,8 +2255,6 @@
       "footprint": 90,
       "storage_capacity": 200,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2696,7 +2292,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "kinetic_tower_2",
@@ -2715,8 +2312,6 @@
       "footprint": 90,
       "storage_capacity": 500,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2754,7 +2349,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "kinetic_tower_3",
@@ -2773,8 +2369,6 @@
       "footprint": 90,
       "storage_capacity": 1600,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2808,7 +2402,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "missile_tower",
@@ -2827,8 +2422,6 @@
       "footprint": 90,
       "storage_capacity": 200,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2866,7 +2459,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "missile_tower_2",
@@ -2885,8 +2479,6 @@
       "footprint": 90,
       "storage_capacity": 500,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2924,7 +2516,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "missile_tower_3",
@@ -2943,8 +2536,6 @@
       "footprint": 90,
       "storage_capacity": 1600,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -2978,7 +2569,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "plasma_tower",
@@ -2997,8 +2589,6 @@
       "footprint": 90,
       "storage_capacity": 200,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -3036,7 +2626,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "plasma_tower_2",
@@ -3055,8 +2646,6 @@
       "footprint": 90,
       "storage_capacity": 500,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -3094,7 +2683,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "plasma_tower_3",
@@ -3113,8 +2703,6 @@
       "footprint": 90,
       "storage_capacity": 1600,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 2200,
       "color": [
@@ -3148,7 +2736,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "wall_segment",
@@ -3165,8 +2754,6 @@
       "footprint": 50,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -3202,7 +2789,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "wall_segment_2",
@@ -3219,8 +2807,6 @@
       "footprint": 50,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -3256,7 +2842,8 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     },
     {
       "id": "wall_segment_3",
@@ -3273,8 +2860,6 @@
       "footprint": 50,
       "storage_capacity": 100,
       "recipe": "",
-      "extract_resource": "",
-      "extract_rate": 0,
       "sensor_range": 0,
       "attack_range": 0,
       "color": [
@@ -3308,18 +2893,12 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff"
+      "workforce_mode": "full_staff",
+      "extraction_rates": {}
     }
   ],
   "build_menu": [
-    "extract_water",
-    "extract_iron_ore",
-    "extract_silica",
-    "extract_carbon",
-    "extract_copper_ore",
-    "extract_radioactive_ore",
-    "extract_crystalline",
-    "extract_hydrocarbons",
+    "extraction_mine",
     "alloy_refinery",
     "conductor_works",
     "substrate_works",

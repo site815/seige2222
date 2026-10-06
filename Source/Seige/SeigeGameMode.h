@@ -86,7 +86,7 @@ public:
     float GrassShadowDistanceMeters=100;
     float GrassProgrammableDistanceMeters=0;
     float GrassDetailDistanceMeters=45,GrassLodTransitionMeters=35,GrassStreamRadiusMeters=540,GrassStreamBudgetMs=2;
-    int32 GrassStreamCellsPerFrame=2;
+    int32 GrassStreamCellsPerFrame=32;
     float ForestDetailDistanceMeters=300,ForestLodTransitionMeters=120;
     FString GrassProxyAsset=TEXT("/Game/Art/NatureV07/SM_GrassProxy.SM_GrassProxy");
     FString BroadleafProxyAsset=TEXT("/Game/Art/NatureV07/SM_BroadleafProxy.SM_BroadleafProxy");
@@ -168,6 +168,8 @@ public:
     void RefreshTransportScenery();
     bool IsSceneryStreamingReady() const;
     int32 PendingSceneryCells() const;
+    int32 PendingVisibleSceneryCells() const;
+    int32 PendingNearSceneryCells() const;
     FTransform CameraTransform(float ZoomOverride=-1) const;
     FVector2D CameraPanDirection(float Forward,float Right) const;
     void ApplyOrbitDrag(FVector2D Pixels);
@@ -283,19 +285,22 @@ struct FSeigeMenuEntry { FString Definition,Shortcut; };
 struct FSeigeMenuGroup { FString Id,Name,Shortcut,Description; TArray<FSeigeMenuEntry> Entries; };
 struct FSeigeCredit { FString Heading,Text; };
 struct FSeigeSummaryResource { FString Resource,Label; };
+struct FSeigeResourceGroup { FString Id,Label; TArray<FSeigeSummaryResource> Entries; };
 struct FSeigeDepositLabelState { FVector2D Offset=FVector2D(14,-14); bool Initialized=false; };
 struct FSeigeUiState
 {
-    float ViewportWidth=1600,ViewportHeight=900,Scale=1;
+    float ViewportWidth=1600,ViewportHeight=900,Scale=1,ContentTop=178;
     bool BuildOpen=false,GroupFocused=false;
     FString Category,HoverPanel;
     TArray<FSeigeMenuGroup> Categories;
     TArray<FSeigeCredit> Credits;
-    TArray<FSeigeSummaryResource> SummaryResources;
+    TArray<FSeigeResourceGroup> ResourceGroups;
     FString Title=TEXT("SEIGE"),Eyebrow=TEXT("FIRST LANDING"),Tagline=TEXT("A foothold in the wilderness.");
     TArray<int32> SpeedSteps={1,5,10};
     TArray<FSeigeButton> HitRegions;
     FString HitTest(float ScreenX,float ScreenY) const;
+    void UpdateHoverPanel(float ScreenX,float ScreenY,bool Enabled);
+    TArray<FBox2D> ResourceCardBounds(float LogicalWidth) const;
     void CloseMenus();
 };
 UCLASS()

@@ -22,7 +22,6 @@
 namespace {
 const FLinearColor Ink(.023f,.029f,.033f,.93f),Panel(.043f,.052f,.057f,.95f),Raised(.105f,.124f,.133f,.99f);
 const FLinearColor Gold(.86f,.80f,.63f),Green(.55f,.79f,.68f),Text(.94f,.92f,.85f),Muted(.65f,.70f,.70f),Red(.96f,.46f,.38f);
-constexpr float TopHeight=80;
 bool Contains(const FSeigeButton& R,float X,float Y) {return X>=R.Position.X&&X<=R.Position.X+R.Size.X&&Y>=R.Position.Y&&Y<=R.Position.Y+R.Size.Y;}
 bool OutcomeModal(const ASeigeGameMode& G) {return !G.Ready||(!G.Observer&&(G.Sim.Escaped||G.Sim.Failed||(G.Sim.Won&&!G.WinAcknowledged)));}
 bool CanIssueCoreCommands(const ASeigeGameMode& G)
@@ -54,6 +53,23 @@ FString FSeigeUiState::HitTest(float SX,float SY) const
     return TEXT("");
 }
 void FSeigeUiState::CloseMenus(){BuildOpen=false;GroupFocused=false;Category.Empty();HoverPanel.Empty();}
+void FSeigeUiState::UpdateHoverPanel(float X,float Y,bool Enabled)
+{
+    if(!Enabled||Scale<=0){HoverPanel.Empty();return;}
+    const FString Action=HitTest(X,Y);
+    if(Action.StartsWith(TEXT("summary:"))){HoverPanel=Action.RightChop(8);return;}
+    // Child buttons take hit-test priority but still belong to the open panel.
+    const FString PanelAction=TEXT("hover-panel:")+HoverPanel;
+    if(!HitRegions.ContainsByPredicate([&](const FSeigeButton& R){return R.Action==PanelAction&&Contains(R,X/Scale,Y/Scale);}))HoverPanel.Empty();
+}
+TArray<FBox2D> FSeigeUiState::ResourceCardBounds(float LogicalWidth) const
+{
+    const float Width=FMath::Min(1600.f,LogicalWidth-48.f),Gap=8;
+    const float Weights[]={.10f,.145f,.25f,.22f,.285f};float Left=(LogicalWidth-Width)*.5f;
+    TArray<FBox2D> Bounds;
+    for(float Weight:Weights){const float W=(Width-4*Gap)*Weight;Bounds.Emplace(FVector2D(Left,28),FVector2D(Left+W,124));Left+=W+Gap;}
+    return Bounds;
+}
 bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
 {
     FString Json;if(!FFileHelper::LoadFileToString(Json,*FPaths::Combine(Directory,TEXT("ui.json")))){Error=TEXT("Cannot read Interface/ui.json");return false;}
@@ -81,9 +97,21 @@ bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
     TArray<FSeigeCredit> Credits;const TArray<TSharedPtr<FJsonValue>>* CreditRows=nullptr;
     if(!Root->TryGetArrayField(TEXT("credits"),CreditRows)){Error=TEXT("Interface credits are missing");return false;}
     for(const auto& Row:*CreditRows){const auto O=Row->AsObject();FSeigeCredit C;if(!O||!O->TryGetStringField(TEXT("heading"),C.Heading)||!O->TryGetStringField(TEXT("text"),C.Text)){Error=TEXT("Invalid credits entry");return false;}Credits.Add(C);}
-    TArray<FSeigeSummaryResource> Summary;const TArray<TSharedPtr<FJsonValue>>* SummaryRows=nullptr;
-    if(!Root->TryGetArrayField(TEXT("summary_resources"),SummaryRows)){Error=TEXT("Interface summary resources are missing");return false;}
-    for(const auto& Row:*SummaryRows){const auto O=Row->AsObject();FSeigeSummaryResource R;if(!O||!O->TryGetStringField(TEXT("resource"),R.Resource)||!O->TryGetStringField(TEXT("label"),R.Label)){Error=TEXT("Invalid summary resource entry");return false;}Summary.Add(R);}
+    TArray<FSeigeResourceGroup> ResourceGroups;const TArray<TSharedPtr<FJsonValue>>* ResourceRows=nullptr;
+    const TArray<FString> RequiredGroups={TEXT("credits"),TEXT("energy"),TEXT("raw"),TEXT("basic"),TEXT("advanced")};TSet<FString> ResourceIds;
+    if(!Root->TryGetArrayField(TEXT("resource_groups"),ResourceRows)||ResourceRows->Num()!=RequiredGroups.Num()){Error=TEXT("Interface needs Credits, Energy, Raw materials, Basic production and Adv production groups");return false;}
+    for(int32 I=0;I<ResourceRows->Num();++I)
+    {
+        const auto O=(*ResourceRows)[I]->AsObject();FSeigeResourceGroup Group;const TArray<TSharedPtr<FJsonValue>>* Entries=nullptr;
+        if(!O||!O->TryGetStringField(TEXT("id"),Group.Id)||Group.Id!=RequiredGroups[I]||!O->TryGetStringField(TEXT("label"),Group.Label)||Group.Label.IsEmpty()||!O->TryGetArrayField(TEXT("entries"),Entries)||(I<2?!Entries->IsEmpty():Entries->IsEmpty()||Entries->Num()>8)){Error=TEXT("Invalid resource group or order");return false;}
+        for(const auto& Row:*Entries)
+        {
+            const auto Item=Row->AsObject();FSeigeSummaryResource R;
+            if(!Item||!Item->TryGetStringField(TEXT("resource"),R.Resource)||R.Resource.IsEmpty()||ResourceIds.Contains(R.Resource)||!Item->TryGetStringField(TEXT("label"),R.Label)||R.Label.IsEmpty()){Error=TEXT("Duplicate or invalid grouped resource entry");return false;}
+            ResourceIds.Add(R.Resource);Group.Entries.Add(R);
+        }
+        ResourceGroups.Add(MoveTemp(Group));
+    }
     const TSharedPtr<FJsonObject>* Frontend=nullptr;
     if(Root->TryGetObjectField(TEXT("frontend"),Frontend))
     {(*Frontend)->TryGetStringField(TEXT("title"),Ui.Title);(*Frontend)->TryGetStringField(TEXT("eyebrow"),Ui.Eyebrow);(*Frontend)->TryGetStringField(TEXT("tagline"),Ui.Tagline);}
@@ -93,7 +121,7 @@ bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
         TArray<int32> Values;for(const auto& Item:*Speeds){double Number=0;if(!Item->TryGetNumber(Number)||(Number!=1&&Number!=5&&Number!=10)||Values.Contains(int32(Number))){Error=TEXT("Simulation speeds must contain 1, 5 and 10 once each");return false;}Values.Add(int32(Number));}
         Values.Sort();if(Values.Num()!=3){Error=TEXT("Simulation speeds must contain 1, 5 and 10");return false;}Ui.SpeedSteps=MoveTemp(Values);
     }
-    Ui.Categories=MoveTemp(Parsed);Ui.Credits=MoveTemp(Credits);Ui.SummaryResources=MoveTemp(Summary);InterfaceLoaded=true;InterfaceAttempted=true;Error.Empty();return true;
+    Ui.Categories=MoveTemp(Parsed);Ui.Credits=MoveTemp(Credits);Ui.ResourceGroups=MoveTemp(ResourceGroups);InterfaceLoaded=true;InterfaceAttempted=true;Error.Empty();return true;
 }
 bool ASeigeHUD::BlocksCameraKeys() const{return Ui.BuildOpen;}
 bool ASeigeHUD::IsPointerOverUI() const{float X=0,Y=0;const auto* PC=GetOwningPlayerController();return PC&&PC->GetMousePosition(X,Y)&&!Ui.HitTest(X,Y).IsEmpty();}
@@ -189,7 +217,9 @@ bool ASeigeHUD::ProcessClick(float X,float Y,ASeigeGameMode& G)
     }
     if(!Action.IsEmpty())return ExecuteAction(Action,G);
     if(Ui.BuildOpen){Ui.CloseMenus();return true;}
-    if(!Ui.HoverPanel.IsEmpty()){Ui.HoverPanel.Empty();return true;}
+    // Resource details are a passive hover surface. An uncovered world click
+    // dismisses them without consuming placement or selection between draws.
+    Ui.HoverPanel.Empty();
     return false;
 }
 bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
@@ -286,7 +316,7 @@ void ASeigeHUD::Wrapped(const FString& Value,float X,float& Y,float Width,float 
 float ASeigeHUD::DrawNotice(ASeigeGameMode& G,float W,float H)
 {
     if(LastNotice.IsEmpty()||NoticeVisibleSeconds>=8)return 0;
-    const float NW=FMath::Min(700.f,W-420),X=(W-NW)*.5f,Y=TopHeight+10;
+    const float NW=FMath::Min(700.f,W-420),X=(W-NW)*.5f,Y=G.Screen==TEXT("landing")?90.f:Ui.ContentTop;
     auto Lines=WrapLines(LastNotice,NW-36,15);
     if(Lines.Num()>3){Lines.SetNum(3);Lines.Last()+=TEXT(" ...");}
     const float NH=22+Lines.Num()*22;
@@ -321,7 +351,12 @@ void ASeigeHUD::Description(const FSeigeBuildingDef& D,ASeigeGameMode& G,float X
         for(const FString& Id:Inputs){if(!Recipe.IsEmpty())Recipe+=TEXT(" + ");Recipe+=FString::Printf(TEXT("%.0f %s"),R->Inputs[Id],*ResourceName(G.Sim,Id));}
         Recipe+=FString::Printf(TEXT("  /  %.0fs per batch"),R->Seconds);Wrapped(Recipe,X+18,TY,W-36,13,Green);
     }
-    else if(!D.ExtractResource.IsEmpty())Wrapped(FString::Printf(TEXT("%.1f %s per second when staffed"),D.ExtractRate,*ResourceName(G.Sim,D.ExtractResource)),X+18,TY,W-36,13,Green);
+    else if(D.Role==TEXT("extractor"))
+    {
+        const auto* Node=G.CursorOnWorld?G.Sim.ExtractionNode(D.Id,G.CursorWorld):nullptr;
+        if(Node){const auto* DepositResource=G.Sim.Resources.Find(Node->Resource);Wrapped(FString::Printf(TEXT("Deposit: %s / %.2f %s per second when powered and staffed"),*ResourceName(G.Sim,Node->Resource),D.ExtractionRates.FindRef(Node->Resource),DepositResource?*DepositResource->Unit:TEXT("units")),X+18,TY,W-36,13,Green);}
+        else Wrapped(TEXT("Place on any raw deposit. Output and extraction rate follow that deposit; resources cannot be selected independently."),X+18,TY,W-36,13,Green);
+    }
 }
 bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
 {
@@ -485,7 +520,7 @@ void ASeigeHUD::DrawBuildingInfo(ASeigeGameMode& G,float W,float H)
     for(const auto& R:Rows)Sections.AddUnique(R.Section);
     if(Sections.IsEmpty())return;
     if(!Sections.Contains(BuildingInfoSection)){BuildingInfoSection=Sections[0];BuildingInfoPage=0;}
-    const float PW=416,X=W-PW-24,Y=102,MaxH=H-Y-110,ContentY=Y+173,ContentH=MaxH-227;
+    const float PW=416,X=W-PW-24,Y=Ui.ContentTop,MaxH=H-Y-110,ContentY=Y+173,ContentH=MaxH-227;
     TArray<TArray<int32>> Pages;Pages.Emplace();float Used=0;
     auto RowHeight=[&](const FSeigeBuildingInfoRow& R){return FMath::Max(WrapLines(R.Label,155,13).Num(),WrapLines(R.Value,205,14).Num())*21.f+12;};
     for(int32 I=0;I<Rows.Num();++I)if(Rows[I].Section==BuildingInfoSection)
@@ -593,14 +628,16 @@ void ASeigeHUD::DrawHUD()
     Super::DrawHUD();if(!Canvas)return;auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;if(!G)return;auto* PC=GetOwningPlayerController();
     Scale=FMath::Max(.1f,FMath::Min(Canvas->SizeX/1600.f,Canvas->SizeY/900.f));Ui.Scale=Scale;Ui.ViewportWidth=Canvas->SizeX;Ui.ViewportHeight=Canvas->SizeY;
     const float W=Ui.ViewportWidth/Scale,H=Ui.ViewportHeight/Scale;float MX=-1,MY=-1;if(PC)PC->GetMousePosition(MX,MY);
-    const FString PreviousHover=Ui.HitTest(MX,MY);const bool WasOverUi=!PreviousHover.IsEmpty();Ui.HitRegions.Reset();
+    const FString PreviousHover=Ui.HitTest(MX,MY);const bool WasOverUi=!PreviousHover.IsEmpty();
+    Ui.ContentTop=G->Screen==TEXT("playing")?178.f:102.f;
+    Ui.UpdateHoverPanel(MX,MY,G->Screen==TEXT("playing")&&!G->CompanionView&&!Ui.BuildOpen&&G->ViewedSimulation()&&(G->Observer||G->DetailedSectorIndex()==4));Ui.HitRegions.Reset();
     if(!InterfaceAttempted)
     {
         InterfaceAttempted=true;FString Directory=FPaths::Combine(FPaths::ProjectDir(),TEXT("Interface"));
         if(!FPaths::FileExists(FPaths::Combine(Directory,TEXT("ui.json"))))Directory=FPaths::Combine(FPlatformProcess::BaseDir(),TEXT("Interface"));
         if(!LoadInterface(Directory,InterfaceError))G->Notice=InterfaceError;
         if(InterfaceLoaded)for(const auto& Group:Ui.Categories)for(const auto& Item:Group.Entries)if(Item.Definition!=TEXT("road")&&Item.Definition!=TEXT("upgrade_road")&&Item.Definition!=TEXT("wall")&&!G->Sim.BuildMenu.Contains(Item.Definition)){InterfaceError=TEXT("Unavailable interface building: ")+Item.Definition;InterfaceLoaded=false;}
-        if(InterfaceLoaded)for(const auto& Item:Ui.SummaryResources)if(!G->Sim.Resources.Contains(Item.Resource)){InterfaceError=TEXT("Unavailable summary resource: ")+Item.Resource;InterfaceLoaded=false;}
+        if(InterfaceLoaded)for(const auto& Group:Ui.ResourceGroups)for(const auto& Item:Group.Entries)if(!G->Sim.Resources.Contains(Item.Resource)){InterfaceError=TEXT("Unavailable summary resource: ")+Item.Resource;InterfaceLoaded=false;}
     }
     if(Version.IsEmpty()){GConfig->GetString(TEXT("/Script/EngineSettings.GeneralProjectSettings"),TEXT("ProjectVersion"),Version,GGameIni);if(Version.IsEmpty())Version=TEXT("unversioned");}
     const float Dt=GetWorld()->GetDeltaSeconds();if(Dt>0)SmoothedFps=SmoothedFps<=0?1.f/Dt:FMath::Lerp(SmoothedFps,1.f/Dt,.08f);
@@ -612,6 +649,7 @@ void ASeigeHUD::DrawHUD()
         Frame(W*.5f-265,H-82,530,60);Label(TEXT("REX  /  FIRST PERSON  /  1x"),W*.5f-245,H-67,16,Gold);
         Label(G->Paused?TEXT("Paused - Space resumes. Esc returns to colony."):TEXT("WASD walk  /  Mouse look  /  Esc return  /  F10 menu"),W*.5f-245,H-42,12,Text);return;
     }
+    const float TopHeight=Ui.ContentTop-22;
     const bool RegionMap=G->IsRegionMap();const auto* Viewed=G->ViewedSimulation();const bool Readable=Viewed&&(G->Observer||G->DetailedSectorIndex()==4);const FSeigeSimulation& Local=Readable?*Viewed:G->Sim;const FVector2D SectorOffset=G->DetailedSectorOffset();
     if(RegionMap){Ui.BuildOpen=false;Ui.GroupFocused=false;G->SelectedBuild.Empty();}
     const float MapAlpha=G->RegionMapAlpha();
@@ -727,28 +765,50 @@ void ASeigeHUD::DrawHUD()
         }
         if(!NeighborhoodOverview)DrawDeposits(false,{});
     }
-    // Floating information strip leaves the landscape visible around every edge.
-    Label(TEXT("seige2222"),24,21,21,Text);Label(FString::Printf(TEXT("v%s  /  %.0f FPS"),*Version,SmoothedFps),25,51,12,Muted);
-    const float StripW=900,StripX=(W-StripW)*.5f,StripY=14,StripH=64;
-    Frame(StripX,StripY,StripW,StripH);
-    auto Summary=[&](const FString& Id,const FString& Heading,const FString& Value,float Offset,float Width,FLinearColor C)
-    {
-        const float X=StripX+Offset;
-        const float ValueSize=FMath::Clamp(14.f*(Width-24)/FMath::Max(1.f,float(MeasureLabel(Value,14).X)),10.f,14.f);
-        Label(Heading,X+12,StripY+8,9,Muted);Label(Value,X+12,StripY+27,ValueSize,C);
-        Region(TEXT("summary:")+Id,X,StripY,Width,StripH);
-        if(Offset>0)Box(X,StripY+12,1,StripH-24,FLinearColor(.23f,.28f,.28f,.7f));
-    };
+    // Five separate resource groups keep owned quantities visible; detail stays on hover.
+    Label(FString::Printf(TEXT("seige2222  /  v%s  /  %.0f FPS"),*Version,SmoothedFps),24,6,12,Muted);
+    const float ResourceY=28,ResourceH=96;const auto ResourceCards=Ui.ResourceCardBounds(W);
     const auto CompactAmount=[](double Amount){return Amount>=1000000?FString::Printf(TEXT("%.1fM"),Amount/1000000):Amount>=1000?FString::Printf(TEXT("%.1fk"),Amount/1000):FString::Printf(TEXT("%.1f"),Amount);};
     const auto ColonyEnergy=Readable?Local.Energy.Info(Local):FSeigeEnergyInfo();
-    Summary(TEXT("resources"),TEXT("GALACTIC CREDITS"),Readable?FString::Printf(TEXT("%.4f"),Local.Credits):TEXT("Unavailable"),0,140,Gold);
-    Label(TEXT("Materials on hover"),StripX+12,StripY+46,9,Muted);
-    Summary(TEXT("resources"),TEXT("COLONY ENERGY"),Readable?FString::Printf(TEXT("%s / %s kWh"),*CompactAmount(ColonyEnergy.StoredKWh),*CompactAmount(ColonyEnergy.CapacityKWh)):TEXT("Unavailable"),140,270,ColonyEnergy.PowerFraction<.999?Gold:Green);
-    if(Readable)Label(FString::Printf(TEXT("Gen %s kW / Passive load %s kW"),*CompactAmount(ColonyEnergy.GenerationKW),*CompactAmount(ColonyEnergy.DemandKW)),StripX+152,StripY+46,10,Muted);
-    Summary(TEXT("workforce"),TEXT("WORKFORCE"),Readable?FString::Printf(TEXT("%d / %d jobs"),Local.Population,Local.TotalJobs):TEXT("Unavailable"),410,140,Local.TotalJobs>Local.Employed?Gold:Text);
-    Summary(TEXT("logistics"),TEXT("IN TRANSIT"),Readable?FString::Printf(TEXT("%d couriers"),Local.Couriers.Num()):TEXT("Unavailable"),550,110,Text);
-    Summary(TEXT("threats"),TEXT("NEXT ALIEN PULSE"),Readable?(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("%.0f seconds"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Disabled"))):TEXT("Unavailable"),660,120,Gold);
-    Summary(TEXT("objective"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("OBSERVATION"):TEXT("FIRST LANDING"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("Read only"):G->Sim.Won?TEXT("Complete"):TEXT("Objectives"),780,120,Green);
+    for(int32 GI=0;GI<Ui.ResourceGroups.Num();++GI)
+    {
+        const auto& Group=Ui.ResourceGroups[GI];const auto& Bounds=ResourceCards[FMath::Min(GI,4)];const float GW=Bounds.GetSize().X,GX=Bounds.Min.X;
+        Frame(GX,ResourceY,GW,ResourceH);Label(Group.Label,GX+12,ResourceY+9,12,Muted);
+        Region(TEXT("summary:")+(GI<2?Group.Id:TEXT("group:")+Group.Id),GX,ResourceY,GW,ResourceH);
+        if(!Readable){Label(TEXT("Unavailable"),GX+12,ResourceY+43,13,Muted);continue;}
+        if(Group.Id==TEXT("credits"))
+        {
+            Label(FString::Printf(TEXT("%.4f"),Local.Credits),GX+12,ResourceY+37,20,Gold);
+            Label(TEXT("Galactic credits"),GX+12,ResourceY+70,10,Muted);continue;
+        }
+        if(Group.Id==TEXT("energy"))
+        {
+            const FString Stored=FString::Printf(TEXT("%s / %s"),*CompactAmount(ColonyEnergy.StoredKWh),*CompactAmount(ColonyEnergy.CapacityKWh));
+            const float Size=FMath::Min(19.f,19.f*(GW-24)/FMath::Max(1.f,float(MeasureLabel(Stored,19).X)));
+            Label(Stored,GX+12,ResourceY+34,Size,ColonyEnergy.PowerFraction<.999?Gold:Green);Label(TEXT("kWh stored / capacity"),GX+12,ResourceY+59,10,Muted);
+            Label(FString::Printf(TEXT("+%s / -%s kW"),*CompactAmount(ColonyEnergy.GenerationKW),*CompactAmount(ColonyEnergy.DemandKW)),GX+12,ResourceY+80,11,Text);continue;
+        }
+        const float CW=(GW-16)/2;
+        for(int32 I=0;I<Group.Entries.Num();++I)
+        {
+            const auto& Item=Group.Entries[I];const auto* R=Local.Resources.Find(Item.Resource);if(!R)continue;
+            const float X=GX+8+(I%2)*CW,Y=ResourceY+29+(I/2)*16;
+            const FString Amount=CompactAmount(Local.TotalStock(Item.Resource));const float AW=MeasureLabel(Amount,11).X;
+            Box(X+3,Y+3,4,10,R->Color);Label(Item.Label,X+12,Y+2,10,Text);Label(Amount,X+CW-AW-5,Y+1,11,Text);
+            Region(TEXT("summary:item:")+Item.Resource,X,Y,CW-2,16);
+        }
+    }
+    const float StripW=900,StripX=(W-StripW)*.5f,StripY=132,StripH=34;
+    Frame(StripX,StripY,StripW,StripH);
+    auto Summary=[&](const FString& Id,const FString& Value,float Offset,float Width,FLinearColor C)
+    {
+        const float X=StripX+Offset;Label(Value,X+12,StripY+10,12,C);Region(TEXT("summary:")+Id,X,StripY,Width,StripH);
+        if(Offset>0)Box(X,StripY+8,1,StripH-16,FLinearColor(.23f,.28f,.28f,.7f));
+    };
+    Summary(TEXT("workforce"),Readable?FString::Printf(TEXT("Workers  %d / %d jobs  +%d stored"),Local.Population,Local.TotalJobs,Local.InactiveWorkerCount()):TEXT("Workers unavailable"),0,300,Local.TotalJobs>Local.Employed?Gold:Text);
+    Summary(TEXT("logistics"),Readable?FString::Printf(TEXT("%d couriers in transit"),Local.Couriers.Num()):TEXT("Logistics unavailable"),300,175,Text);
+    Summary(TEXT("threats"),Readable?(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Next pulse  %.0fs"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Invasions disabled"))):TEXT("Threats unavailable"),475,210,Gold);
+    Summary(TEXT("objective"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("Observation / read only"):G->Sim.Won?TEXT("First landing complete"):TEXT("First landing objectives"),685,215,Green);
     const float DockW=596,DockX=(W-DockW)*.5f,DockY=H-75;
     Frame(DockX,DockY,DockW,60);
     auto DockButton=[&](const FString& Name,const FString& A,const FString& Visual,float X,float Width,bool Active)
@@ -762,8 +822,6 @@ void ASeigeHUD::DrawHUD()
     Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+328,DockY+6,76,48,G->Paused);
     Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+410,DockY+6,84,48,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
     Button(TEXT("Menu"),TEXT("game-menu"),DockX+500,DockY+6,90,48,false,TEXT("Esc / F10 opens the game menu. Space pauses; + / - cycles playback speed."));
-    if(!Readable)Ui.HoverPanel.Empty();
-    if(Readable&&PreviousHover.StartsWith(TEXT("summary:"))&&!Ui.BuildOpen)Ui.HoverPanel=PreviousHover.RightChop(8);else if(!PreviousHover.StartsWith(TEXT("hover-panel:")))Ui.HoverPanel.Empty();
     if(!G->Ready)
     {
         Ui.HitRegions.Reset();Frame(W/2-340,H/2-160,680,320);Label(TEXT("RULE FILE ERROR"),W/2-310,H/2-130,26,Red);float Y=H/2-78;Wrapped(G->Error,W/2-310,Y,610,16,Text);Button(TEXT("Reload corrected rules"),TEXT("reset"),W/2-310,H/2+88,610,42);return;
@@ -802,18 +860,53 @@ void ASeigeHUD::DrawHUD()
     }
     else if(!Ui.HoverPanel.IsEmpty())
     {
-        float Offset=0;if(Ui.HoverPanel==TEXT("workforce"))Offset=410;else if(Ui.HoverPanel==TEXT("logistics"))Offset=550;else if(Ui.HoverPanel==TEXT("threats"))Offset=660;else if(Ui.HoverPanel==TEXT("objective"))Offset=780;
-        const float Y=90,PW=Ui.HoverPanel==TEXT("resources")?780:425,PH=Ui.HoverPanel==TEXT("resources")?FMath::Max(442.f,150.f+FMath::DivideAndRoundUp(Local.Resources.Num(),2)*27.f):Ui.HoverPanel==TEXT("workforce")?410:242;
-        const float X=FMath::Min(StripX+Offset,W-PW-20);Frame(X,Y,PW,PH);Region(TEXT("hover-panel:")+Ui.HoverPanel,X,Y-13,PW,PH+13);float TY=Y+21;
-        if(Ui.HoverPanel==TEXT("resources"))
+        const bool ItemDetail=Ui.HoverPanel.StartsWith(TEXT("item:")),GroupDetail=Ui.HoverPanel.StartsWith(TEXT("group:"));
+        const float Y=Ui.ContentTop,PW=GroupDetail?470.f:425.f,PH=Ui.HoverPanel==TEXT("workforce")?450.f:GroupDetail?330.f:300.f;
+        const FString AnchorAction=TEXT("summary:")+Ui.HoverPanel;const auto* Anchor=Ui.HitRegions.FindByPredicate([&](const FSeigeButton& R){return R.Action==AnchorAction;});
+        const float X=FMath::Clamp(Anchor?float(Anchor->Position.X):StripX,20.f,W-PW-20);Frame(X,Y,PW,PH);Region(TEXT("hover-panel:")+Ui.HoverPanel,X,Y-12,PW,PH+12);float TY=Y+21;
+        if(Ui.HoverPanel==TEXT("credits"))
         {
-            Label(TEXT("COLONY ECONOMY & MATERIALS"),X+18,TY,18,Gold);TY+=35;Label(FString::Printf(TEXT("Galactic credits: %.4f  /  physical cargo includes shipments in transit"),Local.Credits),X+18,TY,12,Muted);TY+=30;
-            const auto Grid=Local.Energy.Info(Local);Label(FString::Printf(TEXT("Energy %.1f / %.1f kWh stored  |  %.1f kW generation / %.1f kW passive demand"),Grid.StoredKWh,Grid.CapacityKWh,Grid.GenerationKW,Grid.DemandKW),X+18,TY,12,Green);TY+=32;
-            Label(TEXT("Totals include separate grids. Production, weapons and trade also draw energy per action."),X+18,TY,12,Muted);TY+=22;
-            TArray<FString> Keys;Local.Resources.GetKeys(Keys);Keys.Sort();int32 RI=0;const int32 PerColumn=FMath::DivideAndRoundUp(Keys.Num(),2);
-            for(const FString& Id:Keys){const auto& R=Local.Resources[Id];const float RX=X+18+(RI/PerColumn)*380,RY=TY+(RI%PerColumn)*27;++RI;Box(RX,RY+4,7,9,R.Color);Label(R.Name,RX+18,RY,13,Text);Label(FString::Printf(TEXT("%.1f %s"),Local.TotalStock(Id),*R.Unit),RX+258,RY,13,Text);}
+            Label(TEXT("GALACTIC CREDITS"),X+18,TY,18,Gold);TY+=42;
+            Label(FString::Printf(TEXT("%.6f credits"),Local.Credits),X+18,TY,23,Text);TY+=48;
+            Wrapped(TEXT("Credits are used only for external trade. Export physical goods through a powered trading port to earn them; imports spend your balance."),X+18,TY,PW-36,14,Text);TY+=12;
+            Wrapped(TEXT("Price anchor: 1 Galactic credit equals the value of 1 kg of gold."),X+18,TY,PW-36,13,Muted);
         }
-        else if(Ui.HoverPanel==TEXT("workforce")){Label(TEXT("WORKFORCE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.WorkforceStatus(),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Workers fill jobs automatically. The core supports your first workers; charging and maintenance hubs [B L C] support expansion. Keep components supplied for efficient operation."),X+18,TY,PW-36,14,Muted);TY+=14;DrawWorkforceControls(*G,X+18,TY,PW-36);}
+        else if(Ui.HoverPanel==TEXT("energy"))
+        {
+            Label(TEXT("COLONY ENERGY"),X+18,TY,18,Gold);TY+=40;const auto Grid=Local.Energy.Info(Local);
+            Wrapped(FString::Printf(TEXT("%.2f / %.2f kWh stored"),Grid.StoredKWh,Grid.CapacityKWh),X+18,TY,PW-36,19,Green);TY+=12;
+            Wrapped(FString::Printf(TEXT("Generation %.2f kW / passive demand %.2f kW"),Grid.GenerationKW,Grid.DemandKW),X+18,TY,PW-36,15,Text);TY+=12;
+            Wrapped(TEXT("Totals include separate road grids. A building can use only its connected grid. Production, weapons and trade also consume energy per action."),X+18,TY,PW-36,14,Muted);
+        }
+        else if(ItemDetail)
+        {
+            const FString Id=Ui.HoverPanel.RightChop(5);if(const auto* R=Local.Resources.Find(Id))
+            {
+                Wrapped(R->Name,X+18,TY,PW-36,20,R->Color);TY+=12;const double Total=Local.TotalStock(Id);
+                Label(FString::Printf(TEXT("%.2f %s owned"),Total,*R->Unit),X+18,TY,22,Text);TY+=40;
+                double InBuildings=0,Moving=0;for(const auto& B:Local.Buildings)if(B.Health>0)InBuildings+=B.Inventory.FindRef(Id);for(const auto& C:Local.Couriers)if(C.Resource==Id)Moving+=C.Amount;
+                Wrapped(FString::Printf(TEXT("Building inventories: %.2f %s / Couriers: %.2f %s"),InBuildings,*R->Unit,Moving,*R->Unit),X+18,TY,PW-36,13,Text);TY+=8;
+                Wrapped(FString::Printf(TEXT("Each %s: %.2f kg mass / %.2f L storage"),*R->Unit,R->UnitMassKg,R->LitresPerUnit),X+18,TY,PW-36,13,Muted);TY+=8;
+                Wrapped(TEXT("Owned totals also include committed construction/production inputs, fleet cargo and outgoing shipment escrow. They are not all available at one building."),X+18,TY,PW-36,13,Muted);
+            }
+        }
+        else if(GroupDetail)
+        {
+            const FString Id=Ui.HoverPanel.RightChop(6);if(const auto* Group=Ui.ResourceGroups.FindByPredicate([&](const FSeigeResourceGroup& R){return R.Id==Id;}))
+            {
+                Label(Group->Label,X+18,TY,19,Gold);TY+=40;
+                for(const auto& Item:Group->Entries)if(const auto* R=Local.Resources.Find(Item.Resource))
+                {Box(X+18,TY+3,5,10,R->Color);Label(R->Name,X+34,TY,13,Text);const FString Value=FString::Printf(TEXT("%.1f %s"),Local.TotalStock(Item.Resource),*R->Unit);Label(Value,X+PW-18-MeasureLabel(Value,13).X,TY,13,Text);TY+=26;}
+                TY+=8;Wrapped(TEXT("Owned totals include transit and committed cargo."),X+18,TY,PW-36,12,Muted);
+            }
+        }
+        else if(Ui.HoverPanel==TEXT("workforce"))
+        {
+            Label(TEXT("WORKFORCE"),X+18,TY,18,Gold);TY+=40;Wrapped(Local.WorkforceStatus(),X+18,TY,PW-36,15,Text);TY+=12;
+            Wrapped(TEXT("Workers fill jobs automatically. Stored bodies include transit and shipment escrow; only local, unreserved bodies can reactivate or be recycled."),X+18,TY,PW-36,13,Muted);
+            if(!G->Observer&&G->DetailedSectorIndex()==4)DrawWorkforceControls(*G,X+18,Y+PH-154,PW-36);
+            else{TY+=20;Wrapped(FString::Printf(TEXT("Stored: %d / colony spare target: %d / all targets: %d"),Local.InactiveWorkerCount(),Local.WorkerSurplusTarget,Local.WorkerReserveTarget()),X+18,TY,PW-36,14,Text);}
+        }
         else if(Ui.HoverPanel==TEXT("logistics")){Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Factories consume locally delivered stock. Construction reserves core materials, then couriers carry them to the site. Workers assemble buildings once supplies arrive."),X+18,TY,PW-36,14,Muted);}
         else if(Ui.HoverPanel==TEXT("threats")){Label(TEXT("SECTOR PRESSURE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Pulse %d / Next pulse in %.0f seconds"),Local.Wave,FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Periodic attacks: disabled for this scenario.")),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(Local.BackgroundBugsEnabled?TEXT("Background bugs: enabled. Roaming bugs can arrive between invasion pulses."):TEXT("Background bugs: disabled for this scenario."),X+18,TY,PW-36,14,Muted);TY+=12;Wrapped(TEXT("Sensors reveal live contacts; defenses require staffing. Repairs consume local materials."),X+18,TY,PW-36,14,Muted);}
         else{Label(TEXT("FIRST LANDING OBJECTIVES"),X+18,TY,18,Gold);TY+=43;TArray<FString> Goals;Local.ObjectiveText().ParseIntoArray(Goals,TEXT(" | "),true);for(const FString& Goal:Goals){Wrapped(Goal,X+18,TY,PW-36,16,Text);TY+=7;}}
@@ -822,7 +915,7 @@ void ASeigeHUD::DrawHUD()
     {
         if(!RegionMap&&G->SelectedCompanionId)if(const auto* Dog=G->Sim.Companions.Find(G->SelectedCompanionId))
         {
-            const float PW=416,X=W-PW-24,Y=102;Frame(X,Y,PW,360);Label(TEXT("REX"),X+20,Y+23,23,Gold);Button(TEXT("x"),TEXT("deselect"),X+PW-39,Y+9,29,29);
+            const float PW=416,X=W-PW-24,Y=Ui.ContentTop;Frame(X,Y,PW,360);Label(TEXT("REX"),X+20,Y+23,23,Gold);Button(TEXT("x"),TEXT("deselect"),X+PW-39,Y+9,29,29);
             float TY=Y+74;Wrapped(TEXT("Golden retriever / colony companion"),X+20,TY,PW-40,16,Text);TY+=18;
             Wrapped(Dog->FedUntil>G->Sim.Time?TEXT("Fed / morale benefit active"):TEXT("Hungry / needs nearby organic food"),X+20,TY,PW-40,15,Dog->FedUntil>G->Sim.Time?Green:Gold);TY+=12;
             Wrapped(FString::Printf(TEXT("Meals: %.2f kg organic food every %.0f minutes. Nearby workers gain %.0f%% efficiency while Rex is fed."),G->Sim.Companions.FoodPerMealKg,G->Sim.Companions.MealIntervalSeconds/60,G->Sim.Companions.MoraleBonus*100),X+20,TY,PW-40,14,Muted);
@@ -835,7 +928,7 @@ void ASeigeHUD::DrawHUD()
             const auto* Target=Local.TransportTiers.Find(Road->TargetTier);
             const auto* Next=Tier?Local.TransportTiers.Find(Tier->NextTier):nullptr;
             const bool Own=!G->Observer&&G->DetailedSectorIndex()==4;
-            const float PW=416,X=W-PW-24,Y=102;Frame(X,Y,PW,430);
+            const float PW=416,X=W-PW-24,Y=Ui.ContentTop;Frame(X,Y,PW,430);
             Icon(TEXT("road"),X+18,Y+20,37,Gold);Label(TEXT("TRANSPORT ROUTE"),X+69,Y+24,19,Gold);
             Button(TEXT("x"),TEXT("deselect"),X+PW-39,Y+9,29,29);
             float TY=Y+87;Wrapped(Tier?FString::Printf(TEXT("%s / %.0fx transport"),*Tier->Name,Tier->SpeedMultiplier):TEXT("Road construction"),X+18,TY,PW-36,18,Text);

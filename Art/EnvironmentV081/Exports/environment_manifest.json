@@ -1,0 +1,42 @@
+{
+  "units": "centimeters",
+  "license": "CC0-1.0",
+  "source_manifest": "Art/EnvironmentV04/sources.json",
+  "description": "Sixteen photographic tall tufts plus four opaque curved blade beds; v0.8 had 920 masked low tufts.",
+  "meshes": {
+    "SM_MeadowSwardV081A": {
+      "fbx": "SM_MeadowSwardV081A.fbx",
+      "sha256": "d90ab3ffa1bbcc38b881319d93429c12ef552ccb70a049f3963df1e7f158a4cc",
+      "triangles": 33632,
+      "baseline_triangles": 77572,
+      "dimensions_cm": [
+        140.39905667304993,
+        143.3177411556244,
+        55.69947510957718
+      ],
+      "materials": [
+        "PH_grass_medium_02_surface",
+        "PH_opaque_ground_surface"
+      ],
+      "tall_tufts": 16,
+      "opaque_underlayer_blades": 3072
+    },
+    "SM_MeadowSwardV081B": {
+      "fbx": "SM_MeadowSwardV081B.fbx",
+      "sha256": "91a93996269b9a7c1d1cfedc642b13004d46f545845dbedb07848444de14d558",
+      "triangles": 33632,
+      "baseline_triangles": 77572,
+      "dimensions_cm": [
+        136.50939464569092,
+        131.28322958946228,
+        52.48019574210048
+      ],
+      "materials": [
+        "PH_grass_medium_02_surface",
+        "PH_opaque_ground_surface"
+      ],
+      "tall_tufts": 16,
+      "opaque_underlayer_blades": 3072
+    }
+  }
+}

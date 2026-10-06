@@ -6,6 +6,7 @@ struct FSeigeAIBuildTarget
 {
     FString Definition;
     int32 Count = 0;
+    int32 PlacementIndex = 0;
 };
 
 // A deterministic colony controller. Owns no simulation and gives no resources during play.

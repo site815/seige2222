@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.0",
+  "version": "prototype-8.1",
   "energy": {
     "worker_kw": 0.1,
     "connection_tolerance_meters": 0.15,
@@ -16,54 +16,6 @@
         "self_start": true,
         "requires_road_grid": false,
         "priority": 0
-      },
-      "extract_iron_ore": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
-      },
-      "extract_copper_ore": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
-      },
-      "extract_silica": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
-      },
-      "extract_carbon": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
       },
       "alloy_refinery": {
         "generation_kw": 0,
@@ -172,54 +124,6 @@
         "self_start": false,
         "requires_road_grid": true,
         "priority": 1
-      },
-      "extract_water": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
-      },
-      "extract_radioactive_ore": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
-      },
-      "extract_crystalline": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
-      },
-      "extract_hydrocarbons": {
-        "generation_kw": 0,
-        "battery_capacity_kwh": 0,
-        "initial_battery_kwh": 0,
-        "idle_kw": 1,
-        "fuel_resource": "",
-        "fuel_units_per_kwh": 0,
-        "fuel_buffer_seconds": 0,
-        "self_start": false,
-        "requires_road_grid": true,
-        "priority": 4
       },
       "solar_array": {
         "generation_kw": 25,
@@ -706,6 +610,18 @@
         "battery_capacity_kwh": 0,
         "initial_battery_kwh": 0,
         "idle_kw": 0.06,
+        "fuel_resource": "",
+        "fuel_units_per_kwh": 0,
+        "fuel_buffer_seconds": 0,
+        "self_start": false,
+        "requires_road_grid": true,
+        "priority": 4
+      },
+      "extraction_mine": {
+        "generation_kw": 0,
+        "battery_capacity_kwh": 0,
+        "initial_battery_kwh": 0,
+        "idle_kw": 1,
         "fuel_resource": "",
         "fuel_units_per_kwh": 0,
         "fuel_buffer_seconds": 0,

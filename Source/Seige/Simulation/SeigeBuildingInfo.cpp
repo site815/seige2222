@@ -98,12 +98,15 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     else
     {
         Add(TEXT("Production"),TEXT("Resource inputs"),TEXT("None (0)"));
-        Add(TEXT("Production"),TEXT("Resource output"),D.ExtractResource.IsEmpty()?TEXT("None (0)"):Name(D.ExtractResource));
-        const FString ExtractionUnit=Resources.Contains(D.ExtractResource)?Resources[D.ExtractResource].Unit:TEXT("kg");
-        Add(TEXT("Production"),TEXT("Nominal extraction"),N(D.ExtractRate)+TEXT(" ")+ExtractionUnit+TEXT(" / simulation s"));
+        const FString Resource=B?ExtractionResource(*B):FString();
+        const double Rate=B?ExtractionRate(*B):0;
+        const FString Unit=Resources.Contains(Resource)?Resources[Resource].Unit:TEXT("units");
+        Add(TEXT("Production"),TEXT("Resource output"),!Resource.IsEmpty()?Name(Resource):D.ExtractionRates.IsEmpty()?TEXT("None (0)"):TEXT("Selected automatically from the local deposit"));
+        if(!B&&!D.ExtractionRates.IsEmpty())Add(TEXT("Production"),TEXT("Deposit rates"),Amounts(D.ExtractionRates)+TEXT(" / simulation s"));
+        else Add(TEXT("Production"),TEXT("Nominal extraction"),N(Rate)+TEXT(" ")+Unit+TEXT(" / simulation s"));
         const bool Full=B&&Occupied(*B)>=D.StorageCapacity-UE_DOUBLE_SMALL_NUMBER;
-        Add(TEXT("Production"),TEXT("Operating extraction"),N(Full?0:D.ExtractRate*Fraction)+TEXT(" ")+ExtractionUnit+TEXT(" / s"));
-        Add(TEXT("Production"),TEXT("Extraction limit"),D.ExtractResource.IsEmpty()?TEXT("Not an extractor"):TEXT("One matching deposit; output stops when local storage is full"));
+        Add(TEXT("Production"),TEXT("Operating extraction"),N(Full?0:Rate*Fraction)+TEXT(" ")+Unit+TEXT(" / s"));
+        Add(TEXT("Production"),TEXT("Extraction limit"),D.ExtractionRates.IsEmpty()?TEXT("Not a mine"):TEXT("One mine per deposit; output stops when local storage is full"));
     }
 
     if(D.StoresInactiveWorkers)
@@ -118,7 +121,7 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     if(B&&B->IsConstructing)for(const auto& Pair:ConstructionCost(*B))StockIds.Add(Pair.Key);
     if(CoreBuilding||D.Role==TEXT("storage"))for(const auto& Pair:Resources)StockIds.Add(Pair.Key);
     StockIds.Add(TextRule(TEXT("repair_resource")));
-    if(!D.ExtractResource.IsEmpty())StockIds.Add(D.ExtractResource);
+    if(B){const FString Resource=ExtractionResource(*B);if(!Resource.IsEmpty())StockIds.Add(Resource);}
     if(Recipe){for(const auto& Pair:Recipe->Inputs)StockIds.Add(Pair.Key);for(const auto& Pair:Recipe->Outputs)StockIds.Add(Pair.Key);}
     if(B){for(const auto& Pair:B->Inventory)StockIds.Add(Pair.Key);for(const auto& Pair:B->ConstructionMaterials)StockIds.Add(Pair.Key);for(const auto& C:Couriers)if(C.TargetId==B->Id)StockIds.Add(C.Resource);}
     TArray<FString> StockKeys=StockIds.Array();StockKeys.Sort();

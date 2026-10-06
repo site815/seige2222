@@ -1,6 +1,7 @@
 #include "SeigeGameMode.h"
 #include "SeigeSceneryContact.h"
 #include "SeigeSceneryPlacement.h"
+#include "SeigeSceneryStreaming.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -30,6 +31,33 @@ struct FCameraWorld : FTestWorldWrapper
         Game->RebuildTerrainHeights();return true;
     }
 };
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSceneryStreamingTest,"Seige.Camera.SceneryStreamingPriority",CameraFlags)
+bool FSeigeSceneryStreamingTest::RunTest(const FString& Parameters)
+{
+    FSeigeSceneryView View;View.TanHalfHorizontal=1;View.Aspect=2;
+    TestTrue(TEXT("Front terrain is a visible streaming priority"),View.Intersects(FBox(FVector(100,-10,-10),FVector(120,10,10))));
+    TestFalse(TEXT("Terrain behind the camera is not a visible priority"),View.Intersects(FBox(FVector(-120,-10,-10),FVector(-100,10,10))));
+    TestFalse(TEXT("Horizontal frustum excludes an offscreen cell"),View.Intersects(FBox(FVector(100,200,-10),FVector(120,220,10))));
+    TestFalse(TEXT("Vertical frustum respects viewport aspect"),View.Intersects(FBox(FVector(100,-10,80),FVector(120,10,100))));
+    TestTrue(TEXT("A partially visible edge cell is retained"),View.Intersects(FBox(FVector(100,90,-10),FVector(120,130,10))));
+    const FBox Ground(FVector(-2700,-2700,-100),FVector(2700,2700,100));
+    View.Position=FVector(0,0,15000);
+    TestFalse(TEXT("A 150m overview does not load close grass simply because its XY lies below the camera"),View.WithinDistance(Ground,5000));
+    View.Position=FVector(0,0,160);
+    TestTrue(TEXT("A close camera preloads the actual near representation"),View.WithinDistance(Ground,5000));
+    View.Position=FVector(7801,0,100);
+    TestFalse(TEXT("Detail stops outside the true 3D radius of a cell"),View.WithinDistance(Ground,5000));
+    TestTrue(TEXT("Missing visible detail is serviced before distant visible proxies"),
+        SeigeSceneryWorkPriority(false,true,true,true,true)<SeigeSceneryWorkPriority(true,true,true,false,false));
+    TestTrue(TEXT("Visible ground cover is serviced before offscreen background"),
+        SeigeSceneryWorkPriority(true,true,true,false,false)<SeigeSceneryWorkPriority(true,true,false,false,false));
+    TestTrue(TEXT("Preloaded detail is serviced before offscreen background"),
+        SeigeSceneryWorkPriority(false,true,false,false,true)<SeigeSceneryWorkPriority(true,true,false,false,false));
+    TestEqual(TEXT("A ready cell never schedules redundant work"),SeigeSceneryWorkPriority(false,false,true,true,true),5);
+    return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSwardPlacementTest,"Seige.Camera.SwardPlacementCoverage",CameraFlags)

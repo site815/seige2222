@@ -4,7 +4,7 @@
 
 Fleet assignments, physical cargo, raiding, salvage, and the confirmed automatic loading order.
 
-**Current v0.8 source, release acceptance pending:** Couriers and aggregate construction crews route around reserved plots through declared access ports. Powered Road / Road + rail / Road + rail + vacuum links provide 2×/4×/8× walking speed; upgrades retain their earlier tier during construction. External trading ports use physical shipments and credit settlement. Separate combat modules provide fleet orders, outfitting, privateer travel, encounters and physical loot/return. A general cross-sector convoy economy is still separate future scope. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns local transport; the [resource/economy document](RESOURCE_PROPOSAL.md) owns port trade.
+**Retained transport and fleet prototype, checked in v0.8.1:** Couriers and aggregate construction crews route around reserved plots through declared access ports. Powered Road / Road + rail / Road + rail + vacuum links provide 2×/4×/8× walking speed; upgrades retain their earlier tier during construction. External trading ports use physical shipments and credit settlement. Separate combat modules provide fleet orders, outfitting, privateer travel, encounters and physical loot/return. A general cross-sector convoy economy is still separate future scope. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns local transport; the [resource/economy document](RESOURCE_PROPOSAL.md) owns port trade.
 
 ## Fleets and assignments
 

@@ -12,3 +12,6 @@ jobs:
           node-version: '22'
       - run: node Tools/validate_rules.mjs --self-test
       - run: node Tools/validate_configuration.mjs
+      - run: node Tools/test_ai_configuration.mjs
+      - run: node Tools/test_combat_configuration.mjs
+      - run: node Tools/test_ui_configuration.mjs

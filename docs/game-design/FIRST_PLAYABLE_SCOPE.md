@@ -4,11 +4,11 @@
 
 **Historical verified package: v0.7.0.** Packaging exited 0; all 38 native tests passed cleanly, the 79-stage Shipping interaction route passed with zero failures and exit 0, and all four actual Shipping display states passed. The route recorded 874 courier-motion frames; all 86 process-tree socket samples showed zero TCP/UDP endpoints. All nine loose JSON files matched source hashes. See the [v0.7 verification record](../verification/v0.7.0.json). Final performance benchmarks remain separate. The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
 
-## Current v0.8 construction and transport revision
+## Current v0.8.1 HUD and extraction revision
 
 [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) records the expanded source contract. Workers and cargo follow physical access-port routes; construction installs delivered materials progressively and roads retain earlier service during upgrades. The latest scope adds tiered facilities, walls, selectable core replication, dedicated worker manufacture, inactive-worker storage/export and combat/fleet modules. Core bodies grow through 1×/2×/3× widths within one 3× reservation. Vegetation clears the reservation; grading follows the built body. UI terminology is Worker; Menu replaces Colony and manual launch requires selecting the own live core. Playback includes Paused, 1×, 5× and 10×.
 
-Current definitions use `prototype-8.0` with separate combat schemas, and expanded simulation snapshots use format 5. Earlier formats or differing Rules/AI fingerprints require a new scenario. **v0.8 release verification is pending:** the earlier economy/Rex native checkpoint passed, but its packaged 105-stage UI route reported 9 failures. A revised 117-stage route and new UI/mechanics tests await final acceptance. The v0.7 and earlier v0.8 results do not establish expanded-system acceptance.
+Current definitions use `prototype-8.1` with separate combat schemas; simulation and neighborhood snapshots use format 6. Earlier formats or differing Rules/AI fingerprints require a new scenario. The five resource HUD groups retain workforce controls below them. One Extraction Mine binds to its actual deposit and uses the resource-specific external extraction rate. v0.8.1 has compiled and been staged; package boot and four display states passed. The final v0.8.1 Shipping executable passed 117 interaction stages, boot/offline checks and four display states; reconciled native coverage contains 88 unique clean results. The [v0.8.1 verification record](../verification/v0.8.1.json) identifies the exact evidence and retained limitations. The completed [v0.8 verification record](../verification/v0.8.0.json) preserves the preceding package's results, which do not verify these changes.
 
 ## Historical v0.7 scenario and scenery revision
 
@@ -79,7 +79,7 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | --- | --- |
 | [resources.json](../../Rules/resources.json) | Eight raw deposit types and fourteen manufactured/cargo types, including ammunition and discrete stored workers. Each declares physical mass/volume and presentation. |
 | [recipes.json](../../Rules/recipes.json) | Fourteen production recipes covering industrial intermediates, fuel/plastic, organic food, advanced parts, ammunition and worker assembly. |
-| [buildings.json](../../Rules/buildings.json) | Fifty-nine definitions covering three core levels, extraction, industry, storage, services, power, trade, vehicle factories, four tower families and walls. Capabilities, upgrades, staffing and material bills are external data. The initial core is supplied by the scenario. |
+| [buildings.json](../../Rules/buildings.json) | Fifty-two definitions covering three core levels, one deposit-driven Extraction Mine, industry, storage, services, power, trade, vehicle factories, four tower families and walls. There are 28 ordinary blueprints; the interface adds three road/wall tools. Capabilities, upgrades, staffing and material bills are external data. The initial core is supplied by the scenario. |
 | [policies.json](../../Rules/policies.json) | Simulation timing, staffing, population adjustment, physical delivery, repair/upkeep, visibility, threat behavior, scenario objectives, and numerical tuning. |
 | [transport.json](../../Rules/transport.json) | Physical distance units, walking speed, access/path clearance, road snapping and length limits, tier names, 2×/4×/8× speeds, widths, construction costs and times. |
 | [scenario.json](../../Rules/scenario.json) | Initial core, population and stock, landing deployment kit, separate shuttle cargo, world extent, seed and three-standard/two-rare resource generation settings. |
@@ -89,11 +89,11 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a finite developed-colony preset. Runtime AI uses the normal simulation rules. |
 | [Graphics definitions](../../Graphics/scene.json) | Camera limits/clearance and orbit sensitivity, regional-view threshold, logical-to-rendered scale, relief/pad settings, terrain/cloud materials and lighting, vegetation density/scales, and ten nature roles. These change presentation without changing logical costs, rates, or travel times. |
 
-These catalogs describe current v0.8 source capabilities; they do not establish final balance or completed release acceptance. The JSON files own exact quantities and rates so this document does not become a second balance table.
+These catalogs describe current v0.8.1 source capabilities; they do not establish final balance or completed release acceptance. The JSON files own exact quantities and rates so this document does not become a second balance table.
 
 ## Current source behavior for this slice
 
-These behaviors describe the current v0.8 source. Earlier release checks do not verify the new mechanics; current native, rendered and packaged acceptance must be recorded separately.
+These behaviors describe the current v0.8.1 source and retained v0.8 systems. Earlier release checks do not verify the new mine or HUD; current native/gameplay and rendered acceptance must be recorded separately.
 
 | Area | Prototype behavior |
 | --- | --- |
@@ -112,7 +112,7 @@ These behaviors describe the current v0.8 source. Earlier release checks do not 
 | Objective | Survive for the configured duration and actually manufacture the configured component output while maintaining the required industrial building. Starting stock alone must not satisfy a production objective. |
 | Local state | Local save/load includes inventory, cargo, timers, population, threats, random state, construction progress/site materials and cargo purpose, maintenance state, both threat settings, all occupied sectors, camera/time controls, and rule/AI fingerprints; native continuation tests cover it. It does not implement offline multiplayer progression. |
 
-The precise local interface and input bindings belong with [Interface and Controls](INTERFACE_AND_CONTROLS.md), including the current fleet orders and paid material-plan controls. Expanded release acceptance remains pending.
+The precise local interface and input bindings belong with [Interface and Controls](INTERFACE_AND_CONTROLS.md), including the current fleet orders and paid material-plan controls. The [v0.8.1 record](../verification/v0.8.1.json) records completed bounded release checks and known limitations.
 
 ## Explicit simplifications and differences from the full design
 

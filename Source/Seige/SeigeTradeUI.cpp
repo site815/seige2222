@@ -49,7 +49,7 @@ void ASeigeHUD::DrawTradeInfo(ASeigeGameMode& G,float W,float H)
     const auto& Resource=G.Sim.Resources[TradeResourceSelection];const auto* Definition=G.Sim.Definition(*Port);
     const auto* PortDefinition=G.Sim.Trade.Definition(Port->DefId);
     const FLinearColor Text(.89f,.92f,.9f),Muted(.56f,.65f,.64f),Gold(.89f,.75f,.43f),Mint(.46f,.84f,.68f),Red(.91f,.48f,.39f);
-    const float X=24,Y=104,PW=410,PH=FMath::Min(590.f,H-Y-96.f);if(PH<500)return;
+    const float X=24,Y=Ui.ContentTop,PW=410,PH=FMath::Min(590.f,H-Y-96.f);if(PH<500)return;
     Frame(X,Y,PW,PH);Region(TEXT("trade:panel"),X,Y,PW,PH);
     Label(TEXT("EXTERNAL TRADE"),X+18,Y+16,18,Gold);
     Label(FString::Printf(TEXT("Level %d  /  %.0f kg shipment capacity"),PortDefinition?PortDefinition->Level:1,PortDefinition?PortDefinition->CapacityKg:0),X+18,Y+43,13,Muted);

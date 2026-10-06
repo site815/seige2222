@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.0",
+  "version": "prototype-8.1",
   "balance_status": "Provisional material-balanced gameplay transactions. Worker_output creates counted stored_workers using the same explicit material/energy ledger; it is not free population. Core replication and dedicated factory multipliers are building data. Combat chassis assembly costs are in the combat catalogs.",
   "recipes": [
     {

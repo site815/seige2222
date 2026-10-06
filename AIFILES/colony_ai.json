@@ -22,103 +22,93 @@
   "build_targets": [
     {
       "definition": "solar_array",
-      "count": 1
+      "count": 1,
+      "placement_index": 0
     },
     {
       "definition": "robot_service_bay",
-      "count": 1
+      "count": 1,
+      "placement_index": 1
     },
     {
       "definition": "sensor",
-      "count": 1
+      "count": 1,
+      "placement_index": 2
     },
     {
       "definition": "turret",
-      "count": 1
+      "count": 1,
+      "placement_index": 3
     },
     {
-      "definition": "extract_water",
-      "count": 1
-    },
-    {
-      "definition": "extract_iron_ore",
-      "count": 1
-    },
-    {
-      "definition": "extract_silica",
-      "count": 1
-    },
-    {
-      "definition": "extract_carbon",
-      "count": 1
-    },
-    {
-      "definition": "extract_copper_ore",
-      "count": 1
-    },
-    {
-      "definition": "extract_radioactive_ore",
-      "count": 1
-    },
-    {
-      "definition": "extract_crystalline",
-      "count": 1
-    },
-    {
-      "definition": "extract_hydrocarbons",
-      "count": 1
+      "definition": "extraction_mine",
+      "count": 1,
+      "placement_index": 4
     },
     {
       "definition": "trading_port",
-      "count": 1
+      "count": 1,
+      "placement_index": 12
     },
     {
       "definition": "worker_factory",
-      "count": 1
+      "count": 1,
+      "placement_index": 13
     },
     {
       "definition": "turret",
-      "count": 4
+      "count": 4,
+      "placement_index": 14
     },
     {
       "definition": "sensor",
-      "count": 2
+      "count": 2,
+      "placement_index": 15
     },
     {
       "definition": "robot_service_bay",
-      "count": 2
+      "count": 2,
+      "placement_index": 16
     },
     {
       "definition": "alloy_refinery",
-      "count": 1
+      "count": 1,
+      "placement_index": 17
     },
     {
       "definition": "conductor_works",
-      "count": 1
+      "count": 1,
+      "placement_index": 18
     },
     {
       "definition": "substrate_works",
-      "count": 1
+      "count": 1,
+      "placement_index": 19
     },
     {
       "definition": "biofuel_refinery",
-      "count": 1
+      "count": 1,
+      "placement_index": 20
     },
     {
       "definition": "circuit_works",
-      "count": 1
+      "count": 1,
+      "placement_index": 21
     },
     {
       "definition": "component_works",
-      "count": 1
+      "count": 1,
+      "placement_index": 22
     },
     {
       "definition": "depot",
-      "count": 1
+      "count": 1,
+      "placement_index": 23
     },
     {
       "definition": "robot_service_bay",
-      "count": 3
+      "count": 3,
+      "placement_index": 24
     }
   ],
   "developed_setup_seconds": 64800,

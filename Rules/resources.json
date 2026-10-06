@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.0",
+  "version": "prototype-8.1",
   "quantity_note": "Raw/product quantities are kg or L. Stored workers are indivisible counts with external mass and berth volume. The current 1 kg worker material bill and 50 L occupied berth are provisional accounting values, not finished robot engineering. Grid energy and credits remain separate ledgers.",
   "resources": [
     {

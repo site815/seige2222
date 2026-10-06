@@ -51,12 +51,12 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation S;
     if(!S.Initialize(TestRules(),Error,false,false)){AddError(Error);return false;}
-    const auto Node=S.Nodes[0];FString Extractor,Wrong;
-    for(const auto& Pair:S.BuildingDefs)if(Pair.Value.Role==TEXT("extractor")){if(Pair.Value.ExtractResource==Node.Resource)Extractor=Pair.Key;else Wrong=Pair.Key;}
+    const auto Node=S.Nodes[0];FString Extractor;
+    for(const auto& Id:S.BuildMenu)if(S.BuildingDefs[Id].ExtractionRates.Contains(Node.Resource)){Extractor=Id;break;}
     if(!S.SetInitialCorePosition(Node.Position-FVector2D(1200,0),Error)){AddError(Error);return false;}S.Tick(S.BuildingDefs[S.CoreDefinition].ConstructionSeconds+S.FixedStepSeconds());
     TestFalse(TEXT("Cannot build a second core"),S.CanPlaceBuilding(S.CoreDefinition,Node.Position,Error));
-    TestFalse(TEXT("Mismatched extractor cannot mine another material"),S.CanPlaceBuilding(Wrong,Node.Position,Error));
-    TestTrue(TEXT("Matching extractor placement accepted"),S.PlaceBuilding(Extractor,Node.Position,Error));
+    TestFalse(TEXT("Extraction Mine cannot operate without a deposit"),S.CanPlaceBuilding(Extractor,Node.Position+FVector2D(600,0),Error));
+    TestTrue(TEXT("Generic mine placement accepted"),S.PlaceBuilding(Extractor,Node.Position,Error));
     TestFalse(TEXT("Same deposit cannot host another extractor"),S.CanPlaceBuilding(Extractor,Node.Position+FVector2D(40,40),Error));
     TestFalse(TEXT("Missing directory fails visibly"),S.Initialize(FPaths::Combine(TestRules(),TEXT("missing-rules")),Error));
     TestFalse(TEXT("Missing rules produce a diagnostic"),Error.IsEmpty());
@@ -262,7 +262,7 @@ bool FSeigePersistenceTest::RunTest(const FString& Parameters)
     if (!A.Save(TestSave(TEXT("roundtrip-a")),Error) || !B.Save(TestSave(TEXT("roundtrip-b")),Error)) { AddError(Error); return false; }
     FString SA,SB; FFileHelper::LoadFileToString(SA,*TestSave(TEXT("roundtrip-a"))); FFileHelper::LoadFileToString(SB,*TestSave(TEXT("roundtrip-b")));
     TestEqual(TEXT("Continued complete simulation states are identical"),SA,SB);
-    const double Before=B.Time; FString Corrupt=SB; Corrupt.ReplaceInline(TEXT("\"save_format\": 5"),TEXT("\"save_format\": 999"));
+    const double Before=B.Time; FString Corrupt=SB; Corrupt.ReplaceInline(TEXT("\"save_format\": 6"),TEXT("\"save_format\": 999"));
     FFileHelper::SaveStringToFile(Corrupt,*TestSave(TEXT("incompatible")));
     TestFalse(TEXT("Incompatible save rejected"),B.Load(TestSave(TEXT("incompatible")),Error)); TestEqual(TEXT("Rejected save leaves running colony untouched"),B.Time,Before);
     return true;

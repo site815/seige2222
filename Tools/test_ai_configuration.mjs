@@ -14,4 +14,10 @@ for (const policy of [undefined, null, 1, 'unlimited_free_actions']) {
   else candidate.ai.decision_scheduling_policy = policy;
   assert.throws(() => validateConfiguration(candidate), /decision_scheduling_policy/);
 }
-console.log('AI scheduling validation: 2 supported policies, 4 invalid cases passed.');
+for (const placementIndex of [undefined, -1, .5, 4097]) {
+  const candidate = structuredClone(data);
+  if (placementIndex === undefined) delete candidate.ai.build_targets[0].placement_index;
+  else candidate.ai.build_targets[0].placement_index = placementIndex;
+  assert.throws(() => validateConfiguration(candidate), /placement_index/);
+}
+console.log('AI configuration validation: 2 supported schedules, 4 invalid schedules and 4 invalid placement indices passed.');

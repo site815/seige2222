@@ -1,10 +1,12 @@
 #include "SeigeGameMode.h"
 #include "SeigeSceneryContact.h"
 #include "SeigeSceneryPlacement.h"
+#include "SeigeSceneryStreaming.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "ProceduralMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/App.h"
 #include "HAL/PlatformTime.h"
@@ -21,6 +23,14 @@ struct FSeigeSceneryStreamState
     TMap<FString,TWeakObjectPtr<UStaticMesh>> Meshes;
     TArray<FIntPoint> Wanted;
     TArray<FIntPoint> Retiring;
+    TMap<FIntPoint,FBox> CellBounds;
+    TSet<FIntPoint> VisibleCells,NearCells,DetailCells;
+    FVector PriorityPosition=FVector::ZeroVector,PriorityForward=FVector::ZeroVector;
+    double PriorityAspect=0,PriorityTanHalf=0;
+    bool PriorityDirty=true,Committing=false;
+    FString PendingTerrainSignature;
+    TArray<FName> CommitKeys;
+    int32 CommitKey=0;
     FIntPoint FocusCell=FIntPoint(MAX_int32,MAX_int32),CameraCell=FIntPoint(MAX_int32,MAX_int32);
     FIntPoint PendingCell;
     int32 PendingIndex=MIN_int32;
@@ -28,6 +38,7 @@ struct FSeigeSceneryStreamState
     FRandomStream Random;
     TMap<FName,TArray<FTransform>> PendingTransforms;
     int32 Remaining=0;
+    int32 RemainingVisible=0,RemainingNear=0;
     double Started=0;
 };
 
@@ -435,6 +446,7 @@ void ASeigeGameMode::RefreshBuildingPads()
     }
     TerrainPadSignature=Prepared.Signature;TerrainPadBounds=Prepared.Bounds;
     struct FChangedRect {int32 Tile,MinX,MinY,MaxX,MaxY;};
+    if(SceneryStream){SceneryStream->CellBounds.Reset();SceneryStream->PriorityDirty=true;}
     TArray<FChangedRect> Rects;int32 UpdatedVertices=0,UpdatedChunks=0;
     const double Half=Sim.WorldHalfSize;
     for(int32 TileIndex=0;TileIndex<TerrainTiles.Num();++TileIndex)
@@ -739,10 +751,12 @@ void ASeigeGameMode::CreateGroundCover()
         const int32 Y=FMath::FloorToInt(double(Cell.Y)/CellsPerInstancePage);
         return FName(*FString::Printf(TEXT("%d:%d:%s_%d"),X,Y,*Kind,Band));
     };
-    const FVector CameraPosition=CameraTransform(CameraViewZoom()).GetLocation();
+    const FTransform CameraPose=CameraTransform(CameraViewZoom());
+    const FVector CameraPosition=CameraPose.GetLocation();
     const FVector2D CameraXY=FVector2D(CameraPosition)/RenderScale,Focus=FVector2D(CameraCenter),Offset=DetailedSectorOffset();
     const double Half=Sim.WorldHalfSize,Radius=GrassStreamRadiusMeters*100/RenderScale;
-    const double DetailPreload=(GrassDetailDistanceMeters+GrassLodTransitionMeters)*100/RenderScale+GroundTileSize*2;
+    const double DetailDistance=(GrassDetailDistanceMeters+GrassLodTransitionMeters)*100;
+    const double DetailPreload=DetailDistance+GroundTileSize*RenderScale*.5;
     const int32 RadiusCells=FMath::CeilToInt(Radius/GroundTileSize);
     const FIntPoint FocusCell(FMath::FloorToInt(Focus.X/GroundTileSize),FMath::FloorToInt(Focus.Y/GroundTileSize));
     const FIntPoint CameraCell(FMath::FloorToInt(CameraXY.X/GroundTileSize),FMath::FloorToInt(CameraXY.Y/GroundTileSize));
@@ -751,7 +765,7 @@ void ASeigeGameMode::CreateGroundCover()
         const FVector2D Min(Cell.X*GroundTileSize,Cell.Y*GroundTileSize),Max=Min+FVector2D(GroundTileSize);
         return FMath::Square(FMath::Max(FMath::Max(Min.X-P.X,P.X-Max.X),0.))+FMath::Square(FMath::Max(FMath::Max(Min.Y-P.Y,P.Y-Max.Y),0.));
     };
-    auto WantsDetail=[&](FIntPoint Cell){return CellDistanceSq(Cell,CameraXY)<=DetailPreload*DetailPreload;};
+    auto WantsDetail=[&](FIntPoint Cell){return State.DetailCells.Contains(Cell);};
     if(State.FocusCell!=FocusCell||State.CameraCell!=CameraCell)
     {
         State.FocusCell=FocusCell;State.CameraCell=CameraCell;FoliageCenter=Focus;
@@ -763,28 +777,75 @@ void ASeigeGameMode::CreateGroundCover()
                 if(Origin.X+GroundTileSize<Offset.X-Half||Origin.X>Offset.X+Half||Origin.Y+GroundTileSize<Offset.Y-Half||Origin.Y>Offset.Y+Half)continue;
                 if(FMath::Min(CellDistanceSq(Cell,Focus),CellDistanceSq(Cell,CameraXY))<=Radius*Radius)Wanted.Add(Cell);
             }
-        State.Wanted=Wanted.Array();
-        State.Wanted.Sort([&](const FIntPoint& A,const FIntPoint& B)
-        {
-            const double DA=CellDistanceSq(A,CameraXY),DB=CellDistanceSq(B,CameraXY);
-            if(DA!=DB)return DA<DB;
-            return A.Y==B.Y?A.X<B.X:A.Y<B.Y;
-        });
+        State.Wanted=Wanted.Array();State.PriorityDirty=true;
         // One-cell retention hysteresis prevents churn when a camera hovers on
         // a grid edge. Existing proxy cover remains while incoming cells fill.
         State.Retiring.Reset();
         const double RetainRadius=Radius+GroundTileSize;
         for(auto& Pair:State.Cells)
             if(!Wanted.Contains(Pair.Key)&&FMath::Min(CellDistanceSq(Pair.Key,Focus),CellDistanceSq(Pair.Key,CameraXY))>RetainRadius*RetainRadius)State.Retiring.Add(Pair.Key);
-        if(State.PendingIndex!=MIN_int32&&!Wanted.Contains(State.PendingCell))
+        if(State.PendingIndex!=MIN_int32&&!State.Committing&&!Wanted.Contains(State.PendingCell))
         {State.PendingIndex=MIN_int32;State.PendingTransforms.Reset();}
+    }
+    FSeigeSceneryView View;View.Position=CameraPosition;View.Forward=CameraPose.GetUnitAxis(EAxis::X);
+    View.Right=CameraPose.GetUnitAxis(EAxis::Y);View.Up=CameraPose.GetUnitAxis(EAxis::Z);
+    View.TanHalfHorizontal=FMath::Tan(FMath::DegreesToRadians(double(CompanionView?Sim.Companions.ViewFov:CameraFov)*.5));
+    if(auto* PC=GetWorld()->GetFirstPlayerController()){int32 W=0,H=0;PC->GetViewportSize(W,H);if(W>0&&H>0)View.Aspect=double(W)/H;}
+    auto BoundsForCell=[&](FIntPoint Cell)->FBox
+    {
+        if(const FBox* Existing=State.CellBounds.Find(Cell))return *Existing;
+        const FVector2D Lo(Cell.X*GroundTileSize,Cell.Y*GroundTileSize),Hi=Lo+FVector2D(GroundTileSize);
+        double MinHeight=DBL_MAX,MaxHeight=-DBL_MAX;
+        // Bound the actual cached triangles, including their bordering vertices.
+        // Sampling only cell centers can miss a nearby hillside or pad edge.
+        if(TerrainTiles.IsValidIndex(DetailedSectorIndex())&&TerrainTiles[DetailedSectorIndex()].Resolution>0&&
+            !TerrainTiles[DetailedSectorIndex()].Heights.IsEmpty())
+        {
+            const auto& Tile=TerrainTiles[DetailedSectorIndex()];const double Step=Half*2/Tile.Resolution;
+            const FVector2D A=Lo-Tile.Offset,B=Hi-Tile.Offset;
+            const int32 X0=FMath::Clamp(FMath::FloorToInt((A.X+Half)/Step),0,Tile.Resolution),X1=FMath::Clamp(FMath::CeilToInt((B.X+Half)/Step),0,Tile.Resolution);
+            const int32 Y0=FMath::Clamp(FMath::FloorToInt((A.Y+Half)/Step),0,Tile.Resolution),Y1=FMath::Clamp(FMath::CeilToInt((B.Y+Half)/Step),0,Tile.Resolution);
+            for(int32 Y=Y0;Y<=Y1;++Y)for(int32 X=X0;X<=X1;++X)
+            {const double H=Tile.Heights[Y*(Tile.Resolution+1)+X];MinHeight=FMath::Min(MinHeight,H);MaxHeight=FMath::Max(MaxHeight,H);}
+        }
+        if(MinHeight==DBL_MAX)MinHeight=MaxHeight=GroundHeight((Lo+Hi)*.5);
+        // The shipped sward meshes are below one meter before configured scale.
+        // This pad is conservative for foliage tips, not a terrain-height change.
+        const FBox Bounds(FVector(Lo.X*RenderScale,Lo.Y*RenderScale,MinHeight*RenderScale),
+            FVector(Hi.X*RenderScale,Hi.Y*RenderScale,MaxHeight*RenderScale+GrassScaleMax*100));
+        State.CellBounds.Add(Cell,Bounds);return Bounds;
+    };
+    if(State.PriorityDirty||FVector::DistSquared(State.PriorityPosition,CameraPosition)>FMath::Square(GroundTileSize*RenderScale*.125)||
+        FVector::DotProduct(State.PriorityForward,View.Forward)<.995||
+        State.PriorityAspect!=View.Aspect||State.PriorityTanHalf!=View.TanHalfHorizontal)
+    {
+        State.PriorityDirty=false;State.PriorityPosition=CameraPosition;State.PriorityForward=View.Forward;
+        State.PriorityAspect=View.Aspect;State.PriorityTanHalf=View.TanHalfHorizontal;
+        State.VisibleCells.Reset();State.NearCells.Reset();State.DetailCells.Reset();
+        for(const FIntPoint Cell:State.Wanted)
+        {
+            const FBox Bounds=BoundsForCell(Cell);
+            if(View.Intersects(Bounds))State.VisibleCells.Add(Cell);
+            if(View.WithinDistance(Bounds,DetailDistance))State.NearCells.Add(Cell);
+            if(View.WithinDistance(Bounds,DetailPreload))State.DetailCells.Add(Cell);
+        }
+        State.Wanted.Sort([&](const FIntPoint& A,const FIntPoint& B)
+        {
+            const bool AV=State.VisibleCells.Contains(A),BV=State.VisibleCells.Contains(B);if(AV!=BV)return AV;
+            // The focus is the visible ground ahead, while camera-XY can be well
+            // behind it in an overview. Prefetch in viewing order, not behind us.
+            const double DA=AV?CellDistanceSq(A,Focus):CellDistanceSq(A,CameraXY);
+            const double DB=BV?CellDistanceSq(B,Focus):CellDistanceSq(B,CameraXY);
+            if(DA!=DB)return DA<DB;return A.Y==B.Y?A.X<B.X:A.Y<B.Y;
+        });
     }
     // Retiring an entire strip in one frame caused the same hitch as building
     // it. Retire at most one cell here; removal is also inside the frame budget.
     if(!State.Retiring.IsEmpty())
     {
         const FIntPoint Cell=State.Retiring.Pop(EAllowShrinking::No);
-        if(auto* Record=State.Cells.Find(Cell))
+        if(State.Committing&&Cell==State.PendingCell)State.Retiring.Insert(Cell,0);
+        else if(auto* Record=State.Cells.Find(Cell))
         {
             for(auto& Pair:Record->Instances)if(auto* Set=State.Sets.FindRef(Pair.Key).Get())
             {
@@ -799,6 +860,7 @@ void ASeigeGameMode::CreateGroundCover()
                 }
             }
             State.Cells.Remove(Cell);
+            State.CellBounds.Remove(Cell);
         }
     }
     const auto Areas=VisibleClearances(*this);
@@ -833,24 +895,25 @@ void ASeigeGameMode::CreateGroundCover()
     constexpr int32 PropsPerCell=6500/GroundReferenceCells;
     const int32 GrassPerCell=GroundCoverCandidates/GroundReferenceCells;
     int32 Completed=0;
-    while(Completed<GrassStreamCellsPerFrame&&(FPlatformTime::Seconds()-Started<Budget||State.PendingIndex==MIN_int32))
+    while(Completed<GrassStreamCellsPerFrame&&FPlatformTime::Seconds()-Started<Budget)
     {
         if(State.PendingIndex==MIN_int32)
         {
-            bool Found=false;
+            bool Found=false;int32 BestPriority=5;FIntPoint SelectedCell;
             // Detail replacements are preloaded before the camera reaches the
             // handoff band; proxy-only cells extend much farther into the view.
             for(const FIntPoint Cell:State.Wanted)
             {
                 const auto* Record=State.Cells.Find(Cell);
-                if(!Record||!Record->BaseReady||((!Record->DetailReady)&&(!HasProxy||WantsDetail(Cell))))
-                {
-                    State.PendingCell=Cell;State.PendingBase=!Record||!Record->BaseReady;
-                    State.PendingDetail=!HasProxy||WantsDetail(Cell);State.PendingIndex=-PropsPerCell;
-                    State.Random.Initialize(static_cast<int32>(GroundCellSeed(Cell.X,Cell.Y)));State.PendingTransforms.Reset();Found=true;break;
-                }
+                const int32 Priority=SeigeSceneryWorkPriority(!Record||!Record->BaseReady,!Record||!Record->DetailReady,
+                    State.VisibleCells.Contains(Cell),State.NearCells.Contains(Cell),!HasProxy||WantsDetail(Cell));
+                if(Priority<BestPriority){BestPriority=Priority;SelectedCell=Cell;Found=true;if(Priority==0)break;}
             }
             if(!Found)break;
+            const auto* Record=State.Cells.Find(SelectedCell);State.PendingCell=SelectedCell;State.PendingBase=!Record||!Record->BaseReady;
+            State.PendingDetail=!HasProxy||State.NearCells.Contains(SelectedCell)||(!State.PendingBase&&WantsDetail(SelectedCell));
+            State.PendingIndex=-PropsPerCell;State.PendingTerrainSignature=TerrainPadSignature;
+            State.Random.Initialize(static_cast<int32>(GroundCellSeed(SelectedCell.X,SelectedCell.Y)));State.PendingTransforms.Reset();
         }
         const FVector2D Origin(State.PendingCell.X*GroundTileSize,State.PendingCell.Y*GroundTileSize);
         auto Add=[&](const FString& Kind,int32 Band,const FTransform& Transform)
@@ -877,7 +940,7 @@ void ASeigeGameMode::CreateGroundCover()
             const FString Kind=Flowers?TEXT("Wildflowers"):I%2?TEXT("Grass"):TEXT("GrassB");
             const UStaticMesh* Mesh=State.Meshes.FindRef(Kind).Get();const double Margin=Mesh?Mesh->GetBounds().SphereRadius*Size/RenderScale:15.;
             if(!Mesh||IsSceneryClear(*this,P,Margin,Offset,Half,Areas)||Chance<Woodland*.7||Chance>MeadowSwardDensity(P))continue;
-            const FTransform Transform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size));
+            const FTransform Transform=GroundCoverContact(*this,FTransform(GroundCoverRotation(*this,P,Yaw),RenderPosition(P),FVector(Size)),Mesh);
             const int32 Band=int32(GroundCellSeed(I,State.PendingCell.X*31+State.PendingCell.Y)%SceneryLodBands);
             if(Flowers){if(State.PendingBase)Add(Kind,0,Transform);continue;}
             if(State.PendingDetail)Add(Kind,Band,Transform);
@@ -893,16 +956,19 @@ void ASeigeGameMode::CreateGroundCover()
         if(State.PendingIndex>=GrassPerCell)
         {
             auto& Record=State.Cells.FindOrAdd(State.PendingCell);
-            for(auto& Pair:State.PendingTransforms)
+            if(!State.Committing){State.PendingTransforms.GetKeys(State.CommitKeys);State.CommitKey=0;State.Committing=true;}
+            const bool TerrainChanged=State.PendingTerrainSignature!=TerrainPadSignature;
+            while(State.CommitKey<State.CommitKeys.Num()&&FPlatformTime::Seconds()-Started<Budget)
             {
-                FString Kind,BandText;Pair.Key.ToString().Split(TEXT("_"),&Kind,&BandText,ESearchCase::CaseSensitive,ESearchDir::FromEnd);
+                const FName Key=State.CommitKeys[State.CommitKey++];auto& Transforms=State.PendingTransforms[Key];
+                FString Kind,BandText;Key.ToString().Split(TEXT("_"),&Kind,&BandText,ESearchCase::CaseSensitive,ESearchDir::FromEnd);
                 // A construction pad may change during multi-frame preparation.
                 // Recheck the full source clump against current clearances,
                 // including when its pivot is outside a newly built foundation.
                 const bool Proxy=Kind.StartsWith(TEXT("GrassProxy"));
                 const auto* Source=State.Meshes.FindRef(Proxy?(Kind==TEXT("GrassProxyA")?TEXT("Grass"):TEXT("GrassB")):Kind).Get();
                 const auto* ProxyMesh=State.Meshes.FindRef(TEXT("GrassProxy")).Get();
-                Pair.Value.RemoveAll([&](const FTransform& Transform)
+                if(TerrainChanged)Transforms.RemoveAll([&](const FTransform& Transform)
                 {
                     const FVector Pivot=Proxy?ProxyPivotOffset(Transform,Source,ProxyMesh):FVector::ZeroVector;
                     const FVector2D Logical=FVector2D(Transform.GetLocation()-Pivot)/RenderScale;
@@ -911,7 +977,7 @@ void ASeigeGameMode::CreateGroundCover()
                     return IsSceneryClear(*this,Logical,Margin,Offset,Half,Areas);
                 });
                 // Commit retained instances against the authoritative surface.
-                for(auto& Transform:Pair.Value)
+                if(TerrainChanged)for(auto& Transform:Transforms)
                 {
                     const FVector Pivot=Proxy?ProxyPivotOffset(Transform,Source,ProxyMesh):FVector::ZeroVector;
                     FVector P=Transform.GetLocation()-Pivot;const FVector2D Logical=FVector2D(P)/RenderScale;
@@ -927,23 +993,27 @@ void ASeigeGameMode::CreateGroundCover()
                     else if(Kind==TEXT("Grass")||Kind==TEXT("GrassB")||Kind==TEXT("Wildflowers"))
                         Transform=GroundCoverContact(*this,Transform,Source);
                 }
-                if(!Pair.Value.IsEmpty())
+                if(!Transforms.IsEmpty())
                 {
                     const int32 Band=FCString::Atoi(*BandText);
                     if(auto* Set=EnsureSet(Kind,Band))
-                        Record.Instances.FindOrAdd(InstancePageKey(State.PendingCell,Kind,Band)).Append(Set->AddInstancesById(Pair.Value,false,false));
+                        Record.Instances.FindOrAdd(InstancePageKey(State.PendingCell,Kind,Band)).Append(Set->AddInstancesById(Transforms,false,false));
                 }
             }
+            if(State.CommitKey<State.CommitKeys.Num())break;
             Record.BaseReady|=State.PendingBase;Record.DetailReady|=State.PendingDetail;
-            State.PendingIndex=MIN_int32;State.PendingTransforms.Reset();++Completed;
+            State.PendingIndex=MIN_int32;State.Committing=false;State.CommitKeys.Reset();State.PendingTransforms.Reset();++Completed;
         }
         if(FPlatformTime::Seconds()-Started>=Budget)break;
     }
-    State.Remaining=0;
+    State.Remaining=0;State.RemainingVisible=0;State.RemainingNear=0;
     for(const FIntPoint Cell:State.Wanted)
     {
         const auto* Record=State.Cells.Find(Cell);
-        if(!Record||!Record->BaseReady||(!Record->DetailReady&&(!HasProxy||WantsDetail(Cell))))++State.Remaining;
+        const bool MissingBase=!Record||!Record->BaseReady,MissingDetail=!Record||!Record->DetailReady;
+        if(MissingBase||(MissingDetail&&(!HasProxy||WantsDetail(Cell))))++State.Remaining;
+        if(State.VisibleCells.Contains(Cell)&&(MissingBase||(MissingDetail&&State.NearCells.Contains(Cell))))++State.RemainingVisible;
+        if(State.NearCells.Contains(Cell)&&(MissingBase||MissingDetail))++State.RemainingNear;
     }
     if(State.Remaining==0&&State.Started>0)
     {
@@ -960,6 +1030,10 @@ int32 ASeigeGameMode::PendingSceneryCells() const
 {
     return SceneryStream?SceneryStream->Remaining+SceneryStream->Retiring.Num():0;
 }
+int32 ASeigeGameMode::PendingVisibleSceneryCells() const
+{return SceneryStream?SceneryStream->RemainingVisible:0;}
+int32 ASeigeGameMode::PendingNearSceneryCells() const
+{return SceneryStream?SceneryStream->RemainingNear:0;}
 void ASeigeGameMode::RefreshEnvironment()
 {
     if(!FApp::CanEverRender())return;const bool Map=RegionMapAlpha()>=1;

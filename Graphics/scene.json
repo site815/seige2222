@@ -1,8 +1,8 @@
 {
   "version": 1,
   "world_centimeters_per_unit": 6,
-  "nanite_max_pixels_per_edge": 4,
-  "nanite_survey_pixels_per_edge": 4,
+  "nanite_max_pixels_per_edge": 6,
+  "nanite_survey_pixels_per_edge": 6,
   "nanite_survey_start_zoom": 7000,
   "nanite_survey_end_zoom": 50000,
   "camera_fov": 55,
@@ -48,8 +48,8 @@
     "PineA": "/Game/Art/Nature/SM_FirA.SM_FirA",
     "PineB": "/Game/Art/Nature/SM_FirB.SM_FirB",
     "Shrub": "/Game/Art/Nature/SM_FernA.SM_FernA",
-    "Grass": "/Game/Art/NatureV04/SM_MeadowSwardA.SM_MeadowSwardA",
-    "GrassB": "/Game/Art/NatureV04/SM_MeadowSwardB.SM_MeadowSwardB",
+    "Grass": "/Game/Art/NatureV081/SM_MeadowSwardV081A.SM_MeadowSwardV081A",
+    "GrassB": "/Game/Art/NatureV081/SM_MeadowSwardV081B.SM_MeadowSwardV081B",
     "Wildflowers": "/Game/Art/NatureV04/SM_WildflowerPatch.SM_WildflowerPatch",
     "RockA": "/Game/Art/Nature/SM_MossRockA.SM_MossRockA",
     "RockB": "/Game/Art/Nature/SM_MossRockB.SM_MossRockB"
@@ -90,7 +90,9 @@
       "r.MaxAnisotropy": 16,
       "r.TemporalAA.Quality": 2,
       "r.TemporalAAFilterSize": 0.8,
-      "r.TemporalAACurrentFrameWeight": 0.08
+      "r.TemporalAACurrentFrameWeight": 0.08,
+      "r.Shadow.Virtual.SMRT.RayCountDirectional": 4,
+      "r.Shadow.Virtual.SMRT.SamplesPerRayDirectional": 2
     },
     "native_antialiasing": "taa",
     "upscaling_antialiasing": "tsr"
@@ -99,11 +101,11 @@
   "exposure_bias": 0.25,
   "color_saturation": 1.1,
   "ambient_occlusion_intensity": 0.5,
-  "grass_detail_distance_m": 25,
-  "grass_lod_transition_m": 25,
+  "grass_detail_distance_m": 15,
+  "grass_lod_transition_m": 20,
   "grass_stream_radius_m": 540,
-  "grass_stream_budget_ms": 2,
-  "grass_stream_cells_per_frame": 2,
+  "grass_stream_budget_ms": 4,
+  "grass_stream_cells_per_frame": 32,
   "forest_detail_distance_m": 500,
   "forest_lod_transition_m": 200,
   "grass_proxy_asset": "/Game/Art/NatureV08/SM_GrassProxyV08.SM_GrassProxyV08",

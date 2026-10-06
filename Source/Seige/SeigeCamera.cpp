@@ -28,8 +28,8 @@ bool ASeigeGameMode::LoadGraphicsSettings()
     };
     float Forest=0,NearForest=0,GroundCandidates=0,TerrainResolution=0,RidgeX=0,RidgeY=0,NeighborForest=0,StreamCells=0;
     if(!Read(TEXT("world_centimeters_per_unit"),1,20,RenderScale)||
-       !Read(TEXT("nanite_max_pixels_per_edge"),.5,4,NaniteMaxPixelsPerEdge)||
-       !Read(TEXT("nanite_survey_pixels_per_edge"),.5,4,NaniteSurveyPixelsPerEdge)||
+       !Read(TEXT("nanite_max_pixels_per_edge"),.5,8,NaniteMaxPixelsPerEdge)||
+       !Read(TEXT("nanite_survey_pixels_per_edge"),.5,8,NaniteSurveyPixelsPerEdge)||
        !Read(TEXT("nanite_survey_start_zoom"),5000,60000,NaniteSurveyStartZoom)||
        !Read(TEXT("nanite_survey_end_zoom"),10000,200000,NaniteSurveyEndZoom)||
        !Read(TEXT("camera_fov"),35,80,CameraFov)||!Read(TEXT("camera_pitch"),5,85,CameraPitch)||
@@ -58,7 +58,7 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("grass_lod_transition_m"),10,200,GrassLodTransitionMeters)||
        !Read(TEXT("grass_stream_radius_m"),150,1200,GrassStreamRadiusMeters)||
        !Read(TEXT("grass_stream_budget_ms"),.5,8,GrassStreamBudgetMs)||
-       !Read(TEXT("grass_stream_cells_per_frame"),1,8,StreamCells)||
+       !Read(TEXT("grass_stream_cells_per_frame"),1,32,StreamCells)||
        !Read(TEXT("forest_detail_distance_m"),75,1000,ForestDetailDistanceMeters)||
        !Read(TEXT("forest_lod_transition_m"),20,500,ForestLodTransitionMeters)||
        !Read(TEXT("grass_programmable_distance_m"),0,900,GrassProgrammableDistanceMeters)||
@@ -138,9 +138,9 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         MediumQualityGroups.Add(Key,static_cast<int32>(Value));
     }
     const TSharedPtr<FJsonObject>* Settings=nullptr;
-    if(!(*Profile)->TryGetObjectField(TEXT("render_settings"),Settings)||(*Settings)->Values.Num()!=9){Error=TEXT("Invalid Medium rendering settings");return false;}
+    if(!(*Profile)->TryGetObjectField(TEXT("render_settings"),Settings)||(*Settings)->Values.Num()!=11){Error=TEXT("Invalid Medium rendering settings");return false;}
     struct FSettingRange{const TCHAR* Name;double Min,Max;bool Integer;};
-    for(const auto& Range:{FSettingRange{TEXT("r.TSR.History.ScreenPercentage"),100,200,false},FSettingRange{TEXT("r.TSR.ThinGeometryDetection"),0,1,true},FSettingRange{TEXT("r.TSR.ThinGeometryDetection.Coverage.ShadingRange"),0,3,true},FSettingRange{TEXT("r.TSR.Velocity.WeightClampingSampleCount"),1,8,false},FSettingRange{TEXT("r.Tonemapper.Sharpen"),0,1,false},FSettingRange{TEXT("r.MaxAnisotropy"),4,16,true},FSettingRange{TEXT("r.TemporalAA.Quality"),1,2,true},FSettingRange{TEXT("r.TemporalAAFilterSize"),.5,1,false},FSettingRange{TEXT("r.TemporalAACurrentFrameWeight"),.04,.2,false}})
+    for(const auto& Range:{FSettingRange{TEXT("r.TSR.History.ScreenPercentage"),100,200,false},FSettingRange{TEXT("r.TSR.ThinGeometryDetection"),0,1,true},FSettingRange{TEXT("r.TSR.ThinGeometryDetection.Coverage.ShadingRange"),0,3,true},FSettingRange{TEXT("r.TSR.Velocity.WeightClampingSampleCount"),1,8,false},FSettingRange{TEXT("r.Tonemapper.Sharpen"),0,1,false},FSettingRange{TEXT("r.MaxAnisotropy"),4,16,true},FSettingRange{TEXT("r.TemporalAA.Quality"),1,2,true},FSettingRange{TEXT("r.TemporalAAFilterSize"),.5,1,false},FSettingRange{TEXT("r.TemporalAACurrentFrameWeight"),.04,.2,false},FSettingRange{TEXT("r.Shadow.Virtual.SMRT.RayCountDirectional"),1,8,true},FSettingRange{TEXT("r.Shadow.Virtual.SMRT.SamplesPerRayDirectional"),1,8,true}})
     {
         double Value=0;
         if(!(*Settings)->TryGetNumberField(Range.Name,Value)||!FMath::IsFinite(Value)||Value<Range.Min||Value>Range.Max||(Range.Integer&&Value!=FMath::FloorToDouble(Value)))

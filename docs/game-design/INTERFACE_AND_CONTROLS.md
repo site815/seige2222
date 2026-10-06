@@ -2,19 +2,39 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-Current v0.8 interface behavior is implemented in source and awaits final native and **117-stage Shipping** acceptance. The floating-bottom construction layout supersedes the earlier top-only requirement. Earlier release evidence below is historical: v0.7 passed 38 clean native tests, 79 Shipping interaction stages and four display states; see its [verification record](../verification/v0.7.0.json). Those results do not verify the expanded worker, wall, trade, companion and combat controls.
+**Current v0.8.1 revision:** The five-group resource HUD and single Extraction Mine are implemented in source and external definitions. Configuration validation passes, including seven invalid grouping cases. The revision has compiled and been staged; package boot and four display states passed. The final v0.8.1 Shipping executable passed 117 interaction stages, boot/offline checks and four display states; reconciled native coverage contains 88 unique clean results. The [v0.8.1 verification record](../verification/v0.8.1.json) identifies the exact evidence and retained limitations. The [v0.8 verification record](../verification/v0.8.0.json) covers the preceding package and keeps its 117-stage gameplay checkpoint separate from its final rendered executable; it does not verify these new changes.
+
+## Five resource groups and one mine — v0.8.1
+
+**Confirmed direction:** The top resource overlay has five separate floating groups, in this order:
+
+| Group | Persistent readout | Hover detail |
+| --- | --- | --- |
+| Credits | Galactic-credit balance, with four decimal places | More precise balance, external-trade purpose and the 1 kg gold price anchor |
+| Energy | Stored/capacity kWh; generation and passive demand in kW | Precise totals, separate-grid limits and additional per-action consumption |
+| Raw materials | Water, metal ore, silica, biomass, rare metals, radioactive ore, crystalline material and hydrocarbons | Full resource names, individual quantities and kg/L units |
+| Basic production | Construction alloys, conductors, industrial glass, fuel, plastic pellets and organic food | Full names, quantities, units and physical mass/storage conversion |
+| Adv production | Control circuits, robotic parts, battery modules, AI chips, fusion reactor assemblies, kinetic ammunition and missile ammunition | The same physical accounting details for advanced products |
+
+Material quantities remain visible without opening a combined inventory panel. A compact name identifies each item; hovering it reveals the full name and unit. A group's heading reveals its complete list. Owned totals include building inventories, physical transit, committed construction/production inputs, fleet cargo and outgoing shipment escrow. They are not a promise that all goods are spendable at the selected building. Energy totals similarly include distinct grids without connecting them.
+
+The worker/status row sits underneath the five groups: active workers/jobs and stored bodies, couriers, alien-pulse timing and objectives. Stored workers belong here, not in manufactured-material totals. The workforce hover retains colony reserve adjustment and **Disassemble surplus for parts**; crossing onto its child buttons must keep that panel open. Observer/neighbor ownership rules remain unchanged, and unreadable colony statistics must not appear through an old hover panel. Alerts appear below the resource area where space permits.
+
+**Confirmed mine direction:** **B, R, M** selects **Extraction Mine**, the single ordinary extraction blueprint. Place it on a valid raw deposit; the selected site's resource fixes output. The player does not select a different resource recipe for that mine. The prototype binds the site to its deposit ID, allows at most one live mine per deposit, and reads per-resource extraction rates from external definitions. The blueprint hover describes the deposit beneath the placement cursor. Paid construction, workers, road-grid power, local storage and physical collection continue to apply.
+
+[ui.json](../../Interface/ui.json) owns the ordered groups, compact item names, categories and shortcuts. The five cards share a compact band, with controls/dossiers below it. Version and FPS remain at the top left in a short row above the resource cards, preserving the earlier explicit requirement. Authored regression coverage checks viewport bounds/scaled hit tests at 1280×720, 1600×900 and 3840×1600, hover-button retention, hidden-state clearing and the single-mine shortcut. Those native checks passed; geometry assertions alone do not prove readable rendered text.
 
 ## Current v0.8 command and transport revision
 
-**Confirmed direction, implemented in source; release verification pending:** The population is labelled **workers** throughout the player interface. It remains robotic; stable IDs are unchanged. The bottom dock contains Build, Regions, time controls and Menu. The separate Colony button/menu is removed. Save/load, settings, credits, main menu and exit live in the game menu. **Launch shuttle** is confined to the selected live own command core's building dossier; observer, neighbor, missing/stale selection, other buildings and active placement tools cannot issue it.
+**Retained command behavior:** The population is labelled **workers** throughout the player interface. It remains robotic; stable IDs are unchanged. The bottom dock contains Build, Regions, time controls and Menu. The separate Colony button/menu is removed. Save/load, settings, credits, main menu and exit live in the game menu. **Launch shuttle** is confined to the selected live own command core's building dossier; observer, neighbor, missing/stale selection, other buildings and active placement tools cannot issue it.
 
 **B, L, R** starts Road construction; **B, L, U** upgrades a selected existing road or enters road targeting. Road / Road + rail / Road + rail + vacuum give 2× / 4× / 8× transport speed. The selected-road panel uses simulation data for tier names, speed, length, next-tier material requirements, progress and assigned/on-site workers. Placement, targeting and selection cancel before Escape opens Menu; F10 opens Menu directly and cancels active placement. Starting a new scenario clears road state.
 
 The speed button and plus/minus now cycle **Paused, 1×, 5×, 10×**, with wraparound in either direction. Space resumes the previous nonzero speed, and the stopped label is **Paused**. New scenarios begin at 1×; the automated construction/economy route selects 10× to test normal timed operations. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns the mechanics; historical verification below does not verify this revision.
 
-**Economy and companion integration, release verification pending:** The construction catalog contains extraction, production, logistics and defense groups, with pagination for the expanded catalog. A selected own trading port exposes its Galactic-credit balance, resource picker, shipment quantity, import/export quote, validation reason, shipment progress and next-level upgrade. Bulk quantities use kg/L; stored workers use whole counts. Each port has a separate worker export-stock target. Goods remain local cargo; import orders reserve credits and exports settle after their physical shipment. Storage displays litres, shipment capacity kilograms and batteries kWh. The current price anchor is the value of one kilogram of gold per Galactic credit, not a redeemable gold inventory.
+**Retained economy and companion controls:** The construction catalog contains extraction, production, logistics and defense groups, with a compact two-row grid for the current catalog. A selected own trading port exposes its Galactic-credit balance, resource picker, shipment quantity, import/export quote, validation reason, shipment progress and next-level upgrade. Bulk quantities use kg/L; stored workers use whole counts. Each port has a separate worker export-stock target. Goods remain local cargo; import orders reserve credits and exports settle after their physical shipment. Storage displays litres, shipment capacity kilograms and batteries kWh. The current price anchor is the value of one kilogram of gold per Galactic credit, not a redeemable gold inventory.
 
-The floating top strip puts **Galactic credits** first, followed by **Colony energy**: stored/capacity in kWh and generation/passive load in kW. Credits retain four decimal places for small transactions. Energy totals include all of the viewed colony's separate grids; they do not imply a shared connection. Production, weapon shots and trade additionally draw energy per action, outside the displayed passive load. Hover either economy readout for the full materials list and precise energy totals; a building's Power tab describes its own grid. Workforce, couriers, alien-pulse timing and objectives retain their separate readouts and hover panels. Neighbor information remains unavailable without the existing ownership/observer permission. This layout awaits rendered verification.
+The former combined economy hover is superseded by the five groups above. A selected building's Power tab still describes its own grid; production, weapon shots and trade draw additional energy per action beyond passive demand.
 
 The selected own core exposes selectable replication and the colony's spare-worker target. The workforce summary also provides target adjustment and **Disassemble surplus for parts**. Recycling uses eligible stored bodies and configured energy (1 kWh by default), preserving active jobs and protected reserves. Target changes request production; they do not create workers or materials immediately.
 
@@ -37,7 +57,7 @@ The user wants to improve on aspects of Manor Lords using the perceived polish o
 **Confirmed user requirements:**
 
 - Show the current game version and FPS at the top left.
-- Present resources as an overlay, with alerts underneath and useful explanations available on hover.
+- Present Credits, Energy, Raw materials, Basic production and Adv production as separate floating groups, with alerts underneath and per-item explanations on hover.
 - Use a **floating bottom construction overlay**, retaining the **B** shortcut. This is the user's latest explicit layout change; the earlier prohibition on a bottom menu no longer applies.
 - Represent construction choices with icons and reveal their building names on hover.
 - Organize construction logically and provide understandable keyboard shortcuts. Exact category and item keys are implementation choices until verified in play.
@@ -79,7 +99,7 @@ Main menu, scenario setup, and human landing survey also suspend the local simul
 - **3D render resolution** is independent of window/display resolution. It defaults to 100%, has 50–100% controls in ten-percentage-point steps, and shows the effective width and height in pixels. Menus and text remain at full display resolution.
 - **Medium** is the sole graphics quality label. It is a custom, externally configured preset in `Graphics/scene.json`, with selected lighting, landscape, texture, and antialiasing settings. It is not an exposed choice among Unreal's generic Low/High/Epic presets. Applying a display or render-resolution change preserves this custom profile.
 - **v0.7 antialiasing:** The current Medium preset uses TAA at 100% render resolution and TSR below 100%. Changing render resolution selects the corresponding method automatically. Shadows remain at the custom profile's level 2; no additional quality selector is introduced. Native regression covers 100% → 75% → 100% and preserves explicit diagnostic overrides. Actual Shipping display checks passed native borderless, windowed 100%, windowed 75%, and restored native borderless, with engine AA methods **2 / 2 / 4 / 2** (TAA / TAA / TSR / TAA) and zero failures; see the [verification record](../verification/v0.7.0.json).
-- Current local playback cycles **Paused, 1×, 5×, 10×**. The speed button and **+** cycle forward; **−** cycles backward with wraparound. Main-keyboard and numeric-keypad variants work. **Space** resumes the previous nonzero speed. The nonzero list is stored in `Interface/ui.json`; v0.8 format-5 saves reject unsupported 3× playback rather than migrating it. Rex's first-person roaming locks playback to 1×.
+- Current local playback cycles **Paused, 1×, 5×, 10×**. The speed button and **+** cycle forward; **−** cycles backward with wraparound. Main-keyboard and numeric-keypad variants work. **Space** resumes the previous nonzero speed. The nonzero list is stored in `Interface/ui.json`; current format-6 saves reject unsupported 3× playback rather than migrating it. Rex's first-person roaming locks playback to 1×.
 
 Normal display preferences persist locally. Automated `-UiSmoke`, `-GraphicsBenchmark`, and `-ForceRes` runs leave the player's display preferences untouched and retain their explicitly requested capture size. The separate `-DisplaySmoke -NoSaveDisplay` route applies actual borderless/windowed and render-resolution changes, but the `NoSaveDisplay` guard suppresses preference saves and display config writes. It is a verification path, not a player-facing option.
 
@@ -102,6 +122,7 @@ The custom Medium shadow quality remained active in every state. High-DPI game m
 | + / − | Cycle Paused, 1×, 5×, 10× forward/backward with wraparound |
 | F5 / F9 | Save/load a running colony; also available through the game menu |
 | B | Open construction; category and blueprint shortcuts follow |
+| B, R, M | Extraction Mine; deposit determines its output |
 | B, L, R / B, L, U | Road construction / existing-road upgrade |
 | Selected own command core | Production, spare-worker target, Find Rex and manual Launch shuttle |
 | Workforce summary | Spare-worker target and disassemble eligible stored surplus |

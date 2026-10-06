@@ -24,11 +24,12 @@ struct FSeigeRecipeDef
 };
 struct FSeigeBuildingDef
 {
-    FString Id, Name, Category, Description, Visual, Recipe, ExtractResource, Role, WeaponName;
+    FString Id, Name, Category, Description, Visual, Recipe, Role, WeaponName;
     FLinearColor Color = FLinearColor::White;
     TMap<FString, double> Cost;
     int32 Jobs = 0;
-    double Health = 1, Footprint = 100, SensorRange = 0, AttackRange = 0, DamagePerSecond = 0, ExtractRate = 0;
+    double Health = 1, Footprint = 100, SensorRange = 0, AttackRange = 0, DamagePerSecond = 0;
+    TMap<FString,double> ExtractionRates;
     double StorageCapacity = 0;
     // Logical square half-widths: current body versus permanently reserved plot.
     double ReservedFootprint = 100;
@@ -50,6 +51,7 @@ struct FSeigeBuilding
 {
     int32 Id = 0;
     FString DefId, Status;
+    int32 DepositId = 0;
     FVector2D Position = FVector2D::ZeroVector;
     double Health = 0, Progress = 0, WeaponCooldown = 0, LastShotTime = -1;
     FVector2D LastShotPosition = FVector2D::ZeroVector;
@@ -144,6 +146,9 @@ public:
     double TotalStock(const FString& Resource) const;
     bool IsVisible(FVector2D Position) const;
     const FSeigeBuildingDef* Definition(const FSeigeBuilding& Building) const;
+    const FSeigeNode* ExtractionNode(const FString& DefinitionId,FVector2D Position) const;
+    FString ExtractionResource(const FSeigeBuilding& Building) const;
+    double ExtractionRate(const FSeigeBuilding& Building) const;
     FSeigeBuilding* FindBuilding(int32 Id);
     const FSeigeBuilding* FindBuilding(int32 Id) const;
     void LaunchShuttle();
@@ -244,6 +249,7 @@ private:
     friend class FSeigeReplicatorWorkforceTest;
     friend class FSeigeStoredWorkerLifecycleTest;
     friend class FSeigeRoadRepairTest;
+    friend class FSeigeExtractionMineTest;
 #endif
     TSharedPtr<class FJsonObject> Policy, Scenario, Transport;
     int32 NextId = 1;

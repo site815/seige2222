@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.0",
+  "version": "prototype-8.1",
   "walls": {
     "level_definitions": ["wall_segment", "wall_segment_2", "wall_segment_3"],
     "segment_length_meters": 6,

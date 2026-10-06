@@ -2,7 +2,9 @@
 Native moving-camera example:
   ./Tools/benchmark_packaged.ps1 -Name baseline-orbit -NativeResolution -Orbit
   ./Tools/benchmark_packaged.ps1 -Name current-orbit -NativeResolution -Orbit -BaselineReport Saved/GraphicsBenchmark-baseline-orbit.json
-Omit -Orbit to retain the original static-camera test. Diagnostics change only
+Use -Travel for a 36 m/s camera translation with live streaming and visible/near
+cell backlog counters. Orbit and Travel are mutually exclusive.
+Omit both switches to retain the original static-camera test. Diagnostics change only
 the launched process, not player preferences. -SimpleTerrain isolates terrain
 shading; -HideSward isolates dense meadow geometry while retaining other foliage.
 Use -View ground (or colony/meadow/hills/boundary) for one sampled camera and
@@ -24,7 +26,7 @@ https://dev.epicgames.com/documentation/en-us/unreal-engine/introduction-to-perf
 param(
     [ValidatePattern('^[a-zA-Z0-9_-]+$')][string]$Name='release',
     [switch]$NaniteBaseline, [switch]$EpicReference,
-    [switch]$Orbit, [switch]$SimpleTerrain, [switch]$HideSward, [switch]$Clearing,
+    [switch]$Orbit, [switch]$Travel, [switch]$SimpleTerrain, [switch]$HideSward, [switch]$Clearing,
     [ValidateSet('colony','meadow','ground','hills','boundary')][string]$View,
     [switch]$NativeResolution,
     [int]$Width=1600, [int]$Height=900,
@@ -32,6 +34,7 @@ param(
     [string]$BaselineReport
 )
 $ErrorActionPreference='Stop'
+if($Orbit -and $Travel){throw 'Choose Orbit or Travel, not both'}
 $projectRoot=Split-Path $PSScriptRoot -Parent
 if($NativeResolution){
     if($PSBoundParameters.ContainsKey('Width') -or $PSBoundParameters.ContainsKey('Height')){throw 'Choose NativeResolution or explicit Width/Height, not both'}
@@ -80,6 +83,7 @@ $arguments="-GraphicsBenchmark -BenchmarkName=$Name -RenderOffscreen -windowed -
 if($NaniteBaseline){$arguments+=' -BenchmarkNaniteBaseline'}
 if($EpicReference){$arguments+=' -BenchmarkV05Epic'}
 if($Orbit){$arguments+=' -BenchmarkOrbit'}
+if($Travel){$arguments+=' -BenchmarkTravel'}
 if($SimpleTerrain){$arguments+=' -BenchmarkSimpleTerrain'}
 if($HideSward){$arguments+=' -BenchmarkHideSward'}
 if($Clearing){if($View -ne 'colony'){throw 'Clearing diagnostic requires -View colony'}; $arguments+=' -BenchmarkClearing'}
@@ -94,8 +98,8 @@ $expectedViews=if($View){@($View.ToLowerInvariant())}else{@('colony','meadow','g
 $reportedViews=@($report.views | ForEach-Object {$_.view})
 if($reportedViews.Count -ne $expectedViews.Count -or @($expectedViews | Where-Object {$_ -notin $reportedViews}).Count -gt 0 -or $report.width -ne $Width -or $report.height -ne $Height){throw 'Incomplete graphics benchmark or incorrect requested views'}
 if($View -and $report.selected_view -ne $View){throw 'Package does not support the requested single-view benchmark'}
-if(!$Orbit -and $report.schema_version -ge 3 -and @($report.views | Where-Object {$_.pending_scenery_cells_at_sample_end -ne 0}).Count -gt 0){throw 'Static benchmark sampled incomplete scenery'}
-$mode=if($Orbit){'orbit'}else{'static'}
+if(!$Orbit -and !$Travel -and $report.schema_version -ge 3 -and @($report.views | Where-Object {$_.pending_scenery_cells_at_sample_end -ne 0}).Count -gt 0){throw 'Static benchmark sampled incomplete scenery'}
+$mode=if($Travel){'travel'}elseif($Orbit){'orbit'}else{'static'}
 $reportedMode=if($report.camera_mode){$report.camera_mode}else{'static'}
 if($reportedMode -ne $mode){throw 'Package does not support the requested camera benchmark mode'}
 if($SimpleTerrain -and (!$report.diagnostic_simple_terrain -or @($report.views | Where-Object {$_.simple_terrain_components -le 0}).Count -gt 0)){throw 'Simple terrain diagnostic was not applied'}
@@ -111,6 +115,7 @@ if($BaselineReport){
     if($baselineSpeed -ne $currentSpeed){throw 'Baseline simulation workload differs: compare benchmarks at the same simulation speed'}
     if($baselineMode -ne $reportedMode -or $baseline.width -ne $report.width -or $baseline.height -ne $report.height){throw 'Baseline must have the same camera mode and output dimensions'}
     if($Orbit -and ($baseline.camera_path_version -ne $report.camera_path_version -or $baseline.orbit_degrees_per_second -ne $report.orbit_degrees_per_second -or $baseline.orbit_pitch_amplitude_degrees -ne $report.orbit_pitch_amplitude_degrees)){throw 'Orbit trajectories differ'}
+    if($Travel -and ($baseline.camera_path_version -ne $report.camera_path_version -or $baseline.travel_meters_per_second -ne $report.travel_meters_per_second)){throw 'Travel trajectories differ'}
     if($baseline.quality.runtime_resolution_quality -ne $report.quality.runtime_resolution_quality){throw 'Baseline render resolution differs'}
     $comparisons=@()
     foreach($viewResult in $report.views){

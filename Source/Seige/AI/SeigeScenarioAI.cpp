@@ -60,19 +60,7 @@ bool DevelopedSeed(const FObject& Object, const FSeigeSimulation& Colony, int32&
 }
 bool NodeOccupied(const FSeigeSimulation& Colony, const FSeigeNode& Node)
 {
-    for (const FSeigeBuilding& B : Colony.Buildings)
-    {
-        const FSeigeBuildingDef* Def = Colony.Definition(B);
-        if (B.Health <= 0 || !Def || Def->ExtractResource != Node.Resource) continue;
-        const FSeigeNode* Closest = nullptr;
-        double Distance = TNumericLimits<double>::Max();
-        for (const FSeigeNode& Candidate : Colony.Nodes)
-        {
-            const double D = FVector2D::DistSquared(B.Position, Candidate.Position);
-            if (Candidate.Resource == Node.Resource && D < Distance) { Closest = &Candidate; Distance = D; }
-        }
-        if (Closest && Closest->Id == Node.Id) return true;
-    }
+    for(const auto& B:Colony.Buildings)if(B.Health>0&&B.DepositId==Node.Id)return true;
     return false;
 }
 }
@@ -131,7 +119,7 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
         const FObject* Entry = nullptr; FSeigeAIBuildTarget Target;
         if (!Value->TryGetObject(Entry) || !Entry || !Entry->IsValid() || !(*Entry)->TryGetStringField(TEXT("definition"), Target.Definition) || !Colony.BuildMenu.Contains(Target.Definition))
         { Error = TEXT("AI target references an unknown or unbuildable definition"); return false; }
-        if (!Integer(*Entry, TEXT("count"), Target.Count, 1, 128, Error)) return false;
+        if (!Integer(*Entry, TEXT("count"), Target.Count, 1, 128, Error) || !Integer(*Entry,TEXT("placement_index"),Target.PlacementIndex,0,4096,Error)) return false;
         if (PreviousCounts.FindRef(Target.Definition) >= Target.Count)
         { Error = TEXT("Repeated AI target counts must increase: ") + Target.Definition; return false; }
         PreviousCounts.Add(Target.Definition, Target.Count); Targets.Add(Target);
@@ -313,8 +301,8 @@ const FSeigeNode* FSeigeScenarioAI::ExportNode(const FSeigeSimulation& Colony) c
 bool FSeigeScenarioAI::IncludesTarget(const FSeigeSimulation& Colony,const FString& Definition) const
 {
     const auto* D=Colony.BuildingDefs.Find(Definition);if(!D)return false;
-    if(D->ExtractResource.IsEmpty())return true;
-    const auto* Node=ExportNode(Colony);return Node&&D->ExtractResource==Node->Resource;
+    if(D->ExtractionRates.IsEmpty())return true;
+    const auto* Node=ExportNode(Colony);return Node&&D->ExtractionRates.Contains(Node->Resource);
 }
 
 bool FSeigeScenarioAI::ConnectPowerRoad(FSeigeSimulation& Colony,bool& Waiting)
@@ -523,7 +511,7 @@ bool FSeigeScenarioAI::RecoverWorkerSupport(FSeigeSimulation& Colony,bool& Waiti
         Waiting=true;bool Affordable=true;
         for(const auto& Cost:Def.Cost)if(Colony.ConstructionAvailable(Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value)Affordable=false;
         if(!Affordable){Status=TEXT("Waiting for materials to restore worker support");return false;}
-        if(BuildNear(Colony,Target.Definition,Core->Position,Index*UE_TWO_PI/Angles))return true;
+        if(BuildNear(Colony,Target.Definition,Core->Position,Target.PlacementIndex*UE_TWO_PI/Angles))return true;
         return false;
     }
     return false;
@@ -561,10 +549,10 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
         Core = Command(Colony);
         for (const auto& Pair : Def.Cost) if (Colony.ConstructionAvailable(Pair.Key) + UE_DOUBLE_SMALL_NUMBER < Pair.Value) Affordable = false;
         if (!Affordable) { Status = TEXT("Waiting for construction materials: ")+Target.Definition; return false; }
-        if (!Def.ExtractResource.IsEmpty())
+        if (!Def.ExtractionRates.IsEmpty())
         {
             TArray<const FSeigeNode*> Nodes;
-            for (const FSeigeNode& N : Colony.Nodes) if (N.Resource == Def.ExtractResource && !NodeOccupied(Colony, N)) Nodes.Add(&N);
+            for (const FSeigeNode& N : Colony.Nodes) if (Def.ExtractionRates.Contains(N.Resource) && ExportNode(Colony) && N.Id==ExportNode(Colony)->Id && !NodeOccupied(Colony, N)) Nodes.Add(&N);
             Nodes.Sort([&](const FSeigeNode& A, const FSeigeNode& B)
             {
                 const double DA = FVector2D::DistSquared(Origin, A.Position), DB = FVector2D::DistSquared(Origin, B.Position);
@@ -584,7 +572,7 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
         }
         else
         {
-            double Angle = Index * UE_TWO_PI / Angles;
+            double Angle = Target.PlacementIndex * UE_TWO_PI / Angles;
             double FirstRadius=RingStart;
             if (Def.Role==TEXT("defense") || Def.SensorRange > 0)
             {

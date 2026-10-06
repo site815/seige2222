@@ -4,7 +4,7 @@
 
 ## Status and implementation boundary
 
-The rules marked confirmed below come from the user's October 5 design additions. They supersede the earlier unspecified roster and tentative fleet limit. The latest authorized expansion implements projectiles, customizable vehicles, fleet commands and layered defenses through separate simulation modules. The earlier v0.8 economy/Rex test checkpoint does not verify these systems; expanded native, rendered and packaged acceptance is pending.
+The rules marked confirmed below come from the user's October 5 design additions. They supersede the earlier unspecified roster and tentative fleet limit. The latest authorized expansion implements projectiles, customizable vehicles, fleet commands and layered defenses through separate simulation modules. The [v0.8.1 record](../verification/v0.8.1.json) records bounded native and packaged checks of these systems. Newly reported melee-contact and attack-feedback issues are queued for v0.9.
 
 The [combat design data](../CombatDesign/README.md) retains the earlier design specification. New runtime combat catalogs in `Rules/` supply weapons, chassis, platforms and fleet policies, with separate schema/version checks and fingerprints. Numerical weapon balance and chassis loadouts remain provisional external values. The catalog is not a substitute for gameplay verification.
 
@@ -73,7 +73,7 @@ For vehicle manufacture, select the core or a matching family factory, choose th
 
 Rex's first-person roaming does not grant first-person combat or individual vehicle control. Fleets still fight autonomously after receiving fleet-level mission, movement and aggression orders.
 
-**Current guard behavior, acceptance pending:** Defensive and escort fleets can reposition around friendly buildings to obtain a clear shot, constrained by their existing sensor coverage, weapon range and guard leash. This does not reveal unseen targets or grant unbounded pursuit. Passive fleets do not pursue; explicit fleet movement remains a separate order.
+**Retained guard behavior, covered by bounded native checks:** Defensive and escort fleets can reposition around friendly buildings to obtain a clear shot, constrained by their existing sensor coverage, weapon range and guard leash. This does not reveal unseen targets or grant unbounded pursuit. Passive fleets do not pursue; explicit fleet movement remains a separate order.
 
 ## Implementation and acceptance checklist
 

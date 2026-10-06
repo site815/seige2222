@@ -8,6 +8,7 @@
 
 | Family | Levels and capability |
 | --- | --- |
+| Extraction Mine | One blueprint for all eight raw types; placement binds output to the underlying deposit. Per-resource rates remain external balance. |
 | Command core | Parked shuttle at level 1; levels 2/3 double/triple body width. All reserve the level-3 plot. Fusion power, storage, four large lasers and a slow selectable universal replicator, including workers and combat production. |
 | Solar array | Levels 1–3, unchanged footprint, increasing externally configured output. |
 | Worker factory | Fast worker assembly with lower process electricity than core replication; physical inactive-worker berths. |
@@ -19,11 +20,11 @@
 
 Vegetation clears across each reserved largest-upgrade plot. Foundations and terrain grading follow the actual built body, leaving natural relief in the future expansion yard. Source-level upgrade bills are additional costs; the next definition supplies completion time and staffing. Upper levels are upgrades, not separate starting blueprints.
 
-The catalog currently contains 59 definitions and 35 ordinary blueprints. The interface adds Road, Upgrade road and Wall as three custom tools. These are authored data and integration work, not proof of completed runtime or package acceptance. The earlier v0.8 resource/Rex test checkpoint does not verify this expansion.
+The v0.8.1 source catalog contains **52 definitions and 28 ordinary blueprints**. A single `extraction_mine` replaces the eight resource-specific extractor definitions; the interface adds Road, Upgrade road and Wall as three custom tools, for 31 catalog/tool entries. This consolidation has compiled and been staged; package boot and four display states passed. The final v0.8.1 Shipping executable passed 117 interaction stages, boot/offline checks and four display states; reconciled native coverage contains 88 unique clean results. The [v0.8.1 verification record](../verification/v0.8.1.json) identifies the exact evidence and retained limitations. Earlier v0.8 release evidence does not verify the new mine binding or revised HUD.
 
 ## Latest economy direction
 
-**Confirmed functions:** The finite landed material kit supports a road, solar generation and a level-one trading port with zero starting credits. The external trading port upgrades through levels 1–3; connected road networks share electricity and battery storage. Footprints, capacities, costs and power values are authored in the current external rules as provisional balance. [Resource Proposal](RESOURCE_PROPOSAL.md) and [Product Recipes](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md) supersede the earlier four-material starter assumptions. Every building dossier reports workers used/capacity, storage used/capacity and weapons/statistics, plus stored charge/capacity where batteries exist. These systems have source implementations; final expanded v0.8 runtime and package acceptance remains pending.
+**Confirmed functions:** The finite landed material kit supports a road, solar generation and a level-one trading port with zero starting credits. The external trading port upgrades through levels 1–3; connected road networks share electricity and battery storage. Footprints, capacities, costs and power values are authored in the current external rules as provisional balance. [Resource Proposal](RESOURCE_PROPOSAL.md) and [Product Recipes](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md) supersede the earlier four-material starter assumptions. Every building dossier reports workers used/capacity, storage used/capacity and weapons/statistics, plus stored charge/capacity where batteries exist. These systems are retained from v0.8; its completed checks are recorded in the [v0.8 verification record](../verification/v0.8.0.json). Current mine/HUD checks passed separately in the [v0.8.1 record](../verification/v0.8.1.json).
 
 ## Historical v0.6 presentation metadata
 
@@ -43,7 +44,7 @@ See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for version-specific evidenc
 
 | Primary category | Current functions | Possible secondary tags |
 | --- | --- | --- |
-| Extraction | Deposit resource gathering | Storage, power, logistics access |
+| Extraction | One deposit-driven Extraction Mine | Storage, power, logistics access |
 | Production | Processing and component manufacture | Storage, power, service, defensive |
 | Logistics | Local transport, storage, power, external trade, fleet support, and worker service | Storage, repair, charging, manufacturing, defensive |
 | Defense | Fixed protection, perimeter control, and protective infrastructure | Sensor, storage, logistics access |
@@ -66,7 +67,7 @@ The older starter proposal assumed all four industrial materials could be obtain
 | Building/function | Category | Purpose in the starter loop | Current boundary |
 | --- | --- | --- | --- |
 | Command core | Central | Starting defense, fusion generation, storage, selectable replication and worker information | A parked shuttle at level 1; finite materials, process time and electricity govern manufacture. |
-| Resource extractor | Resource-related | Gather an available deposit for local use or sale | Resource compatibility and fixed extraction ceilings are external data; no extra deposit is guaranteed. |
+| Extraction Mine | Resource-related | Gather the raw resource at its bound deposit for local use or sale | One blueprint, at most one live mine per deposit, external per-resource rates; no selectable output or extra deposit. |
 | Solar array and road connection | Logistics | Establish a shared generating network | Electricity follows completed connected roads; batteries store charge rather than create it. |
 | Trading port | Logistics | Sell available goods, then import missing inputs | Credits start at zero. Orders use physical cargo, timed shipments and paid imports. |
 | Materials, electronics and mechanical works | Resource-related | Make alloys, conductors, glass, circuits and parts | Authored recipes are provisional balance; local input stocks and energy are required. |
@@ -86,9 +87,9 @@ This historical crosswalk preserves the original sixteen ideas while stating the
 | --- | --- | --- |
 | Core | Tiered command core | Confirmed shuttle, fusion power, storage, four large lasers and slow universal replication; exact rates and bills remain provisional. |
 | Habitat | Reconsider as a robot service or social space, or omit | Human housing is deferred. Robot accommodation and its satisfaction effects are not selected. |
-| Waterworks | Water extractor | Current standard-resource extraction; water has industrial uses and does not imply worker drinking needs. |
+| Waterworks | Extraction Mine on water | The same mine blueprint gathers this standard resource. Water has industrial uses and does not imply worker drinking needs. |
 | Cultivation | Biomass extraction and food manufacture | Biomass is currently a deposit resource. Organic food feeds Rex and can be exported; workers do not eat it. Cultivation as a separate renewable source remains a proposal. |
-| Mine / extractor | Resource-specific extractors | Current catalog functions use the confirmed three-standard/two-rare regional deposits; rates and bills remain provisional. |
+| Mine / extractor | Single deposit-driven Extraction Mine | Supersedes separate raw-specific extractors. Output follows the chosen deposit from the confirmed three-standard/two-rare regional distribution; rates and bills remain provisional. |
 | Refinery | Material processing facilities | Current alloys, conductors and glass chains; quantities and facility balance remain provisional. |
 | Chemical plant | Fuel/plastics processing | Current product chains include fuel and plastic pellets, with physical multi-output recipes. Additional chemistry remains proposed. |
 | Power plant | Core fusion, tiered solar, fuel generation and batteries | Confirmed shared road-grid operation. Authored output, fuel, idle demand and storage values remain editable balance. |

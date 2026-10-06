@@ -76,8 +76,8 @@ export function validateConfiguration(data) {
   version(graphics, 'Graphics/scene.json');
   number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);
   if(Math.abs(graphics.world_centimeters_per_unit/100-data.rules.transport.transport.meters_per_world_unit)>1e-9)fail('Graphics and transport physical scales must agree');
-  number(graphics.nanite_max_pixels_per_edge, 'Graphics nanite_max_pixels_per_edge', .5, 4);
-  number(graphics.nanite_survey_pixels_per_edge, 'Graphics nanite_survey_pixels_per_edge', .5, 4);
+  number(graphics.nanite_max_pixels_per_edge, 'Graphics nanite_max_pixels_per_edge', .5, 8);
+  number(graphics.nanite_survey_pixels_per_edge, 'Graphics nanite_survey_pixels_per_edge', .5, 8);
   number(graphics.nanite_survey_start_zoom, 'Graphics nanite_survey_start_zoom', 5000, 60000);
   number(graphics.nanite_survey_end_zoom, 'Graphics nanite_survey_end_zoom', 10000, 200000);
   number(graphics.camera_fov, 'Graphics camera_fov', 35, 80);
@@ -130,7 +130,7 @@ export function validateConfiguration(data) {
   number(graphics.grass_lod_transition_m, 'Graphics grass_lod_transition_m', 10, 200);
   number(graphics.grass_stream_radius_m, 'Graphics grass_stream_radius_m', 150, 1200);
   number(graphics.grass_stream_budget_ms, 'Graphics grass_stream_budget_ms', .5, 8);
-  number(graphics.grass_stream_cells_per_frame, 'Graphics grass_stream_cells_per_frame', 1, 8, true);
+  number(graphics.grass_stream_cells_per_frame, 'Graphics grass_stream_cells_per_frame', 1, 32, true);
   number(graphics.forest_detail_distance_m, 'Graphics forest_detail_distance_m', 75, 1000);
   number(graphics.forest_lod_transition_m, 'Graphics forest_lod_transition_m', 20, 500);
   if (graphics.grass_stream_radius_m <= graphics.grass_detail_distance_m + graphics.grass_lod_transition_m) fail('Grass proxy streaming must extend beyond the detail transition');
@@ -151,7 +151,7 @@ export function validateConfiguration(data) {
   if (Object.keys(quality).length !== mediumGroups.length) fail('Invalid Medium quality groups');
   for (const key of mediumGroups) number(quality[key], `Medium quality ${key}`, 0, 3, true);
   const rendering = object(medium.render_settings, 'Medium render_settings');
-  const ranges = [['r.TSR.History.ScreenPercentage', 100, 200, false], ['r.TSR.ThinGeometryDetection', 0, 1, true], ['r.TSR.ThinGeometryDetection.Coverage.ShadingRange', 0, 3, true], ['r.TSR.Velocity.WeightClampingSampleCount', 1, 8, false], ['r.Tonemapper.Sharpen', 0, 1, false], ['r.MaxAnisotropy', 4, 16, true], ['r.TemporalAA.Quality', 1, 2, true], ['r.TemporalAAFilterSize', .5, 1, false], ['r.TemporalAACurrentFrameWeight', .04, .2, false]];
+  const ranges = [['r.TSR.History.ScreenPercentage', 100, 200, false], ['r.TSR.ThinGeometryDetection', 0, 1, true], ['r.TSR.ThinGeometryDetection.Coverage.ShadingRange', 0, 3, true], ['r.TSR.Velocity.WeightClampingSampleCount', 1, 8, false], ['r.Tonemapper.Sharpen', 0, 1, false], ['r.MaxAnisotropy', 4, 16, true], ['r.TemporalAA.Quality', 1, 2, true], ['r.TemporalAAFilterSize', .5, 1, false], ['r.TemporalAACurrentFrameWeight', .04, .2, false], ['r.Shadow.Virtual.SMRT.RayCountDirectional', 1, 8, true], ['r.Shadow.Virtual.SMRT.SamplesPerRayDirectional', 1, 8, true]];
   if (Object.keys(rendering).length !== ranges.length) fail('Invalid Medium rendering settings');
   for (const [key, min, max, integer] of ranges) number(rendering[key], `Medium rendering ${key}`, min, max, integer);
   number(graphics.orbit_yaw_degrees_per_pixel, 'Graphics orbit_yaw_degrees_per_pixel', .05, 2);
@@ -208,6 +208,7 @@ export function validateConfiguration(data) {
     object(target, `AI build_targets[${index}]`);
     buildable(target.definition, `AI build_targets[${index}].definition`);
     number(target.count, `AI build_targets[${index}].count`, 1, 128, true);
+    number(target.placement_index, `AI build_targets[${index}].placement_index`, 0, 4096, true);
     if ((finalCounts.get(target.definition) ?? 0) >= target.count) fail(`Repeated AI target counts must increase: ${target.definition}`);
     finalCounts.set(target.definition, target.count);
   }
@@ -254,14 +255,25 @@ export function validateConfiguration(data) {
     }
   }
   for (const id of menu) if (!assigned.has(id)) fail(`Build-menu definition has no UI entry: ${id}`);
-  const summaryIds = new Set(), summaryLabels = new Set();
-  for (const [index, row] of array(ui.summary_resources, 'UI summary_resources', 1).entries()) {
-    object(row, `UI summary_resources[${index}]`);
-    text(row.resource, `UI summary_resources[${index}].resource`);
-    if (!resources.has(row.resource)) fail(`UI summary references unknown resource: ${row.resource}`);
-    unique(summaryIds, row.resource, 'UI summary resource');
-    unique(summaryLabels, text(row.label, `UI summary_resources[${index}].label`), 'UI summary label');
+  const summaryIds = new Set();
+  const expectedGroups = ['credits','energy','raw','basic','advanced'];
+  for (const [index, group] of array(ui.resource_groups, 'UI resource_groups', 5, 5).entries()) {
+    object(group, `UI resource_groups[${index}]`);
+    if (group.id !== expectedGroups[index]) fail('UI resource groups must be Credits, Energy, Raw, Basic, Advanced in that order');
+    text(group.label, `UI resource group ${group.id} label`);
+    const entries = array(group.entries, `UI resource group ${group.id} entries`, index < 2 ? 0 : 1, index < 2 ? 0 : 8);
+    for (const row of entries) {
+      object(row, `UI resource group ${group.id} entry`);
+      const resource = resources.get(text(row.resource, 'UI resource id'));
+      if (!resource) fail(`UI summary references unknown resource: ${row.resource}`);
+      if (row.resource === policies.inactive_worker_resource) fail('Inactive workers belong to workforce controls, not material groups');
+      const expected = resource.class === 'manufactured' ? (resource.tier <= 1 ? 'basic' : 'advanced') : 'raw';
+      if (group.id !== expected) fail(`UI resource ${row.resource} belongs to ${expected}`);
+      unique(summaryIds, row.resource, 'UI grouped resource');
+      text(row.label, `UI resource ${row.resource} label`);
+    }
   }
+  for (const id of resources.keys()) if (id !== policies.inactive_worker_resource && !summaryIds.has(id)) fail(`UI resource groups omit ${id}`);
   const creditHeadings = new Set();
   for (const [index, row] of array(ui.credits, 'UI credits', 1).entries()) {
     object(row, `UI credits[${index}]`);

@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.0",
+  "version": "prototype-8.1",
   "policies": {
     "fixed_step_seconds": 0.05,
     "dispatch_interval": 2,

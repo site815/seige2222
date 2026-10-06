@@ -60,7 +60,7 @@ void ASeigeHUD::DrawCommandInfo(ASeigeGameMode& G,float W,float H)
     const auto Options=G.Sim.ProductionOptions(B->Id);const bool Core=D->Role==TEXT("core");
     const bool CombatCapable=G.Sim.Combat.Factories.Contains(B->DefId)||G.Sim.Combat.BuildingPlatforms.Contains(B->DefId);
     if(Options.IsEmpty()&&D->NextUpgrade.IsEmpty()&&!Core&&!CombatCapable)return;
-    const float X=24,Y=104,PW=410,PH=FMath::Min(Core?640.f:440.f,H-Y-96.f);
+    const float X=24,Y=Ui.ContentTop,PW=410,PH=FMath::Min(Core?640.f:440.f,H-Y-96.f);
     if(PH<360)return;
     const float FooterTop=Y+PH-68,WorkforceTop=FooterTop-145,TextBottom=Core?WorkforceTop-8:FooterTop-8;
     Frame(X,Y,PW,PH);Label(Core?TEXT("COMMAND & PRODUCTION"):TEXT("BUILDING OPERATIONS"),X+18,Y+18,17,Gold);float TY=Y+56;
