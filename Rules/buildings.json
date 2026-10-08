@@ -1,5 +1,5 @@
 {
-  "version": "prototype-9.0",
+  "version": "prototype-9.2",
   "buildings": [
     {
       "id": "command_core",
@@ -872,7 +872,8 @@
         "conductors": 105.0,
         "substrates": 70.0,
         "circuits": 35.0,
-        "components": 140.0
+        "components": 140.0,
+        "ai_chips": 30
       },
       "level": 2,
       "family": "trading_port",
@@ -1116,7 +1117,8 @@
         "conductors": 100,
         "substrates": 80,
         "circuits": 30,
-        "components": 190
+        "components": 190,
+        "plastic": 100
       },
       "jobs": 2,
       "health": 250,
@@ -1170,8 +1172,9 @@
         "alloy": 1700,
         "conductors": 140,
         "substrates": 160,
-        "circuits": 100,
-        "components": 300
+        "circuits": 300,
+        "components": 300,
+        "batteries": 120
       },
       "jobs": 2,
       "health": 250,
@@ -1226,7 +1229,8 @@
         "conductors": 240,
         "substrates": 160,
         "circuits": 100,
-        "components": 500
+        "components": 500,
+        "ai_chips": 40
       },
       "jobs": 2,
       "health": 250,
@@ -1533,7 +1537,8 @@
         "conductors": 70.0,
         "substrates": 175.0,
         "circuits": 17.5,
-        "batteries": 43.75
+        "batteries": 43.75,
+        "ai_chips": 20
       },
       "level": 2,
       "family": "solar_array",
@@ -1649,7 +1654,8 @@
         "conductors": 250.0,
         "substrates": 250.0,
         "circuits": 125.0,
-        "components": 625.0
+        "components": 625.0,
+        "batteries": 150
       },
       "level": 1,
       "family": "vehicle_factory",
@@ -1710,7 +1716,8 @@
         "conductors": 350.0,
         "substrates": 350.0,
         "circuits": 175.0,
-        "components": 875.0
+        "components": 875.0,
+        "ai_chips": 40
       },
       "level": 2,
       "family": "vehicle_factory",
@@ -1789,7 +1796,8 @@
         "conductors": 200,
         "substrates": 200,
         "circuits": 100,
-        "components": 700
+        "components": 700,
+        "batteries": 300
       },
       "jobs": 2,
       "health": 450,
@@ -1826,7 +1834,8 @@
         "conductors": 250.0,
         "substrates": 250.0,
         "circuits": 125.0,
-        "components": 875.0
+        "components": 875.0,
+        "batteries": 150
       },
       "level": 1,
       "family": "tank_factory",
@@ -1887,7 +1896,8 @@
         "conductors": 350.0,
         "substrates": 350.0,
         "circuits": 175.0,
-        "components": 1225.0
+        "components": 1225.0,
+        "ai_chips": 40
       },
       "level": 2,
       "family": "tank_factory",
@@ -1966,7 +1976,8 @@
         "conductors": 240,
         "substrates": 160,
         "circuits": 100,
-        "components": 1000
+        "components": 1000,
+        "ai_chips": 20
       },
       "jobs": 2,
       "health": 450,
@@ -2003,7 +2014,8 @@
         "conductors": 300.0,
         "substrates": 200.0,
         "circuits": 125.0,
-        "components": 1250.0
+        "components": 1250.0,
+        "batteries": 150
       },
       "level": 1,
       "family": "mech_factory",
@@ -2064,7 +2076,8 @@
         "conductors": 420.0,
         "substrates": 280.0,
         "circuits": 175.0,
-        "components": 1750.0
+        "components": 1750.0,
+        "ai_chips": 50
       },
       "level": 2,
       "family": "mech_factory",
@@ -2295,7 +2308,8 @@
         "conductors": 35.0,
         "substrates": 35.0,
         "circuits": 72.75,
-        "components": 282.25
+        "components": 282.25,
+        "ai_chips": 8
       },
       "family": "turret",
       "level": 2,
@@ -2472,7 +2486,8 @@
         "conductors": 35.0,
         "substrates": 35.0,
         "circuits": 72.75,
-        "components": 282.25
+        "components": 282.25,
+        "ai_chips": 8
       },
       "family": "kinetic_tower",
       "level": 2,
@@ -2649,7 +2664,8 @@
         "conductors": 35.0,
         "substrates": 35.0,
         "circuits": 72.75,
-        "components": 282.25
+        "components": 282.25,
+        "ai_chips": 8
       },
       "family": "missile_tower",
       "level": 2,
@@ -2728,7 +2744,8 @@
         "conductors": 20,
         "substrates": 20,
         "circuits": 6.0,
-        "components": 19.0
+        "components": 19.0,
+        "ai_chips": 6
       },
       "jobs": 2,
       "health": 300,
@@ -2826,7 +2843,8 @@
         "conductors": 35.0,
         "substrates": 35.0,
         "circuits": 72.75,
-        "components": 282.25
+        "components": 282.25,
+        "ai_chips": 12
       },
       "family": "plasma_tower",
       "level": 2,
@@ -2898,7 +2916,7 @@
       "name": "Wall segment \u00b7 Level 1",
       "category": "defense",
       "role": "wall",
-      "description": "A structural6m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
+      "description": "A structural 6 m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
       "visual": "wall",
       "cost": {
         "alloy": 600
@@ -2951,7 +2969,7 @@
       "name": "Wall segment \u00b7 Level 2",
       "category": "defense",
       "role": "wall",
-      "description": "A structural6m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
+      "description": "A structural 6 m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
       "visual": "wall",
       "cost": {
         "alloy": 1350.0
@@ -3004,7 +3022,7 @@
       "name": "Wall segment \u00b7 Level 3",
       "category": "defense",
       "role": "wall",
-      "description": "A structural6m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
+      "description": "A structural 6 m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
       "visual": "wall",
       "cost": {
         "alloy": 2400
@@ -3081,7 +3099,7 @@
     "missile_tower",
     "plasma_tower"
   ],
-  "balance_status": "Provisional costs, durations, staffing, capacities and health. Confirmed tier geometry and hardpoint constraints are validated separately. Upgrade bills are incremental and stored on the source level.",
+  "balance_status": "Provisional costs, durations, staffing, capacities and health. Confirmed tier geometry and hardpoint constraints are validated separately. Upgrade bills are incremental and stored on the source level. prototype-9.2 adds progression gates: AI chip works, tank factory and battery works need tier-2 products beyond the landing kit; fusion works, mech factory and plasma towers need locally made AI chips; every level-3 upgrade needs AI chips and the core needs fusion reactors.",
   "capacity_note": "Provisional closed storage in litres. Vehicle factories and cores hold the full largest permitted chassis plus a legal full weapon loadout, ammunition and local operating buffers; capacity adds no starting materials. Advanced assembly still needs enough charged batteries on the connected road grid.",
   "quantity_note": "Provisional v0.9 physical construction bills in native cargo units. Core level 1 is a preinstalled landed shuttle: its 20 kg bill is deployment consumables, not its unmodeled hull/reactor mass. Level 2/3 costs include expansion and installed upgrade equipment. Tower costs include equipped modules; replacements discard old modules without refund."
 }

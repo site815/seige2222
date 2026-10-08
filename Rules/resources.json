@@ -1,5 +1,5 @@
 {
-  "version": "prototype-9.0",
+  "version": "prototype-9.2",
   "quantity_note": "Raw/product quantities are kg or L. Stored workers are indivisible counts with external mass and berth volume. The accepted provisional worker body is 80 kg with a 160 L packed berth; assembly consumes its full material mass. These are gameplay accounting values, not finished robot engineering. Grid energy and credits remain separate ledgers.",
   "resources": [
     {
