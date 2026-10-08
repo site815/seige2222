@@ -55,6 +55,7 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     }
     Add(TEXT("Weapons"),TEXT("Nominal DPS"),N(DPS)+TEXT(" health/s before misses and protection"));
     Add(TEXT("Weapons"),TEXT("Operating DPS"),N(DPS*WeaponFraction)+TEXT(" theoretical; requires energy/ammunition"));
+    if(B)Add(TEXT("Weapons"),TEXT("Fire control"),Combat.BuildingFireStatus(*this,B->Id));
     Add(TEXT("Weapons"),TEXT("Mount area used / capacity"),FString::FromInt(Area)+TEXT(" / ")+FString::FromInt(Platform?Platform->MountPoints:0)+TEXT(" small units (1 large = 4 medium = 16 small)"));
     Add(TEXT("Weapons"),TEXT("Weapon mass used / capacity"),N(Mass)+TEXT(" / ")+N(Platform?Platform->MaxWeaponMassKg:0)+TEXT(" kg"));
     Add(TEXT("Weapons"),TEXT("Energy per full volley"),N(ShotEnergy)+TEXT(" kWh"));
@@ -64,10 +65,11 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
 
     const auto* E=Energy.Definition(D.Id);const auto Grid=B?Energy.Info(*this,B->Id):FSeigeEnergyInfo();
     Add(TEXT("Power"),TEXT("Power consumption"),N(E?E->IdleKW:0)+TEXT(" kW"));
-    Add(TEXT("Power"),TEXT("Power generation"),N(E?E->GenerationKW:0)+TEXT(" kW"));
+    Add(TEXT("Power"),E&&E->GenerationSource==TEXT("solar")?TEXT("Rated generation (daylight peak)"):TEXT("Rated generation"),N(E?E->GenerationKW:0)+TEXT(" kW"));
+    if(E&&E->GenerationSource==TEXT("solar"))Add(TEXT("Power"),TEXT("Solar availability now"),N(Calendar.Sample().SolarFactor*100)+TEXT("% of peak before staffing; 0 at night"));
     Add(TEXT("Power"),TEXT("Battery charge / capacity"),N(B?B->BatteryEnergyKWh:0)+TEXT(" / ")+N(E?E->BatteryCapacityKWh:0)+TEXT(" kWh"));
     Add(TEXT("Power"),TEXT("Power system"),B?(Grid.Connected?TEXT("Connected road grid"):E&&!E->RequiresRoadGrid?TEXT("Self-contained bootstrap generation"):TEXT("Disconnected; connect a powered road")):TEXT("Shares power and batteries within its connected road network"));
-    Add(TEXT("Power"),TEXT("Grid generation / demand"),N(Grid.GenerationKW)+TEXT(" / ")+N(Grid.DemandKW)+TEXT(" kW"));
+    Add(TEXT("Power"),TEXT("Current grid generation / demand"),N(Grid.GenerationKW)+TEXT(" / ")+N(Grid.DemandKW)+TEXT(" kW"));
     Add(TEXT("Power"),TEXT("Grid battery charge / capacity"),N(Grid.StoredKWh)+TEXT(" / ")+N(Grid.CapacityKWh)+TEXT(" kWh"));
     Add(TEXT("Power"),TEXT("Worker electricity"),N(Energy.WorkerKW)+TEXT(" kW per worker"));
     if(E&&!E->FuelResource.IsEmpty())Add(TEXT("Power"),TEXT("Generator fuel"),Name(E->FuelResource)+TEXT("; ")+N(E->FuelUnitsPerKWh)+TEXT(" units / kWh"));

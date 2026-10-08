@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "description": "Physical world geography; logical units at 0.06 m per unit. Surface water is scenery and an obstacle, not additional extractable deposits. River points run upstream to downstream. Prototype authored landforms, not an erosion simulation.",
+  "enabled": true,
+  "river_half_width": 220,
+  "river_depth": 45,
+  "bank_width": 500,
+  "bank_height": 35,
+  "river": [
+    {"x": 20000, "y": 26000, "height": 420},
+    {"x": 17500, "y": 16000, "height": 250},
+    {"x": 14000, "y": 4000, "height": 40},
+    {"x": 14000, "y": -5000, "height": -100},
+    {"x": 14000, "y": -12000, "height": -100},
+    {"x": 9000, "y": -27000, "height": -330},
+    {"x": 16000, "y": -58000, "height": -680},
+    {"x": 7000, "y": -90000, "height": -1050}
+  ],
+  "lakes": [
+    {"x": 14000, "y": -8500, "radius_x": 3800, "radius_y": 3000, "height": -100, "depth": 140}
+  ],
+  "cliffs": [
+    {"x": -13500, "y": 9000, "radius_x": 4200, "radius_y": 2100, "height": 530, "edge_ratio": 0.10},
+    {"x": 23000, "y": -17500, "radius_x": 5000, "radius_y": 1800, "height": 420, "edge_ratio": 0.13},
+    {"x": -28000, "y": 45500, "radius_x": 7200, "radius_y": 3400, "height": 800, "edge_ratio": 0.12}
+  ]
+}

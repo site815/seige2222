@@ -32,7 +32,7 @@ namespace
 bool CanApplyDisplayPreferences()
 {
     const TCHAR* Command=FCommandLine::Get();
-    return FApp::CanEverRender()&&!FParse::Param(Command,TEXT("ForceRes"))&&!FParse::Param(Command,TEXT("UiSmoke"))&&!FParse::Param(Command,TEXT("GraphicsBenchmark"));
+    return FApp::CanEverRender()&&!FParse::Param(Command,TEXT("ForceRes"))&&!FParse::Param(Command,TEXT("UiSmoke"))&&!FParse::Param(Command,TEXT("WorldReview"))&&!FParse::Param(Command,TEXT("GraphicsBenchmark"));
 }
 bool CanSaveDisplayPreferences()
 {
@@ -124,13 +124,14 @@ bool ASeigeGameMode::InitializeScenario(FString& Reason)
         FSeigeNeighbor N; N.Index=Index; N.Type=ScenarioSlots[Index];
         N.Offset=FVector2D(Index%3-1,Index/3-1)*NewCenter.WorldHalfSize*2;
         N.Brain=MakeShared<FSeigeScenarioAI>();
-        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),N.Type==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks,SeigeSectorResourceSeed(NewCenter.GenerationSeed,Index))) return false;
+        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),N.Type==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks,SeigeSectorResourceSeed(NewCenter.GenerationSeed,Index),N.Offset)) return false;
         NewNeighbors.Add(MoveTemp(N));
     }
     TArray<FSeigeRegionResources> NewEmptyRegions;
     if(!GenerateEmptyRegionResources(NewCenter,ScenarioSlots,NewEmptyRegions,Reason))return false;
     ExitCompanionView();
     Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewCenterBrain); Neighbors=MoveTemp(NewNeighbors); Observer=NewObserver;
+    ResetScenarioCalendar();
     EmptyRegionResources=MoveTemp(NewEmptyRegions);ConfigureCombatTerrain();SelectedFleetId=0;FleetOrderActive=false;
     return true;
 }
@@ -165,7 +166,7 @@ void ASeigeGameMode::BeginScenarioPreparation()
     {Notice=TEXT("Invalid scenario region choice");return;}
     ScenarioPreparation=MakeShared<FSeigeScenarioPreparation>();auto& P=*ScenarioPreparation;
     P.Slots=ScenarioSlots;P.Background=ScenarioBackgroundBugs;P.Periodic=ScenarioPeriodicAttacks;P.Observer=P.Slots[4]!=TEXT("player");P.ReturnScreen=Screen;
-    Screen=TEXT("preparing");Notice=TEXT("Preparing colonies with the same construction and defense rules. You can cancel.");
+    Screen=TEXT("preparing");Notice=TEXT("Loading established colonies and validating their supplies, workforce and defenses. You can cancel.");
 }
 void ASeigeGameMode::CancelScenarioPreparation()
 {
@@ -183,8 +184,8 @@ FString ASeigeGameMode::ScenarioPreparationStatus() const
 {
     if(!ScenarioPreparation)return {};const auto& P=*ScenarioPreparation;
     if(!P.Order.IsValidIndex(P.Cursor))return TEXT("Preparing the region map");
-    const int32 Index=P.Order[P.Cursor];const auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;const auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;
-    return FString::Printf(TEXT("Region %d of 9 | %s | Simulated %.0f minutes\n%s"),P.Cursor+1,*P.Slots[Index],Candidate.Time/60.,Brain?*Brain->GetStatus():TEXT("Loading region definitions"));
+    const int32 Index=P.Order[P.Cursor];const auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;
+    return FString::Printf(TEXT("Region %d of 9 | %s\n%s"),P.Cursor+1,*P.Slots[Index],Brain?*Brain->GetStatus():TEXT("Loading region definitions"));
 }
 void ASeigeGameMode::TickScenarioPreparation(double BudgetMilliseconds)
 {
@@ -200,6 +201,7 @@ void ASeigeGameMode::TickScenarioPreparation(double BudgetMilliseconds)
             if(!GenerateEmptyRegionResources(P.Center,P.Slots,Empty,Reason)){Fail(Reason);return;}
             ExitCompanionView();Sim=MoveTemp(P.Center);CenterBrain=MoveTemp(P.CenterBrain);Neighbors=MoveTemp(P.Neighbors);Observer=P.Observer;
             ScenarioSlots=P.Slots;ScenarioBackgroundBugs=P.Background;ScenarioPeriodicAttacks=P.Periodic;EmptyRegionResources=MoveTemp(Empty);
+            ResetScenarioCalendar();
             ScenarioPreparation.Reset();ConfigureCombatTerrain();SelectedFleetId=0;FleetOrderActive=false;FinishScenarioStart();return;
         }
         const int32 Index=P.Order[P.Cursor];const FString Type=P.Slots[Index];
@@ -212,7 +214,7 @@ void ASeigeGameMode::TickScenarioPreparation(double BudgetMilliseconds)
             if(Index==4)P.CenterBrain=MakeShared<FSeigeScenarioAI>();
             else{P.ActiveNeighbor=FSeigeNeighbor();P.ActiveNeighbor.Index=Index;P.ActiveNeighbor.Type=Type;P.ActiveNeighbor.Offset=FVector2D(Index%3-1,Index/3-1)*P.Center.WorldHalfSize*2;P.ActiveNeighbor.Brain=MakeShared<FSeigeScenarioAI>();}
             auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;
-            if(!Brain->BeginInitialize(Candidate,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),Type==TEXT("developed"),Reason,P.Background,P.Periodic,Index==4?INDEX_NONE:SeigeSectorResourceSeed(P.Center.GenerationSeed,Index))){Fail(Reason);return;}
+            if(!Brain->BeginInitialize(Candidate,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),Type==TEXT("developed"),Reason,P.Background,P.Periodic,Index==4?INDEX_NONE:SeigeSectorResourceSeed(P.Center.GenerationSeed,Index),Index==4?FVector2D::ZeroVector:P.ActiveNeighbor.Offset)){Fail(Reason);return;}
             P.SlotActive=true;
         }
         auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;bool Complete=!Brain->IsPreparing();FString Reason;
@@ -318,4 +320,24 @@ void ASeigeGameMode::CycleGameSpeed(int32 Direction)
 bool ASeigeGameMode::IsSupportedGameSpeed(double Value) const
 {
     return FMath::IsFinite(Value)&&Value>=1&&Value<=10&&Value==FMath::FloorToDouble(Value)&&GameSpeeds.Contains(static_cast<int32>(Value));
+}
+
+void ASeigeGameMode::ResetScenarioCalendar()
+{
+    ScenarioCalendar.Configure(Sim.Calendar.GetRules());
+    BindScenarioCalendar();
+    Sim.Energy.Tick(Sim,0);
+    for(auto& N:Neighbors)N.Sim.Energy.Tick(N.Sim,0);
+}
+void ASeigeGameMode::BindScenarioCalendar()
+{
+    Sim.Calendar.SetElapsedMicroseconds(ScenarioCalendar.ElapsedMicroseconds());
+    for(auto& N:Neighbors)N.Sim.Calendar.SetElapsedMicroseconds(ScenarioCalendar.ElapsedMicroseconds());
+}
+FString ASeigeGameMode::CalendarLabel() const
+{
+    const auto Sample=ScenarioCalendar.Sample();
+    const TCHAR* Names[]={TEXT("Spring"),TEXT("Summer"),TEXT("Autumn"),TEXT("Winter")};
+    const int32 Minute=FMath::FloorToInt(Sample.CycleFraction*1440.);
+    return FString::Printf(TEXT("%s %d | %02d:%02d | %s"),Names[Sample.SeasonIndex],Sample.DayOfSeason,(Minute/60+6)%24,Minute%60,Sample.IsDay?TEXT("Daylight"):TEXT("Night"));
 }

@@ -17,7 +17,8 @@ bool ASeigeGameMode::GenerateEmptyRegionResources(const FSeigeSimulation& Center
         Region.Index=Index;Region.Seed=SeigeSectorResourceSeed(Center.GenerationSeed,Index);
         // Only immutable resource data is generated. An unsettled region never
         // initializes a simulation, command core, population, AI or inventory.
-        if(!Center.GenerateResourceNodesForSeed(Region.Seed,Region.Nodes,Reason))return false;
+        const FVector2D Offset=FVector2D(Index%3-1,Index/3-1)*Center.WorldHalfSize*2;
+        if(!Center.GenerateResourceNodesForSeed(Region.Seed,Region.Nodes,Reason,Offset))return false;
         Generated.Add(MoveTemp(Region));
     }
     Output=MoveTemp(Generated);Reason.Empty();return true;

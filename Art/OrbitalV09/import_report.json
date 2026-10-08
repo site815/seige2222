@@ -1,0 +1,44 @@
+{
+  "meshes": {
+    "SM_Shuttle": {
+      "dimensions_cm": [
+        848.5870361328125,
+        848.5870361328125,
+        2088.0
+      ],
+      "lods": 3,
+      "triangles": 13388
+    },
+    "SM_Core": {
+      "dimensions_cm": [
+        2035.0000610351562,
+        2030.0001220703125,
+        580.5
+      ],
+      "lods": 3,
+      "triangles": 16548
+    },
+    "SM_Robot": {
+      "dimensions_cm": [
+        70.99999237060547,
+        79.80000686645508,
+        79.0
+      ],
+      "lods": 3,
+      "triangles": 4792
+    }
+  },
+  "portraits": [
+    "/Game/Art/Interface/T_Building_Core.T_Building_Core",
+    "/Game/Art/Interface/T_Building_Depot.T_Building_Depot",
+    "/Game/Art/Interface/T_Building_Extractor.T_Building_Extractor",
+    "/Game/Art/Interface/T_Building_Factory.T_Building_Factory",
+    "/Game/Art/Interface/T_Building_Robot.T_Building_Robot",
+    "/Game/Art/Interface/T_Building_RobotService.T_Building_RobotService",
+    "/Game/Art/Interface/T_Building_Sensor.T_Building_Sensor",
+    "/Game/Art/Interface/T_Building_Shuttle.T_Building_Shuttle",
+    "/Game/Art/Interface/T_Building_Turret.T_Building_Turret",
+    "/Game/Art/Interface/T_Building_Wall.T_Building_Wall",
+    "/Game/Art/Interface/T_OrbitalHero.T_OrbitalHero"
+  ]
+}

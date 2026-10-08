@@ -35,13 +35,19 @@ struct FInteractionWorld : FTestWorldWrapper
         Game = Cast<ASeigeGameMode>(GetTestWorld()->GetAuthGameMode());
         if (!Test.TestNotNull(TEXT("Authoritative colony game mode exists"), Game)) return false;
         Game->Screen = TEXT("playing");
-        Game->Ready = Game->Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(), TEXT("Rules")), Game->Error);
+        Game->Ready = Game->Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(), TEXT("Rules")), Game->Error, false, false);
         if (!Test.TestTrue(TEXT("Colony rules initialize for interaction test"), Game->Ready))
         {
             Test.AddError(Game->Error);
             return false;
         }
-        Game->Sim.Tick(Game->Sim.BuildingDefs[Game->Sim.CoreDefinition].ConstructionSeconds+Game->Sim.FixedStepSeconds());
+        // Exercise the real hatch, hauling and finite construction crew. The authored
+        // build duration alone excludes their travel and is not a deployment deadline.
+        const int32 CoreId = Game->Sim.Buildings[0].Id;
+        for (int32 Step = 0; Step < 400 && Game->Sim.FindBuilding(CoreId)->IsConstructing; ++Step)
+            Game->Sim.Tick(10);
+        if (!Test.TestFalse(TEXT("Paid physical deployment finishes before interaction checks"), Game->Sim.FindBuilding(CoreId)->IsConstructing)) return false;
+        Game->Sim.Tick(20); // Existing bodies reach their operating stations.
         Controller = GetTestWorld()->SpawnActor<ASeigeController>();
         if (!Test.TestNotNull(TEXT("Real player controller exists"), Controller)) return false;
         // No LocalPlayer/net connection exists in this headless fixture. Invoke the
@@ -400,6 +406,34 @@ bool FSeigePortWorkerUiTest::RunTest(const FString& Parameters)
     G.SelectedId=G.Sim.Buildings[0].Id;Click(TEXT("trade:reserve-more"));TestEqual(TEXT("A stale port action cannot modify a nonselected port"),G.Sim.FindBuilding(PortId)->WorkerExportTarget,1);
     G.SelectedId=PortId;G.Observer=true;Click(TEXT("trade:reserve-more"));TestEqual(TEXT("Observer cannot change a port worker target"),G.Sim.FindBuilding(PortId)->WorkerExportTarget,1);G.Observer=false;
     G.SelectedBuild=TEXT("sensor");Click(TEXT("trade:reserve-more"));TestEqual(TEXT("Placement consumes stale trade actions"),G.Sim.FindBuilding(PortId)->WorkerExportTarget,1);
+    G.SelectedBuild.Empty();
+    for(int32 I=0;I<4000&&G.Sim.FindBuilding(PortId)->IsConstructing;++I)G.Sim.Tick(5);
+    if(!TestFalse(TEXT("The port finishes its ordinary paid construction before trading"),G.Sim.FindBuilding(PortId)->IsConstructing))return false;
+    FString Error;
+    if(!G.Sim.TryTrade(PortId,TEXT("alloy"),1,false,Error)){AddError(Error);return false;}
+    const double Stock=G.Sim.TotalStock(TEXT("alloy")),Credits=G.Sim.Credits;
+    G.SelectedId=G.Sim.Buildings[0].Id;Click(TEXT("trade:cancel-export"));
+    TestFalse(TEXT("A stale cancel action cannot change a nonselected port"),G.Sim.FindBuilding(PortId)->Shipment.Resource.IsEmpty());
+    G.SelectedId=PortId;G.Observer=true;Click(TEXT("trade:cancel-export"));
+    TestFalse(TEXT("Observer cannot cancel a player's export"),G.Sim.FindBuilding(PortId)->Shipment.Resource.IsEmpty());G.Observer=false;
+    G.CameraCenter=FVector(G.Sim.WorldHalfSize*2,0,0);Click(TEXT("trade:cancel-export"));
+    TestFalse(TEXT("A neighbor view cannot cancel the home port's export"),G.Sim.FindBuilding(PortId)->Shipment.Resource.IsEmpty());G.CameraCenter=FVector::ZeroVector;
+    G.SelectedBuild=TEXT("sensor");Click(TEXT("trade:cancel-export"));
+    TestFalse(TEXT("Placement consumes stale export cancellation"),G.Sim.FindBuilding(PortId)->Shipment.Resource.IsEmpty());G.SelectedBuild.Empty();
+    Click(TEXT("trade:cancel-export"));
+    TestTrue(TEXT("Selected own port cancels its actual undeparted export through controller dispatch"),G.Sim.FindBuilding(PortId)->Shipment.Resource.IsEmpty());
+    TestEqual(TEXT("Cancellation neither refunds nor grants Galactic credits"),G.Sim.Credits,Credits);
+    TestEqual(TEXT("Cancellation preserves physical goods"),G.Sim.TotalStock(TEXT("alloy")),Stock);
+    if(!G.Sim.TryTrade(PortId,TEXT("alloy"),1,false,Error)){AddError(Error);return false;}
+    // Isolate forbidden cancellation states without progressing a synthetic
+    // shipment or awarding a credit/cargo refund in this UI routing fixture.
+    auto& Shipment=G.Sim.FindBuilding(PortId)->Shipment;Shipment.Buy=true;
+    Click(TEXT("trade:cancel-export"));TestFalse(TEXT("A stale cancel action cannot cancel an import"),Shipment.Resource.IsEmpty());
+    Shipment.Buy=false;Shipment.Departed=true;
+    Click(TEXT("trade:cancel-export"));TestFalse(TEXT("A departed export cannot be recalled by a stale button"),Shipment.Resource.IsEmpty());
+    TestEqual(TEXT("Rejected cancellations leave credits unchanged"),G.Sim.Credits,Credits);
+    TestEqual(TEXT("Rejected cancellations leave local goods unchanged"),G.Sim.TotalStock(TEXT("alloy")),Stock);
+    Shipment.Departed=false;Click(TEXT("trade:cancel-export"));
     return true;
 }
 
@@ -470,7 +504,7 @@ bool FSeigeCombatUiTest::RunTest(const FString& Parameters)
     const int32 CoreId=G.Sim.Buildings[0].Id;G.SelectedId=CoreId;
     auto Click=[&](const TCHAR* Action){H.Ui.Scale=1;H.Ui.HitRegions={{FVector2D(100,100),FVector2D(200,50),Action,TEXT("")}};W.Controller->HandlePrimaryClick(150,125);H.Ui.HitRegions.Reset();};
     Click(TEXT("combat:request"));TestFalse(TEXT("A stale hidden combat action cannot install a supply plan"),C.FabricationPlans.Contains(CoreId));
-    Click(TEXT("combat:open"));Click(TEXT("combat:tab:factory"));Click(TEXT("combat:hull-next"));Click(TEXT("combat:weapon-next"));Click(TEXT("combat:add"));
+    Click(TEXT("combat:open"));Click(TEXT("combat:tab:factory"));Click(TEXT("combat:hull-next"));Click(TEXT("combat:hull-next"));Click(TEXT("combat:weapon-next"));Click(TEXT("combat:add"));
     const double Alloy=G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),Energy=C.EnergySpentKWh;const int32 Jobs=C.Fabrication.Num();
     Click(TEXT("combat:request"));const auto* Plan=C.FabricationPlans.Find(CoreId);
     if(!TestNotNull(TEXT("Core can request a physical chassis and weapon bill through its UI"),Plan))return false;
@@ -478,9 +512,10 @@ bool FSeigeCombatUiTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Requesting parts cannot start assembly"),C.Fabrication.Num(),Jobs);
     TestEqual(TEXT("Requesting parts cannot spend or award alloy"),G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),Alloy);
     TestEqual(TEXT("Requesting parts cannot spend grid energy"),C.EnergySpentKWh,Energy);
-    Click(TEXT("combat:queue"));TestEqual(TEXT("An unaffordable medium hull does not bypass physical delivery"),C.Fabrication.Num(),Jobs);
+    if(!TestTrue(TEXT("The selected large hull genuinely exceeds the finite starter alloy stock"),C.Chassis[Plan->ChassisId].Cost.FindRef(TEXT("alloy"))>Alloy))return false;
+    Click(TEXT("combat:queue"));TestEqual(TEXT("An unaffordable large hull does not bypass physical delivery"),C.Fabrication.Num(),Jobs);
     TestEqual(TEXT("Rejected assembly preserves actual stock"),G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),Alloy);
-    Click(TEXT("combat:hull-prev"));Click(TEXT("combat:weapon-next"));Click(TEXT("combat:add"));Click(TEXT("combat:request"));
+    Click(TEXT("combat:hull-prev"));Click(TEXT("combat:hull-prev"));Click(TEXT("combat:weapon-next"));Click(TEXT("combat:add"));Click(TEXT("combat:request"));
     Plan=C.FabricationPlans.Find(CoreId);if(!TestNotNull(TEXT("Affordable small hull replaces the draft plan"),Plan))return false;
     const auto Hull=C.Chassis[Plan->ChassisId];const auto Weapon=C.Weapons[Plan->Weapons[0]];
     Click(TEXT("combat:queue"));if(!TestEqual(TEXT("Local paid stock and energy start a real timed job"),C.Fabrication.Num(),Jobs+1)){AddError(G.Notice);return false;}

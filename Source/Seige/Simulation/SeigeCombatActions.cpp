@@ -52,18 +52,24 @@ bool FSeigeCombatSystem::TransferCargo(FSeigeSimulation& Sim,int32 VehicleId,int
 {
     auto* V=FindVehicle(VehicleId);auto* B=Sim.FindBuilding(BuildingId);if(!V||V->Health<=0||V->Evacuated||V->Embarked||V->SectorIndex!=4||!B||B->Health<=0||B->IsConstructing||!Sim.Resources.Contains(Resource)||!FMath::IsFinite(Amount)||Amount<=0||FVector2D::Distance(V->Position,Sim.BuildingAccessPoint(*B))*MetresPerUnit>ServiceMeters){Error=TEXT("Cargo requires positive quantity and physical service proximity");return false;}
     const auto& R=Sim.Resources[Resource];if(R.Discrete&&Amount!=FMath::FloorToDouble(Amount)){Error=TEXT("Discrete cargo requires whole units");return false;}if(ToVehicle&&Resource==Sim.TextRule(TEXT("inactive_worker_resource"))&&B->Inventory.FindRef(Resource)-Amount<B->DisassemblyQueued-(B->DisassemblyCommitted?1:0)){Error=TEXT("Those stored workers are reserved for disassembly");return false;}const auto& C=Chassis[V->ChassisId];auto& From=ToVehicle?B->Inventory:V->Inventory;auto& To=ToVehicle?V->Inventory:B->Inventory;
-    if((ToVehicle?Sim.Spendable(*B,Resource):From.FindRef(Resource))+1.e-8<Amount||(ToVehicle&&(Sim.InventoryLitres(To)+Amount*R.LitresPerUnit>C.StorageLitres+1.e-8||Sim.InventoryMassKg(To)+Amount*R.UnitMassKg>C.CargoMassKg+1.e-8))||(!ToVehicle&&Sim.StorageUsed(*B)+Amount*R.LitresPerUnit>Sim.Definition(*B)->StorageCapacity+1.e-8)){Error=TEXT("Insufficient local cargo or mass/volume capacity");return false;}
+    if((ToVehicle?Sim.Spendable(*B,Resource):From.FindRef(Resource))+1.e-8<Amount||(ToVehicle&&(Sim.InventoryLitres(To)+Amount*R.LitresPerUnit>C.StorageLitres+1.e-8||Sim.InventoryMassKg(To)+Amount*R.UnitMassKg>C.CargoMassKg+1.e-8))||(!ToVehicle&&Amount*R.LitresPerUnit>Sim.StorageRoom(*B)+1.e-8)){Error=TEXT("Insufficient local cargo or mass/volume capacity");return false;}
+    if(Resource==Sim.TextRule(TEXT("inactive_worker_resource"))&&!(ToVehicle?Sim.Workers.MoveStored(BuildingId,TEXT("vehicle"),VehicleId,int32(Amount)):Sim.Workers.ReceiveStored(Sim,TEXT("vehicle"),VehicleId,BuildingId,int32(Amount)))){Error=TEXT("Worker cargo manifest is unavailable");return false;}
     From.FindOrAdd(Resource)=FMath::Max(0.,From.FindRef(Resource)-Amount);To.FindOrAdd(Resource)+=Amount;Error.Empty();return true;
 }
 double FSeigeCombatSystem::CargoStock(const FString& Resource) const{double Total=0;for(const auto& V:Vehicles)if(V.Health>0&&!V.Evacuated)Total+=V.Inventory.FindRef(Resource);for(const auto& J:Fabrication)Total+=J.PaidMaterials.FindRef(Resource);return Total;}
 bool FSeigeCombatSystem::IsVisible(FVector2D P) const{for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.BatteryKWh>0)if(const auto* C=Chassis.Find(V.ChassisId))if(FVector2D::Distance(P,V.Position+SectorOffset(V.SectorIndex))*MetresPerUnit<=C->SensorMeters)return true;return false;}
-double FSeigeCombatSystem::Demand(const FSeigeSimulation& Sim,int32 Id,const FString& Resource) const
+double FSeigeCombatSystem::AmmoDemand(const FSeigeSimulation& Sim,int32 Id,const FString& Resource) const
 {
     const auto* B=Sim.FindBuilding(Id);if(!B)return 0;double Need=0;
     if(const auto* P=BuildingPlatforms.Find(B->DefId))for(const auto& W:BuildingState.Contains(B->Id)?BuildingState[B->Id].Weapons:P->Weapons)if(Weapons[W].Ammo==Resource)Need+=AmmoBufferShots*Weapons[W].AmmoPerShot;
+    if(Factories.Contains(B->DefId))for(const auto& W:Weapons)if(W.Value.Ammo==Resource)Need=FMath::Max(Need,AmmoBufferShots*W.Value.AmmoPerShot);
+    return Need;
+}
+double FSeigeCombatSystem::Demand(const FSeigeSimulation& Sim,int32 Id,const FString& Resource) const
+{
+    if(!Sim.FindBuilding(Id))return 0;double Need=AmmoDemand(Sim,Id,Resource);
     if(const auto* Plan=FabricationPlans.Find(Id)){Need+=Chassis[Plan->ChassisId].Cost.FindRef(Resource);for(const auto& W:Plan->Weapons)Need+=Weapons[W].Cost.FindRef(Resource);}
     if(const auto* Refit=RefitPlans.Find(Id))for(const auto& W:*Refit)Need+=Weapons[W].Cost.FindRef(Resource);
-    if(Factories.Contains(B->DefId))for(const auto& W:Weapons)if(W.Value.Ammo==Resource)Need=FMath::Max(Need,AmmoBufferShots*W.Value.AmmoPerShot);
     return Need;
 }
 void FSeigeCombatSystem::ShiftHome(FVector2D D){for(auto& V:Vehicles)if(V.SectorIndex==4){V.Position+=D;V.Destination+=D;for(auto& P:V.Route)P+=D;}for(auto& F:Fleets)if(F.DestinationSector==4)F.Destination+=D;for(auto& P:Projectiles)if(P.SectorIndex==4){P.Position+=D;P.PreviousPosition+=D;}}

@@ -1,13 +1,381 @@
 {
   "version": 1,
-  "population": 6,
-  "inventory": {
-    "alloy": 500,
-    "circuits": 300,
-    "components": 150,
-    "iron_ore": 40,
-    "copper_ore": 40,
-    "silica": 40,
-    "carbon": 40
-  }
+  "kind": "established_colony",
+  "balance_status": "Explicit provisional starting state, not simulated growth or a grant during live play. Quantities and layout are editable. Player and Starting AI keep the finite landing manifest.",
+  "age_seconds": 60,
+  "credits": 0.5,
+  "idle_workers": 6,
+  "layout_rotations": 4,
+  "road_tier": "road",
+  "equipment": "definition_defaults",
+  "fleet": "scenario_guard_manifest",
+  "buildings": [
+    {
+      "definition": "command_core",
+      "anchor": "core",
+      "offset_meters": [
+        0,
+        0
+      ],
+      "operators": 6,
+      "battery_kwh": 30,
+      "recipe": "assemble_robot",
+      "inventory": {
+        "alloy": 2000,
+        "conductors": 500,
+        "substrates": 300,
+        "plastic": 200,
+        "circuits": 300,
+        "components": 600,
+        "batteries": 300,
+        "iron_ore": 500,
+        "silica": 500,
+        "carbon": 500,
+        "water": 500,
+        "fuel": 300,
+        "organic_food": 20,
+        "stored_workers": 2
+      }
+    },
+    {
+      "definition": "turret",
+      "anchor": "core",
+      "offset_meters": [
+        -120,
+        -120
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "turret",
+      "anchor": "core",
+      "offset_meters": [
+        120,
+        -120
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "turret",
+      "anchor": "core",
+      "offset_meters": [
+        -120,
+        120
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "turret",
+      "anchor": "core",
+      "offset_meters": [
+        120,
+        120
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "sensor",
+      "anchor": "core",
+      "offset_meters": [
+        -100,
+        0
+      ],
+      "operators": 1,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "sensor",
+      "anchor": "core",
+      "offset_meters": [
+        100,
+        0
+      ],
+      "operators": 1,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "solar_array",
+      "anchor": "core",
+      "offset_meters": [
+        -84,
+        -42
+      ],
+      "operators": 0,
+      "battery_kwh": 5,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "solar_array",
+      "anchor": "core",
+      "offset_meters": [
+        -84,
+        42
+      ],
+      "operators": 0,
+      "battery_kwh": 5,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "robot_service_bay",
+      "anchor": "core",
+      "offset_meters": [
+        0,
+        -84
+      ],
+      "operators": 1,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12,
+        "components": 40
+      }
+    },
+    {
+      "definition": "robot_service_bay",
+      "anchor": "core",
+      "offset_meters": [
+        0,
+        84
+      ],
+      "operators": 1,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12,
+        "components": 40
+      }
+    },
+    {
+      "definition": "robot_service_bay",
+      "anchor": "core",
+      "offset_meters": [
+        84,
+        42
+      ],
+      "operators": 1,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12,
+        "components": 40
+      }
+    },
+    {
+      "definition": "extraction_mine",
+      "anchor": "deposit",
+      "offset_meters": [
+        0,
+        0
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "trading_port",
+      "anchor": "core",
+      "offset_meters": [
+        -42,
+        -84
+      ],
+      "operators": 1,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "fuel_generator",
+      "anchor": "core",
+      "offset_meters": [
+        42,
+        84
+      ],
+      "operators": 1,
+      "battery_kwh": 5,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12,
+        "fuel": 40
+      }
+    },
+    {
+      "definition": "worker_factory",
+      "anchor": "core",
+      "offset_meters": [
+        84,
+        -42
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "assemble_robot",
+      "inventory": {
+        "alloy": 24,
+        "components": 120,
+        "circuits": 8,
+        "batteries": 8,
+        "stored_workers": 2
+      }
+    },
+    {
+      "definition": "alloy_refinery",
+      "anchor": "core",
+      "offset_meters": [
+        -42,
+        -126
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "smelt_alloy",
+      "inventory": {
+        "alloy": 12,
+        "iron_ore": 100
+      }
+    },
+    {
+      "definition": "conductor_works",
+      "anchor": "core",
+      "offset_meters": [
+        0,
+        -126
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "draw_conductors",
+      "inventory": {
+        "alloy": 12,
+        "iron_ore": 100
+      }
+    },
+    {
+      "definition": "substrate_works",
+      "anchor": "core",
+      "offset_meters": [
+        42,
+        -126
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "make_substrates",
+      "inventory": {
+        "alloy": 12,
+        "silica": 40
+      }
+    },
+    {
+      "definition": "biofuel_refinery",
+      "anchor": "core",
+      "offset_meters": [
+        -42,
+        126
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "refine_biofuel",
+      "inventory": {
+        "alloy": 12,
+        "carbon": 160,
+        "water": 40
+      }
+    },
+    {
+      "definition": "circuit_works",
+      "anchor": "core",
+      "offset_meters": [
+        0,
+        126
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "make_circuits",
+      "inventory": {
+        "alloy": 12,
+        "conductors": 20,
+        "substrates": 20,
+        "plastic": 20
+      }
+    },
+    {
+      "definition": "component_works",
+      "anchor": "core",
+      "offset_meters": [
+        42,
+        126
+      ],
+      "operators": 2,
+      "battery_kwh": 0,
+      "recipe": "make_components",
+      "inventory": {
+        "alloy": 52,
+        "conductors": 20,
+        "circuits": 20
+      }
+    },
+    {
+      "definition": "battery_bank",
+      "anchor": "core",
+      "offset_meters": [
+        -42,
+        84
+      ],
+      "operators": 0,
+      "battery_kwh": 100,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    },
+    {
+      "definition": "depot",
+      "anchor": "core",
+      "offset_meters": [
+        126,
+        0
+      ],
+      "operators": 1,
+      "battery_kwh": 0,
+      "recipe": "",
+      "inventory": {
+        "alloy": 12
+      }
+    }
+  ]
 }

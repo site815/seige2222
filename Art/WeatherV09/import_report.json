@@ -1,0 +1,52 @@
+{
+  "collection": "/Game/Art/WeatherV09/MPC_Weather.MPC_Weather",
+  "snowflake_material": "/Game/Art/WeatherV09/M_Snowflake.M_Snowflake",
+  "ambient_cubemap": "/Game/Art/WeatherV09/T_AmbientDaylight.T_AmbientDaylight",
+  "ambient_source": "/Engine/MapTemplates/Sky/DaylightAmbientCubemap",
+  "materials": [
+    {
+      "material": "/Game/Art/Nature/M_NatureFoliage.M_NatureFoliage",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/Nature/M_NatureSurface.M_NatureSurface",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/NatureV04/M_V04Bark.M_V04Bark",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/NatureV04/M_V04Foliage.M_V04Foliage",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/NatureV04/M_V04Grass.M_V04Grass",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/NatureV04/M_V04Wildflowers.M_V04Wildflowers",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/NatureV08/M_BroadleafSpraysV08.M_BroadleafSpraysV08",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/NatureV08/M_ConiferSpraysV08.M_ConiferSpraysV08",
+      "status": "already wrapped"
+    },
+    {
+      "material": "/Game/Art/NatureV08/M_GrassProxyV08.M_GrassProxyV08",
+      "status": "wrapped",
+      "vegetation": true
+    },
+    {
+      "material": "/Game/Art/NatureV08/M_TerrainV08.M_TerrainV08",
+      "status": "wrapped",
+      "vegetation": false
+    }
+  ],
+  "license": "Original shader wrapper; retained photographic texture licenses unchanged. Ambient cubemap is Epic Unreal Engine content copied into the cooked game art directory.",
+  "render_review_pending": true
+}

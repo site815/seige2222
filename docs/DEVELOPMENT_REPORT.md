@@ -2,7 +2,23 @@
 
 Updated: **2026-10-06** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
 
-## Current locally verified v0.8.1 prototype
+## v0.9 candidate — verification in progress
+
+The source candidate uses **80 kg / 160 L workers**, a finite **9,570 kg loose starting cargo kit**, zero credits, tonne-scale building bills and the existing four standard/four rare deposit pool. These are the user's accepted **provisional test values**, not final balance. The [economy baseline](game-design/ECONOMY_BASELINE_0_9.md) lists every building bill and recipe. Save format **7** and `prototype-9.0` fingerprints require a fresh scenario.
+
+- Workers now have persistent identities shared by construction, operation, hauling, storage and trade. A pickup claims stock, the same worker collects and carries it, and delivery releases that worker. Destruction and evacuation retain explicit body states. Rendering no longer invents separate courier/builder/operator populations.
+- Original Blender meshes provide an upright command shuttle, surrounding upgrade campus and legless hover workers. The ship descends vertically, opens its physical cargo hatch and releases its original crew. Two large weapon banks mount one large, two medium and eight small lasers. Building/menu portraits come from the actual meshes.
+- A shared scenario calendar implements 30 minutes of daylight, 30 minutes of night and 30 days per season. Solar output follows daylight; night produces none. Winter adds seasonal surface coverage and a bounded instanced snowfall effect. These are cosmetic seasons without unapproved winter production/movement penalties.
+- Terrain has a shared river/lake/cliff profile used by visible surfaces and dry-land routing. Sensor-revealed deposits receive physical outcrop cues. Region transitions retain unchanged terrain and forest batches; local grass still refills.
+- The native HUD uses a coordinated dark ceramic/teal/amber style, rendered building portraits and detailed dossiers. Enemy contact tests cover arrival at buildings; weapon presentation uses the actual firing module.
+
+Current bounded evidence: all **24 resource-type bootstrap combinations** passed using the finite kit and ordinary paid construction/trade; calendar/solar, camera and combat checks passed. **Editor WorldReview7 completed 38 stages with zero assertions**, covering actual 10× deployment plus isolated dawn/night/winter/terrain views. Its retained `Saved/WorldReview-v09-build7.json` records those 38 stages; weather snapshots are not a 100-day simulation soak, and displayed FPS is not a native-resolution performance result. Integration12 (`Saved/Automation/v09-integration-12`) records **21 clean passes and two AI failures**: all six physical-worker regressions and both shared defense-energy regressions passed. The latter cover real recipe/shot competition, shield and vehicle servicing, disconnected grids and save/load continuation. Later source or rule changes still require their own rerun; these bounded results do not establish a clean full suite.
+
+The user has now selected **established Developed-AI initial states**, replacing hours of simulated growth during loading. Player and Starting AI keep the six-worker, finite 9.57 t kit and zero credits; the developed manifest declares its separate initial buildings, bodies and local stores. Normal paid simulation and selected threats apply afterward. Earlier growth/recovery failures remain historical diagnostics, not the new loading gate. Manifest initialization, post-start continuation and final packaged checks are still pending. **v0.9 is not yet the verified Shipping release.** The launcher remains on v0.8.1. Regular landform silhouettes, material repetition and stylized characters remain visual limitations; no reference-game parity is claimed.
+
+The full21 candidate suite was deliberately interrupted before the established-manifest replacement (`Saved/full21-interruption.txt`; archived diagnostics in `Saved/Diagnostics/v09-full-21`). It is retained as incomplete historical evidence, not counted as a completed native pass.
+
+## Retained locally verified v0.8.1 prototype
 
 Version **0.8.1** includes the five resource HUD groups, unified Extraction Mine and grass performance changes. **Start a new scenario:** saves use format 6 and `prototype-8.1` Rules/AI fingerprints. The [verification record](verification/v0.8.1.json) identifies the final executable, completed checks, superseded failures and limitations.
 

@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.1",
+  "version": "prototype-9.0",
   "balance_status": "Provisional material-balanced gameplay transactions. Worker_output creates counted stored_workers using the same explicit material/energy ledger; it is not free population. Core replication and dedicated factory multipliers are building data. Combat chassis assembly costs are in the combat catalogs.",
   "recipes": [
     {
@@ -158,11 +158,13 @@
       "id": "assemble_robot",
       "seconds": 60,
       "inputs": {
-        "components": 0.5,
-        "circuits": 0.5
+        "components": 60,
+        "alloy": 12,
+        "circuits": 4,
+        "batteries": 4
       },
       "outputs": {},
-      "energy_kwh": 0.1,
+      "energy_kwh": 1,
       "worker_output": 1
     },
     {

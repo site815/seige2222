@@ -8,11 +8,13 @@ struct FSeigeRenderSnapshot
     bool Valid = false;
     TMap<int32,FVector2D> Couriers, Enemies, Builders, RoadBuilders, Companions, Vehicles;
     TMap<int32,int32> VehicleSectors;
+    TMap<FString,FVector2D> WorkerPositions;
     TMap<int32,double> Construction;
     void Capture(const FSeigeSimulation& Sim)
     {
         Valid=true;Time=Sim.Time;Couriers.Reset();Enemies.Reset();Construction.Reset();Builders.Reset();RoadBuilders.Reset();
         for(const auto& C:Sim.Couriers)Couriers.Add(C.Id,C.Position);
+        WorkerPositions.Reset();for(const auto& W:Sim.Workers.Bodies)WorkerPositions.Add(W.Id,W.Position);
         for(const auto& E:Sim.Enemies)Enemies.Add(E.Id,E.Position);
         for(const auto& B:Sim.Buildings){Construction.Add(B.Id,B.ConstructionProgress);Builders.Add(B.Id,B.BuilderPosition);}
         for(const auto& R:Sim.Roads)RoadBuilders.Add(R.Id,R.BuilderPosition);
@@ -23,6 +25,8 @@ struct FSeigeRenderSnapshot
     {return Valid&&Time<=Sim.Time?FMath::Lerp(Time,Sim.Time,FMath::Clamp(Alpha,0.,1.)):Sim.Time;}
     FVector2D Courier(const FSeigeCourier& C,double Alpha) const
     {const auto* P=Couriers.Find(C.Id);return Valid&&P?FMath::Lerp(*P,C.Position,FMath::Clamp(Alpha,0.,1.)):C.Position;}
+    FVector2D Worker(const FSeigeWorker& W,double Alpha) const
+    {const auto* P=WorkerPositions.Find(W.Id);return Valid&&P?FMath::Lerp(*P,W.Position,FMath::Clamp(Alpha,0.,1.)):W.Position;}
     FVector2D CourierAtLoadingPorts(const FSeigeSimulation& Sim,const FSeigeCourier& C,double Alpha,double Clearance) const
     {
         // Routes now physically start/end at edge ports. Presentation must not

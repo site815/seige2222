@@ -60,7 +60,7 @@ Each occupied sector runs an independent local economy and alien threat simulati
 - A developed colony, representing a well-established player already situated in the persistent world.
 - A newly founded colony, representing a player starting out alongside the player's new colony.
 
-The distinction concerns starting development. The prototype has externally editable starting priorities and a finite developed preset in [AIFILES](../../AIFILES/README.md). The latter pays ordinary construction costs from its setup stock. Final buildings, population, stockpiles, forces, and additional development profiles remain open; the current preset does not settle full-game balance or diplomatic relationships.
+The distinction concerns starting development. **Confirmed October 6 correction:** Developed AI uses an authored established initial state from [AIFILES](../../AIFILES/README.md), without replaying hours of colony growth at load. Its initial buildings, bodies, stores and infrastructure are explicit scenario assets, separate from the finite 9.57 t player/Starting-AI landing kit. After initialization, all colonies use ordinary production, construction, logistics, paid AI commands and selected threats; the preset supplies no recurring grants. Manifest values remain provisional and require validation. Additional development profiles and diplomatic relationships remain open.
 
 The disabled-neighbor rule means an empty sector. Startup selections are now implemented; changing occupied cells during play is not supported.
 

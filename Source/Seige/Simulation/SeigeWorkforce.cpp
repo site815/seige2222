@@ -25,6 +25,14 @@ TMap<FString,double> FSeigeSimulation::ProductionInputs(const FSeigeBuilding& B,
 {TMap<FString,double> Inputs;if(const auto* R=Recipes.Find(Id)){Inputs=R->Inputs;for(auto& P:Inputs)P.Value*=Definition(B)->RecipeInputMultiplier;}return Inputs;}
 double FSeigeSimulation::ProductionSeconds(const FSeigeBuilding& B,const FString& Id) const{return Recipes[Id].Seconds*Definition(B)->RecipeTimeMultiplier;}
 double FSeigeSimulation::ProductionEnergy(const FSeigeBuilding& B,const FString& Id) const{return Recipes[Id].EnergyKWh*Definition(B)->RecipeEnergyMultiplier;}
+bool FSeigeSimulation::CanCommitProduction(const FSeigeBuilding& B,const FString& Id) const
+{
+    const auto* Recipe=Recipes.Find(Id);
+    if(!Recipe||B.Health<=0||!B.Enabled||B.IsConstructing||B.ProductionCommitted||!ProductionOptions(B.Id).Contains(Id))return false;
+    const auto Inputs=ProductionInputs(B,Id);
+    const double Reserved=FMath::Max(InventoryLitres(Inputs),ProductionOutputLitres(*Recipe));
+    return HasSpendable(B,Inputs)&&Reserved<=StorageRoom(B)+InventoryLitres(Inputs)+1.e-8&&Energy.CanConsume(*this,B.Id,ProductionEnergy(B,Id));
+}
 double FSeigeSimulation::ProductionOutputLitres(const FSeigeRecipeDef& R) const{return InventoryLitres(R.Outputs)+R.WorkerOutput*Number(TEXT("inactive_worker_litres"));}
 int32 FSeigeSimulation::InactiveWorkerCount() const{if(!Policy)return 0;int32 Count=FMath::RoundToInt(TotalStock(TextRule(TEXT("inactive_worker_resource"))));for(const auto& B:Buildings)if(B.Health>0&&B.DisassemblyCommitted)--Count;return Count;}
 double FSeigeSimulation::DisassemblyEnergyKWh() const{return Policy?Number(TEXT("worker_disassembly_kwh")):0;}
@@ -46,7 +54,7 @@ FString FSeigeSimulation::ActiveProductionRecipe(const FSeigeBuilding& B) const
             const FString WorkerRecipe=TextRule(TEXT("population_recipe"));const auto Inputs=ProductionInputs(B,WorkerRecipe);bool Ready=true;
             for(const auto& P:Inputs)if(B.Inventory.FindRef(P.Key)+1.e-8<P.Value){Ready=false;break;}
             const double Reserved=FMath::Max(InventoryLitres(Inputs),ProductionOutputLitres(Recipes[WorkerRecipe]));
-            if(Occupied(B)-InventoryLitres(Inputs)+Reserved>D->StorageCapacity+1.e-8||!Energy.CanConsume(*this,B.Id,ProductionEnergy(B,WorkerRecipe)))Ready=false;
+            if(Reserved>StorageRoom(B)+InventoryLitres(Inputs)+1.e-8||!Energy.CanConsume(*this,B.Id,ProductionEnergy(B,WorkerRecipe)))Ready=false;
             // A blocked automatic worker batch must not prevent the selected
             // replicator recipe from making its missing parts or freeing storage.
             if(Ready)Id=WorkerRecipe;
@@ -73,7 +81,7 @@ bool FSeigeSimulation::StepRecipe(FSeigeBuilding& B,double Seconds)
     {
         if(!HasSpendable(B,Inputs)){B.Status=TEXT("Waiting for delivered inputs");return true;}
         const double Reserved=FMath::Max(InventoryLitres(Inputs),ProductionOutputLitres(R));
-        if(Occupied(B)-InventoryLitres(Inputs)+Reserved>Definition(B)->StorageCapacity+1.e-8){B.Status=TEXT("Storage full; production waiting");return true;}
+        if(Reserved>StorageRoom(B)+InventoryLitres(Inputs)+1.e-8){B.Status=TEXT("Storage full; production waiting");return true;}
         if(!Energy.Consume(*this,B.Id,ProductionEnergy(B,Id))){B.Status=TEXT("Waiting for batch energy in connected batteries");return true;}
         for(const auto& P:Inputs)B.Inventory.FindOrAdd(P.Key)=FMath::Max(0.,B.Inventory.FindRef(P.Key)-P.Value);
         B.ProductionInputs=Inputs;B.ProductionReservedLitres=Reserved;B.ProductionCommitted=true;B.CommittedRecipe=Id;B.Progress=0;
@@ -82,7 +90,7 @@ bool FSeigeSimulation::StepRecipe(FSeigeBuilding& B,double Seconds)
     if(B.Progress+UE_DOUBLE_SMALL_NUMBER>=1)
     {
         for(const auto& P:R.Outputs){B.Inventory.FindOrAdd(P.Key)+=P.Value;ProducedUnits.FindOrAdd(P.Key)+=P.Value;}
-        if(R.WorkerOutput>0)B.Inventory.FindOrAdd(TextRule(TEXT("inactive_worker_resource")))+=R.WorkerOutput;
+        if(R.WorkerOutput>0){B.Inventory.FindOrAdd(TextRule(TEXT("inactive_worker_resource")))+=R.WorkerOutput;Workers.NewStored(*this,B.Id,R.WorkerOutput);}
         B.ProductionInputs.Empty();B.ProductionReservedLitres=0;B.ProductionCommitted=false;B.CommittedRecipe.Empty();B.Progress=0;
     }
     return true;
@@ -113,7 +121,7 @@ void FSeigeSimulation::StepWorkerDisassembly(double Seconds)
         // Active overflow has already committed a workstation in StepPopulation.
         if(!B.DisassemblyCommitted&&B.DisassemblyQueued==0&&B.Inventory.FindRef(Resource)<1)continue;
         bool Shortage=false;if(Policy->GetBoolField(TEXT("auto_disassemble_parts_shortage")))for(const auto& P:Returns)if(ConstructionAvailable(P.Key)+1.e-8<P.Value){Shortage=true;break;}
-        const bool Full=Policy->GetBoolField(TEXT("auto_disassemble_storage_full"))&&Occupied(B)+Resources[Resource].LitresPerUnit>Definition(B)->StorageCapacity+1.e-8;
+        const bool Full=Policy->GetBoolField(TEXT("auto_disassemble_storage_full"))&&StorageRoom(B)+1.e-8<Resources[Resource].LitresPerUnit;
         if(B.DisassemblyQueued==0&&(Shortage||Full)&&DisassemblyAvailable(B)>=1)B.DisassemblyQueued=1;
         if(B.DisassemblyQueued<=0)continue;
         if(!B.DisassemblyCommitted)
@@ -121,11 +129,11 @@ void FSeigeSimulation::StepWorkerDisassembly(double Seconds)
             // Newly raised reserve targets and vacancies supersede unstarted recycling.
             const int32 Queued=B.DisassemblyQueued;B.DisassemblyQueued=0;const double Available=DisassemblyAvailable(B);B.DisassemblyQueued=FMath::Min(Queued,FMath::FloorToInt(Available));
             if(B.DisassemblyQueued<=0)continue;
-            if(Occupied(B)-Resources[Resource].LitresPerUnit+Volume>Definition(B)->StorageCapacity+1.e-8||!Energy.Consume(*this,B.Id,Number(TEXT("worker_disassembly_kwh"))))continue;
-            B.Inventory.FindOrAdd(Resource)-=1;B.DisassemblyCommitted=true;B.DisassemblyReservedLitres=Volume;B.DisassemblyProgress=0;
+            if(Workers.StoredAt(B.Id)<1||Volume>StorageRoom(B)+Resources[Resource].LitresPerUnit+1.e-8||!Energy.Consume(*this,B.Id,Number(TEXT("worker_disassembly_kwh"))))continue;
+            Workers.BeginDisassembly(*this,B.Id);B.Inventory.FindOrAdd(Resource)-=1;B.DisassemblyCommitted=true;B.DisassemblyReservedLitres=Volume;B.DisassemblyProgress=0;
         }
         B.DisassemblyProgress=FMath::Min(1.,B.DisassemblyProgress+Seconds*WorkFraction(B)/Number(TEXT("worker_disassemble_seconds")));
-        if(B.DisassemblyProgress+UE_DOUBLE_SMALL_NUMBER>=1){for(const auto& P:Returns)B.Inventory.FindOrAdd(P.Key)+=P.Value;++WorkersDisassembled;--B.DisassemblyQueued;B.DisassemblyCommitted=false;B.DisassemblyProgress=B.DisassemblyReservedLitres=0;}
+        if(B.DisassemblyProgress+UE_DOUBLE_SMALL_NUMBER>=1){for(const auto& P:Returns)B.Inventory.FindOrAdd(P.Key)+=P.Value;Workers.FinishDisassembly(*this,B.Id);++WorkersDisassembled;--B.DisassemblyQueued;B.DisassemblyCommitted=false;B.DisassemblyProgress=B.DisassemblyReservedLitres=0;}
     }
 }
 
@@ -133,32 +141,8 @@ void FSeigeSimulation::StepPopulation(double Seconds)
 {
     auto* C=Core();if(!C||C->Health<=0||C->IsConstructing)return;
     const int32 Target=FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))));const FString Worker=TextRule(TEXT("inactive_worker_resource"));
-    if(Population<Target&&Population<RobotSupportCapacity)
-    {
-        WorkerReactivateClock+=Seconds;
-        while(WorkerReactivateClock>=Number(TEXT("worker_reactivate_seconds"))&&Population<FMath::Min(Target,RobotSupportCapacity))
-        {
-            FSeigeBuilding* Stock=nullptr;for(auto& B:Buildings)if(B.Health>0&&!B.IsConstructing&&B.Inventory.FindRef(Worker)-(B.DisassemblyQueued-(B.DisassemblyCommitted?1:0))-Trade.Demand(*this,B.Id,Worker)>=1){Stock=&B;break;}
-            if(!Stock){WorkerReactivateClock=Number(TEXT("worker_reactivate_seconds"));break;}Stock->Inventory.FindOrAdd(Worker)-=1;++Population;WorkerReactivateClock-=Number(TEXT("worker_reactivate_seconds"));
-        }
-    }
-    else WorkerReactivateClock=0;
-    if(Population>Target)
-    {
-        WorkerStoreClock+=Seconds;
-        while(WorkerStoreClock>=Number(TEXT("worker_store_seconds"))&&Population>Target&&Population>Employed)
-        {
-            FSeigeBuilding* Storage=nullptr;for(auto& B:Buildings)if(B.Health>0&&!B.IsConstructing&&Definition(B)->StoresInactiveWorkers&&Occupied(B)+Resources[Worker].LitresPerUnit<=Definition(B)->StorageCapacity+1.e-8){Storage=&B;break;}
-            if(Storage){--Population;Storage->Inventory.FindOrAdd(Worker)+=1;WorkerStoreClock-=Number(TEXT("worker_store_seconds"));continue;}
-            // An unassigned body can enter the core's recycling workstation when
-            // warehouse slots are full. Its outputs still reserve actual storage.
-            const double OutputVolume=InventoryLitres(DisassemblyOutputs());
-            if(Policy->GetBoolField(TEXT("auto_disassemble_storage_full"))&&!C->DisassemblyCommitted&&C->DisassemblyQueued==0&&WorkFraction(*C)>0&&Occupied(*C)+OutputVolume<=Definition(*C)->StorageCapacity+1.e-8&&Energy.Consume(*this,C->Id,Number(TEXT("worker_disassembly_kwh"))))
-            {--Population;C->DisassemblyQueued=1;C->DisassemblyCommitted=true;C->DisassemblyProgress=0;C->DisassemblyReservedLitres=OutputVolume;WorkerStoreClock-=Number(TEXT("worker_store_seconds"));continue;}
-            WorkerStoreClock=Number(TEXT("worker_store_seconds"));break;
-        }
-    }
-    else WorkerStoreClock=0;
+    // Bodies reactivate/store only through the physical worker lifecycle.
+    WorkerReactivateClock=WorkerStoreClock=0;
     PopulationClock=0; // Kept in the serialized base clock set; batches own assembly time.
     UpkeepClock+=Seconds;
     while(UpkeepClock>=Number(TEXT("upkeep_interval")))

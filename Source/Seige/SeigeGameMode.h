@@ -8,6 +8,7 @@
 #include "SeigeGameMode.generated.h"
 
 class FSeigeScenarioAI;
+class UTexture2D;
 struct FSeigeSceneryStreamState;
 struct FSeigeScenarioPreparation;
 struct FSeigeNeighbor
@@ -40,6 +41,20 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
     FSeigeSimulation Sim;
+    FSeigeWorldCalendar ScenarioCalendar;
+    void ResetScenarioCalendar();
+    void BindScenarioCalendar();
+    FString CalendarLabel() const;
+    bool LoadWeatherSettings();
+    void UpdateWeather(float DeltaSeconds=0);
+    double SnowCoverage() const;
+    float NightSkyFraction=.5f,NightExposureOffsetEV=2.f,SunriseSoftness=.12f,WinterAccumulationFraction=.08f,WinterMeltFraction=.12f,MaximumSnowCoverage=.92f;
+    float SnowRadiusMeters=32,SnowHeightMeters=24,SnowFallMetersPerSecond=1.4f,SnowflakeSizeCentimeters=2.2f;
+    float SunDirectionUpdateDegrees=.15f,SunShadowUpdateSeconds=.5f;
+    double LastWeatherSunUpdate=-1;
+    bool HasWeatherSunDirection=false;
+    int32 SnowflakeCount=384;
+    FString SnowCollectionPath,SnowflakeMaterialPath,AmbientCubemapPath;
     FString Error, Notice, SelectedBuild;
     int32 SelectedId=0;
     int32 SelectedCompanionId=0;
@@ -164,7 +179,7 @@ public:
     FVector RenderPosition(FVector2D Position,float HeightOffset=0) const;
     bool TraceGroundRay(const FVector& Origin,const FVector& Direction,FVector& Hit) const;
     bool SelectBuildingRay(const FVector& Origin,const FVector& Direction);
-    void RebuildTerrainHeights();
+    void RebuildTerrainHeights(bool ReuseUnchangedTiles=false);
     void RefreshTransportScenery();
     bool IsSceneryStreamingReady() const;
     int32 PendingSceneryCells() const;
@@ -187,6 +202,11 @@ private:
     friend class FSeigeCompanionViewTest;
     friend class FSeigeCommandShuttlePickTest;
 #endif
+    UPROPERTY() TObjectPtr<class UDirectionalLightComponent> WeatherSun;
+    UPROPERTY() TObjectPtr<class USkyLightComponent> WeatherSky;
+    UPROPERTY() TObjectPtr<class UTextureCube> WeatherAmbientCubemap;
+    UPROPERTY() TObjectPtr<class UMaterialParameterCollection> WeatherCollection;
+    UPROPERTY() TObjectPtr<class UInstancedStaticMeshComponent> Snowflakes;
     UPROPERTY() TObjectPtr<class ACameraActor> Camera;
     FString CompanionVisualAssetKey;
     UPROPERTY() TObjectPtr<class USkeletalMesh> CompanionMesh;
@@ -207,6 +227,7 @@ private:
     bool GraphicsSettingsValid=true;
     int32 PresentationSmokeStage=0,SmokeFailures=0;
     void RunPresentationSmoke();
+    void RunWorldReview();
     void RunDisplaySmoke();
     void RunGraphicsBenchmark(float DeltaSeconds);
     TSharedPtr<FSeigeScenarioAI> CenterBrain;
@@ -217,14 +238,17 @@ private:
     UMaterialInterface* Material(FLinearColor Color);
     AActor* Visual(const FString& Key, const FString& Kind, FVector Location, FLinearColor Color, float Size);
     void Part(AActor* Actor,const FString& Shape,FVector Offset,FVector Scale,FLinearColor Color,FRotator Rotation=FRotator::ZeroRotator);
-    void CreateLandscape();
+    void CreateLandscape(bool SectorTransition=false);
+    void CreateEnvironmentWater();
     void RefreshEnvironment();
     void RefreshBuildingPads();
     FString TerrainPadSignature;
     FString RoadGhostSignature;
     FString BuildingPlotGhostSignature;
     TMap<FString,FVector4> TerrainPadBounds;
-    void CreateFoliage();
+    void CreateFoliage(int32 PreviousSector=INDEX_NONE);
+    void RefreshDepositGeology(bool Force=false);
+    FString DepositVisibilitySignature;
     void CreateGroundCover();
     TSharedPtr<FSeigeSceneryStreamState> SceneryStream;
     int32 RenderedSector=-1;
@@ -255,6 +279,7 @@ private:
     double RenderSimulationTime(const FSeigeSimulation& Colony) const;
     double RenderConstructionProgress(const FSeigeSimulation& Colony,const FSeigeBuilding& Building) const;
     void SyncWorkerVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
+    void SyncWorkerAgents(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live);
     void SyncInventoryVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
     void SyncStockpile(const FSeigeResourceDef& Resource,double Amount,FVector2D Position,const FString& Key,TSet<FString>& Live);
 };
@@ -327,6 +352,7 @@ private:
     FString BuildingInfoSection;
     int32 BuildingInfoPage=0;
     TMap<FString,FSeigeDepositLabelState> DepositLabels;
+    UPROPERTY(Transient) TMap<FString,TObjectPtr<UTexture2D>> PortraitTextures;
     FVector LabelCameraPosition=FVector(1.e10,1.e10,1.e10);
     FRotator LabelCameraRotation=FRotator::ZeroRotator;
     FVector2D LabelViewport=FVector2D::ZeroVector;
@@ -357,6 +383,7 @@ private:
     TArray<FString> WrapLines(const FString& Text,float Width,float Size) const;
     float DrawNotice(ASeigeGameMode& GameMode,float Width,float Height);
     void Icon(const FString& Visual,float X,float Y,float Size,FLinearColor Color);
+    bool Portrait(const FString& Name,float X,float Y,float Width,float Height,float Opacity=1);
     void Frame(float X,float Y,float W,float H);
     void Description(const FSeigeBuildingDef& Def,ASeigeGameMode& GameMode,float X,float Y,float Width);
     bool ExecuteAction(const FString& Action,ASeigeGameMode& GameMode);

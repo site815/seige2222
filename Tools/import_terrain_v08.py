@@ -75,6 +75,7 @@ def save(m):
 
 terrain=material('M_TerrainV08')
 inputs={'World':node(terrain,u.MaterialExpressionWorldPosition),
+        'SurfaceUp':node(terrain,u.MaterialExpressionVertexNormalWS),
         'Weights':node(terrain,u.MaterialExpressionVertexColor),
         'Vigor':node(terrain,u.MaterialExpressionVertexColor),
         'Camera':node(terrain,u.MaterialExpressionCameraPositionWS)}
@@ -125,6 +126,20 @@ for i,layer in enumerate(layers):
     float2 uv=World.xy*{layer}Scale;
     float2 gx=dx*{layer}Scale, gy=dy*{layer}Scale;
 '''
+    if layer=='Rock':
+        code+='''
+    // A top-down projection stretches into vertical ribbons on cliff faces.
+    // Select the dominant physical surface plane without extra texture reads.
+    float3 plane=abs(normalize(SurfaceUp));
+    if(plane.x>plane.z && plane.x>=plane.y) uv=World.yz*RockScale;
+    else if(plane.y>plane.z) uv=World.xz*RockScale;
+    gx=ddx(uv); gy=ddy(uv);
+    // Gently warp the rock plane across several texture repetitions. The same
+    // coordinates drive colour/normal/roughness; explicit derivatives retain
+    // ordinary mip filtering on the distorted face.
+    uv+=float2(sin(uv.y*.61+sin(uv.x*.29)),cos(uv.x*.47+sin(uv.y*.37)))*.73;
+    gx=ddx(uv); gy=ddy(uv);
+'''
     if layer=='Forest':
         code+='''
     // The retained forest scan has a strong directional brightness band.
@@ -143,6 +158,15 @@ for i,layer in enumerate(layers):
     }
     ratio=clamp(ratio,.12,2.60);
     float surfaceDetail=detail*(1-forestPatternFade);
+'''
+    elif layer=='Rock':
+        code+='''
+    float2 uv2=float2(uv.x*.79863551-uv.y*.60181502,uv.x*.60181502+uv.y*.79863551)*.427+float2(.417,.193);
+    float3 a=Texture2DSampleGrad(RockColor,RockColorSampler,uv,gx,gy).rgb;
+    float3 b=Texture2DSampleGrad(RockColor,RockColorSampler,uv2,ddx(uv2),ddy(uv2)).rgb;
+    // Equal rotated samples reduce the boulder's recognisable tile pattern.
+    float3 ratio=clamp(lerp(a,b,.5)/max(RockMean.rgb,.001),.45,1.65);
+    float surfaceDetail=detail;
 '''
     else:
         code+=f'''

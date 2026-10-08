@@ -112,6 +112,7 @@ struct FPreparedTerrain
     double RidgeCos=0,RidgeSin=0;
     explicit FPreparedTerrain(const ASeigeGameMode& G):Game(G)
     {
+        Signature=G.Sim.Environment.Fingerprint+TEXT(";");
         const double Angle=FMath::DegreesToRadians(double(G.RidgeAngleDegrees));
         RidgeCos=FMath::Cos(Angle);RidgeSin=FMath::Sin(Angle);
         auto AddColony=[&](const FSeigeSimulation& Colony,FVector2D Offset,int32 Index)
@@ -178,9 +179,10 @@ struct FPreparedTerrain
         const double Along=(Delta.X*RidgeCos+Delta.Y*RidgeSin)/Game.RidgeLength;
         const double Across=(-Delta.X*RidgeSin+Delta.Y*RidgeCos)/Game.RidgeWidth;
         const double Ridge=Game.RidgeHeight*FMath::Exp(-Across*Across-Along*Along*Along*Along);
-        return FMath::PerlinNoise2D(P/13000+FVector2D(17.8,-8.1))*1500+
+        const double Base=FMath::PerlinNoise2D(P/13000+FVector2D(17.8,-8.1))*1500+
             FMath::PerlinNoise2D(P/Game.RollingTerrainWavelength+FVector2D(-4.6,25.4))*Game.RollingTerrainAmplitude+
             FMath::PerlinNoise2D(P/Game.MicroTerrainWavelength+FVector2D(41.2,12.5))*Game.MicroTerrainAmplitude+Ridge;
+        return Game.Sim.Environment.ShapeHeight(P-Game.Sim.Environment.WorldOffset,Base);
     }
     double PadHeight(FVector2D P,double Base) const
     {
@@ -222,6 +224,9 @@ struct FPreparedTerrain
             WeightedHeight+=Target*BlendWeight;TotalWeight+=BlendWeight;Influence=FMath::Max(Influence,Weight);
         }
         if(TotalWeight>0)Base=FMath::Lerp(Base,WeightedHeight/TotalWeight,Influence);
+        // Dry building bodies may still have a broad smoothing shoulder near
+        // a bank. Do not let that shoulder fill the physical river/lake bed.
+        if(Game.Sim.Environment.WaterAt(P-Game.Sim.Environment.WorldOffset).Present)return Natural(P);
         return PadHeight(P,Base);
     }
 };
@@ -276,16 +281,19 @@ double ASeigeGameMode::GroundHeight(FVector2D P) const
     }
     return TerrainHeight(P);
 }
-void ASeigeGameMode::RebuildTerrainHeights()
+void ASeigeGameMode::RebuildTerrainHeights(bool ReuseUnchangedTiles)
 {
     const double Started=FPlatformTime::Seconds();
     const double Half=Sim.WorldHalfSize;
     const FPreparedTerrain Prepared(*this);
+    const bool Reuse=ReuseUnchangedTiles&&TerrainTiles.Num()==9&&TerrainPadSignature==Prepared.Signature;
     TerrainPadSignature=Prepared.Signature;TerrainPadBounds=Prepared.Bounds;
-    TerrainTiles.Reset();
+    TArray<FSeigeTerrainTile> Previous;if(Reuse)Previous=MoveTemp(TerrainTiles);else TerrainTiles.Reset();
     for(int32 Y=-1;Y<=1;++Y)for(int32 X=-1;X<=1;++X)
     {
         FSeigeTerrainTile Tile;Tile.Offset=FVector2D(X,Y)*Half*2;Tile.Resolution=((Y+1)*3+X+1==DetailedSectorIndex())?DetailedTerrainResolution:128;
+        const int32 Index=(Y+1)*3+X+1;
+        if(Reuse&&Previous[Index].Resolution==Tile.Resolution&&Previous[Index].Offset==Tile.Offset){TerrainTiles.Add(MoveTemp(Previous[Index]));continue;}
         Tile.Heights.Reserve((Tile.Resolution+1)*(Tile.Resolution+1));
         for(int32 V=0;V<=Tile.Resolution;++V)for(int32 U=0;U<=Tile.Resolution;++U)
             Tile.Heights.Add(VertexHeight(Prepared,Tile,U,V));
@@ -398,19 +406,27 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
         Terrain->CreateMeshSection_LinearColor(0,Vertices,Triangles,Normals,UVs,Colors,Tangents,false);
 }
 }
-void ASeigeGameMode::CreateLandscape()
+void ASeigeGameMode::CreateLandscape(bool SectorTransition)
 {
     if(!FApp::CanEverRender())return;
     const double Started=FPlatformTime::Seconds();
-    if(Landscape)Landscape->Destroy();
-    auto* Ground=GetWorld()->SpawnActor<AActor>();
-    auto* Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();Landscape=Ground;
-    RenderedSector=DetailedSectorIndex();RebuildTerrainHeights();
+    const int32 PreviousSector=RenderedSector;
+    const bool Reuse=SectorTransition&&Landscape&&TerrainTiles.Num()==9&&PreviousSector>=0&&PreviousSector!=DetailedSectorIndex()&&TerrainPadSignature==FPreparedTerrain(*this).Signature;
+    if(!Reuse&&Landscape)Landscape->Destroy();
+    auto* Ground=Reuse?Landscape.Get():GetWorld()->SpawnActor<AActor>();
+    auto* Root=Ground->GetRootComponent();if(!Root){Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();}Landscape=Ground;
+    if(Reuse)
+    {
+        TArray<UProceduralMeshComponent*> Existing;Ground->GetComponents(Existing);
+        for(auto* Mesh:Existing)if(Mesh->ComponentTags.Num()==3){const int32 Tile=FCString::Atoi(*Mesh->ComponentTags[0].ToString());if(Tile==PreviousSector||Tile==DetailedSectorIndex())Mesh->DestroyComponent();}
+    }
+    RenderedSector=DetailedSectorIndex();RebuildTerrainHeights(Reuse);
     const auto DirtPatches=PrepareDirt(*this);
     auto* TerrainMaterial=LoadObject<UMaterialInterface>(nullptr,*TerrainMaterialPath,nullptr,LOAD_NoWarn);
     for(int32 TileIndex=0;TileIndex<TerrainTiles.Num();++TileIndex)
     {
         const auto& Tile=TerrainTiles[TileIndex];
+        if(Reuse&&TileIndex!=PreviousSector&&TileIndex!=RenderedSector)continue;
         for(int32 Y=0;Y<Tile.Resolution;Y+=TerrainChunkCells)for(int32 X=0;X<Tile.Resolution;X+=TerrainChunkCells)
         {
             auto* Terrain=NewObject<UProceduralMeshComponent>(Ground);
@@ -425,7 +441,8 @@ void ASeigeGameMode::CreateLandscape()
         }
     }
     UE_LOG(LogTemp,Display,TEXT("Terrain surface ready: focused %d grid, eight 128 grids, %.3f seconds before foliage"),DetailedTerrainResolution,FPlatformTime::Seconds()-Started);
-    CreateFoliage();
+    if(!Reuse)CreateEnvironmentWater();
+    CreateFoliage(Reuse?PreviousSector:INDEX_NONE);
 }
 void ASeigeGameMode::RefreshBuildingPads()
 {
@@ -571,6 +588,14 @@ TArray<FSceneryClearance> VisibleClearances(const ASeigeGameMode& G)
 bool IsSceneryClear(const ASeigeGameMode& G,FVector2D P,double Radius,FVector2D Offset,double Half,const TArray<FSceneryClearance>& Areas)
 {
     const FVector2D Local=P-Offset;if(FMath::Abs(Local.X)>Half||FMath::Abs(Local.Y)>Half)return true;
+    if(!G.Sim.Environment.CanStand(P-G.Sim.Environment.WorldOffset,Radius))return true;
+    if(G.Sim.Environment.Enabled)for(const auto& Cliff:G.Sim.Environment.Cliffs)
+    {
+        const double ShortRadius=FMath::Min(Cliff.Radii.X,Cliff.Radii.Y);
+        if(Cliff.Height/(ShortRadius*Cliff.EdgeRatio)<.65)continue;
+        const double Distance=((P-Cliff.Center)/Cliff.Radii).Size(),Margin=Radius/ShortRadius;
+        if(Distance>1-Cliff.EdgeRatio-Margin&&Distance<1+Margin)return true;
+    }
     for(const auto& A:Areas)
     {
         const FVector2D Closest=A.Segment?ClosestRoadPoint(P,A.Position,A.End):A.Position;
@@ -635,12 +660,18 @@ void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
     }
 }
 }
-void ASeigeGameMode::CreateFoliage()
+void ASeigeGameMode::CreateFoliage(int32 PreviousSector)
 {
     if(!FApp::CanEverRender())return;
     const double Started=FPlatformTime::Seconds();
-    if(Foliage)Foliage->Destroy();if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}SceneryStream.Reset();SceneryMeshReferences.Reset();
-    auto* Ground=GetWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();Foliage=Ground;
+    const bool Reuse=PreviousSector!=INDEX_NONE&&Foliage;
+    if(!Reuse&&Foliage)Foliage->Destroy();if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}SceneryStream.Reset();SceneryMeshReferences.Reset();
+    auto* Ground=Reuse?Foliage.Get():GetWorld()->SpawnActor<AActor>();auto* Root=Ground->GetRootComponent();if(!Root){Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();}Foliage=Ground;
+    if(Reuse)
+    {
+        TArray<UInstancedStaticMeshComponent*> Existing;Ground->GetComponents(Existing);
+        for(auto* Set:Existing)if(Set->ComponentHasTag(FName(*FString::Printf(TEXT("seige_forest_sector:%d"),PreviousSector)))||Set->ComponentHasTag(FName(*FString::Printf(TEXT("seige_forest_sector:%d"),DetailedSectorIndex()))))Set->DestroyComponent();
+    }
     const double Half=Sim.WorldHalfSize,FarDistance=Half*RenderScale*8;
     auto* BroadProxy=LoadObject<UStaticMesh>(nullptr,*BroadleafProxyAsset,nullptr,LOAD_NoWarn);
     auto* PineProxy=LoadObject<UStaticMesh>(nullptr,*ConiferProxyAsset,nullptr,LOAD_NoWarn);
@@ -652,9 +683,10 @@ void ASeigeGameMode::CreateFoliage()
         const FString Name=TEXT("SM_")+Kind,Path=NatureAssets.Contains(Kind)?NatureAssets[Kind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
         if(auto* Mesh=LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn))Meshes.Add(Kind,Mesh);
     }
+    int32 ActiveSector=0;
     auto EnsureSet=[&](const FString& Kind,int32 Band,bool Proxy)->UInstancedStaticMeshComponent*
     {
-        const FName Key(*FString::Printf(TEXT("%s_%d_%s"),*Kind,Band,Proxy?TEXT("proxy"):TEXT("detail")));
+        const FName Key(*FString::Printf(TEXT("%d_%s_%d_%s"),ActiveSector,*Kind,Band,Proxy?TEXT("proxy"):TEXT("detail")));
         if(auto** Existing=Sets.Find(Key))return *Existing;
         const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
         auto* Source=Meshes.FindRef(Kind);auto* ProxyMesh=Kind.StartsWith(TEXT("Pine"))?PineProxy:BroadProxy;
@@ -664,6 +696,7 @@ void ASeigeGameMode::CreateFoliage()
         const double Cut=(ForestDetailDistanceMeters+ForestLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
         auto* Set=VegetationSet(Ground,Root,Proxy?ProxyMesh:Source,Kind,false,0,Proxy?Cut:0,Tree?(Proxy?FarDistance:HasProxy?Cut:FarDistance):FarDistance);
         if(!Set)return nullptr;
+        Set->ComponentTags.Add(FName(*FString::Printf(TEXT("seige_forest_sector:%d"),ActiveSector)));
         if(Proxy)
         {
             Set->ComponentTags.Add(ProxyTag);Set->SetCastShadow(NeighborForestShadows);
@@ -677,14 +710,14 @@ void ASeigeGameMode::CreateFoliage()
         const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
         auto* Source=Meshes.FindRef(Kind);if(!Source)return;
         const FTransform Transform(FRotator(0,Yaw,0),RenderPosition(P),FVector(Size));
-        const FName DetailKey(*FString::Printf(TEXT("%s_%d_detail"),*Kind,Band));
+        const FName DetailKey(*FString::Printf(TEXT("%d_%s_%d_detail"),ActiveSector,*Kind,Band));
         if(EnsureSet(Kind,Band,false))Batches.FindOrAdd(DetailKey).Add(Transform);
         if(Tree)if(auto* Proxy=Kind.StartsWith(TEXT("Pine"))?PineProxy:BroadProxy)
         {
             if(EnsureSet(Kind,Band,true))
             {
                 const FTransform Far=AlignProxyBounds(Transform,Source,Proxy);
-                const FName ProxyKey(*FString::Printf(TEXT("%s_%d_proxy"),*Kind,Band));
+                const FName ProxyKey(*FString::Printf(TEXT("%d_%s_%d_proxy"),ActiveSector,*Kind,Band));
                 Batches.FindOrAdd(ProxyKey).Add(Far);
             }
         }
@@ -694,6 +727,7 @@ void ASeigeGameMode::CreateFoliage()
     // focus level. Only the representation changes with camera distance.
     for(int32 Sector=0;Sector<9;++Sector)
     {
+        if(Reuse&&Sector!=PreviousSector&&Sector!=DetailedSectorIndex())continue;ActiveSector=Sector;
         const FVector2D Offset=FVector2D(Sector%3-1,Sector/3-1)*Half*2;
         const FSeigeSimulation* Colony=Sector==4?&Sim:nullptr;
         if(!Colony)for(const auto& N:Neighbors)if(N.Index==Sector){Colony=&N.Sim;break;}
@@ -716,18 +750,58 @@ void ASeigeGameMode::CreateFoliage()
         };
         for(int32 I=0;I<ForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half)),I);
         for(int32 I=0;I<NearForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000)),I);
-        // Resource-specific clusters must not reveal a hidden neighbor's nodes.
-        if(Sector==DetailedSectorIndex()&&Colony&&(Observer||Sector==4))for(const auto& N:Colony->Nodes)for(int32 I=0;I<13;++I)
-        {
-            const FVector2D P=Offset+N.Position+FVector2D(R.FRandRange(-125,125),R.FRandRange(-125,125));
-            const double Size=R.FRandRange(.35,.8),Yaw=R.FRandRange(0,360);
-            if(IsSceneryClear(*this,P,30,Offset,Half,Areas))continue;
-            Add(I%2?TEXT("RockA"):TEXT("RockB"),P,Size,Yaw,0);
-        }
+
     }
     for(auto& Pair:Batches)if(auto** Set=Sets.Find(Pair.Key))(*Set)->AddInstances(Pair.Value,false,false,false);
     UE_LOG(LogTemp,Display,TEXT("SCENERY_FOREST_READY: %d stable trees across nine sectors, %d ISM batches, %.3f seconds; opaque distance proxies %s"),Trees,Sets.Num(),FPlatformTime::Seconds()-Started,BroadProxy&&PineProxy?TEXT("enabled"):TEXT("fallback"));
+    RefreshDepositGeology(true);
     CreateGroundCover();
+}
+void ASeigeGameMode::RefreshDepositGeology(bool Force)
+{
+    if(!FApp::CanEverRender()||!Foliage)return;
+    const int32 Sector=DetailedSectorIndex();
+    const auto* Nodes=RegionNodes(Sector);
+    FString Signature=FString::FromInt(Sector)+TEXT("|")+TerrainPadSignature;
+    if(Nodes)for(const auto& Deposit:*Nodes)if(IsRegionResourceVisible(Sector,Deposit))Signature+=TEXT("|")+FString::FromInt(Deposit.Id);
+    if(!Force&&Signature==DepositVisibilitySignature)return;
+    DepositVisibilitySignature=MoveTemp(Signature);
+    TArray<UInstancedStaticMeshComponent*> Existing;Foliage->GetComponents(Existing);
+    for(auto* Set:Existing)if(Set->ComponentHasTag(TEXT("seige_deposit")))Set->DestroyComponent();
+    if(!Nodes)return;
+    const double Half=Sim.WorldHalfSize,FarDistance=Half*RenderScale*8;
+    const FVector2D Offset=DetailedSectorOffset();
+    const FString MeshKind=TEXT("RockA"),Name=TEXT("SM_RockA");
+    const FString MeshPath=NatureAssets.Contains(MeshKind)?NatureAssets[MeshKind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
+    auto* Mesh=LoadObject<UStaticMesh>(nullptr,*MeshPath,nullptr,LOAD_NoWarn);if(!Mesh)return;
+    const auto Areas=VisibleClearances(*this);
+    auto* Ground=Foliage.Get();auto* Root=Ground->GetRootComponent();
+    // Sensor/observer changes can reveal a deposit without changing sectors.
+    // Refresh only these small components; retain the forest and grass caches.
+    for(const auto& Deposit:*Nodes)
+        {
+            if(!IsRegionResourceVisible(Sector,Deposit))continue;
+            const FString Kind=TEXT("Deposit_")+Deposit.Resource;
+            auto* Set=VegetationSet(Ground,Root,Mesh,Kind,false,0,0,FarDistance);if(!Set)continue;
+            Set->ComponentTags.Add(TEXT("seige_deposit"));
+            const FString Path=FString::Printf(TEXT("/Game/Art/EnvironmentV09/M_Deposit_%s.M_Deposit_%s"),*Deposit.Resource,*Deposit.Resource);
+            auto* Surface=LoadObject<UMaterialInterface>(nullptr,*Path,nullptr,LOAD_NoWarn);
+            if(!Surface)Surface=Material(Sim.Resources.FindRef(Deposit.Resource).Color*.35f);
+            for(int32 Slot=0;Slot<Mesh->GetStaticMaterials().Num();++Slot)Set->SetMaterial(Slot,Surface);
+            FRandomStream DepositRandom(uint32(Deposit.Id)*1637u+uint32(Sector)*100003u);
+            TArray<FTransform> Outcrop;TArray<FSceneryClearance> SolidAreas;for(const auto& Area:Areas)if(Area.Square||Area.Segment)SolidAreas.Add(Area);
+            const bool Crystal=Deposit.Resource==TEXT("crystalline"),Wet=Deposit.Resource==TEXT("water"),Organic=Deposit.Resource==TEXT("carbon");
+            for(int32 I=0;I<19;++I)
+            {
+                const double Angle=DepositRandom.FRandRange(0,2*PI),Radius=DepositRandom.FRandRange(12,190);
+                const FVector2D P=Offset+Deposit.Position+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Radius;
+                if(IsSceneryClear(*this,P,25,Offset,Half,SolidAreas))continue;
+                const double Scale=DepositRandom.FRandRange(.42,.95);
+                const FVector Shape=Crystal?FVector(.6,.75,1.8):Wet||Organic?FVector(1.35,1.15,.3):FVector(1,1,.75);
+                Outcrop.Add(FTransform(FRotator(0,DepositRandom.FRandRange(0,360),0),RenderPosition(P),Shape*Scale));
+            }
+            Set->AddInstances(Outcrop,false,false,false);
+        }
 }
 void ASeigeGameMode::CreateGroundCover()
 {
@@ -899,7 +973,7 @@ void ASeigeGameMode::CreateGroundCover()
     {
         if(State.PendingIndex==MIN_int32)
         {
-            bool Found=false;int32 BestPriority=5;FIntPoint SelectedCell;
+            bool Found=false;int32 BestPriority=5;FIntPoint SelectedCell=FIntPoint::ZeroValue;
             // Detail replacements are preloaded before the camera reaches the
             // handoff band; proxy-only cells extend much farther into the view.
             for(const FIntPoint Cell:State.Wanted)
@@ -1039,7 +1113,7 @@ void ASeigeGameMode::RefreshEnvironment()
     if(!FApp::CanEverRender())return;const bool Map=RegionMapAlpha()>=1;
     if(!Map)
     {
-        if(RenderedSector!=DetailedSectorIndex()){SelectedId=0;SelectedBuild.Empty();CreateLandscape();}
+        if(RenderedSector!=DetailedSectorIndex()){SelectedId=0;SelectedBuild.Empty();CreateLandscape(true);}
         else
         {
             const FString Before=TerrainPadSignature;
@@ -1048,6 +1122,7 @@ void ASeigeGameMode::RefreshEnvironment()
             CreateGroundCover();
         }
     }
+    if(!Map)RefreshDepositGeology();
     if(Landscape)Landscape->SetActorHiddenInGame(Map);if(Foliage)Foliage->SetActorHiddenInGame(Map);if(GroundCover)GroundCover->SetActorHiddenInGame(Map);
 }
 void ASeigeGameMode::RefreshTransportScenery()

@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.1",
+  "version": "prototype-9.0",
   "transport": {
     "meters_per_world_unit": 0.06,
     "worker_walk_kmh": 5,
@@ -20,7 +20,8 @@
         "construction_seconds_per_100_meters": 900,
         "construction_workers": 2,
         "cost_per_100_meters": {
-          "alloy": 6
+          "alloy": 40,
+          "conductors": 20
         },
         "minimum_construction_seconds": 120,
         "visual": "road",
@@ -36,8 +37,9 @@
         "construction_seconds_per_100_meters": 1800,
         "construction_workers": 2,
         "cost_per_100_meters": {
-          "alloy": 12,
-          "components": 2
+          "alloy": 120,
+          "conductors": 20,
+          "components": 20
         },
         "minimum_construction_seconds": 240,
         "visual": "rail",
@@ -53,9 +55,10 @@
         "construction_seconds_per_100_meters": 3600,
         "construction_workers": 2,
         "cost_per_100_meters": {
-          "alloy": 18,
-          "circuits": 4,
-          "components": 4
+          "alloy": 240,
+          "conductors": 40,
+          "circuits": 20,
+          "components": 60
         },
         "minimum_construction_seconds": 480,
         "visual": "vacuum",

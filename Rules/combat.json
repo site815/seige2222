@@ -21,15 +21,22 @@
   "bug_weapon": "bug_plasma",
   "building_platforms": {
     "command_core": {
-      "mount_points": 64,
-      "max_weapon_mass_kg": 128000,
+      "mount_points": 32,
+      "max_weapon_mass_kg": 64000,
       "shield_hp": 500,
       "armor_hp": 600,
       "loadout": [
         "laser_large",
-        "laser_large",
-        "laser_large",
-        "laser_large"
+        "laser_medium",
+        "laser_medium",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small"
       ]
     },
     "turret": {
@@ -69,15 +76,22 @@
       ]
     },
     "command_core_2": {
-      "mount_points": 64,
-      "max_weapon_mass_kg": 128000,
+      "mount_points": 32,
+      "max_weapon_mass_kg": 64000,
       "shield_hp": 1000,
       "armor_hp": 1200,
       "loadout": [
         "laser_large",
-        "laser_large",
-        "laser_large",
-        "laser_large"
+        "laser_medium",
+        "laser_medium",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small"
       ]
     },
     "turret_2": {
@@ -117,15 +131,22 @@
       ]
     },
     "command_core_3": {
-      "mount_points": 64,
-      "max_weapon_mass_kg": 128000,
+      "mount_points": 32,
+      "max_weapon_mass_kg": 64000,
       "shield_hp": 1500,
       "armor_hp": 1800,
       "loadout": [
         "laser_large",
-        "laser_large",
-        "laser_large",
-        "laser_large"
+        "laser_medium",
+        "laser_medium",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small",
+        "laser_small"
       ]
     },
     "turret_3": {

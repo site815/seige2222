@@ -8,7 +8,9 @@ Alien pressure, automatic combat, privateering, raids, theft, and colony defense
 
 ## Current conflict scope
 
-**Confirmed full-game scope change:** Formal war against other colonies or regions is removed for now. Privateering, attacks on neighbors, and theft remain. The current v0.8 source implements player-directed privateer travel, local encounters, cargo theft and return through a bridge between separate colony simulations; bounded release checks passed; newly reported contact/feedback bugs remain queued for v0.9. Formal war declarations, territorial conquest, mercenary contracts and strategic AI privateer dispatch are not current mechanics.
+**Confirmed full-game scope change:** Formal war against other colonies or regions is removed for now. Privateering, attacks on neighbors, and theft remain. The retained combat implementation supports player-directed privateer travel, local encounters, cargo theft and return through a bridge between separate colony simulations; its bounded v0.8.1 release evidence is linked above. Formal war declarations, territorial conquest, mercenary contracts and strategic AI privateer dispatch are not current mechanics.
+
+**Current v0.9 correction:** Defensive flanking no longer stops short of a clear firing corner merely because the vehicle is within the ordinary one-metre station tolerance. It continues paid movement until its current firing line is clear or the chosen point is reached; ordinary station tolerance is unchanged. The focused native arrival regression passed cleanly, while the full suite and Shipping acceptance remain pending. See [guard behavior and its verification scope](WEAPONS_DEFENSES_AND_VEHICLE_OUTFITTING.md#fleets-and-the-command-center).
 
 The wider setting of humanity's war against the aliens remains. This change concerns conflict between neighboring colonies.
 
@@ -35,7 +37,7 @@ The wider setting of humanity's war against the aliens remains. This change conc
 
 **Confirmed and implemented:** Before starting a single-player scenario, independently choose **Background bugs** and **Periodic attacks**. Both default to ON, retaining the earlier roaming-plus-pulse behavior. Either source can be disabled independently; disabling both creates no new bugs while ordinary colony operation and objectives continue.
 
-The same choices govern the player or AI center and all occupied neighbors, including the elapsed simulation used to construct developed AI starts. They are not separate player protection timers. The settings remain fixed during play, are restored by save/load, and appear in the pressure interface; disabled periodic attacks have no active countdown. Existing numerical spawn, damage, repair and scaling rules are unchanged.
+The same choices govern the player or AI center and all occupied neighbors, during live play; the current established-state initializer does not replay a history of attacks. They are not separate player protection timers. The settings remain fixed during play, are restored by save/load, and appear in the pressure interface; disabled periodic attacks have no active countdown. Existing numerical spawn, damage, repair and scaling rules are unchanged.
 
 The final v0.7 native suite passed 38 tests cleanly, including independent spawning, all four frontend choices, developed AI preparation and save compatibility (`Saved/Automation/v07-final/index.json`). The v0.7 Shipping route passed 79 stages with zero failures and exit 0; see the [verification record](../verification/v0.7.0.json). These local scenario controls do not settle future persistent-server configuration or implement the wider raiding/fleet design below. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
 

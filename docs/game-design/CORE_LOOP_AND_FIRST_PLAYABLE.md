@@ -38,7 +38,7 @@ Workers automatically fill open jobs. Surplus workers occupy physical inactive s
 
 The recurring choice is what to build and prepare first. These priorities operate under three sources of pressure: roaming background aliens, periodic alien invasion pulses, and possible privateer attacks sent by developed neighbors. The latter is a possible consequence of neighboring an established faction, not a mandatory attack from every such faction.
 
-**Current local prototype:** v0.7 scenario setup independently enables background bugs and periodic attacks, both ON by default. The choices apply to every occupied colony and developed AI preparation, persist in saves, and remain fixed during play. Privateers are not implemented. These local options do not select persistent-server settings; see [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
+**Current local prototype:** Scenario setup independently enables background bugs and periodic attacks, both ON by default. The choices apply to every occupied colony after initialization, persist in saves, and remain fixed during play. Developed AI starts from an authored established state; it does not replay past attacks during loading. Player-directed privateering is implemented, while strategic AI privateer dispatch remains later work. These local options do not select persistent-server settings; see [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
 
 **Current scope:** Formal war against neighboring regions is removed. Privateering, attacks on neighbors, and theft remain part of the loop.
 
@@ -91,6 +91,8 @@ The following is a discussion outline, not a selected set of mechanics:
 ## Neighbor development at the start
 
 **Confirmed direction:** The player can make AI selections among the eight neighboring sectors. For each AI neighbor, the player can choose a developed colony representing an established human player or a newly founded colony starting out like the player. These choices allow single-player to represent different stages of settlement in a persistent world.
+
+**Confirmed setup correction:** The developed option loads an explicit established-colony manifest, not a simulated growth history. Starting AI keeps the same finite 9.57 t loose kit and six initial workers as the player. Normal paid operation and threats apply once either type is initialized; the established manifest is a one-time scenario boundary, not ongoing free production.
 
 Exact starting assets and development profiles remain open. See [World, Visibility, and Relocation](WORLD_AND_RELOCATION.md) for AI-neighbor setup.
 

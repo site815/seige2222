@@ -83,6 +83,7 @@ bool FSeigeWallSystem::Plan(const FSeigeSimulation& Sim,const TArray<FVector2D>&
         const double Plot=Sim.BuildingDefs[LevelDefinitions[0]].ReservedFootprint;
         const double WorkerClearance=Sim.Transport->GetNumberField(TEXT("path_clearance"));
         auto Occupies=[&](FVector2D P,double Clearance){return FMath::Abs(P.X-Mid.X)<Plot+Clearance&&FMath::Abs(P.Y-Mid.Y)<Plot+Clearance;};
+        for(const auto& W:Sim.Workers.Bodies)if(W.State==TEXT("active")&&W.Outdoor&&Occupies(W.Position,Sim.Workers.BodyRadiusMeters()/Metres)){Error=TEXT("Wait for the worker to leave the wall corridor");return false;}
         for(const auto& C:Sim.Couriers)if(Occupies(C.Position,WorkerClearance)){Error=TEXT("Wait for the delivery worker to leave the wall corridor");return false;}
         for(const auto& B:Sim.Buildings)if(B.Health>0&&((B.TravellingBuilders>0&&Occupies(B.BuilderPosition,WorkerClearance))||(B.BuildersOnSite>0&&Occupies(Sim.BuildingAccessPoint(B),WorkerClearance)))){Error=TEXT("Wait for the construction crew to leave the wall corridor");return false;}
         for(const auto& R:Sim.Roads)if(R.Health>0&&((R.TravellingBuilders>0&&Occupies(R.BuilderPosition,WorkerClearance))||(R.BuildersOnSite>0&&Occupies(Sim.RoadAccessPoint(R),WorkerClearance)))){Error=TEXT("Wait for the road crew to leave the wall corridor");return false;}

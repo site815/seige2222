@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 class FSeigeSimulation;
 class FJsonObject;
+struct FSeigeBuilding;
 struct FSeigeTradeShipment
 {
     FString Resource;
@@ -16,11 +17,13 @@ public:
     bool Initialize(const TSharedPtr<FJsonObject>& Document,const FSeigeSimulation& Sim,FString& Error);
     bool CanTrade(const FSeigeSimulation& Sim,int32 PortId,const FString& Resource,double Quantity,bool Buy,FString& Error) const;
     bool TryTrade(FSeigeSimulation& Sim,int32 PortId,const FString& Resource,double Quantity,bool Buy,FString& Error);
+    bool CancelPendingExport(FSeigeSimulation& Sim,int32 PortId,FString& Error);
     double Quote(const FString& Resource,double Quantity,bool Buy) const;
     void Tick(FSeigeSimulation& Sim,double Seconds);
     double Demand(const FSeigeSimulation& Sim,int32 BuildingId,const FString& Resource) const;
     const FSeigeTradePortDefinition* Definition(const FString& Id) const{return Ports.Find(Id);}
     TMap<FString,FSeigeTradePrice> Prices;
 private:
+    double ExportableStock(const FSeigeSimulation& Sim,const FSeigeBuilding& Building,const FString& Resource,bool OwnShipment=false) const;
     TMap<FString,FSeigeTradePortDefinition> Ports;
 };

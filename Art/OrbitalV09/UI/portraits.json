@@ -1,0 +1,62 @@
+{
+  "Factory": {
+    "source_mesh": "SM_Factory",
+    "source_blend": "Art/Source/Seige_Industry_Architecture.blend",
+    "texture": "/Game/Art/Interface/T_Building_Factory",
+    "size": 384
+  },
+  "Depot": {
+    "source_mesh": "SM_Depot",
+    "source_blend": "Art/Source/Seige_Industry_Architecture.blend",
+    "texture": "/Game/Art/Interface/T_Building_Depot",
+    "size": 384
+  },
+  "Extractor": {
+    "source_mesh": "SM_Extractor",
+    "source_blend": "Art/Source/Seige_Industry_Architecture.blend",
+    "texture": "/Game/Art/Interface/T_Building_Extractor",
+    "size": 384
+  },
+  "Sensor": {
+    "source_mesh": "SM_Sensor",
+    "source_blend": "Art/Source/Seige_Industry_Architecture.blend",
+    "texture": "/Game/Art/Interface/T_Building_Sensor",
+    "size": 384
+  },
+  "Turret": {
+    "source_mesh": "SM_Turret",
+    "source_blend": "Art/Source/Seige_Industry_Architecture.blend",
+    "texture": "/Game/Art/Interface/T_Building_Turret",
+    "size": 384
+  },
+  "RobotService": {
+    "source_mesh": "SM_RobotService",
+    "source_blend": "Art/Construction/Source/Seige_Construction_Assets.blend",
+    "texture": "/Game/Art/Interface/T_Building_RobotService",
+    "size": 384
+  },
+  "Shuttle": {
+    "source_mesh": "SM_Shuttle",
+    "source_blend": "Art/OrbitalV09/Source/Seige_Orbital_Workforce.blend",
+    "texture": "/Game/Art/Interface/T_Building_Shuttle",
+    "size": 384
+  },
+  "Core": {
+    "source_mesh": "SM_Core",
+    "source_blend": "Art/OrbitalV09/Source/Seige_Orbital_Workforce.blend",
+    "texture": "/Game/Art/Interface/T_Building_Core",
+    "size": 384
+  },
+  "Robot": {
+    "source_mesh": "SM_Robot",
+    "source_blend": "Art/OrbitalV09/Source/Seige_Orbital_Workforce.blend",
+    "texture": "/Game/Art/Interface/T_Building_Robot",
+    "size": 384
+  },
+  "Wall": {
+    "source_mesh": "SM_Wall",
+    "source_blend": "Source/Seige/SeigeWallVisuals.cpp",
+    "texture": "/Game/Art/Interface/T_Building_Wall",
+    "size": 384
+  }
+}

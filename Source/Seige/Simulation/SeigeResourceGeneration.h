@@ -9,6 +9,7 @@ struct FSeigeResourceGenerationSettings
 {
     int32 StandardCount=3, RareCount=2, AttemptBudget=512;
     double InnerAreaFraction=.75, MinimumSeparationHalfSizeFraction=.12;
+    TFunction<bool(FVector2D)> CanPlace;
 };
 SEIGE_API bool GenerateSeigeResourceNodes(const TMap<FString, FSeigeResourceDef>& Resources,
     int32 Seed, double WorldHalfSize, TArray<FSeigeNode>& OutNodes, FString& Error,

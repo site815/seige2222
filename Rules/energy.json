@@ -1,6 +1,7 @@
 {
-  "version": "prototype-8.1",
+  "version": "prototype-9.0",
   "energy": {
+    "dispatch_policy": "pending_defense_before_optional_transactions",
     "worker_kw": 0.1,
     "connection_tolerance_meters": 0.15,
     "minimum_operating_fraction": 1,
@@ -15,7 +16,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": true,
         "requires_road_grid": false,
-        "priority": 0
+        "priority": 0,
+        "generation_source": "constant"
       },
       "alloy_refinery": {
         "generation_kw": 0,
@@ -27,7 +29,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "conductor_works": {
         "generation_kw": 0,
@@ -39,7 +42,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "substrate_works": {
         "generation_kw": 0,
@@ -51,7 +55,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "circuit_works": {
         "generation_kw": 0,
@@ -63,7 +68,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "component_works": {
         "generation_kw": 0,
@@ -75,7 +81,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "sensor": {
         "generation_kw": 0,
@@ -87,7 +94,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 3
+        "priority": 3,
+        "generation_source": "constant"
       },
       "turret": {
         "generation_kw": 0,
@@ -99,7 +107,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 2
+        "priority": 2,
+        "generation_source": "constant"
       },
       "depot": {
         "generation_kw": 0,
@@ -111,7 +120,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "robot_service_bay": {
         "generation_kw": 0,
@@ -123,7 +133,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 1
+        "priority": 1,
+        "generation_source": "constant"
       },
       "solar_array": {
         "generation_kw": 25,
@@ -135,7 +146,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": true,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "solar"
       },
       "battery_bank": {
         "generation_kw": 0,
@@ -147,7 +159,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "trading_port": {
         "generation_kw": 0,
@@ -159,7 +172,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "trading_port_2": {
         "generation_kw": 0,
@@ -171,7 +185,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "trading_port_3": {
         "generation_kw": 0,
@@ -183,7 +198,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "biofuel_refinery": {
         "generation_kw": 0,
@@ -195,7 +211,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "fuel_refinery": {
         "generation_kw": 0,
@@ -207,7 +224,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "food_producer": {
         "generation_kw": 0,
@@ -219,7 +237,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "battery_works": {
         "generation_kw": 0,
@@ -231,7 +250,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "ai_chip_works": {
         "generation_kw": 0,
@@ -243,7 +263,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "fusion_reactor_works": {
         "generation_kw": 0,
@@ -255,7 +276,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "fuel_generator": {
         "generation_kw": 60,
@@ -267,7 +289,8 @@
         "fuel_buffer_seconds": 600,
         "self_start": true,
         "requires_road_grid": false,
-        "priority": 3
+        "priority": 3,
+        "generation_source": "constant"
       },
       "command_core_2": {
         "generation_kw": 60,
@@ -279,7 +302,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": true,
         "requires_road_grid": false,
-        "priority": 0
+        "priority": 0,
+        "generation_source": "constant"
       },
       "command_core_3": {
         "generation_kw": 120,
@@ -291,7 +315,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": true,
         "requires_road_grid": false,
-        "priority": 0
+        "priority": 0,
+        "generation_source": "constant"
       },
       "solar_array_2": {
         "generation_kw": 50,
@@ -303,7 +328,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": true,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "solar"
       },
       "solar_array_3": {
         "generation_kw": 100,
@@ -315,7 +341,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": true,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "solar"
       },
       "vehicle_factory": {
         "generation_kw": 0,
@@ -327,7 +354,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "vehicle_factory_2": {
         "generation_kw": 0,
@@ -339,7 +367,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "vehicle_factory_3": {
         "generation_kw": 0,
@@ -351,7 +380,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "tank_factory": {
         "generation_kw": 0,
@@ -363,7 +393,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "tank_factory_2": {
         "generation_kw": 0,
@@ -375,7 +406,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "tank_factory_3": {
         "generation_kw": 0,
@@ -387,7 +419,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "mech_factory": {
         "generation_kw": 0,
@@ -399,7 +432,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "mech_factory_2": {
         "generation_kw": 0,
@@ -411,7 +445,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "mech_factory_3": {
         "generation_kw": 0,
@@ -423,7 +458,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "worker_factory": {
         "generation_kw": 0,
@@ -435,7 +471,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "ammunition_works": {
         "generation_kw": 0,
@@ -447,7 +484,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "turret_2": {
         "generation_kw": 0,
@@ -459,7 +497,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "turret_3": {
         "generation_kw": 0,
@@ -471,7 +510,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "kinetic_tower": {
         "generation_kw": 0,
@@ -483,7 +523,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "kinetic_tower_2": {
         "generation_kw": 0,
@@ -495,7 +536,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "kinetic_tower_3": {
         "generation_kw": 0,
@@ -507,7 +549,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "missile_tower": {
         "generation_kw": 0,
@@ -519,7 +562,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "missile_tower_2": {
         "generation_kw": 0,
@@ -531,7 +575,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "missile_tower_3": {
         "generation_kw": 0,
@@ -543,7 +588,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "plasma_tower": {
         "generation_kw": 0,
@@ -555,7 +601,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "plasma_tower_2": {
         "generation_kw": 0,
@@ -567,7 +614,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "plasma_tower_3": {
         "generation_kw": 0,
@@ -579,7 +627,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "wall_segment": {
         "generation_kw": 0,
@@ -591,7 +640,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "wall_segment_2": {
         "generation_kw": 0,
@@ -603,7 +653,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "wall_segment_3": {
         "generation_kw": 0,
@@ -615,7 +666,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       },
       "extraction_mine": {
         "generation_kw": 0,
@@ -627,7 +679,8 @@
         "fuel_buffer_seconds": 0,
         "self_start": false,
         "requires_road_grid": true,
-        "priority": 4
+        "priority": 4,
+        "generation_source": "constant"
       }
     }
   }

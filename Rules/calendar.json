@@ -1,0 +1,16 @@
+{
+  "version": "prototype-9.0",
+  "calendar": {
+    "daylight_seconds": 1800,
+    "night_seconds": 1800,
+    "days_per_season": 30,
+    "seasons": [
+      "spring",
+      "summer",
+      "autumn",
+      "winter"
+    ],
+    "initial_elapsed_seconds": 0,
+    "solar_curve": "daylight_half_sine"
+  }
+}

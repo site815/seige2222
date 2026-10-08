@@ -4,7 +4,13 @@
 
 **Historical verified package: v0.7.0.** Packaging exited 0; all 38 native tests passed cleanly, the 79-stage Shipping interaction route passed with zero failures and exit 0, and all four actual Shipping display states passed. The route recorded 874 courier-motion frames; all 86 process-tree socket samples showed zero TCP/UDP endpoints. All nine loose JSON files matched source hashes. See the [v0.7 verification record](../verification/v0.7.0.json). Final performance benchmarks remain separate. The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
 
-## Current v0.8.1 HUD and extraction revision
+## Current v0.9 scenario boundary
+
+Player and Starting AI begin from the accepted finite 9.57 t kit, six 80 kg workers and zero credits. Developed AI instead loads an explicit established-colony manifest, without hours of simulated growth during loading. Initial assets are a declared scenario boundary, followed by the same paid production, workforce, logistics, AI and threats. Current Rules are `prototype-9.0` and saves require format 7; manifest integration and final release acceptance are pending. Earlier failed growth runs remain historical strategy diagnostics. [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md) and [Economy Baseline 0.9](ECONOMY_BASELINE_0_9.md) own the current details.
+
+The versioned sections below retain their original evidence and older implementation boundaries; they do not override the current finite-worker or established-start design.
+
+## Retained v0.8.1 HUD and extraction revision
 
 [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) records the expanded source contract. Workers and cargo follow physical access-port routes; construction installs delivered materials progressively and roads retain earlier service during upgrades. The latest scope adds tiered facilities, walls, selectable core replication, dedicated worker manufacture, inactive-worker storage/export and combat/fleet modules. Core bodies grow through 1×/2×/3× widths within one 3× reservation. Vegetation clears the reservation; grading follows the built body. UI terminology is Worker; Menu replaces Colony and manual launch requires selecting the own live core. Playback includes Paused, 1×, 5× and 10×.
 
@@ -69,7 +75,7 @@ See the [development report](../DEVELOPMENT_REPORT.md) for logs and actual game 
 
 Test whether a visible robotic colony is engaging when the player establishes an interconnected industrial chain, keeps materials moving, and prepares automatic defenses against enabled alien pressure. The authorized expansion adds a local scenario setup, simple AI colonies, and observation of an AI-controlled center before persistent multiplayer.
 
-The complete design remains broader than this prototype. Scenario cells can be empty, starting AI, or developed AI; empty neighbors are the default. Assigning AI to the center selects observer play. The first AI implementation uses independent instances of the same colony simulation. Cross-colony combat, trade, and fleet missions are not included. The persistent-world design baseline remains unchanged.
+The complete design remains broader than this prototype. Scenario cells can be empty, starting AI, or developed AI; empty neighbors are the default. Assigning AI to the center selects observer play. The first AI implementation uses independent instances of the same colony simulation. Player-directed privateering now bridges separate colony simulations; general inter-colony commerce and strategic AI missions remain outside this slice. The persistent-world design baseline remains unchanged.
 
 ## Current external definition set
 
@@ -86,7 +92,7 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | [energy.json](../../Rules/energy.json), [trade.json](../../Rules/trade.json) | Road-grid generation, consumption and batteries; physical external shipments, capacity, timing and prices. |
 | [combat.json](../../Rules/combat.json), [weapons.json](../../Rules/weapons.json), [chassis.json](../../Rules/chassis.json) | Fleet policies, platforms, fabrication, protection, weapon shots and costs, twelve chassis classes and outfit limits. |
 | [walls.json](../../Rules/walls.json), [companions.json](../../Rules/companions.json) | Wall geometry/construction and Rex's food, morale, movement and presentation rules. |
-| [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a finite developed-colony preset. Runtime AI uses the normal simulation rules. |
+| [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a separate established-colony initial-state manifest. Runtime AI uses the normal simulation rules afterward. |
 | [Graphics definitions](../../Graphics/scene.json) | Camera limits/clearance and orbit sensitivity, regional-view threshold, logical-to-rendered scale, relief/pad settings, terrain/cloud materials and lighting, vegetation density/scales, and ten nature roles. These change presentation without changing logical costs, rates, or travel times. |
 
 These catalogs describe current v0.8.1 source capabilities; they do not establish final balance or completed release acceptance. The JSON files own exact quantities and rates so this document does not become a second balance table.
@@ -124,7 +130,7 @@ The precise local interface and input bindings belong with [Interface and Contro
 - **Energy:** Road-connected grids, generation, battery storage, ongoing consumption and transaction energy are explicit. Worker service remains aggregate; each combat vehicle has its own battery.
 - **Transport:** Couriers and aggregate crews use local plot-avoiding routes and constructed road tiers. Ground fleets use finite batteries and terrain-grade restrictions. A full traffic system, general cross-sector convoys and wreck salvage remain later work.
 - **World:** Colonies retain independent inventories and grids. The privateer bridge transfers owned vehicles and stolen cargo physically across sectors without merging colony state. Remote extraction, territorial conquest and persistent-world ownership remain absent.
-- **AI:** A deterministic controller builds and repairs its industrial plan using real costs, road-grid connections, external trade and its finite carried guard fleet. Developed preparation advances that simulation from a finite seed. Strategic diplomacy and AI-initiated privateer missions remain absent.
+- **AI:** A deterministic controller builds and repairs its industrial plan using real costs, road-grid connections, external trade and its finite carried guard fleet. Developed AI now uses an authored established initial state; subsequent repairs and expansion use those same paid rules. Historical growth replay is no longer the loading gate. Strategic diplomacy and AI-initiated privateer missions remain absent.
 - **Emergency escape:** Separate preloaded shuttle cargo and explicitly embarked fleet cargo leave; deployed vehicles remain behind. Boarding requires physical service proximity. Launch ends the local scenario and never copies core inventory; destination selection and relocation remain absent.
 - **Balance:** The external files supply playable test assumptions. The final invasion clock, production rates, starter inventory, core defense strength, and victory/loss rules remain subject to review.
 - **Persistence:** Local save/load and any local time controls are prototype facilities. They do not settle the persistent game's authority, server timeline, or offline behavior.
@@ -152,7 +158,7 @@ This checklist remains useful for subsequent revisions. Current verification is 
 9. Record actual build, package, and gameplay results in the development report. Push only the intended project contents, with generated build/cache output excluded from source control.
 10. Exercise actual controller clicks outside HUD draw passes, menu/observer input isolation, legal and rejected landings, starting/developed AI operation, and deterministic AI continuation after save/load. Verify scenario metadata protects the AI configuration fingerprint as well as each colony's rule fingerprint.
 
-11. Exercise all four background-bug/periodic-attack combinations, verify center and AI preparation use the same choices, and confirm saved settings override current setup choices without accepting partial or inconsistent snapshots.
+11. Exercise all four background-bug/periodic-attack combinations, verify the center and initialized AI colonies use the same choices, and confirm saved settings override current setup choices without accepting partial or inconsistent snapshots.
 
 ## Related documents
 

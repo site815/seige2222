@@ -5,23 +5,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCombatRules } from './validate_combat.mjs';
+import { validateEnvironment } from './validate_environment.mjs';
 
 const defaultRules = fileURLToPath(new URL('../Rules/', import.meta.url));
-const names = ['resources', 'recipes', 'buildings', 'policies', 'scenario', 'transport', 'energy', 'trade', 'companions', 'walls'];
+const names = ['resources', 'recipes', 'buildings', 'policies', 'scenario', 'transport', 'energy', 'trade', 'companions', 'walls', 'calendar', 'workers'];
 const positive = ['fixed_step_seconds','dispatch_interval','courier_capacity','courier_min_batch','delivery_buffer_cycles','repair_health_per_unit','robot_retire_seconds','upkeep_interval','wave_interval','spawn_radius','roam_interval','enemy_health','enemy_speed','extractor_snap_distance'];
 const nonnegative = ['repair_buffer_units','repair_health_per_second','minimum_build_spacing','population_buffer_robots','upkeep_per_robot','upkeep_buffer_intervals','upkeep_shortage_efficiency','objective_produced_amount','objective_survival_seconds','wave_first_time','wave_per_building','wave_per_population','wave_escalation_per_wave','roam_first_time','enemy_attack_range','enemy_damage_per_second','enemy_courier_attack_range','shuttle_capacity'];
 const integerPolicies = ['max_couriers','minimum_population','objective_building_count','wave_base_count','wave_max_count','roam_count','event_history_limit','placement_requires_visibility'];
+const deliveryClasses = ['fuel','maintenance','repair','defense','construction','production','trade','reserve','storage'];
 const selectors = {
   population_policy:['fill_open_jobs'], workforce_mode:['full_staff','proportional'], surplus_policy:['store_inactive'],
   logistics_policy:['local_delivery'], enemy_target_policy:['nearest_building'], extraction_limit_policy:['one_extractor_per_node'],
   repair_policy:['local_materials'], objective_policy:['survive_and_manufacture'], shuttle_policy:['preloaded_cargo_only'],
   storage_policy:['overflow_only'], rule_time_basis:['simulation_seconds'],
   construction_policy:['phased_physical_delivery'], robot_support_policy:['local_capacity_and_maintenance'],
+  construction_source_policy:['surplus_then_largest_load'],
 };
 export function readRules(directory) {
-  return {ruleDirectory:directory,...Object.fromEntries(names.map(n => [n, JSON.parse(fs.readFileSync(path.join(directory, `${n}.json`), 'utf8').replace(/^\uFEFF/, ''))]))};
+  return {ruleDirectory:directory,environment:JSON.parse(fs.readFileSync(path.join(directory,'environment.json'),'utf8').replace(/^\uFEFF/,'')),...Object.fromEntries(names.map(n => [n, JSON.parse(fs.readFileSync(path.join(directory, `${n}.json`), 'utf8').replace(/^\uFEFF/, ''))]))};
 }
 export function validateRules(d) {
+  validateEnvironment(d.environment);
   const fail = text => { throw new Error(text); };
   if(!d.ruleDirectory)fail('Rules directory is required for independent combat catalogs');
   const combatErrors=validateCombatRules(d.ruleDirectory);if(combatErrors.length)fail(`Combat catalogs: ${combatErrors.join('; ')}`);
@@ -34,6 +38,16 @@ export function validateRules(d) {
   const sum = v => Object.values(v).reduce((a,b)=>a+b,0);
   const catalog = (rows,n) => { array(rows,n); const result = new Map(); for (const row of rows) { object(row,n); str(row.id,`${n}.id`); if(result.has(row.id)) fail(`Duplicate ${n} ID ${row.id}`); result.set(row.id,row); } return result; };
   for (const n of names) { object(d[n],n); str(d[n].version,`${n}.version`); if(d[n].version !== d.resources.version) fail('Rule file versions differ'); }
+  const calendar=object(d.calendar.calendar,'calendar');
+  for(const key of ['daylight_seconds','night_seconds']){num(calendar[key],`calendar.${key}`,1);if(calendar[key]>86400||Math.abs(calendar[key]*1e6-Math.round(calendar[key]*1e6))>.001)fail('Calendar duration is outside supported microsecond bounds');}
+  num(calendar.days_per_season,'calendar.days_per_season',1,true);if(calendar.days_per_season>366)fail('Calendar season exceeds366 days');
+  num(calendar.initial_elapsed_seconds,'calendar.initial_elapsed_seconds');if(calendar.initial_elapsed_seconds>9007199254||Math.abs(calendar.initial_elapsed_seconds*1e6-Math.round(calendar.initial_elapsed_seconds*1e6))>.001)fail('Calendar start is not a safe microsecond time');
+  if(JSON.stringify(calendar.seasons)!==JSON.stringify(['spring','summer','autumn','winter'])||calendar.solar_curve!=='daylight_half_sine')fail('Unsupported season order or solar curve');
+  const workers=object(d.workers,'workers');if(workers.scheduler_policy!=='finite_shared_pool')fail('Worker scheduler must use the finite shared pool');
+  const workerBounds={body_radius_meters:[.1,5],haul_mass_kg:[.1,10000],haul_volume_litres:[.1,10000],logistics_workers:[1,1000,true],logistics_facilities_per_worker:[1,1000,true],logistics_max_workers:[1,1000,true],core_minimum_operators:[1,1000,true],loading_seconds:[.01,3600],unloading_seconds:[.01,3600],route_retry_seconds:[.01,3600],deployment_ground_seconds:[.01,3600],deployment_hatch_seconds:[.01,3600],hatch_exit_spacing_seconds:[.01,3600],core_hatch_fraction:[.01,1],workstation_spacing_meters:[.1,10],idle_return_seconds:[.01,3600]};
+  for(const [key,[min,max,integer]]of Object.entries(workerBounds)){num(workers[key],`workers.${key}`,min,!!integer);if(workers[key]>max)fail(`workers.${key} exceeds supported bound`);}
+  if(!['fixed','completed_facilities'].includes(workers.logistics_scaling_policy))fail('Unsupported logistics scaling policy');
+  if(workers.logistics_max_workers<workers.logistics_workers)fail('Logistics maximum cannot be below its base worker count');
   const resources = catalog(d.resources.resources,'resources');
   if (!resources.size) fail('Resource catalog cannot be empty');
   const dog=object(d.companions.dog,'companions.dog');
@@ -55,6 +69,8 @@ export function validateRules(d) {
   for (const r of recipes.values()) { num(r.seconds,`${r.id}.seconds`,0,false,true); num(r.energy_kwh,`${r.id}.energy_kwh`);num(r.worker_output,`${r.id}.worker_output`,0,true);amounts(r.inputs,`${r.id}.inputs`); amounts(r.outputs,`${r.id}.outputs`); if(sum(r.inputs)<=0||sum(r.outputs)+r.worker_output<=0) fail(`${r.id} needs positive inputs and outputs`);if(r.inputs.stored_workers||r.outputs.stored_workers||(r.worker_output>0&&sum(r.outputs)>0))fail(`${r.id}: worker assembly must use worker_output exclusively`);if(Math.abs(mass(r.inputs)-mass(r.outputs)-r.worker_output*workerCargo.unit_mass_kg)>1e-6)fail(`${r.id}: physical recipe mass does not balance`); }
   const buildings = catalog(d.buildings.buildings,'buildings');
   const roles = ['core','extractor','processor','storage','sensor','defense','service','generator','battery','trade','worker_factory','vehicle_factory','wall'];
+  const logisticsExclusions=array(workers.logistics_excluded_roles,'workers.logistics_excluded_roles');
+  if(new Set(logisticsExclusions).size!==logisticsExclusions.length||logisticsExclusions.some(role=>!roles.includes(role)))fail('Logistics exclusions require unique known building roles');
   for (const b of buildings.values()) {
     for(const k of ['name','category','role','description','visual']) str(b[k],`${b.id}.${k}`);
     str(b.recipe,`${b.id}.recipe`,true);
@@ -92,9 +108,9 @@ export function validateRules(d) {
   }
   const familyLevels=new Set();
   for(const b of buildings.values()){const base=buildings.get(b.family),target=buildings.get(b.next_upgrade);if(!base||base.family!==b.family||base.level!==1||base.role!==b.role||familyLevels.has(`${b.family}:${b.level}`))fail(`${b.id}: invalid or duplicate family level`);familyLevels.add(`${b.family}:${b.level}`);if(b.role!=='core'&&b.footprint!==base.footprint)fail(`${b.id}: upgraded building must keep its footprint`);if(b.next_upgrade&&(!target||target.role!==b.role||target.family!==b.family||target.level!==b.level+1||target.reserved_footprint!==b.reserved_footprint||sum(b.upgrade_cost)<=0))fail(`${b.id}: invalid in-place upgrade`);const visited=new Set();let current=b;while(current?.next_upgrade){if(visited.has(current.id))fail('Cyclic building upgrades');visited.add(current.id);current=buildings.get(current.next_upgrade);}}
-  const energy=object(d.energy.energy,'energy');num(energy.worker_kw,'energy.worker_kw');num(energy.connection_tolerance_meters,'energy.connection_tolerance_meters');num(energy.minimum_operating_fraction,'energy.minimum_operating_fraction',0,false,true);if(energy.minimum_operating_fraction>1)fail('Energy operation fraction >1');object(energy.buildings,'energy.buildings');
+  const energy=object(d.energy.energy,'energy');if(energy.dispatch_policy!=='pending_defense_before_optional_transactions')fail('Unsupported energy dispatch policy');num(energy.worker_kw,'energy.worker_kw');num(energy.connection_tolerance_meters,'energy.connection_tolerance_meters');num(energy.minimum_operating_fraction,'energy.minimum_operating_fraction',0,false,true);if(energy.minimum_operating_fraction>1)fail('Energy operation fraction >1');object(energy.buildings,'energy.buildings');
   if(Object.keys(energy.buildings).length!==buildings.size)fail('Every building requires one energy definition');
-  for(const [id,e] of Object.entries(energy.buildings)){if(!buildings.has(id))fail(`Unknown power definition ${id}`);object(e,id);for(const k of ['generation_kw','battery_capacity_kwh','initial_battery_kwh','idle_kw','fuel_units_per_kwh','fuel_buffer_seconds'])num(e[k],`${id}.${k}`);num(e.priority,`${id}.priority`,0,true);str(e.fuel_resource,`${id}.fuel_resource`,true);if(typeof e.self_start!=='boolean'||typeof e.requires_road_grid!=='boolean')fail('Energy selectors must be boolean');if(e.initial_battery_kwh>e.battery_capacity_kwh||(e.initial_battery_kwh>0&&buildings.get(id).role!=='core')||(e.fuel_resource&&(!resources.has(e.fuel_resource)||e.generation_kw<=0||e.fuel_units_per_kwh<=0))||(!e.fuel_resource&&e.fuel_units_per_kwh!==0))fail('Invalid fuel generation or starting battery');}
+  for(const [id,e] of Object.entries(energy.buildings)){if(!buildings.has(id))fail(`Unknown power definition ${id}`);object(e,id);if(!['constant','solar'].includes(e.generation_source)||(e.generation_source==='solar'&&(e.generation_kw<=0||e.fuel_resource)))fail('Invalid energy generation source');for(const k of ['generation_kw','battery_capacity_kwh','initial_battery_kwh','idle_kw','fuel_units_per_kwh','fuel_buffer_seconds'])num(e[k],`${id}.${k}`);num(e.priority,`${id}.priority`,0,true);str(e.fuel_resource,`${id}.fuel_resource`,true);if(typeof e.self_start!=='boolean'||typeof e.requires_road_grid!=='boolean')fail('Energy selectors must be boolean');if(e.initial_battery_kwh>e.battery_capacity_kwh||(e.initial_battery_kwh>0&&buildings.get(id).role!=='core')||(e.fuel_resource&&(!resources.has(e.fuel_resource)||e.generation_kw<=0||e.fuel_units_per_kwh<=0))||(!e.fuel_resource&&e.fuel_units_per_kwh!==0))fail('Invalid fuel generation or starting battery');}
   const trade=object(d.trade.trade,'trade');object(trade.prices,'trade.prices');object(trade.ports,'trade.ports');if(Object.keys(trade.prices).length!==resources.size||Object.keys(trade.ports).length!==3)fail('Trade must cover all cargo and three port levels');
   for(const [id,p] of Object.entries(trade.prices)){if(!resources.has(id))fail('Unknown trade cargo');num(p.buy_credits,'buy price',0,false,true);num(p.sell_credits,'sell price',0,false,true);if(p.sell_credits>p.buy_credits)fail('Export/import arbitrage');}
   const levels=new Set();for(const [id,p] of Object.entries(trade.ports)){if(buildings.get(id)?.role!=='trade')fail('Invalid trade port');num(p.level,'port.level',1,true);if(p.level>3||levels.has(p.level))fail('Port levels must be unique 1-3');levels.add(p.level);num(p.capacity_kg,'port.capacity_kg',0,false,true);num(p.shipment_seconds,'port.shipment_seconds',0,false,true);num(p.energy_kwh,'port.energy_kwh');}
@@ -124,6 +140,11 @@ export function validateRules(d) {
   for(const k of positive) num(p[k],k,0,false,true);
   for(const k of nonnegative) num(p[k],k);
   for(const k of integerPolicies) num(p[k],k,0,true);
+  const deliveryOrder=array(p.delivery_priority_order,'delivery_priority_order');
+  if(deliveryOrder.length!==deliveryClasses.length || new Set(deliveryOrder).size!==deliveryClasses.length || deliveryOrder.some(id=>!deliveryClasses.includes(id))) fail('delivery_priority_order must contain every supported delivery class exactly once');
+  num(p.delivery_refill_trigger_fraction,'delivery_refill_trigger_fraction',0,false,true);
+  num(p.delivery_raw_input_buffer_loads,'delivery_raw_input_buffer_loads');
+  if(p.delivery_refill_trigger_fraction>1)fail('delivery_refill_trigger_fraction must be in (0,1]');
   if(p.max_couriers<1 || p.event_history_limit<1 || p.wave_max_count<p.wave_base_count || p.placement_requires_visibility>1 || p.upkeep_shortage_efficiency>1 || p.courier_min_batch>p.courier_capacity || p.fixed_step_seconds>p.dispatch_interval) fail('Inconsistent policy ranges');
   for(const b of buildings.values()) if(b.damage_per_shot>0 && b.reload_seconds<p.fixed_step_seconds) fail(`${b.id}: reload cannot be shorter than fixed_step_seconds`);
   for(const [k,allowed] of Object.entries(selectors)) if(!allowed.includes(p[k])) fail(`Unsupported ${k}: ${p[k]}`);
@@ -198,7 +219,12 @@ export function validateRules(d) {
   // Buffer allocations cannot create an unavoidable storage deadlock.
   for(const b of buildings.values()) {
     let reserve=p.repair_buffer_units*resources.get(p.repair_resource).litres_per_unit;
-    if(b.recipe) reserve+=volume(recipes.get(b.recipe).inputs)*p.delivery_buffer_cycles;
+    if(b.recipe)for(const [id,quantity]of Object.entries(recipes.get(b.recipe).inputs)){
+      const resource=resources.get(id),cycles=quantity*b.recipe_input_multiplier*p.delivery_buffer_cycles;
+      const raw=!resource.discrete&&['standard','rare'].includes(resource.class);
+      const target=raw?Math.max(cycles,p.delivery_raw_input_buffer_loads*Math.min(workers.haul_mass_kg/resource.unit_mass_kg,workers.haul_volume_litres/resource.litres_per_unit)):cycles;
+      reserve+=target*resource.litres_per_unit;
+    }
     if(b.role==='core') reserve+=volume(p.core_reserves)+volume(recipes.get(p.population_recipe).inputs)*p.population_buffer_robots;
     reserve+=b.robot_support_capacity*p.upkeep_per_robot*p.upkeep_buffer_intervals*resources.get(p.upkeep_resource).litres_per_unit;
     if(reserve+(combatStorage.get(b.id)??0)>b.storage_capacity) fail(`${b.id} storage is smaller than its permitted fabrication/refit bill and demand buffers`);
@@ -206,7 +232,57 @@ export function validateRules(d) {
   return {version:d.resources.version,resources:resources.size,recipes:recipes.size,buildings:buildings.size,renewable:[...available].sort(),bootstrap};
 }
 function selfTest(source) {
+  // The order and refill threshold are external policy choices, not fixed
+  // authored values. A complete reordering and both valid bounds remain usable.
+  for(const fraction of [.0001,1]){const d=structuredClone(source);d.policies.policies.delivery_priority_order.reverse();d.policies.policies.delivery_refill_trigger_fraction=fraction;validateRules(d);}
+  for(const loads of [0,.5,2]){const d=structuredClone(source);d.policies.policies.delivery_raw_input_buffer_loads=loads;validateRules(d);}
+  for(const policy of ['fixed','completed_facilities']){const d=structuredClone(source);d.workers.logistics_scaling_policy=policy;d.workers.logistics_facilities_per_worker=1000;d.workers.logistics_max_workers=d.workers.logistics_workers;d.workers.logistics_excluded_roles=[];validateRules(d);}
   const cases=[
+    ['missing raw input buffer loads',d=>delete d.policies.policies.delivery_raw_input_buffer_loads],
+    ['negative raw input buffer loads',d=>d.policies.policies.delivery_raw_input_buffer_loads=-1],
+    ['nonnumeric raw input buffer loads',d=>d.policies.policies.delivery_raw_input_buffer_loads='2'],
+    ['null raw input buffer loads',d=>d.policies.policies.delivery_raw_input_buffer_loads=null],
+    ['nonfinite raw input buffer loads',d=>d.policies.policies.delivery_raw_input_buffer_loads=Infinity],
+    ['NaN raw input buffer loads',d=>d.policies.policies.delivery_raw_input_buffer_loads=NaN],
+    ['raw input buffers exceed physical storage',d=>d.policies.policies.delivery_raw_input_buffer_loads=10000],
+    ['missing logistics scaling policy',d=>delete d.workers.logistics_scaling_policy],
+    ['unknown logistics scaling policy',d=>d.workers.logistics_scaling_policy='free_couriers'],
+    ['missing logistics divisor',d=>delete d.workers.logistics_facilities_per_worker],
+    ['zero logistics divisor',d=>d.workers.logistics_facilities_per_worker=0],
+    ['fractional logistics divisor',d=>d.workers.logistics_facilities_per_worker=1.5],
+    ['excessive logistics divisor',d=>d.workers.logistics_facilities_per_worker=1001],
+    ['missing logistics maximum',d=>delete d.workers.logistics_max_workers],
+    ['fractional logistics maximum',d=>d.workers.logistics_max_workers=1.5],
+    ['excessive logistics maximum',d=>d.workers.logistics_max_workers=1001],
+    ['logistics maximum below base',d=>{d.workers.logistics_workers=2;d.workers.logistics_max_workers=1;}],
+    ['missing logistics exclusions',d=>delete d.workers.logistics_excluded_roles],
+    ['nonarray logistics exclusions',d=>d.workers.logistics_excluded_roles='core'],
+    ['duplicate logistics exclusions',d=>d.workers.logistics_excluded_roles=['core','core']],
+    ['unknown logistics exclusion',d=>d.workers.logistics_excluded_roles=['free_workers']],
+    ['missing delivery priorities',d=>delete d.policies.policies.delivery_priority_order],
+    ['unknown construction source policy',d=>d.policies.policies.construction_source_policy='oldest_buffer_first'],
+    ['missing construction source policy',d=>delete d.policies.policies.construction_source_policy],
+    ['nonarray delivery priorities',d=>d.policies.policies.delivery_priority_order='fuel'],
+    ['incomplete delivery priorities',d=>d.policies.policies.delivery_priority_order.pop()],
+    ['duplicate delivery priority',d=>d.policies.policies.delivery_priority_order[1]=d.policies.policies.delivery_priority_order[0]],
+    ['unknown delivery priority',d=>d.policies.policies.delivery_priority_order[0]='free_cargo'],
+    ['nonstring delivery priority',d=>d.policies.policies.delivery_priority_order[0]=null],
+    ['missing delivery refill trigger',d=>delete d.policies.policies.delivery_refill_trigger_fraction],
+    ['zero delivery refill trigger',d=>d.policies.policies.delivery_refill_trigger_fraction=0],
+    ['negative delivery refill trigger',d=>d.policies.policies.delivery_refill_trigger_fraction=-.1],
+    ['excess delivery refill trigger',d=>d.policies.policies.delivery_refill_trigger_fraction=1.01],
+    ['nonnumeric delivery refill trigger',d=>d.policies.policies.delivery_refill_trigger_fraction='0.5'],
+    ['nonfinite delivery refill trigger',d=>d.policies.policies.delivery_refill_trigger_fraction=Infinity],
+    ['NaN delivery refill trigger',d=>d.policies.policies.delivery_refill_trigger_fraction=NaN],
+    ['calendar negative phase',d=>d.calendar.calendar.initial_elapsed_seconds=-1],
+    ['calendar season order',d=>d.calendar.calendar.seasons.reverse()],
+    ['calendar fractional microsecond',d=>d.calendar.calendar.daylight_seconds=1800.0000001],
+    ['calendar invalid solar curve',d=>d.calendar.calendar.solar_curve='constant'],
+    ['worker haul invalid volume',d=>d.workers.haul_volume_litres=0],
+    ['worker fractional essential operators',d=>d.workers.core_minimum_operators=1.5],
+    ['energy undefined solar selector',d=>d.energy.energy.buildings.solar_array.generation_source='magic'],
+    ['energy missing dispatch policy',d=>delete d.energy.energy.dispatch_policy],
+    ['energy unknown dispatch policy',d=>d.energy.energy.dispatch_policy='unlimited_defense'],
     ['fractional worker stock',d=>d.scenario.scenario.starting_inventory.stored_workers=.5],
     ['worker cargo not discrete',d=>d.resources.resources.find(r=>r.id==='stored_workers').discrete=false],
     ['bulk cargo marked discrete',d=>d.resources.resources[0].discrete=true],

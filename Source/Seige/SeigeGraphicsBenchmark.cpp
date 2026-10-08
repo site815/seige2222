@@ -58,6 +58,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     enum class EPhase {AwaitScenery,Warmup,Sample,Capture,AwaitCapture};
     static EPhase Phase=EPhase::Warmup;
     static double Started=0,Previous=0;
+    static double SampleSimulationStart=0;
     static FString Name;
     static TArray<double> Frames;
     static TArray<double> GameTimes,RenderTimes,RhiTimes,GpuTimes;
@@ -210,8 +211,16 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
                 NaniteEdge->Set(1.f,ECVF_SetByConsole);
         const bool Clearing=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkClearing"));
         ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");
+        const bool DevelopedNeighbors=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkDevelopedNeighbors"));
+        if(DevelopedNeighbors)for(int32 Index=0;Index<9;++Index)if(Index!=4)ScenarioSlots[Index]=TEXT("developed");
         if(Clearing)ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;
-        StartScenario();
+        if(DevelopedNeighbors)
+        {
+            if(!InitializeScenario(Error))
+            {UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK established neighbors failed: %s"),*Error);View=UE_ARRAY_COUNT(Views);FPlatformMisc::RequestExitWithStatus(false,1);return;}
+            FinishScenarioStart();
+        }
+        else StartScenario();
         FVector2D Landing=FVector2D::ZeroVector;
         if(Clearing)
         {
@@ -226,7 +235,16 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         if(Screen==TEXT("landing"))ConfirmLanding(Landing);
         const FSeigeBuildingDef* CommandDefinition=Sim.BuildingDefs.Find(Sim.CoreDefinition);
         if(Screen==TEXT("playing")&&!Observer&&CommandDefinition)
-            Sim.Tick(CommandDefinition->ConstructionSeconds+Sim.FixedStepSeconds());
+        {
+            const double Deadline=Sim.Time+CommandDefinition->ConstructionSeconds*6;
+            auto Core=[&](){return Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==Sim.CoreDefinition&&B.Health>0;});};
+            while(Core()&&Core()->IsConstructing&&Sim.Time<Deadline&&!Sim.Failed)Sim.Tick(1.);
+        }
+        // A graphics comparison uses a documented identical light phase. It does
+        // not grant production/cargo or change the colony's elapsed development.
+        const auto& CalendarRules=ScenarioCalendar.GetRules();
+        const int64 BenchmarkDay=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkWinter"))?int64(CalendarRules.DaysPerSeason)*3+CalendarRules.DaysPerSeason/2:0;
+        ScenarioCalendar.SetElapsedMicroseconds(BenchmarkDay*(CalendarRules.DaylightMicroseconds+CalendarRules.NightMicroseconds)+CalendarRules.DaylightMicroseconds/2);BindScenarioCalendar();UpdateWeather(0);
         Paused=false;Speed=10;ResetSimulationPresentation();
         const FSeigeBuilding* Command=Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& Building){return Building.DefId==Sim.CoreDefinition;});
         if(Screen!=TEXT("playing")||Observer||!Command||Command->IsConstructing||Command->Health<=0)
@@ -296,7 +314,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
                 if(auto* ShowUI=IConsoleManager::Get().FindConsoleVariable(TEXT("r.ProfileGPU.ShowUI")))ShowUI->Set(0,ECVF_SetByConsole);
                 if(GEngine)GEngine->Exec(GetWorld(),TEXT("profilegpu"));
             }
-            Phase=EPhase::Sample;Started=Previous=Now;
+            Phase=EPhase::Sample;Started=Previous=Now;SampleSimulationStart=Sim.Time;
             PendingSceneryAtSampleStart=PendingSceneryCells();
             CSV_EVENT_GLOBAL(TEXT("SEIGE_BENCH_SAMPLE_BEGIN:%s"),Views[View].Name);
         }
@@ -375,6 +393,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         for(const TCHAR* CVar:{TEXT("r.Shadow.Virtual.SMRT.RayCountDirectional"),TEXT("r.Shadow.Virtual.SMRT.SamplesPerRayDirectional")})
             if(const auto* Value=IConsoleManager::Get().FindConsoleVariable(CVar))Row->SetNumberField(CVar,Value->GetInt());
         Row->SetNumberField(TEXT("sample_seconds"),Sum/1000);
+        Row->SetNumberField(TEXT("simulation_seconds_advanced"),Sim.Time-SampleSimulationStart);
+        Row->SetNumberField(TEXT("effective_simulation_speed"),Sum>0?(Sim.Time-SampleSimulationStart)*1000/Sum:0);
         Row->SetNumberField(TEXT("mean_fps"),Sum>0?Frames.Num()*1000/Sum:0);
         Row->SetNumberField(TEXT("mean_frame_ms"),Frames.Num()?Sum/Frames.Num():0);
         Row->SetNumberField(TEXT("p95_frame_ms"),Frames.Num()?Frames[FMath::Clamp(FMath::CeilToInt(Frames.Num()*.95)-1,0,Frames.Num()-1)]:0);
@@ -415,6 +435,11 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetStringField(TEXT("selected_view"),SelectedView==INDEX_NONE?TEXT("all"):Views[SelectedView].Name);
     Report->SetNumberField(TEXT("schema_version"),4);
     Report->SetNumberField(TEXT("simulation_speed"),Speed);Report->SetNumberField(TEXT("simulation_seconds"),Sim.Time);
+    Report->SetBoolField(TEXT("diagnostic_developed_neighbors"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkDevelopedNeighbors")));
+    Report->SetNumberField(TEXT("simulated_neighbor_count"),Neighbors.Num());
+    int32 NeighborWorkers=0,NeighborBuildings=0;
+    for(const auto& Neighbor:Neighbors){NeighborWorkers+=Neighbor.Sim.Workers.Bodies.Num();NeighborBuildings+=Neighbor.Sim.Buildings.Num();}
+    Report->SetNumberField(TEXT("neighbor_worker_bodies"),NeighborWorkers);Report->SetNumberField(TEXT("neighbor_buildings"),NeighborBuildings);
     Report->SetStringField(TEXT("camera_mode"),Travel?TEXT("travel"):Orbit?TEXT("orbit"):TEXT("static"));
     Report->SetNumberField(TEXT("travel_meters_per_second"),Travel?36:0);
     Report->SetStringField(TEXT("camera_path_version"),TEXT("five-views-v1"));
@@ -435,6 +460,13 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetBoolField(TEXT("grass_distance_field_lighting"),GrassDistanceFieldLighting);
     Report->SetNumberField(TEXT("ground_cover_candidates"),GroundCoverCandidates);
     Report->SetStringField(TEXT("profile"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkV05Epic"))?TEXT("v0.5 Epic reference"):TEXT("Medium"));
+    const bool WinterFixture=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkWinter"));
+    Report->SetBoolField(TEXT("diagnostic_winter"),WinterFixture);
+    Report->SetStringField(TEXT("lighting_fixture"),WinterFixture?TEXT("Midwinter, midday at benchmark start; advances at 10x during measurements"):TEXT("Spring day 1, midday at benchmark start; advances at 10x during measurements"));
+    Report->SetNumberField(TEXT("season_index_at_finish"),ScenarioCalendar.Sample().SeasonIndex);
+    Report->SetNumberField(TEXT("snow_coverage_at_finish"),SnowCoverage());
+    Report->SetNumberField(TEXT("snowflake_instances_at_finish"),Snowflakes&&Snowflakes->IsVisible()?Snowflakes->GetInstanceCount():0);
+    Report->SetNumberField(TEXT("calendar_elapsed_seconds_at_finish"),ScenarioCalendar.ElapsedMicroseconds()/1000000.);
     Report->SetBoolField(TEXT("sky_realtime_capture"),SkyRealtimeCapture);
     Report->SetNumberField(TEXT("fog_density"),FogDensity);
     Report->SetNumberField(TEXT("atmosphere_mie_scale"),AtmosphereMieScale);

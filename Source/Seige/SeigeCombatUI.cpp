@@ -1,7 +1,7 @@
 #include "SeigeGameMode.h"
 namespace
 {
-const FLinearColor Text(.89f,.92f,.9f),Muted(.56f,.65f,.64f),Gold(.89f,.75f,.43f),Mint(.46f,.84f,.68f);
+const FLinearColor Text(.91f,.95f,.96f),Muted(.58f,.71f,.76f),Gold(.91f,.72f,.39f),Mint(.35f,.85f,.78f);
 bool Ready(const ASeigeGameMode& G){return G.Ready&&!G.Observer&&!G.CompanionView&&G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.Sim.Escaped&&!G.Sim.Failed&&(!G.Sim.Won||G.WinAcknowledged)&&G.SelectedBuild.IsEmpty()&&!G.IsRoadToolActive()&&!G.WallPlacementActive;}
 bool HomeBuildingView(const ASeigeGameMode& G){return G.DetailedSectorIndex()==4&&!G.IsRegionMap();}
 TArray<FString> Hulls(const FSeigeSimulation& S,int32 FactoryId)

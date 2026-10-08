@@ -4,7 +4,7 @@
 
 ## Status and implementation boundary
 
-The rules marked confirmed below come from the user's October 5 design additions. They supersede the earlier unspecified roster and tentative fleet limit. The latest authorized expansion implements projectiles, customizable vehicles, fleet commands and layered defenses through separate simulation modules. The [v0.8.1 record](../verification/v0.8.1.json) records bounded native and packaged checks of these systems. Newly reported melee-contact and attack-feedback issues are queued for v0.9.
+The rules marked confirmed below come from the user's October 5 design additions. They supersede the earlier unspecified roster and tentative fleet limit. The latest authorized expansion implements projectiles, customizable vehicles, fleet commands and layered defenses through separate simulation modules. The [v0.8.1 record](../verification/v0.8.1.json) records bounded native and packaged checks of these systems. Current v0.9 corrections have separate focused evidence below; full native and packaged acceptance remain pending.
 
 The [combat design data](../CombatDesign/README.md) retains the earlier design specification. New runtime combat catalogs in `Rules/` supply weapons, chassis, platforms and fleet policies, with separate schema/version checks and fingerprints. Numerical weapon balance and chassis loadouts remain provisional external values. The catalog is not a substitute for gameplay verification.
 
@@ -49,7 +49,7 @@ The four size classes apply across three movement families. Fleet point costs ar
 
 **Confirmed:** Chassis provide weapon hardpoints and storage, with a configuration experience inspired by MechWarrior. A combat-focused loadout trades against cargo capacity and other equipment. Equipment does not currently add fleet points; the confirmed point schedule is chassis-based.
 
-**Confirmed hardpoint dimensions and mounting ratio:** Small envelopes measure 0.5 × 0.5 × 2 m; medium 1 × 1 × 4 m; large 2 × 2 × 8 m. Mount capacity is **1 large = 4 medium = 16 small**. Physical volume scales eightfold between these dimensions, a separate constraint from mount capacity. The command core carries four large lasers. Laser, kinetic, missile and plasma tower families have three levels on unchanged family footprints.
+**Confirmed hardpoint dimensions and mounting ratio:** Small envelopes measure 0.5 × 0.5 × 2 m; medium 1 × 1 × 4 m; large 2 × 2 × 8 m. Mount capacity is **1 large = 4 medium = 16 small**. Physical volume scales eightfold between these dimensions, a separate constraint from mount capacity. The command core has two large hardpoint banks carrying one large, two medium and eight small lasers. Laser, kinetic, missile and plasma tower families have three levels on unchanged family footprints.
 
 **Provisional loaded-mass ceilings:** Small / medium / large mounts currently allow 500 / 4,000 / 32,000 kg. Their 0.5 / 4 / 32 cubic-metre envelopes imply the same maximum average loaded density of 1,000 kg per cubic metre. These are consistent fictional balance ceilings, not confirmed engineering capacities; actual module masses remain provisional external values below them. Runtime outfit validation checks per-size module mass, total platform equipment mass and mount area. Ammunition occupies separate finite cargo storage. Installed weapons do not currently subtract mass or envelope volume from that cargo allowance: a shared internal-volume allocation between weapons and cargo remains future work. The prototype does not pack geometric ammunition cells inside each mount.
 
@@ -74,6 +74,10 @@ For vehicle manufacture, select the core or a matching family factory, choose th
 Rex's first-person roaming does not grant first-person combat or individual vehicle control. Fleets still fight autonomously after receiving fleet-level mission, movement and aggression orders.
 
 **Retained guard behavior, covered by bounded native checks:** Defensive and escort fleets can reposition around friendly buildings to obtain a clear shot, constrained by their existing sensor coverage, weapon range and guard leash. This does not reveal unseen targets or grant unbounded pursuit. Passive fleets do not pursue; explicit fleet movement remains a separate order.
+
+**v0.9 defensive arrival correction:** A flanking guard continues ordinary, energy-paid movement until its current firing line is clear or it reaches the selected firing point. Being within one metre of that point is no longer sufficient to stop while a friendly building still blocks the shot. Ordinary station orders retain their one-metre arrival tolerance. This changes neither movement speed nor targeting, sensor, range or leash rules; it grants no movement or shots for free. Physical spread, moving obstructions and splash can still cause unintended hits.
+
+The focused `Seige.Combat.DefensiveCornerArrival` regression passed with zero warnings or errors after compile 21 (`Saved/Automation/v09-corner-21/index.json`). It exercises an occluded guard less than one metre from a clear corner, verifies actual movement and a paid shot, preserves the allied building, and checks the unchanged ordinary station tolerance. This establishes the specific arrival fix; full-suite results, developed-colony survival and final Shipping verification are still pending.
 
 ## Implementation and acceptance checklist
 

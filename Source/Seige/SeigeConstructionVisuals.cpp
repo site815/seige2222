@@ -9,6 +9,8 @@
 namespace
 {
 const FLinearColor BuildMint(.18f,.9f,.68f),BuildRed(1.f,.12f,.08f),Steel(.18f,.23f,.25f),Safety(.8f,.47f,.08f);
+double LandingFootprint(const FSeigeSimulation& Colony,double Fallback)
+{for(const auto& Pair:Colony.BuildingDefs)if(Pair.Value.Role==TEXT("core")&&Pair.Value.Level==1)return Pair.Value.Footprint;return Fallback;}
 AActor* PresentationActor(UWorld* World,FVector Location)
 {
     auto* Actor=World->SpawnActor<AActor>();
@@ -143,25 +145,31 @@ void ASeigeGameMode::SyncConstructionVisuals(const FSeigeSimulation& Colony,cons
                 Hull->SetCollisionResponseToChannel(ECC_Visibility,ECR_Block);
             }
         }
-        const double Descent=Smooth(Progress*Definition.ConstructionSeconds/12.);
+        const double Descent=Colony.DeploymentGrounded?1.:Smooth(Colony.DeploymentElapsed/Colony.Workers.DeploymentDescentSeconds());
         Body->SetActorLocation(RenderPosition(WorldPosition)+FVector(0,0,(1.-Descent)*Size*1.7));
-        Body->SetActorRotation(FRotator((1.-Descent)*-12,0,0));
+        Body->SetActorRotation(FRotator::ZeroRotator);
         // The level-one command center is the actual parked spacecraft. Its
         // hull lands intact while workers deploy its ground service equipment.
         SetConstructionReveal(Body,1.);
     }
     if(Core&&Definition.Visual!=TEXT("shuttle")&&!Colony.Escaped)
     {
-        // The authored core has an emergency docking collar on its rear apron.
-        // The carried shuttle settles there and stays attached to the colony.
+        // Expansion wings surround the original spacecraft. Neither the landing
+        // point nor the ship scale changes when the command campus upgrades.
         const FString ShuttleKey=Key+TEXT("_shuttle");Live.Add(ShuttleKey);
-        const double Descent=Smooth(Progress*Definition.ConstructionSeconds/12.);
-        // Measured in the centered core source mesh; FBX converts Blender +Y
-        // to Unreal -Y. Z is the collar's flat deck, not its raised clamps.
-        const FVector DockOffset(0,-1059.*Size/2848.,696.091064*Size/2848.*Reveal+(1.-Descent)*Size*1.7);
-        auto* Shuttle=Visual(ShuttleKey,TEXT("Shuttle"),RenderPosition(WorldPosition)+DockOffset,FLinearColor(.65f,.7f,.72f),Size*.20);
-        Shuttle->SetActorRotation(FRotator((1-Descent)*-12,0,0));
+        const double ShipSize=LandingFootprint(Colony,Definition.Footprint)*2*RenderScale;
+        auto* Shuttle=Visual(ShuttleKey,TEXT("Shuttle"),RenderPosition(WorldPosition),FLinearColor(.65f,.7f,.72f),ShipSize);
+        Shuttle->SetActorRotation(FRotator::ZeroRotator);
         TArray<UStaticMeshComponent*> Meshes;Shuttle->GetComponents(Meshes);for(auto* Mesh:Meshes)Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
+    if(Core&&!Colony.Escaped)
+    {
+        const double ShipSize=LandingFootprint(Colony,Definition.Footprint)*2*RenderScale,ShipScale=ShipSize/848.586975;
+        const double Airborne=Colony.DeploymentGrounded?0.:(1.-Smooth(Colony.DeploymentElapsed/Colony.Workers.DeploymentDescentSeconds()))*ShipSize*1.7;
+        const FString HatchKey=Key+TEXT("_cargo_hatch");Live.Add(HatchKey);auto* Hatch=Visuals.FindRef(HatchKey).Get();
+        if(!Hatch){Hatch=PresentationActor(GetWorld(),RenderPosition(WorldPosition));Visuals.Add(HatchKey,Hatch);Part(Hatch,TEXT("Cube"),FVector::ZeroVector,FVector(.08,1.57,2.82),FLinearColor(.57f,.65f,.68f));}
+        const double Open=Colony.DeploymentHatchOpen?1.:Colony.DeploymentGrounded?Smooth((Colony.DeploymentElapsed-Colony.Workers.DeploymentDescentSeconds())/Colony.Workers.DeploymentHatchSeconds()):0.;
+        Hatch->SetActorScale3D(FVector(ShipScale));Hatch->SetActorLocation(RenderPosition(WorldPosition)+FVector(308*ShipScale,0,(147+Open*290)*ShipScale+Airborne));
     }
     if(!Building.IsConstructing)return;
 
@@ -213,76 +221,13 @@ void ASeigeGameMode::SyncConstructionVisuals(const FSeigeSimulation& Colony,cons
     TArray<FString> Resources;Colony.ConstructionCost(Building).GetKeys(Resources);Resources.Sort();
     for(int32 I=0;I<Resources.Num();++I)
     {
-        if(Core&&Progress*Definition.ConstructionSeconds<12)continue; // The deployment kit is still aboard the descending shuttle.
+        if(Core&&!Colony.DeploymentGrounded)continue; // The deployment kit is still aboard the descending shuttle.
         // Only delivered, uninstalled materials remain physically at the site.
         const double Amount=Building.ConstructionMaterials.FindRef(Resources[I]);
         const FVector2D StackPosition=WorldPosition+FVector2D((I%3-1)*FMath::Max(48.,Definition.Footprint*.65),-Definition.Footprint-65.-(I/3)*65.);
         if(!Observer&&DetailedSectorIndex()!=4&&!IsWorldVisible(StackPosition))continue;
         if(const auto* Resource=Colony.Resources.Find(Resources[I]))SyncStockpile(*Resource,Amount,StackPosition,Key+TEXT("_stock_")+Resources[I],Live);
     }
-    const int32 Workers=Core&&Progress*Definition.ConstructionSeconds<12?0:FMath::Clamp(Building.Builders,0,4);
-    const double Time=RenderSimulationTime(Colony);
-    const auto* Snapshot=PresentationSnapshot(Colony);
-    const FVector2D Crew=(Snapshot?Snapshot->Builder(Building,PresentationAlpha()):Building.BuilderPosition)+WorldPosition-Building.Position;
-    const FVector2D Offset=WorldPosition-Building.Position;
-    const FVector2D Port=Core?WorldPosition+Definition.AccessPort*(Definition.Footprint+60.):Colony.BuildingAccessPoint(Building)+Offset;
-    const auto* Command=Colony.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==Colony.CoreDefinition;});
-    const FVector2D Awaiting=Command?Colony.BuildingAccessPoint(*Command)+Offset:Crew;
-    const FVector2D Across(-Definition.AccessPort.Y,Definition.AccessPort.X);
-    for(int32 I=0;I<Workers;++I)
-    {
-        const FVector2D Station=Port+Across*((I-1.5)*22.);
-        const FVector2D Tools=Station+Definition.AccessPort*30.;
-        const double Trip=FVector2D::Distance(Station,Tools)/FMath::Max(Colony.WalkingSpeed(),.001);
-        const double Phase=FMath::Fmod(Time+I*2.4,Trip*2+7.);
-        const double Travel=Phase<Trip?Phase/Trip:Phase<Trip+2?1:Phase<2*Trip+2?1-(Phase-Trip-2)/Trip:0;
-        const bool OnSite=I<Building.BuildersOnSite;
-        const bool Travelling=!OnSite&&I<Building.BuildersOnSite+Building.TravellingBuilders;
-        const FVector2D Position=OnSite?FMath::Lerp(Station,Tools,Travel):(Travelling?Crew:Awaiting)+Across*((I-1.5)*22.);
-        if(!Observer&&DetailedSectorIndex()!=4&&!IsWorldVisible(Position))continue;
-        const FString WorkerKey=Key+FString::Printf(TEXT("_builder_%d"),I);Live.Add(WorkerKey);
-        auto* Worker=Visual(WorkerKey,TEXT("Robot"),RenderPosition(Position,4),Safety,95);
-        const FVector2D Facing=OnSite?(Travel>.01?(Phase<Trip+2?Tools-Station:Station-Tools):WorldPosition-Position):Port-Position;
-        Worker->SetActorRotation(FVector(Facing,0).Rotation());
-        if(!Worker->ActorHasTag(TEXT("ConstructionTool")))
-        {
-            Part(Worker,TEXT("Cube"),FVector(38,0,38),FVector(.36,.12,.12),Steel);
-            Part(Worker,TEXT("Sphere"),FVector(57,0,38),FVector(.055),BuildMint);
-            TArray<UStaticMeshComponent*> Parts;Worker->GetComponents(Parts);if(Parts.Num()>1)Parts[Parts.Num()-2]->ComponentTags.Add(TEXT("ConstructionTool"));
-            Worker->Tags.Add(TEXT("ConstructionTool"));
-        }
-        const bool Working=OnSite&&Phase>=2*Trip+2&&Snapshot&&Building.ConstructionProgress>Snapshot->Construction.FindRef(Building.Id);
-        TArray<UStaticMeshComponent*> Parts;Worker->GetComponents(Parts);
-        for(auto* Piece:Parts)if(Piece->ComponentHasTag(TEXT("ConstructionTool")))Piece->SetRelativeRotation(FRotator(Working?FMath::Sin(Time*8+I)*16:0,0,0));
-    }
 }
 
-void ASeigeGameMode::SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live)
-{
-    if(Building.IsConstructing||!Building.Enabled||Building.SupportedRobots<=0)return;
-    const auto* Definition=Colony.Definition(Building);if(!Definition||Definition->Visual!=TEXT("robotService"))return;
-    const double Width=Definition->Footprint*2*RenderScale;
-    // Automatic support capacity is independent of staffed production jobs.
-    // These are a small representation of supported robots, not extra workers.
-    const int32 Occupied=FMath::Clamp(FMath::DivideAndRoundUp(Building.SupportedRobots,4),1,3);
-    for(int32 I=0;I<Occupied;++I)
-    {
-        const FString RobotKey=Key+FString::Printf(TEXT("_service_%d"),I);Live.Add(RobotKey);
-        // Authored berth contact centers after Blender-to-Unreal Y conversion.
-        const FVector Offset((I-1)*468.*Width/1600.,225.*Width/1600.,87.*Width/1600.);
-        auto* Robot=Visual(RobotKey,TEXT("Robot"),RenderPosition(WorldPosition)+Offset,BuildMint,100);
-        Robot->SetActorRotation(FRotator(0,180,0));
-        if(!Robot->ActorHasTag(TEXT("ServiceStatusLamp")))
-        {
-            Part(Robot,TEXT("Sphere"),FVector(0,0,112),FVector(.10),BuildMint);
-            Robot->Tags.Add(TEXT("ServiceStatusLamp"));
-            TArray<UStaticMeshComponent*> Parts;Robot->GetComponents(Parts);if(Parts.Num())Parts.Last()->ComponentTags.Add(TEXT("ServiceStatusLamp"));
-        }
-        TArray<UStaticMeshComponent*> Parts;Robot->GetComponents(Parts);
-        for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("ServiceStatusLamp")))
-        {
-            Part->SetMaterial(0,Material(Building.MaintenanceSupplied?BuildMint:Safety));
-            Part->SetRelativeScale3D(FVector(.09+.01*FMath::Sin(RenderSimulationTime(Colony)*2+I)));
-        }
-    }
-}
+void ASeigeGameMode::SyncServiceVisuals(const FSeigeSimulation&,const FSeigeBuilding&,FVector2D,const FString&,TSet<FString>&) {}

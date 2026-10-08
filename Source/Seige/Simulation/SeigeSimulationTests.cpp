@@ -16,8 +16,8 @@ FString TestSave(const FString& Name) { return FPaths::Combine(FPaths::ProjectSa
 bool Deploy(FSeigeSimulation& S,FString& Error)
 {
     if(!S.Initialize(TestRules(),Error,false,false))return false;
-    S.Tick(S.BuildingDefs[S.CoreDefinition].ConstructionSeconds+S.FixedStepSeconds());
-    return !S.Buildings[0].IsConstructing;
+    for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
+    if(S.Buildings[0].IsConstructing){Error=TEXT("Finite starter workers could not complete physical deployment");return false;}S.Tick(20);return true;
 }
 double CoreWorkerSeconds(const FSeigeSimulation& S)
 {
@@ -53,7 +53,7 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
     if(!S.Initialize(TestRules(),Error,false,false)){AddError(Error);return false;}
     const auto Node=S.Nodes[0];FString Extractor;
     for(const auto& Id:S.BuildMenu)if(S.BuildingDefs[Id].ExtractionRates.Contains(Node.Resource)){Extractor=Id;break;}
-    if(!S.SetInitialCorePosition(Node.Position-FVector2D(1200,0),Error)){AddError(Error);return false;}S.Tick(S.BuildingDefs[S.CoreDefinition].ConstructionSeconds+S.FixedStepSeconds());
+    if(!S.SetInitialCorePosition(Node.Position-FVector2D(1200,0),Error)){AddError(Error);return false;}if(!TestTrue(TEXT("Workers physically complete deployment before testing mine orders"),FinishSites(S)))return false;
     TestFalse(TEXT("Cannot build a second core"),S.CanPlaceBuilding(S.CoreDefinition,Node.Position,Error));
     TestFalse(TEXT("Extraction Mine cannot operate without a deposit"),S.CanPlaceBuilding(Extractor,Node.Position+FVector2D(600,0),Error));
     TestTrue(TEXT("Generic mine placement accepted"),S.PlaceBuilding(Extractor,Node.Position,Error));
@@ -62,7 +62,7 @@ bool FSeigeRulesTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Missing rules produce a diagnostic"),Error.IsEmpty());
     const FString BadRules = FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Automation"),TEXT("BadRules"));
     IFileManager::Get().MakeDirectory(*BadRules,true);
-    for (const FString& Name : {FString(TEXT("resources")),FString(TEXT("recipes")),FString(TEXT("buildings")),FString(TEXT("policies")),FString(TEXT("scenario")),FString(TEXT("transport")),FString(TEXT("energy")),FString(TEXT("trade")),FString(TEXT("companions")),FString(TEXT("walls")),FString(TEXT("combat")),FString(TEXT("weapons")),FString(TEXT("chassis"))})
+    for (const FString& Name : {FString(TEXT("resources")),FString(TEXT("recipes")),FString(TEXT("buildings")),FString(TEXT("policies")),FString(TEXT("scenario")),FString(TEXT("transport")),FString(TEXT("energy")),FString(TEXT("trade")),FString(TEXT("companions")),FString(TEXT("walls")),FString(TEXT("combat")),FString(TEXT("weapons")),FString(TEXT("chassis")),FString(TEXT("workers")),FString(TEXT("calendar")),FString(TEXT("environment"))})
     {
         FString Text; FFileHelper::LoadFileToString(Text,*FPaths::Combine(TestRules(),Name+TEXT(".json")));
         if (Name == TEXT("recipes")) Text.ReplaceInline(TEXT("\"iron_ore\""),TEXT("\"nonexistent_item\""));
@@ -101,13 +101,13 @@ bool FSeigeBlockedCourierSaveTest::RunTest(const FString& Parameters)
     FSeigeSimulation S;FString Error;if(!Deploy(S,Error)){AddError(Error);return false;}
     const FVector2D Origin=S.Buildings[0].Position,Site=Origin+FVector2D(1400,0),OpenPlot=Origin+FVector2D(0,1400);
     if(!S.PlaceBuilding(TEXT("sensor"),Site,Error)){AddError(Error);return false;}
-    for(int I=0;I<100&&S.Couriers.IsEmpty();++I)S.Tick(S.FixedStepSeconds());
+    for(int I=0;I<4000&&(!S.Couriers.Num()||S.Couriers[0].Amount<=0);++I)S.Tick(S.FixedStepSeconds());
     if(!TestTrue(TEXT("Fixture obtains an actual paid construction delivery"),!S.Couriers.IsEmpty()))return false;
     const int32 CourierId=S.Couriers[0].Id,TargetId=S.Couriers[0].TargetId;
     auto* C=S.Couriers.FindByPredicate([&](const auto& X){return X.Id==CourierId;});
     // Reproduce the legitimate pre-fix waiting state left when a replacement
     // structure enclosed a returning courier. Payload still comes from dispatch.
-    C->Position=Site;C->Route.Empty();C->NextWaypoint=0;
+    auto* Body=S.Workers.Find(C->WorkerId);if(!Body)return false;Body->Position=Site;Body->Route.Empty();Body->NextWaypoint=0;Body->RetryAt=0;C->Position=Site;C->Route.Empty();C->NextWaypoint=0;
     const double Payload=C->Amount;const FString Resource=C->Resource;
     S.Tick(S.FixedStepSeconds());C=S.Couriers.FindByPredicate([&](const auto& X){return X.Id==CourierId;});
     TestTrue(TEXT("A physically blocked courier waits without teleporting through its obstruction"),C&&C->Route.IsEmpty()&&C->Position.Equals(Site)&&C->Amount==Payload);
@@ -177,7 +177,7 @@ bool FSeigeBuildingInfoTest::RunTest(const FString& Parameters)
         TSet<FString> Sections;for(const auto& Row:Rows)Sections.Add(Row.Section);
         TestEqual(TEXT("Every blueprint exposes all six information sections"),Sections.Num(),6);
         TestEqual(TEXT("Power demand reflects external energy definition"),Value(Rows,TEXT("Power"),TEXT("Power consumption")),FString::SanitizeFloat(S.Energy.Definition(Pair.Key)->IdleKW,0)+TEXT(" kW"));
-        TestEqual(TEXT("Generation reflects external energy definition"),Value(Rows,TEXT("Power"),TEXT("Power generation")),FString::SanitizeFloat(S.Energy.Definition(Pair.Key)->GenerationKW,0)+TEXT(" kW"));
+        TestEqual(TEXT("Generation reflects external energy definition"),Value(Rows,TEXT("Power"),S.Energy.Definition(Pair.Key)->GenerationSource==TEXT("solar")?TEXT("Rated generation (daylight peak)"):TEXT("Rated generation")),FString::SanitizeFloat(S.Energy.Definition(Pair.Key)->GenerationKW,0)+TEXT(" kW"));
         const auto* Platform=S.Combat.BuildingPlatforms.Find(Pair.Key);double DPS=0;
         if(Platform)for(int I=0;I<Platform->Weapons.Num();++I){const auto& Weapon=S.Combat.Weapons[Platform->Weapons[I]];DPS+=Weapon.Damage/Weapon.ReloadSeconds;const FString Label=FString::Printf(TEXT("Mount %d - %s"),I+1,*Weapon.Name);const FString Details=Value(Rows,TEXT("Weapons"),Label);TestTrue(TEXT("Every real mount exposes authored shot damage, reload and metre range"),Details.Contains(FString::SanitizeFloat(Weapon.Damage,0)+TEXT(" damage"))&&Details.Contains(FString::SanitizeFloat(Weapon.ReloadSeconds,0)+TEXT(" s"))&&Details.Contains(FString::SanitizeFloat(Weapon.RangeMeters,0)+TEXT(" m")));}
         TestEqual(TEXT("Displayed theoretical DPS sums real equipped modules"),Value(Rows,TEXT("Weapons"),TEXT("Nominal DPS")),FString::SanitizeFloat(DPS,0)+TEXT(" health/s before misses and protection"));
@@ -191,7 +191,9 @@ bool FSeigeBuildingInfoTest::RunTest(const FString& Parameters)
     auto& B=S.Buildings.Last();B.Inventory.Add(TEXT("conductors"),3);
     const auto Live=S.BuildingInfo(B.DefId,B.Id,6);
     TestTrue(TEXT("Required missing local input stock remains zero while inbound cargo is listed"),Value(Live,TEXT("Resources"),S.Resources[TEXT("circuits")].Name).StartsWith(TEXT("0 kg")));
-    TestEqual(TEXT("Local inventory uses actual instance stock"),Value(Live,TEXT("Resources"),S.Resources[TEXT("conductors")].Name),FString(TEXT("3 kg")));
+    double Inbound=0;for(const auto& Cargo:S.Couriers)if(Cargo.TargetId==B.Id&&Cargo.Resource==TEXT("conductors"))Inbound+=Cargo.Amount+Cargo.ReservedAmount;
+    const FString ExpectedStock=TEXT("3 kg")+(Inbound>0?TEXT(" (+")+FString::SanitizeFloat(Inbound,0)+TEXT(" inbound)"):FString());
+    TestEqual(TEXT("Local inventory and separately claimed inbound cargo use their actual amounts"),Value(Live,TEXT("Resources"),S.Resources[TEXT("conductors")].Name),ExpectedStock);
     TestTrue(TEXT("Recipe inputs are shown with their quantities"),Value(Live,TEXT("Production"),TEXT("Inputs per cycle")).Contains(TEXT("2 kg ")+S.Resources[TEXT("alloy")].Name));
     TestEqual(TEXT("Unknown instances cannot show another building's stock"),S.BuildingInfo(B.DefId,S.Buildings[0].Id,6).Num(),0);
     const auto Core=S.BuildingInfo(S.CoreDefinition,S.Buildings[0].Id,6);
@@ -207,22 +209,31 @@ bool FSeigePhysicalDeliveryTest::RunTest(const FString& Parameters)
     if (!S.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-1200,0),Error)) { AddError(Error); return false; }
     if(!TestTrue(TEXT("Factory finishes using delivered materials and builders"),FinishSites(S)))return false;
     if(!ConnectPower(S,S.Buildings[1].Id,Error)){AddError(Error);return false;}
-    S.Population=8; S.Buildings[0].Inventory.Add(TEXT("iron_ore"),8); S.Buildings[0].Inventory.Add(TEXT("carbon"),4);
+    // The ordinary setup may already have stocked the refinery while its road
+    // was being built. Finish those transfers, then return only the test inputs
+    // and any paid batch to the source so this probe starts before fresh pickup.
+    const int32 Refinery=S.Buildings[1].Id;S.ToggleBuilding(Refinery);
+    for(int32 I=0;I<120&&!S.Couriers.IsEmpty();++I)S.Tick(10);
+    auto& Factory=*S.FindBuilding(Refinery);
+    for(const auto& P:Factory.ProductionInputs)Factory.Inventory.FindOrAdd(P.Key)+=P.Value;
+    Factory.ProductionInputs.Empty();Factory.ProductionCommitted=false;Factory.CommittedRecipe.Empty();Factory.Progress=Factory.ProductionReservedLitres=0;
+    for(const auto& P:S.Recipes[TEXT("smelt_alloy")].Inputs){S.Buildings[0].Inventory.FindOrAdd(P.Key)+=Factory.Inventory.FindRef(P.Key);Factory.Inventory.Remove(P.Key);}
+    S.ToggleBuilding(Refinery);
     // A very fast recipe cannot consume resources remotely before the physical couriers arrive.
     S.Recipes[TEXT("smelt_alloy")].Seconds=.01;
-    const double IronBefore=S.TotalStock(TEXT("iron_ore")), CarbonBefore=S.TotalStock(TEXT("carbon"));
+    const double IronBefore=S.TotalStock(TEXT("iron_ore")), CarbonBefore=S.TotalStock(TEXT("carbon")), AlloyBefore=S.ProducedUnits.FindRef(TEXT("alloy"));
     S.Tick(2.1);
     TestTrue(TEXT("Input couriers dispatched"),S.Couriers.Num()>0);
     TestEqual(TEXT("Iron conserved across dispatch"),S.TotalStock(TEXT("iron_ore")),IronBefore);
     TestEqual(TEXT("Carbon conserved across dispatch"),S.TotalStock(TEXT("carbon")),CarbonBefore);
     TestEqual(TEXT("Unrelated copper not inflated by other cargo"),S.TotalStock(TEXT("copper_ore")),0.0);
-    TestEqual(TEXT("No production before input delivery"),S.ProducedUnits.FindRef(TEXT("alloy")),0.0);
+    TestEqual(TEXT("No production before input delivery"),S.ProducedUnits.FindRef(TEXT("alloy")),AlloyBefore);
     TestEqual(TEXT("Remote factory still has no iron"),S.Buildings[1].Inventory.FindRef(TEXT("iron_ore")),0.0);
-    S.Tick(300);
-    TestTrue(TEXT("Production starts after local delivery"),S.ProducedUnits.FindRef(TEXT("alloy"))>0);
+    for(int32 I=0;I<120&&S.ProducedUnits.FindRef(TEXT("alloy"))==AlloyBefore;++I)S.Tick(10);
+    TestTrue(TEXT("Production starts after local delivery"),S.ProducedUnits.FindRef(TEXT("alloy"))>AlloyBefore);
     TestTrue(TEXT("Fast data-defined recipes retain normalized progress"),S.Buildings[1].Progress<1);
     TestTrue(TEXT("Delivered units tracked"),S.DeliveredUnits>0);
-    const double Used=S.ProducedUnits.FindRef(TEXT("alloy"))*S.Recipes[TEXT("smelt_alloy")].Inputs[TEXT("iron_ore")]/S.Recipes[TEXT("smelt_alloy")].Outputs[TEXT("alloy")];
+    const double Used=(S.ProducedUnits.FindRef(TEXT("alloy"))-AlloyBefore)*S.Recipes[TEXT("smelt_alloy")].Inputs[TEXT("iron_ore")]/S.Recipes[TEXT("smelt_alloy")].Outputs[TEXT("alloy")];
     TestTrue(TEXT("Iron transformed according to recipe"),FMath::IsNearlyEqual(S.TotalStock(TEXT("iron_ore"))+Used,IronBefore));
     return true;
 }
@@ -231,16 +242,21 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeWorkforceTest,"Seige.Simulation.Automatic
 bool FSeigeWorkforceTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation S;
-    if (!Deploy(S,Error) || !S.PlaceBuilding(TEXT("sensor"),FVector2D(1200,0),Error)) { AddError(Error); return false; }
-    const int32 Start=S.Population, SensorId=S.Buildings.Last().Id;
-    TestEqual(TEXT("Construction creates two builder vacancies"),S.TotalJobs-S.Employed,2);
-    if(!TestTrue(TEXT("Sensor finishes with automatically produced builders"),FinishSites(S)))return false;
-    S.Tick(121);
-    TestEqual(TEXT("Construction surplus becomes inactive at the operating job count"),S.Population,S.TotalJobs);
-    TestTrue(TEXT("Surplus bodies remain physically stored"),S.InactiveWorkerCount()>0);
-    TestEqual(TEXT("All jobs automatically filled"),S.Employed,S.TotalJobs);
-    S.ToggleBuilding(SensorId); S.Tick(121);
-    TestEqual(TEXT("Disabled building removes job demand and surplus becomes stored"),S.Population,S.TotalJobs);
+    if (!Deploy(S,Error)) { AddError(Error); return false; }
+    const int32 Start=S.Population,OriginalJobs=S.TotalJobs;TSet<FString> OriginalIds;for(const auto& W:S.Workers.Bodies)OriginalIds.Add(W.Id);
+    if(!S.PlaceBuilding(TEXT("sensor"),FVector2D(1200,0),Error)){AddError(Error);return false;}
+    const int32 SensorId=S.Buildings.Last().Id;
+    TestEqual(TEXT("A construction order adds its authored builder jobs"),S.TotalJobs-OriginalJobs,S.RequiredBuilders(S.Buildings.Last()));
+    if(!TestTrue(TEXT("Existing finite workers physically finish the sensor"),FinishSites(S)))return false;
+    for(double Elapsed=0;Elapsed<CoreWorkerSeconds(S)*12+600&&(S.Population<S.TotalJobs||S.FindBuilding(SensorId)->Workers<S.Definition(*S.FindBuilding(SensorId))->Jobs);Elapsed+=10)S.Tick(10);
+    TestEqual(TEXT("Paid manufacturing reaches supported operational and logistics demand"),S.Population,S.TotalJobs);
+    TestTrue(TEXT("Vacancies create additional actual worker identities"),S.Population>Start&&S.Workers.Bodies.Num()>OriginalIds.Num());
+    TestEqual(TEXT("Operating sensor is staffed by workers who arrived"),S.FindBuilding(SensorId)->Workers,S.Definition(*S.FindBuilding(SensorId))->Jobs);
+    for(const auto& Id:OriginalIds)TestNotNull(TEXT("Reassignment preserves every original worker identity"),S.Workers.Find(Id));
+    S.ToggleBuilding(SensorId);
+    for(int32 I=0;I<120&&(S.Population>S.TotalJobs||S.InactiveWorkerCount()==0);++I)S.Tick(10);
+    TestEqual(TEXT("Disabled building removes jobs after surplus workers physically return to storage"),S.Population,S.TotalJobs);
+    TestTrue(TEXT("Returned surplus remains represented by a stored body"),S.InactiveWorkerCount()>0&&S.Workers.Bodies.ContainsByPredicate([](const auto& W){return W.State==TEXT("stored");}));
     FSeigeBuilding* B=S.FindBuilding(SensorId); B->Health-=50; B->Inventory.Add(TEXT("alloy"),2);
     const double Before=B->Health; S.Tick(1);
     TestTrue(TEXT("Repair is automatic on disabled structures"),S.FindBuilding(SensorId)->Health>Before);
@@ -253,7 +269,7 @@ bool FSeigePersistenceTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation A,B;
     if (!Deploy(A,Error) || !A.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-1200,0),Error)) { AddError(Error); return false; }
-    A.Buildings[0].Inventory.Add(TEXT("iron_ore"),8); A.Buildings[0].Inventory.Add(TEXT("carbon"),4); A.Population=8; A.Tick(2.1);
+    A.Buildings[0].Inventory.Add(TEXT("iron_ore"),8); A.Buildings[0].Inventory.Add(TEXT("carbon"),4); A.Tick(2.1);
     if (!TestTrue(TEXT("Snapshot has in-transit cargo"),A.Couriers.Num()>0) || !A.Save(TestSave(TEXT("roundtrip")),Error) || !B.Initialize(TestRules(),Error) || !B.Load(TestSave(TEXT("roundtrip")),Error)) { AddError(Error); return false; }
     TestEqual(TEXT("Time restored"),A.Time,B.Time); TestEqual(TEXT("Cargo restored"),A.Couriers.Num(),B.Couriers.Num());
     A.Tick(110); B.Tick(110);
@@ -262,7 +278,7 @@ bool FSeigePersistenceTest::RunTest(const FString& Parameters)
     if (!A.Save(TestSave(TEXT("roundtrip-a")),Error) || !B.Save(TestSave(TEXT("roundtrip-b")),Error)) { AddError(Error); return false; }
     FString SA,SB; FFileHelper::LoadFileToString(SA,*TestSave(TEXT("roundtrip-a"))); FFileHelper::LoadFileToString(SB,*TestSave(TEXT("roundtrip-b")));
     TestEqual(TEXT("Continued complete simulation states are identical"),SA,SB);
-    const double Before=B.Time; FString Corrupt=SB; Corrupt.ReplaceInline(TEXT("\"save_format\": 6"),TEXT("\"save_format\": 999"));
+    const double Before=B.Time; FString Corrupt=SB; Corrupt.ReplaceInline(TEXT("\"save_format\": 7"),TEXT("\"save_format\": 999"));
     FFileHelper::SaveStringToFile(Corrupt,*TestSave(TEXT("incompatible")));
     TestFalse(TEXT("Incompatible save rejected"),B.Load(TestSave(TEXT("incompatible")),Error)); TestEqual(TEXT("Rejected save leaves running colony untouched"),B.Time,Before);
     return true;
@@ -312,13 +328,15 @@ bool FSeigeConstructionTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Landed shuttle keeps deployment sensors and point defense active"),S.IsVisible(FVector2D::ZeroVector));
     TestFalse(TEXT("Cannot order buildings during deployment"),S.PlaceBuilding(TEXT("sensor"),FVector2D(1200,0),Error));
     S.Tick(2);
-    TestTrue(TEXT("Builders make partial deployment progress"),S.Buildings[0].ConstructionProgress>0&&S.Buildings[0].ConstructionProgress<1);
+    TestEqual(TEXT("Descending shuttle has no workers or materials at the worksite yet"),S.Buildings[0].ConstructionProgress,0.);
+    for(int32 I=0;I<120&&S.Buildings[0].ConstructionProgress<=0;++I)S.Tick(10);
+    TestTrue(TEXT("After exit and delivery, actual builders make partial deployment progress"),S.Buildings[0].ConstructionProgress>0&&S.Buildings[0].ConstructionProgress<1);
     if(!S.Save(TestSave(TEXT("deploying")),Error)||!Loaded.Initialize(TestRules(),Error)||!Loaded.Load(TestSave(TEXT("deploying")),Error)){AddError(Error);return false;}
     TestEqual(TEXT("Deployment progress survives loading"),Loaded.Buildings[0].ConstructionProgress,S.Buildings[0].ConstructionProgress);
     if(!FinishSites(S)||!FinishSites(Loaded))return false;
     TestTrue(TEXT("Deployed core provides normal visibility"),S.IsVisible(FVector2D::ZeroVector));
     // Finite stock can fund one sensor plus protected operating buffers, never two.
-    S.Buildings[0].Inventory[TEXT("alloy")]=14;S.Buildings[0].Inventory[TEXT("circuits")]=7;
+    for(const auto& P:S.BuildingDefs[TEXT("sensor")].Cost)S.Buildings[0].Inventory[P.Key]=P.Value+S.Buildings[0].Inventory.FindRef(P.Key)-S.ConstructionAvailable(P.Key);
     const double AlloyBefore=S.TotalStock(TEXT("alloy"));
     if(!TestTrue(TEXT("Affordable order queues a site"),S.PlaceBuilding(TEXT("sensor"),FVector2D(1200,0),Error)))return false;
     const int32 Site=S.Buildings.Last().Id;
@@ -358,7 +376,7 @@ bool FSeigeRobotSupportTest::RunTest(const FString& Parameters)
         if(!S.PlaceBuilding(TEXT("sensor"),P,Error)){AddError(Error);return false;}
     // Manufacture the missing crew at the current authored core replicator rate.
     // Excess demand remains, so the support ceiling is checked after assembly.
-    S.Tick((CoreCapacity-S.Population)*CoreWorkerSeconds(S)+60);
+    for(int32 I=0;I<1200&&S.Population<CoreCapacity;++I)S.Tick(10);
     TestEqual(TEXT("Population growth stops at actual service capacity"),S.Population,CoreCapacity);
     if(!S.PlaceBuilding(TEXT("robot_service_bay"),FVector2D(0,-1200),Error)){AddError(Error);return false;}
     const int32 BayId=S.Buildings.Last().Id;
@@ -368,22 +386,20 @@ bool FSeigeRobotSupportTest::RunTest(const FString& Parameters)
     if(!ConnectPower(S,BayId,Error)){AddError(Error);return false;}
     for(auto& Building:S.Buildings)if(Building.DefId==TEXT("sensor")&&!Building.Enabled)S.ToggleBuilding(Building.Id);
     if(!FinishSites(S)){AddError(TEXT("Expanded supported construction did not finish"));return false;}
-    S.Tick(600);
+    for(int32 I=0;I<1200&&(S.Population<=CoreCapacity||S.FindBuilding(BayId)->SupportedRobots<=0);++I)S.Tick(10);
     TestEqual(TEXT("Completed service bay expands real capacity"),S.RobotSupportCapacity,CoreCapacity+S.BuildingDefs[TEXT("robot_service_bay")].RobotSupportCapacity);
     TestTrue(TEXT("Open jobs can now grow beyond starter capacity"),S.Population>CoreCapacity);
     TestTrue(TEXT("Additional robots are allocated to the new service bay"),S.FindBuilding(BayId)->SupportedRobots>0);
     // Keep the service population working while isolating a single maintenance interval.
     // No outside source can replace missing service supplies before that interval.
     S.FindBuilding(BayId)->Inventory.Remove(TEXT("components"));
-    S.Couriers.RemoveAll([](const auto& C){return C.Resource==TEXT("components");});
-    S.Buildings[0].Inventory[TEXT("components")]=.32;
-    const double Interval=600;
-    const double UntilNext=Interval-FMath::Fmod(S.Time-S.BuildingDefs[S.CoreDefinition].ConstructionSeconds,Interval);
-    S.Tick(UntilNext+S.FixedStepSeconds());
+    const double Interval=S.Number(TEXT("upkeep_interval"));
+    S.Buildings[0].Inventory[TEXT("components")]=S.Buildings[0].SupportedRobots*S.Number(TEXT("upkeep_per_robot"));
+    S.StepPopulation(Interval-S.UpkeepClock+S.FixedStepSeconds());
     TestTrue(TEXT("Core can maintain its crew without exporting its protected buffer"),S.Buildings[0].MaintenanceSupplied);
     TestFalse(TEXT("Service upkeep requires its own local supplies"),S.FindBuilding(BayId)->MaintenanceSupplied);
     TestTrue(TEXT("Maintenance shortage has a real workforce consequence"),S.OperatingEfficiency()<1);
-    S.FindBuilding(BayId)->Inventory.Add(TEXT("components"),5);S.Buildings[0].Inventory[TEXT("components")]=5;S.Tick(Interval);
+    S.FindBuilding(BayId)->Inventory.Add(TEXT("components"),5);S.Buildings[0].Inventory[TEXT("components")]=5;S.StepPopulation(Interval);
     TestTrue(TEXT("Delivered local components restore service at the next interval"),S.FindBuilding(BayId)->MaintenanceSupplied);
     S.ToggleBuilding(BayId);
     TestEqual(TEXT("Disabling a bay removes its usable capacity"),S.RobotSupportCapacity,CoreCapacity);
@@ -395,22 +411,37 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeVisibleWorkGatesTest,"Seige.Simulation.Vi
 bool FSeigeVisibleWorkGatesTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation S;if(!Deploy(S,Error)){AddError(Error);return false;}
-    TestFalse(TEXT("Idle core does not mime manufacturing robots"),S.HasActiveWork(S.Buildings[0]));
-    const FSeigeBuildingDef* D=nullptr;
-    for(const auto& Pair:S.BuildingDefs)if(Pair.Value.Role==TEXT("processor")&&Pair.Value.Jobs<=2){D=&Pair.Value;break;}
-    if(!TestNotNull(TEXT("Current rules contain a processor"),D))return false;
+    for(int32 I=0;I<1200&&S.HasActiveWork(S.Buildings[0]);++I)S.Tick(10);
+    TestFalse(TEXT("Core becomes visually idle once paid startup manufacture finishes"),S.HasActiveWork(S.Buildings[0]));
+    // Use an expanding recipe: a shrinking batch may legitimately run in a full
+    // store because removing its inputs makes enough room for every output.
+    const FSeigeBuildingDef* D=S.BuildingDefs.Find(TEXT("circuit_works"));
+    if(!TestNotNull(TEXT("Current rules contain the circuit processor"),D))return false;
     const FString DefinitionId=D->Id;
     if(!S.PlaceBuilding(DefinitionId,FVector2D(1200,0),Error)||!FinishSites(S)){AddError(Error);return false;}
     const int Id=S.Buildings.Last().Id;
     TestFalse(TEXT("A disconnected completed workplace cannot animate production"),S.HasActiveWork(*S.FindBuilding(Id)));
     if(!ConnectPower(S,Id,Error)){AddError(Error);return false;}
+    for(int32 I=0;I<120&&S.FindBuilding(Id)->Workers<D->Jobs;++I)S.Tick(10);
+    TestEqual(TEXT("Actual workers arrive before checking the production animation gate"),S.FindBuilding(Id)->Workers,D->Jobs);
     auto& B=*S.FindBuilding(Id);B.Inventory.Empty();B.ProductionCommitted=false;B.ProductionInputs.Empty();B.ProductionReservedLitres=0;B.Progress=0;
     TestFalse(TEXT("No local inputs means exterior tools stay idle"),S.HasActiveWork(B));
-    B.Inventory=S.Recipes[D->Recipe].Inputs;
+    const auto Inputs=S.ProductionInputs(B,D->Recipe);const auto& Recipe=S.Recipes[D->Recipe];
+    const double RequiredHeadroom=S.InventoryLitres(Recipe.Outputs)-S.InventoryLitres(Inputs);
+    if(!TestTrue(TEXT("Circuit recipe needs additional output volume"),RequiredHeadroom>0))return false;
+    B.Inventory=Inputs;
     TestTrue(TEXT("Real locally supplied powered production allows work animation"),S.HasActiveWork(B));
-    const FString Stock=B.Inventory.CreateConstIterator().Key();B.Inventory[Stock]=D->StorageCapacity*2/S.Resources[Stock].LitresPerUnit;
+    TestTrue(TEXT("The supplied batch can actually commit"),S.CanCommitProduction(B,D->Recipe));
+    const FString Stock=Recipe.Outputs.CreateConstIterator().Key();const double LitresPerUnit=S.Resources[Stock].LitresPerUnit;
+    B.Inventory.FindOrAdd(Stock)+=S.StorageRoom(B)/LitresPerUnit;
+    TestTrue(TEXT("Full-store fixture respects physical capacity"),S.StorageUsed(B)<=D->StorageCapacity+1.e-8);
+    TestTrue(TEXT("No unclaimed output room remains"),S.StorageRoom(B)<1.e-8);
+    TestFalse(TEXT("Full storage rejects the actual expanding batch"),S.CanCommitProduction(B,D->Recipe));
     TestFalse(TEXT("Full output storage also stops work animation"),S.HasActiveWork(B));
-    B.Inventory=S.Recipes[D->Recipe].Inputs;B.IsConstructing=true;
+    B.Inventory[Stock]-=(RequiredHeadroom+1.e-6)/LitresPerUnit;
+    TestTrue(TEXT("Freeing the required output headroom admits the batch"),S.CanCommitProduction(B,D->Recipe));
+    TestTrue(TEXT("The same freed headroom restores work animation"),S.HasActiveWork(B));
+    B.Inventory=Inputs;B.IsConstructing=true;
     TestFalse(TEXT("Construction site never shows operating workforce"),S.HasActiveWork(B));
     B.IsConstructing=false;B.Enabled=false;
     TestFalse(TEXT("Disabled production stays idle"),S.HasActiveWork(B));

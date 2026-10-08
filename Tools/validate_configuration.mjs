@@ -25,6 +25,7 @@ export function readConfiguration(root = defaultRoot) {
     developed: read('AIFILES/developed_start.json'),
     ui: read('Interface/ui.json'),
     graphics: read('Graphics/scene.json'),
+    weather: read('Graphics/weather.json'),
     availableAssetPackages,
   };
 }
@@ -73,6 +74,10 @@ export function validateConfiguration(data) {
     const speeds = array(ui.simulation_speeds, 'UI simulation_speeds', 3, 3);
     if (new Set(speeds).size !== 3 || !speeds.every(value => [1, 5, 10].includes(value))) fail('UI simulation_speeds must contain 1, 5 and 10 once each');
   }
+  const weather=object(data.weather,'Graphics/weather.json');version(weather,'Graphics/weather.json');
+  const weatherBounds={night_exposure_offset_ev:[0,4],sun_direction_update_degrees:[.01,2],sun_shadow_update_seconds:[.05,10],night_sky_intensity_fraction:[.05,1],sunrise_sunset_softness:[.01,.5],winter_accumulation_fraction:[.001,.49],winter_melt_fraction:[.001,.49],maximum_snow_coverage:[0,1],snowflake_count:[0,2048,true],snow_radius_meters:[5,100],snow_height_meters:[5,100],snow_fall_meters_per_second:[.1,10],snowflake_size_centimeters:[.1,10]};
+  for(const [key,[min,max,integer]]of Object.entries(weatherBounds))number(weather[key],`Weather ${key}`,min,max,!!integer);
+  for(const key of ['ambient_cubemap','snow_collection','snowflake_material']){text(weather[key],`Weather ${key}`);if(!/^\/Game\/(?:[A-Za-z0-9_]+\/)*[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?$/.test(weather[key]))fail(`Weather ${key} requires a game asset`);}
   version(graphics, 'Graphics/scene.json');
   number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);
   if(Math.abs(graphics.world_centimeters_per_unit/100-data.rules.transport.transport.meters_per_world_unit)>1e-9)fail('Graphics and transport physical scales must agree');
@@ -189,6 +194,12 @@ export function validateConfiguration(data) {
   if(buildable(economy.solar_definition,'AI solar_definition').role!=='generator'||buildable(economy.trade_definition,'AI trade_definition').role!=='trade')fail('AI bootstrap needs a generator and trading port');
   number(economy.export_batch,'AI export_batch',1e-8,10000);number(economy.import_batch,'AI import_batch',1e-8,10000);
   number(economy.recipe_input_buffer_cycles,'AI recipe_input_buffer_cycles',1,100);number(economy.credit_buffer_batches,'AI credit_buffer_batches',0,100);
+  number(economy.fuel_import_buffer_cycles,'AI fuel_import_buffer_cycles',1,100);number(economy.fuel_import_refill_fraction,'AI fuel_import_refill_fraction',1e-8,1);
+  if(!['remaining_output_bill','recipe_buffers'].includes(economy.bulk_input_policy))fail('Unsupported AI bulk_input_policy');
+  if(!['surplus_shipment_value','local_raw_only'].includes(economy.export_policy))fail('Unsupported AI export_policy');
+  if(economy.core_replication_policy!=='funded_shortage_first')fail('Unsupported AI core_replication_policy');
+  const replicationRecipes=array(economy.core_replication_recipes,'AI core_replication_recipes',1,128), replicationSeen=new Set();
+  for(const id of replicationRecipes){const recipe=data.rules.recipes.recipes.find(r=>r.id===id);if(replicationSeen.has(id)||!recipe||recipe.worker_output>0||!Object.keys(recipe.outputs).length||!buildings.get(scenario.core_definition).allowed_recipes.includes(id))fail(`Invalid AI core_replication_recipes entry: ${id}`);replicationSeen.add(id);}
   for(const[id,n]of Object.entries(object(economy.reserve_targets,'AI reserve_targets'))){if(!resources.has(id))fail(`Unknown AI reserve target ${id}`);number(n,`AI reserve_targets.${id}`,0,Number.MAX_VALUE);}
   number(ai.developed_setup_seconds, 'AI developed_setup_seconds', ai.decision_interval_seconds, 172800);
   if (buildable(ai.sensor_definition, 'AI sensor_definition').sensor_range <= 0) fail('AI sensor_definition must provide sensor coverage');
@@ -201,6 +212,14 @@ export function validateConfiguration(data) {
   number(placement.node_clearance, 'AI placement.node_clearance', 0, extent);
   number(placement.sensor_overlap, 'AI placement.sensor_overlap', 1e-8, 1);
   number(placement.defense_distance, 'AI placement.defense_distance', 0, extent);
+  if (!['prefer_covered_approaches','first_legal'].includes(placement.defense_coverage_policy)) fail('Unsupported AI placement.defense_coverage_policy');
+  number(placement.coverage_samples, 'AI placement.coverage_samples', 8, 64, true);
+  number(placement.coverage_probe_distance_meters, 'AI placement.coverage_probe_distance_meters', 1e-8, 100);
+  const coverageExcluded = new Set(), knownBuildingRoles = new Set([...buildings.values()].map(building => building.role));
+  for (const role of array(placement.coverage_excluded_roles, 'AI placement.coverage_excluded_roles', 1)) {
+    if (!knownBuildingRoles.has(role)) fail('Unknown AI placement.coverage_excluded_roles entry');
+    unique(coverageExcluded, role, 'AI coverage excluded role');
+  }
   if (((placement.ring_limit - placement.ring_start) / placement.ring_step + 1) * placement.angles > 4096) fail('AI placement search exceeds its supported candidate limit');
   const targets = array(ai.build_targets, 'AI build_targets', 1, 128);
   const finalCounts = new Map();
@@ -212,25 +231,46 @@ export function validateConfiguration(data) {
     if ((finalCounts.get(target.definition) ?? 0) >= target.count) fail(`Repeated AI target counts must increase: ${target.definition}`);
     finalCounts.set(target.definition, target.count);
   }
-  number(developed.population, 'Developed population', scenario.starting_population, 2147483647, true);
-  object(developed.inventory, 'Developed inventory');
-  let stock = 0;
-  for (const [id, amount] of Object.entries(developed.inventory)) {
-    if (!resources.has(id)) fail(`Developed inventory references unknown resource: ${id}`);
-    stock += number(amount, `Developed inventory.${id}`, 0, Number.MAX_VALUE)*resources.get(id).litres_per_unit;
+  if (!['established_manifest','simulated_history'].includes(ai.developed_initialization)) fail('Invalid AI developed_initialization');
+  if (developed.kind !== 'established_colony' || developed.equipment !== 'definition_defaults' || developed.fleet !== 'scenario_guard_manifest') fail('Invalid established kind/equipment/fleet');
+  if (developed.road_tier !== data.rules.transport.transport.initial_tier) fail('Invalid established road_tier');
+  number(developed.age_seconds, 'Established age_seconds', 60, 31536000);
+  number(developed.credits, 'Established credits', 0, 1000000);
+  number(developed.idle_workers, 'Established idle_workers', 0, 1000, true);
+  number(developed.layout_rotations, 'Established layout_rotations', 1, 4, true);
+  const established = array(developed.buildings, 'Established buildings', 1, 128);
+  let stock = 0, operators = developed.idle_workers, capacity = 0, mines = 0;
+  const fixedPlots = [];
+  for (const [i, row] of established.entries()) {
+    object(row, `Established building ${i}`);
+    const def = buildings.get(row.definition);
+    if (!def || (i === 0 ? row.definition !== scenario.core_definition : !menu.has(row.definition) || def.role === 'core')) fail('Established buildings must begin with one valid command core');
+    if (!['core','deposit'].includes(row.anchor) || (def.role === 'extractor') !== (row.anchor === 'deposit')) fail('Invalid established anchor');
+    if (row.anchor === 'deposit') mines++;
+    array(row.offset_meters, 'Established offset_meters', 2, 2).forEach(v => number(v, 'Established offset_meters', -1800, 1800));
+    if ((i === 0 || row.anchor === 'deposit') && row.offset_meters.some(v => v !== 0)) fail('Core and bound deposit must have zero offset_meters');
+    number(row.operators, 'Established operators', def.jobs, def.jobs, true); operators += row.operators; capacity += def.robot_support_capacity;
+    number(row.battery_kwh, 'Established battery_kwh', 0, data.rules.energy.energy.buildings[row.definition].battery_capacity_kwh);
+    if (typeof row.recipe !== 'string' || (row.recipe && row.recipe !== def.recipe && !def.allowed_recipes.includes(row.recipe))) fail('Invalid established recipe');
+    object(row.inventory, 'Established inventory'); let volume = 0;
+    for (const [id, amount] of Object.entries(row.inventory)) {
+      const resource = resources.get(id); if (!resource) fail('Unknown established inventory resource');
+      number(amount, 'Established inventory amount', 0, 1e9, resource.discrete);
+      if (id === 'stored_workers' && !def.stores_inactive_workers) fail('Established inventory stores workers in an incompatible building');
+      volume += amount * resource.litres_per_unit;
+    }
+    if (volume > def.storage_capacity + 1e-8) fail('Established inventory exceeds capacity'); stock += volume;
+    if (row.anchor === 'core') {
+      const radius = def.reserved_footprint * data.rules.transport.transport.meters_per_world_unit;
+      for (const other of fixedPlots) if (Math.abs(row.offset_meters[0]-other.x) < radius+other.radius+policies.minimum_build_spacing*data.rules.transport.transport.meters_per_world_unit && Math.abs(row.offset_meters[1]-other.y) < radius+other.radius+policies.minimum_build_spacing*data.rules.transport.transport.meters_per_world_unit) fail('Established reserved plots overlap');
+      fixedPlots.push({x:row.offset_meters[0], y:row.offset_meters[1], radius});
+    }
   }
-  const deploymentKit = Object.entries(scenario.starting_deployment_materials).reduce((sum, [id,amount]) => sum + amount*resources.get(id).litres_per_unit, 0);
-  if (stock + deploymentKit > buildings.get(scenario.core_definition).storage_capacity) fail('Developed inventory and deployment kit exceed core capacity');
-  // Necessary setup bounds only; geometry, staffing and actual AI behavior require native tests.
-  const cost = new Map();
-  let setupActions = 0;
-  for (const [id, count] of finalCounts) {
-    if(buildings.get(id).role==='extractor')continue; // Native AI selects one locally generated standard source.
-    setupActions += count;
-    for (const [resource, amount] of Object.entries(buildings.get(id).cost)) cost.set(resource, (cost.get(resource) ?? 0) + amount * count);
-  }
-  if (setupActions > ai.developed_setup_action_limit) fail('Developed setup action limit cannot establish the requested building targets');
-  for (const [id, amount] of Object.entries(rules.bootstrap)) if ((developed.inventory[id] ?? 0) < amount) fail(`Developed seed cannot fund its finite energy/trade bootstrap for ${id}`);
+  if (mines !== 1 || operators > capacity) fail('Established manifest needs one bound mine and supported worker capacity');
+  const workerRules = data.rules.workers;
+  const eligible = established.filter(row => !workerRules.logistics_excluded_roles.includes(buildings.get(row.definition).role)).length;
+  const logistics = Math.min(workerRules.logistics_max_workers, workerRules.logistics_workers + (workerRules.logistics_scaling_policy === 'completed_facilities' ? Math.floor(eligible / workerRules.logistics_facilities_per_worker) : 0));
+  if (developed.idle_workers < logistics) fail('Established idle_workers must cover actual logistics jobs');
 
   const shortcut = (value, label) => {
     const key = text(value, label).toUpperCase();
@@ -280,14 +320,14 @@ export function validateConfiguration(data) {
     unique(creditHeadings, text(row.heading, `UI credits[${index}].heading`), 'UI credit heading');
     text(row.text, `UI credits[${index}].text`);
   }
-  return { ...rules, aiTargets: targets.length, developedStock: stock, uiGroups: groups.length, uiBuildings: assigned.size, summaryResources: summaryIds.size, credits: creditHeadings.size, natureRoles: natureRoles.length, renderScale: graphics.world_centimeters_per_unit };
+  return { ...rules, aiTargets: targets.length, developedStock: stock, developedBuildings: established.length, developedActiveWorkers: operators, developedStoredWorkers: established.reduce((sum,row)=>sum+(row.inventory.stored_workers??0),0), uiGroups: groups.length, uiBuildings: assigned.size, summaryResources: summaryIds.size, credits: creditHeadings.size, natureRoles: natureRoles.length, renderScale: graphics.world_centimeters_per_unit };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const result = validateConfiguration(readConfiguration(path.resolve(process.argv[2] ?? defaultRoot)));
     console.log(`Configuration valid: ${result.version}; ${result.resources} items, ${result.recipes} recipes, ${result.buildings} buildings.`);
-    console.log(`AI: ${result.aiTargets} priorities, ${result.developedStock} developed starting items. Interface: ${result.uiGroups} groups, ${result.uiBuildings} building/tool entries, ${result.summaryResources} summary resources, ${result.credits} credits.`);
+    console.log(`AI: ${result.aiTargets} priorities, ${result.developedBuildings} established buildings, ${result.developedActiveWorkers} active + ${result.developedStoredWorkers} stored workers. Interface: ${result.uiGroups} groups, ${result.uiBuildings} building/tool entries, ${result.summaryResources} summary resources, ${result.credits} credits.`);
     console.log(`Graphics: ${result.natureRoles} nature roles resolve to Content assets; ${result.renderScale} rendered centimeters per simulation unit.`);
   } catch (error) {
     console.error(`CONFIGURATION VALIDATION FAILED: ${error.message}`);

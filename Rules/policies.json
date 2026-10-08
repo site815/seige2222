@@ -1,12 +1,16 @@
 {
-  "version": "prototype-8.1",
+  "version": "prototype-9.0",
   "policies": {
     "fixed_step_seconds": 0.05,
     "dispatch_interval": 2,
-    "courier_capacity": 8,
+    "courier_capacity": 40,
     "courier_min_batch": 2,
+    "delivery_refill_trigger_fraction": 0.5,
+    "construction_source_policy": "surplus_then_largest_load",
+    "delivery_priority_order": ["fuel", "maintenance", "repair", "defense", "construction", "production", "trade", "reserve", "storage"],
     "max_couriers": 72,
     "delivery_buffer_cycles": 3,
+    "delivery_raw_input_buffer_loads": 2,
     "repair_buffer_units": 6,
     "repair_health_per_unit": 22,
     "repair_health_per_second": 9,
@@ -89,14 +93,16 @@
       }
     ],
     "inactive_worker_resource": "stored_workers",
-    "inactive_worker_litres": 50,
+    "inactive_worker_litres": 160,
     "worker_store_seconds": 5,
     "worker_reactivate_seconds": 5,
     "worker_disassemble_seconds": 10,
     "worker_disassembly_kwh": 1,
     "worker_disassembly_outputs": {
-      "components": 0.5,
-      "circuits": 0.5
+      "components": 54,
+      "alloy": 10.8,
+      "circuits": 3.6,
+      "batteries": 3.6
     },
     "auto_disassemble_parts_shortage": true,
     "auto_disassemble_storage_full": true,

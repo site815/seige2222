@@ -9,7 +9,7 @@
 | Family | Levels and capability |
 | --- | --- |
 | Extraction Mine | One blueprint for all eight raw types; placement binds output to the underlying deposit. Per-resource rates remain external balance. |
-| Command core | Parked shuttle at level 1; levels 2/3 double/triple body width. All reserve the level-3 plot. Fusion power, storage, four large lasers and a slow selectable universal replicator, including workers and combat production. |
+| Command core | Parked shuttle at level 1; levels 2/3 double/triple body width. All reserve the level-3 plot. Fusion power, storage, two large hardpoint banks carrying one large, two medium and eight small lasers and a slow selectable universal replicator, including workers and combat production. |
 | Solar array | Levels 1–3, unchanged footprint, increasing externally configured output. |
 | Worker factory | Fast worker assembly with lower process electricity than core replication; physical inactive-worker berths. |
 | Wheeled / tracked / mech factories | Separate families, levels 1–3 at fixed family footprints. Paid, timed manufacture uses combat-defined size access and throughput. |
@@ -85,7 +85,7 @@ This historical crosswalk preserves the original sixteen ideas while stating the
 
 | Earlier proposed function | Current treatment | Status and purpose |
 | --- | --- | --- |
-| Core | Tiered command core | Confirmed shuttle, fusion power, storage, four large lasers and slow universal replication; exact rates and bills remain provisional. |
+| Core | Tiered command core | Confirmed shuttle, fusion power, storage, two large hardpoint banks carrying one large, two medium and eight small lasers and slow universal replication; exact rates and bills remain provisional. |
 | Habitat | Reconsider as a robot service or social space, or omit | Human housing is deferred. Robot accommodation and its satisfaction effects are not selected. |
 | Waterworks | Extraction Mine on water | The same mine blueprint gathers this standard resource. Water has industrial uses and does not imply worker drinking needs. |
 | Cultivation | Biomass extraction and food manufacture | Biomass is currently a deposit resource. Organic food feeds Rex and can be exported; workers do not eat it. Cultivation as a separate renewable source remains a proposal. |
@@ -97,7 +97,7 @@ This historical crosswalk preserves the original sixteen ideas while stating the
 | Electronics facility | Circuits and AI-chip manufacture | Current product branches with authored recipes; additional specialist processes remain future design. |
 | Advanced assembly | Worker factory and higher-order manufacture | Dedicated faster worker assembly is confirmed alongside the core's slow replicator. Both feed one workforce; advanced products have separate recipes. |
 | Depot / logistics | Local storage and automatic deliveries | Implemented local inventory and courier rules; additional transfer-hub types remain proposals. |
-| Trade terminal | Level 1–3 trading port | Current timed import/export, credits, physical goods and whole-worker trade; prices and shipment timing remain provisional. |
+| Trade terminal | Level 1–3 trading port | Current timed import/export, credits, physical goods and whole-worker trade. Provisional shipment capacity is 1/2/3 tonnes by level; nominal flight time is 120 seconds and departure costs 0.25 kWh. See the [economy baseline](ECONOMY_BASELINE_0_9.md#provisional-external-freight-capacity) for the revision and pending acceptance. |
 | Fleet yard | Wheeled, tracked and mech factory families | Current level 1–3 manufacture and outfitting, physical bills and separate combat vehicle state; these do not create colony workers. |
 | Defensive emplacement | Laser, kinetic, missile and plasma towers | Confirmed level 1–3 families with hardpoint/loadout data; exact combat balance remains provisional. |
 | Barriers / gates | Level 1–3 wall segments | Walls are confirmed physical obstacles with paid construction and upgrades. Gates and additional access-control behavior remain future work. |

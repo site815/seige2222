@@ -151,24 +151,7 @@ void ASeigeGameMode::SyncRoadVisuals(const FSeigeSimulation& Colony,FVector2D Of
             if(!Observer&&!Offset.IsNearlyZero()&&!IsWorldVisible(P))continue;
             SyncStockpile(Resource.Value,Amount,P,Key+TEXT("_stock_")+Resource.Key,Live);
         }
-        const auto* Snapshot=PresentationSnapshot(Colony);
-        const FVector2D Crew=Snapshot?Snapshot->RoadBuilder(Road,PresentationAlpha()):Road.BuilderPosition;
-        const auto* Command=Colony.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==Colony.CoreDefinition;});
-        const FVector2D Awaiting=Command?Colony.BuildingAccessPoint(*Command):Crew;
-        for(int32 I=0;I<FMath::Min(Road.Builders,3);++I)
-        {
-            // The crew's route and arrival are simulated. Its site tools animate
-            // at render frequency without moving workers faster than walking.
-            const bool OnSite=I<Road.BuildersOnSite;
-            const bool Travelling=!OnSite&&I<Road.BuildersOnSite+Road.TravellingBuilders;
-            const FVector2D P=(OnSite?Colony.RoadAccessPoint(Road):Travelling?Crew:Awaiting)+Offset+Side*(I*20.);
-            if(!Observer&&!Offset.IsNearlyZero()&&!IsWorldVisible(P))continue;
-            const FString WorkerKey=Key+FString::Printf(TEXT("_builder_%d"),I);Live.Add(WorkerKey);
-            auto* Worker=Visual(WorkerKey,TEXT("Robot"),RenderPosition(P,4),Survey,95);
-            Worker->SetActorRotation(FVector(Road.B-Road.A,0).Rotation());
-            if(!Worker->ActorHasTag(TEXT("PavingTool")))
-            {Part(Worker,TEXT("Cube"),FVector(40,0,30),FVector(.5,.22,.12),Rail);Worker->Tags.Add(TEXT("PavingTool"));}
-        }
+
     }
 }
 

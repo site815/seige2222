@@ -91,4 +91,35 @@ bool FSeigeThreatSaveValidationTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Old format rejection explains incompatibility"),Error.Contains(TEXT("incompatible")));
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeEnemyContactTest,"Seige.Simulation.EnemyContactAndAttackPresentation",ThreatFlags)
+bool FSeigeEnemyContactTest::RunTest(const FString& Parameters)
+{
+    FString Error;FSeigeSimulation S;
+    if(!S.Initialize(ThreatRules(),Error,false,false)){AddError(Error);return false;}
+    S.Buildings[0].Enabled=false;S.Combat.Vehicles.Empty();
+    FSeigeBuilding Factory;Factory.Id=9000;Factory.DefId=TEXT("component_works");Factory.Position=FVector2D(1100,500);Factory.Health=S.BuildingDefs[Factory.DefId].Health;Factory.Enabled=false;S.Buildings.Add(Factory);
+    const double Radius=S.Number(TEXT("enemy_attack_range"))+S.BuildingDefs[Factory.DefId].Footprint;
+    FSeigeEnemy Enemy;Enemy.Id=8099;Enemy.Health=100;
+    // The original clamped approach stalls at this exact position: its last
+    // movement is below coordinate precision while distance remains >302.5.
+    Enemy.Position=FVector2D(1126.3646121811712,801.3488961727527);S.Enemies={Enemy};S.Time=1;
+    const double Before=S.FindBuilding(Factory.Id)->Health;S.StepCombat(S.FixedStepSeconds());
+    TestTrue(TEXT("A floating-point residual at contact cannot prevent melee damage"),S.FindBuilding(Factory.Id)->Health<Before);
+    TestEqual(TEXT("Attack presentation identifies the actual factory, not the command core"),S.Enemies[0].TargetBuildingId,Factory.Id);
+    TestEqual(TEXT("Only a performed melee attack records its time"),S.Enemies[0].LastAttackTime,S.Time);
+    S.Enemies[0].Position=Factory.Position+FVector2D(0,Radius+2);S.Enemies[0].LastAttackTime=-1;
+    const double OutsideHealth=S.FindBuilding(Factory.Id)->Health;S.StepCombat(S.FixedStepSeconds());
+    TestEqual(TEXT("An approaching enemy outside contact does not receive an early attack"),S.FindBuilding(Factory.Id)->Health,OutsideHealth);
+    TestEqual(TEXT("Approach does not create an attack presentation event"),S.Enemies[0].LastAttackTime,-1.);
+    for(double Degrees:{35.,85.,135.})
+    {
+        FSeigeSimulation Approach=S;const double Angle=FMath::DegreesToRadians(Degrees);
+        Approach.Enemies[0].Position=Factory.Position+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*(Radius+100);
+        Approach.Enemies[0].LastAttackTime=-1;const double Health=Approach.FindBuilding(Factory.Id)->Health;
+        const int32 Steps=FMath::CeilToInt(100/Approach.Number(TEXT("enemy_speed"))/Approach.FixedStepSeconds())+4;
+        for(int32 I=0;I<Steps;++I){Approach.Time+=Approach.FixedStepSeconds();Approach.StepCombat(Approach.FixedStepSeconds());}
+        TestTrue(FString::Printf(TEXT("Clamped approach at %.0f degrees eventually attacks"),Degrees),Approach.FindBuilding(Factory.Id)->Health<Health);
+    }
+    return true;
+}
 #endif

@@ -2,7 +2,7 @@
 
 [Design index](README.md) · [Resource proposal](RESOURCE_PROPOSAL.md) · [Building proposal](BUILDING_PROPOSAL.md)
 
-**The product types below are user-confirmed; supporting items, recipes, quantities and energy values are provisional.** The v0.8 source implements a candidate catalog in [recipes.json](../../Rules/recipes.json). The larger example transactions below remain design alternatives, not a second runtime recipe table. Engine and packaged verification of the new economy are pending.
+**The product types below are user-confirmed; supporting items, recipes, quantities and energy values are provisional.** The current v0.9 catalog in [recipes.json](../../Rules/recipes.json) is summarized with its accepted worker/kit baseline in [Economy Baseline 0.9](ECONOMY_BASELINE_0_9.md). The larger example transactions below remain design alternatives, not a second runtime recipe table. Native checks provide bounded evidence; expanded scenario and packaged acceptance remain incomplete.
 
 ## Confirmed products and their role
 
@@ -60,7 +60,7 @@ For passive draw, `energy_kWh = power_kW × simulation_seconds / 3600`. Stored b
 
 ## Confirmed bootstrap and proposed acceptance checks
 
-The colony starts with **zero credits**. The landed physical materials must suffice to build a **road, solar generation and the level-one trading port**. The player exports available raw goods to earn external trade credits, then imports the missing standard input. There is no starting credit grant, local wage economy or free import. Port levels 1–3 are confirmed; their candidate throughput, shipment timing and upgrade costs are now external data and still require balance evaluation.
+The colony starts with **zero credits**. The landed physical materials must suffice to build a **road, solar generation and the level-one trading port**. The player exports available raw goods to earn external trade credits, then imports the missing standard input. There is no starting credit grant, local wage economy or free import. Port levels 1–3 now provisionally carry 1/2/3 tonnes per shipment, retaining a nominal 120-second flight and 0.25 kWh departure cost. The previous 100/200/300 kg limits passed the 24 no-threat opening tests but obstructed longer tonne-scale development; the revised freight policy and AI batch ceiling require reruns. [Economy Baseline 0.9](ECONOMY_BASELINE_0_9.md#provisional-external-freight-capacity) separates current settings from prior evidence.
 
 **Proposed validation:** Test all 24 allowed resource subsets, not just one favorable map. The landing kit must support extraction/handling of a saleable local material as well as the named road/solar/port bootstrap. Check solar/grid connection and port operation before any sale, real export cargo/arrival before credit settlement, import delay/capacity, worker maintenance and repairs before the first full production loop, and battery charging against the explicit initial-charge ledger. The current candidate assigns the landed core finite initial charge through `energy.json`; later battery installations start empty. This is a balance choice to evaluate, not an unlimited startup-energy exception. Market demand, prices and fees must make at least one legal opening viable without a hidden inventory or credit award.
 

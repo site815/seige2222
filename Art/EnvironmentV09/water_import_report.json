@@ -1,0 +1,20 @@
+{
+  "asset": "/Game/Art/EnvironmentV09/M_WaterV09.M_WaterV09",
+  "original_material": true,
+  "opaque": true,
+  "world_space_ripple_normals": true,
+  "filtered_irregular_ripples": true,
+  "roughness": 0.48,
+  "specular": 0.12,
+  "deposit_materials": {
+    "iron_ore": "/Game/Art/EnvironmentV09/M_Deposit_iron_ore.M_Deposit_iron_ore",
+    "copper_ore": "/Game/Art/EnvironmentV09/M_Deposit_copper_ore.M_Deposit_copper_ore",
+    "silica": "/Game/Art/EnvironmentV09/M_Deposit_silica.M_Deposit_silica",
+    "carbon": "/Game/Art/EnvironmentV09/M_Deposit_carbon.M_Deposit_carbon",
+    "water": "/Game/Art/EnvironmentV09/M_Deposit_water.M_Deposit_water",
+    "hydrocarbons": "/Game/Art/EnvironmentV09/M_Deposit_hydrocarbons.M_Deposit_hydrocarbons",
+    "radioactive_ore": "/Game/Art/EnvironmentV09/M_Deposit_radioactive_ore.M_Deposit_radioactive_ore",
+    "crystalline": "/Game/Art/EnvironmentV09/M_Deposit_crystalline.M_Deposit_crystalline"
+  },
+  "notes": "Surface geometry comes from shared physical river/lake profile. No refraction or wave displacement; ice simulation is not implemented."
+}

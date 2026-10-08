@@ -9,9 +9,10 @@ bool FSeigeRoadRepairTest::RunTest(const FString&)
 {
     FString Error;FSeigeSimulation S;
     if(!S.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Error,false,false)){AddError(Error);return false;}
-    // Isolate repair from the separately tested timed construction pipeline.
-    // Install the real carried kit and debit each road's actual authored bill.
-    auto& Core=S.Buildings[0];Core.InstalledMaterials=Core.ConstructionMaterials;Core.ConstructionMaterials.Empty();Core.ConstructionProgress=1;Core.IsConstructing=false;Core.Builders=Core.BuildersOnSite=Core.TravellingBuilders=0;
+    // Deploy the real finite crew; only the roads are focused installed fixtures.
+    for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
+    if(!TestFalse(TEXT("Physical starter deployment completes"),S.Buildings[0].IsConstructing))return false;
+    S.Tick(20);auto& Core=S.Buildings[0];
     S.AllocateWorkers();S.Energy.Invalidate();S.Energy.Tick(S,0);
     const FVector2D Port=S.BuildingAccessPoint(Core);
     auto InstallRoad=[&](FVector2D A,FVector2D B)->int32
@@ -34,6 +35,7 @@ bool FSeigeRoadRepairTest::RunTest(const FString&)
     TestEqual(TEXT("Worn road requests the configured local repair buffer"),S.RoadRepairDemand(Core,Material),S.Transport->GetNumberField(TEXT("repair_buffer_units")));
     const double Before=S.FindRoad(Near)->Health,Remote=S.FindRoad(Far)->Health,Separate=S.FindRoad(Disconnected)->Health;
     const double Stock=Core.Inventory.FindRef(Material),Energy=S.Energy.ConsumedKWh,Expected=Rate*S.WorkFraction(Core);
+    if(!TestTrue(TEXT("Real deployed operators can perform nonzero service work"),Expected>0))return false;
     S.StepRoadRepairs(1);
     const double Restored=S.FindRoad(Near)->Health-Before;
     TestTrue(TEXT("Staffed local service restores the authored rate"),FMath::IsNearlyEqual(Restored,Expected,1.e-7));

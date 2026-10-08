@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.1",
+  "version": "prototype-9.0",
   "scenario": {
     "title": "seige2222 - First Landing",
     "core_definition": "command_core",
@@ -8,9 +8,18 @@
     "starting_population": 6,
     "starting_shuttle_cargo": {},
     "starting_inventory": {
-      "alloy": 420,
-      "circuits": 110,
-      "components": 50,
+      "alloy": 6000,
+      "conductors": 400,
+      "substrates": 400,
+      "plastic": 200,
+      "circuits": 240,
+      "components": 960,
+      "batteries": 240,
+      "iron_ore": 250,
+      "silica": 250,
+      "carbon": 250,
+      "water": 250,
+      "fuel": 150,
       "organic_food": 10
     },
     "core_position": [
@@ -38,6 +47,6 @@
       "road_length_meters": 500,
       "extractor_count": 1
     },
-    "quantity_note": "Starting stock is a finite carried landing kit. It covers a road-connected solar array, level-1 trading port and a local extractor before any export income; it does not grant credits."
+    "quantity_note": "Finite provisional 9,570 kg loose kit (3,869.5 L), plus six installed 80 kg workers, installed fleet and ship equipment. No starting credits. The 20 kg preloaded deployment consumables and unmodeled hull/reactor are separate from loose kit; no isotope-cell cargo."
   }
 }

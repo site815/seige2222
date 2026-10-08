@@ -44,10 +44,10 @@ ASeigeGameMode::ASeigeGameMode()
 void ASeigeGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    if(!LoadGraphicsSettings())
+    if(!LoadGraphicsSettings()||!LoadWeatherSettings())
     {
         GraphicsSettingsValid=false;Notice=Error;Screen=TEXT("main");
-        if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark"))||FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke")))
+        if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark"))||FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("WorldReview"))||FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke")))
         {UE_LOG(LogTemp,Error,TEXT("Automated presentation cannot start: %s"),*Error);FPlatformMisc::RequestExitWithStatus(false,1);}
         return;
     }
@@ -75,6 +75,7 @@ void ASeigeGameMode::BeginPlay()
     auto* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,3000),FRotator(-SunElevation,-28,0));
     Sun->GetLightComponent()->SetIntensity(SunIntensity);
     auto* SunComponent=Cast<UDirectionalLightComponent>(Sun->GetLightComponent());
+    WeatherSun=SunComponent;
     SunComponent->SetMobility(EComponentMobility::Movable);
     SunComponent->ForwardShadingPriority=1;
     SunComponent->SetAtmosphereSunLight(true);
@@ -101,12 +102,16 @@ void ASeigeGameMode::BeginPlay()
         CloudComponent->SetMaterial(CloudMaterial);CloudComponent->RegisterComponent();
     }
     auto* Sky=GetWorld()->SpawnActor<ASkyLight>();
+    WeatherSky=Sky->GetLightComponent();
     Sky->GetLightComponent()->SetMobility(EComponentMobility::Movable);
     Sky->GetLightComponent()->SetIntensity(SkyIntensity);
-    Sky->GetLightComponent()->SetRealTimeCaptureEnabled(SkyRealtimeCapture);
-    // The current scenario has fixed sun/time. Capture its ambient environment
-    // once rather than continuously recapturing a static lighting setup.
-    if(!SkyRealtimeCapture)Sky->GetLightComponent()->RecaptureSky();
+    // A scene capture queued during BeginPlay may wait for shaders until dawn
+    // has already switched the sun off. Stable authored radiance avoids baking
+    // a black sky; weather varies its intensity/tint without runtime recapture.
+    Sky->GetLightComponent()->SourceType=SLS_SpecifiedCubemap;
+    Sky->GetLightComponent()->SetCubemap(WeatherAmbientCubemap);
+    Sky->GetLightComponent()->SetRealTimeCaptureEnabled(false);
+    Sky->GetLightComponent()->MarkRenderStateDirty();
     if(FogDensity>0)
     {
         auto* Fog=GetWorld()->SpawnActor<AExponentialHeightFog>();
@@ -146,18 +151,23 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
         const double Step=Sim.FixedStepSeconds(); Accumulator+=FMath::Min(DeltaSeconds,.25f)*Speed;
         while(Accumulator>=Step)
         {
+            BindScenarioCalendar();
             CaptureSimulationPresentation();
             if(Observer&&CenterBrain) CenterBrain->Tick(Sim,Step); else Sim.Tick(Step);
             for(auto& N:Neighbors) if(N.Brain) N.Brain->Tick(N.Sim,Step);
             for(auto& N:Neighbors)Sim.Combat.TickExternalSector(Sim,N.Sim,N.Index,Step);
+            ScenarioCalendar.Advance(Step);
+            BindScenarioCalendar();
             Accumulator-=Step;
         }
     }
     RenderClock+=DeltaSeconds;
+    UpdateWeather(DeltaSeconds);
     RefreshEnvironment();
     SyncVisuals();
     if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark")))RunGraphicsBenchmark(DeltaSeconds);
     if(FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))) RunPresentationSmoke();
+    if(FParse::Param(FCommandLine::Get(),TEXT("WorldReview"))) RunWorldReview();
     if(FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke"))) RunDisplaySmoke();
     if(!ScreenshotRequested && RenderClock>8 && FParse::Param(FCommandLine::Get(),TEXT("PrototypeScreenshot")))
     {
@@ -227,13 +237,9 @@ AActor* ASeigeGameMode::Visual(const FString& Key,const FString& Kind,FVector Lo
     }
     else if(Kind==TEXT("Shuttle"))
     {
-        Part(Actor,TEXT("Cube"),FVector(0,0,Size*.2),FVector(Size*.004,Size*.008,Size*.0025),Color);
-        Part(Actor,TEXT("Sphere"),FVector(0,-Size*.31,Size*.25),FVector(Size*.0038,Size*.0028,Size*.002),Ink);
-        for(double Side:{-1.,1.})
-        {
-            Part(Actor,TEXT("Cube"),FVector(Side*Size*.29,0,Size*.12),FVector(Size*.0013,Size*.006,.22),FLinearColor(.18f,.23f,.25f));
-            for(double End:{-1.,1.})Part(Actor,TEXT("Cylinder"),FVector(Side*Size*.29,End*Size*.22,Size*.09),FVector(Size*.0011,Size*.0011,Size*.0016),Muted);
-        }
+        Part(Actor,TEXT("Cylinder"),FVector(0,0,Size*.8),FVector(Size*.006,Size*.006,Size*.014),Color);
+        Part(Actor,TEXT("Cone"),FVector(0,0,Size*1.65),FVector(Size*.006,Size*.006,Size*.006),Color);
+        for(double X:{-1.,1.})for(double Y:{-1.,1.})Part(Actor,TEXT("Cube"),FVector(X*Size*.3,Y*Size*.3,Size*.08),FVector(Size*.0015,Size*.0015,Size*.0016),Muted);
     }
     else
     {
@@ -273,51 +279,15 @@ void ASeigeGameMode::SyncVisuals()
             if(!Visuals.Contains(Key)) ClearSceneryAt(P,D->ReservedFootprint);
             Visual(Key,Kind,RenderPosition(P),Appearance->Color,Appearance->Footprint*2.f*RenderScale)->Tags.AddUnique(DefinitionTag);
             SyncConstructionVisuals(Colony,B,*Appearance,P,Key,Live);
-            SyncServiceVisuals(Colony,B,P,Key,Live);
+
             SyncInventoryVisuals(Colony,B,*D,P,Key,Live);
-            SyncWorkerVisuals(Colony,B,*D,P,Key,Live);
+
             SyncBuildingPlot(Colony,B,*D,P,Key,Live);
         }
         SyncRoadVisuals(Colony,Offset,Prefix,Live);
         SyncWallVisuals(Colony,Offset,Prefix,Live);
         SyncCombatVisuals(Colony,Offset,Prefix,Live);
-        for(const auto& C:Colony.Couriers)
-        {
-            const FVector2D LocalP=RenderState.Courier(C,Alpha);
-            const FVector2D P=LocalP+Offset;
-            if(!Observer&&!Offset.IsNearlyZero()&&!IsWorldVisible(C.Position+Offset))continue;
-            if(!Observer&&!Offset.IsNearlyZero()&&!IsWorldVisible(P)) continue;
-            const FString Key=Prefix+FString::Printf(TEXT("courier_%d"),C.Id); Live.Add(Key);
-            auto* A=Visual(Key,TEXT("Robot"),RenderPosition(P,4),Mint,110);
-            if(C.Route.IsValidIndex(C.NextWaypoint))A->SetActorRotation(FVector(C.Route[C.NextWaypoint]-LocalP,0).Rotation());
-            // Fast corridors carry workers and payloads on a visible powered
-            // platform; the simulation owns the route and actual travel speed.
-            const auto* Road=Colony.FindRoad(Colony.CourierRoadId(C));
-            const auto* Tier=Road?Colony.TransportTiers.Find(Road->Tier):nullptr;
-            if(Tier&&Tier->SpeedMultiplier>1&&Colony.Energy.RoadPowered(Road->Id))
-            {
-                const FString CarrierKey=Key+TEXT("_carrier");Live.Add(CarrierKey);
-                auto* Carrier=Visuals.FindRef(CarrierKey).Get();
-                if(!Carrier)
-                {
-                    Carrier=GetWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(Carrier);Carrier->SetRootComponent(Root);Root->RegisterComponent();Visuals.Add(CarrierKey,Carrier);
-                    Part(Carrier,TEXT("Cube"),FVector(0,0,9),FVector(1.25,.92,.18),FLinearColor(.24,.3,.31));
-                    for(double X:{-40.,40.})for(double Y:{-42.,42.})Part(Carrier,TEXT("Cylinder"),FVector(X,Y,5),FVector(.16,.16,.12),Ink,FRotator(90,0,0));
-                }
-                Carrier->SetActorLocation(RenderPosition(P,3));Carrier->SetActorRotation(A->GetActorRotation());Carrier->SetActorHiddenInGame(false);
-                A->AddActorWorldOffset(FVector(0,0,18));
-            }
-            if(!A->ActorHasTag(TEXT("PhysicalCargo")))
-            {
-                const auto* Resource=Colony.Resources.Find(C.Resource);
-                Part(A,TEXT("Cube"),FVector(-6,0,5),FVector(.58,.52,.32),Resource?Resource->Color:Mint);
-                TArray<UStaticMeshComponent*> Parts;A->GetComponents(Parts);Parts.Last()->ComponentTags.Add(TEXT("PhysicalCargo"));
-                Part(A,TEXT("Cube"),FVector(-6,-27,5),FVector(.12,.02,.32),C.ForConstruction?FLinearColor(.85,.52,.12):FLinearColor(.18,.22,.24));
-                A->Tags.Add(TEXT("PhysicalCargo"));
-            }
-            TArray<UStaticMeshComponent*> Parts;A->GetComponents(Parts);
-            for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("PhysicalCargo")))Part->SetRelativeScale3D(FVector(.58,.52,.32*FMath::Clamp(C.Amount/8.,.12,1.)));
-        }
+        SyncWorkerAgents(Colony,Offset,Prefix,Live);
         for(const auto& E:Colony.Enemies)
         {
             const FVector2D LocalP=Snapshot?Snapshot->Enemy(E,Alpha):E.Position;
@@ -326,8 +296,14 @@ void ASeigeGameMode::SyncVisuals()
             if(!Observer&&!IsWorldVisible(P)) continue;
             const FString Key=Prefix+FString::Printf(TEXT("enemy_%d"),E.Id); Live.Add(Key);
             auto* A=Visual(Key,TEXT("Bug"),RenderPosition(P),FLinearColor(.4f,.08f,.17f),210);
-            FVector2D Target=Colony.Buildings.IsEmpty()?FVector2D::ZeroVector:Colony.Buildings[0].Position;
+            const auto* Attacked=Colony.FindBuilding(E.TargetBuildingId);
+            FVector2D Target=Attacked?Attacked->Position:Colony.Buildings.IsEmpty()?LocalP+FVector2D(1,0):Colony.Buildings[0].Position;
             A->SetActorRotation(FVector(Target-LocalP,0).Rotation());
+            // Real melee events drive the lunge; an idle blocked enemy does not
+            // pretend to attack, and a repaired target still shows incoming hits.
+            const double SinceAttack=AnimationTime-E.LastAttackTime;
+            if(E.LastAttackTime>=0&&SinceAttack>=0&&SinceAttack<.35)
+                A->AddActorWorldOffset(FVector((Target-LocalP).GetSafeNormal(),0)*FMath::Sin(SinceAttack/.35*PI)*18.);
         }
     };
     const bool AwaitingLanding=Screen==TEXT("landing")||(MenuOpen&&MenuReturnScreen==TEXT("landing"));

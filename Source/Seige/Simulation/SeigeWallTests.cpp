@@ -6,7 +6,7 @@
 namespace
 {
 constexpr EAutomationTestFlags Flags=EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter;
-bool Deploy(FSeigeSimulation& S,FString& Error){if(!S.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Error,false,false))return false;S.Tick(S.BuildingDefs[S.CoreDefinition].ConstructionSeconds+S.FixedStepSeconds());return !S.Buildings[0].IsConstructing;}
+bool Deploy(FSeigeSimulation& S,FString& Error){if(!S.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Error,false,false))return false;for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);if(S.Buildings[0].IsConstructing){Error=TEXT("Physical worker deployment did not complete");return false;}S.Tick(20);return true;}
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeWallPlanTest,"Seige.Simulation.Walls.PreviewCommitAndAtomicRejection",Flags)
 bool FSeigeWallPlanTest::RunTest(const FString&)
@@ -47,6 +47,14 @@ bool FSeigeWallOccupancyTest::RunTest(const FString&)
     FSeigeSimulation S;FString Error;if(!Deploy(S,Error)){AddError(Error);return false;}
     const auto Core=S.Buildings[0].Position;const TArray<FVector2D> Joints={Core+FVector2D(-300,-1000),Core+FVector2D(300,-1000)};
     const auto At=Core+FVector2D(-250,-1000);FSeigeWallPlan P;const int32 Before=S.Buildings.Num();
+    if(S.Workers.Bodies.IsEmpty()){AddError(TEXT("Fixture requires real landed worker bodies"));return false;}
+    auto& Body=S.Workers.Bodies[0];const auto Original=Body;
+    Body.Position=At;Body.State=TEXT("active");Body.Activity=TEXT("idle");Body.BuildingId=Body.RoadId=Body.DeliveryId=0;Body.Outdoor=true;
+    TestFalse(TEXT("An individual idle outdoor worker blocks the wall even without an aggregate crew counter"),S.Walls.Plan(S,Joints,true,P,Error));
+    Body.Position=At+FVector2D(0,S.BuildingDefs[TEXT("wall_segment")].ReservedFootprint+S.Workers.BodyRadiusMeters()/S.MetersPerWorldUnit()*.5);
+    TestFalse(TEXT("The wall plot also respects the physical body radius beyond its pivot"),S.Walls.Plan(S,Joints,true,P,Error));
+    Body.Outdoor=false;TestTrue(TEXT("A worker inside a building does not reserve outdoor wall ground"),S.Walls.Plan(S,Joints,true,P,Error));
+    Body=Original;
     FSeigeCourier C;C.Position=At;S.Couriers.Add(C);
     TestFalse(TEXT("Wall cannot trap a courier"),S.Walls.Commit(S,Joints,true,Error));
     TestEqual(TEXT("Occupied corridor rejection is atomic"),S.Buildings.Num(),Before);S.Couriers.Empty();

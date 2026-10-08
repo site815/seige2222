@@ -1,0 +1,78 @@
+{
+  "units": "centimeters",
+  "license": "Original project work",
+  "generator": "Tools/create_orbital_assets_v09.py",
+  "meshes": {
+    "SM_Shuttle": {
+      "fbx": "SM_Shuttle.fbx",
+      "sha256": "72b821b3620cc8680812ff718b22ff5b7d13030c994f825b353c8ab97d637acd",
+      "dimensions_cm": [
+        848.5869750976562,
+        848.5869750976562,
+        2088.0
+      ],
+      "triangles": 13388,
+      "materials": [
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Yellow"
+      ],
+      "description": "Original vertical orbital command shuttle: upright pressure hull, ogive nose, four landing outriggers, fusion engine, east cargo hatch and two large modular weapon banks.",
+      "unreal_path": "/Game/Art/SM_Shuttle"
+    },
+    "SM_Core": {
+      "fbx": "SM_Core.fbx",
+      "sha256": "eef708055f0ffb83958b5c7815cd4cf2b1bbe123351d9da22138eb3dad62ad34",
+      "dimensions_cm": [
+        2035.0,
+        2030.0,
+        580.5
+      ],
+      "triangles": 16548,
+      "materials": [
+        "IM_Concrete",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Glass",
+        "IM_Yellow"
+      ],
+      "description": "Original four-wing command expansion campus surrounding an open central upright-shuttle well. The original spacecraft remains independently rendered at its original size and location.",
+      "unreal_path": "/Game/Art/SM_Core"
+    },
+    "SM_Robot": {
+      "fbx": "SM_Robot.fbx",
+      "sha256": "040510919db2d1c9144fba97b37e6488a1e8d66c1f21af9582abdc26e5579928",
+      "dimensions_cm": [
+        70.99999237060547,
+        79.80000305175781,
+        79.0
+      ],
+      "triangles": 4792,
+      "materials": [
+        "IM_Ceramic",
+        "IM_Carbon",
+        "IM_Light",
+        "IM_Slate",
+        "IM_Steel"
+      ],
+      "description": "Original legless low-hover worker, rounded ceramic shell, twin cyan optical eyes, articulated tool arms, payload socket and four contained lift emitters. Represents one persistent 80 kg worker.",
+      "unreal_path": "/Game/Art/SM_Robot"
+    }
+  },
+  "hatch": {
+    "direction_unreal": [
+      1,
+      0
+    ],
+    "x_centimeters": 302,
+    "runtime_half_footprint_fraction": 0.71177,
+    "grounded": true
+  },
+  "shuttle_weapon_banks": 2
+}

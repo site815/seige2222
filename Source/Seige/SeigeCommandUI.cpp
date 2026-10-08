@@ -2,7 +2,7 @@
 
 namespace
 {
-const FLinearColor Text(.89f,.92f,.9f),Muted(.56f,.65f,.64f),Gold(.89f,.75f,.43f),Mint(.46f,.84f,.68f),Red(.91f,.48f,.39f);
+const FLinearColor Text(.91f,.95f,.96f),Muted(.58f,.71f,.76f),Gold(.91f,.72f,.39f),Mint(.35f,.85f,.78f),Red(.91f,.48f,.39f);
 bool CanManage(const ASeigeGameMode& G)
 {return G.Ready&&!G.Observer&&!G.CompanionView&&G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.IsRegionMap()&&G.DetailedSectorIndex()==4&&!G.Sim.Failed&&!G.Sim.Escaped&&(!G.Sim.Won||G.WinAcknowledged)&&G.SelectedBuild.IsEmpty()&&!G.WallPlacementActive&&!G.IsRoadToolActive()&&!G.FleetOrderActive;}
 FString RecipeLabel(const FSeigeSimulation& Sim,const FString& Id)

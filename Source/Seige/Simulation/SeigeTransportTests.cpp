@@ -12,7 +12,7 @@ constexpr EAutomationTestFlags TransportTestFlags=EAutomationTestFlags::EditorCo
 FString Rules(){return FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules"));}
 FString SaveFile(const FString& Name){return FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Automation/Transport"),Name+TEXT(".json"));}
 void Advance(FSeigeSimulation& S,double Duration){for(double Remaining=Duration;Remaining>UE_DOUBLE_SMALL_NUMBER;){const double Chunk=FMath::Min(10.,Remaining);S.Tick(Chunk);Remaining-=Chunk;}}
-bool Deploy(FSeigeSimulation& S,FString& Error){if(!S.Initialize(Rules(),Error,false,false))return false;Advance(S,S.BuildingDefs[S.CoreDefinition].ConstructionSeconds+S.FixedStepSeconds());return !S.Buildings[0].IsConstructing;}
+bool Deploy(FSeigeSimulation& S,FString& Error){if(!S.Initialize(Rules(),Error,false,false))return false;for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);if(S.Buildings[0].IsConstructing){Error=TEXT("Physical worker deployment did not complete");return false;}S.Tick(20);return true;}
 // Pay for the crew through the slow core replicator before measuring walking
 // and road assembly; worker-manufacture latency has its own lifecycle tests.
 bool PrepareStoredCrew(FSeigeSimulation& S,FString& Error)
@@ -23,7 +23,9 @@ bool PrepareStoredCrew(FSeigeSimulation& S,FString& Error)
     FString WorkerRecipe;
     for(const auto& Id:S.ProductionOptions(S.Buildings[0].Id))if(S.Recipes[Id].WorkerOutput>0){WorkerRecipe=Id;break;}
     if(WorkerRecipe.IsEmpty()){Error=TEXT("Core must offer worker assembly");return false;}
-    const double Limit=S.ProductionSeconds(S.Buildings[0],WorkerRecipe)*(Count+1)+60;
+    // Allow the authored core recipe to run with only its essential operator;
+    // the hauler and the other real workers are no longer free full staffing.
+    const double Limit=S.ProductionSeconds(S.Buildings[0],WorkerRecipe)*(Count+2)*S.BuildingDefs[S.CoreDefinition].Jobs+60;
     for(double Elapsed=0;Elapsed<Limit&&S.InactiveWorkerCount()<Count;Elapsed+=10)S.Tick(10);
     if(S.InactiveWorkerCount()<Count){Error=TEXT("Core could not manufacture the paid transport-test crew");return false;}
     return S.SetWorkerSurplusTarget(0,Error);
@@ -65,7 +67,11 @@ bool FSeigePhasedWorkTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Travel and phased work continue deterministically after loading"),Left,Right);
     A.ToggleBuilding(SiteId);
     if(!A.Save(SaveFile(TEXT("crew-paused-between-steps")),Error)||!B.Load(SaveFile(TEXT("crew-paused-between-steps")),Error)){AddError(Error);return false;}
-    TestEqual(TEXT("Pausing then immediately saving keeps crew assignment valid without a fixed tick"),B.FindBuilding(SiteId)->BuildersOnSite,0);
+    TestEqual(TEXT("Pausing then immediately saving preserves the real crew still present before the next fixed tick"),B.FindBuilding(SiteId)->BuildersOnSite,A.FindBuilding(SiteId)->BuildersOnSite);
+    const double PausedProgress=A.FindBuilding(SiteId)->ConstructionProgress;
+    A.Tick(A.FixedStepSeconds());B.Tick(B.FixedStepSeconds());
+    TestEqual(TEXT("A disabled site cannot gain work while its physical crew is reassigned"),A.FindBuilding(SiteId)->ConstructionProgress,PausedProgress);
+    TestEqual(TEXT("Loaded disabled site preserves the same stopped work"),B.FindBuilding(SiteId)->ConstructionProgress,PausedProgress);
     return true;
 }
 

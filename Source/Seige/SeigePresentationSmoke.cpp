@@ -19,9 +19,9 @@ void ASeigeGameMode::RunPresentationSmoke()
     if(!FParse::Param(FCommandLine::Get(),TEXT("UiSmoke")))return;
     static const double Times[]={2,3,4,5,7,8,10,11,12,13,14.5,16,17,18,19,20,21,22,23,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,78,80,84,86,90,92,96,98,100,102,104,106,108,114,116,138,158,160,162,163,165,166,167,168,169,170,173,174,176,177,179,180,183,186,188,190,192,194,196,198,200,202,204,206,208,210,212,214,216,218,220,222,224,226,228,230,232,234,236,238,240,242,244,246,248,250,252,254,256,258,260,262};
     static double MenuTime=0,LastStageTime=0,WalkDistance=0,WalkSeconds=0;
-    static TMap<int32,FVector2D> LastSimulationPositions;
+    static TMap<FString,FVector2D> LastSimulationPositions;
     static int32 TestRoadId=0;
-    static FVector2D SmokeLanding,ExportPosition,RexBefore,SolarPosition,PortPosition;
+    static FVector2D SmokeLanding,ExportPosition,RexBefore,SolarPosition,PortPosition,ServicePosition;
     static TArray<FString> AssertionFailures;
     static FString ExportResource,ImportResource;
     static int32 SolarId=0,TradePortId=0,ExtractorId=0;
@@ -34,14 +34,14 @@ void ASeigeGameMode::RunPresentationSmoke()
     static bool CommandSelectionReframed=false;
     static int32 BeforeWallBuildings=0,BeforeFactoryJobs=0;static double BeforeWallAlloy=0,BeforePlanAlloy=0,BeforePlanEnergy=0;
     static TWeakObjectPtr<ASeigeGameMode> MotionOwner;
-    static TMap<int32,FVector> LastCourierPositions;
+    static TMap<FString,FVector> LastCourierPositions;
     static double LastMotionTime=-1;
     static int32 MotionFramesBetweenTicks=0;
     if(MotionOwner.Get()!=this){MotionOwner=this;LastCourierPositions.Reset();LastMotionTime=-1;MotionFramesBetweenTicks=0;LastStageTime=WalkDistance=WalkSeconds=0;LastSimulationPositions.Reset();TestRoadId=SolarId=TradePortId=ExtractorId=0;SmokeLanding=ExportPosition=RexBefore=FVector2D::ZeroVector;ExportResource.Empty();ImportResource.Empty();ExportOrdered=ImportOrdered=false;PreparationCaptured=ServiceGhostCaptured=false;ServiceGhostReadySince=-1;PreActionCapturedStage=INDEX_NONE;CommandSelectionReframed=false;AssertionFailures.Reset();}
     if(Screen==TEXT("playing")&&!Paused&&Speed==1&&!Observer)
     {
-        bool MovedBetweenTicks=false;TMap<int32,FVector> Current;
-        for(const auto& Courier:Sim.Couriers)if(const auto* Actor=Visuals.FindRef(FString::Printf(TEXT("home_courier_%d"),Courier.Id)).Get())
+        bool MovedBetweenTicks=false;TMap<FString,FVector> Current;
+        for(const auto& Courier:Sim.Workers.Bodies)if(Courier.State==TEXT("active")&&Courier.Outdoor)if(const auto* Actor=Visuals.FindRef(TEXT("home_worker_")+Courier.Id).Get())
         {
             const FVector Position=Actor->GetActorLocation();Current.Add(Courier.Id,Position);
             if(const auto* Previous=LastCourierPositions.Find(Courier.Id))
@@ -49,13 +49,13 @@ void ASeigeGameMode::RunPresentationSmoke()
         }
         if(Sim.Time>LastMotionTime&&LastMotionTime>=0)
         {
-            for(const auto& Courier:Sim.Couriers)if(const auto* Before=LastSimulationPositions.Find(Courier.Id))
+            for(const auto& Courier:Sim.Workers.Bodies)if(const auto* Before=LastSimulationPositions.Find(Courier.Id))
             {
                 const double Distance=FVector2D::Distance(*Before,Courier.Position);
-                if(Distance>0&&Sim.CourierRoadId(Courier)==0){WalkDistance+=Distance*Sim.MetersPerWorldUnit();WalkSeconds+=Sim.Time-LastMotionTime;}
+                if(Distance>0&&Sim.Workers.RoadId(Sim,Courier)==0){WalkDistance+=Distance*Sim.MetersPerWorldUnit();WalkSeconds+=Sim.Time-LastMotionTime;}
             }
         }
-        LastSimulationPositions.Reset();for(const auto& Courier:Sim.Couriers)LastSimulationPositions.Add(Courier.Id,Courier.Position);
+        LastSimulationPositions.Reset();for(const auto& Courier:Sim.Workers.Bodies)LastSimulationPositions.Add(Courier.Id,Courier.Position);
         if(MovedBetweenTicks)++MotionFramesBetweenTicks;
         LastCourierPositions=MoveTemp(Current);LastMotionTime=Sim.Time;
     }
@@ -69,7 +69,7 @@ void ASeigeGameMode::RunPresentationSmoke()
         const auto* Core=Sim.Buildings.FindByPredicate([&](const auto&B){return B.DefId==Sim.CoreDefinition&&B.Health>0;});if(!Core)return false;
         if(Sim.IsRoadGridConnected(Core->Id,Id))return true;
         for(const auto& R:Sim.Roads)if(R.IsConstructing)return false;
-        TArray<FVector2D> Starts{Sim.BuildingAccessPoint(*Core)};for(const auto& R:Sim.Roads)if(!R.Tier.IsEmpty()){Starts.AddUnique(R.A);Starts.AddUnique(R.B);}
+        TArray<FVector2D> Starts{Sim.BuildingAccessPoint(*Core)};for(const auto& R:Sim.Roads)if(R.Health>0&&!R.Tier.IsEmpty()){Starts.AddUnique(R.A);Starts.AddUnique(R.B);}
         const FVector2D End=Sim.BuildingAccessPoint(*Target);
         Starts.Sort([&](const FVector2D&A,const FVector2D&B){return FVector2D::DistSquared(A,End)<FVector2D::DistSquared(B,End);});
         for(const auto& Start:Starts)
@@ -78,7 +78,7 @@ void ASeigeGameMode::RunPresentationSmoke()
             for(const auto& Point:Route)
             {
                 auto On=[](FVector2D P,FVector2D A,FVector2D B){const auto D=B-A;const double T=FVector2D::DotProduct(P-A,D)/FMath::Max(D.SizeSquared(),1.e-9);return T>=-.00001&&T<=1.00001&&FVector2D::Distance(P,A+D*T)<.01;};
-                if(Sim.Roads.ContainsByPredicate([&](const auto&R){return !R.Tier.IsEmpty()&&On(Previous,R.A,R.B)&&On(Point,R.A,R.B);})){Previous=Point;continue;}
+                if(Sim.Roads.ContainsByPredicate([&](const auto&R){return R.Health>0&&!R.Tier.IsEmpty()&&On(Previous,R.A,R.B)&&On(Point,R.A,R.B);})){Previous=Point;continue;}
                 FString Why;if(Sim.PlaceRoad(Previous,Point,Why))return false;
                 if(Point.Equals(End,.01)&&!Previous.Equals(Point,.01)&&Sim.PlaceRoad(Previous,Point+(Point-Previous).GetSafeNormal()*400,Why))return false;
                 break;
@@ -89,16 +89,18 @@ void ASeigeGameMode::RunPresentationSmoke()
     const double Delay=PresentationSmokeStage==0?Times[0]:Times[PresentationSmokeStage]-Times[PresentationSmokeStage-1];
     if(RenderClock<LastStageTime+Delay)return;
     // These are real 10x simulation waits, never accelerated construction cheats.
+    const bool WaitingForDeploymentWork=PresentationSmokeStage==57&&!Sim.Buildings.IsEmpty()&&Sim.Buildings[0].IsConstructing&&Sim.Buildings[0].ConstructionProgress<=0;
     const bool WaitingForCore=(PresentationSmokeStage==10||PresentationSmokeStage==58)&&!Sim.Buildings.IsEmpty()&&Sim.Buildings[0].IsConstructing;
-    const bool WaitingForService=PresentationSmokeStage==61&&Sim.Buildings.Num()>=2&&(!PowerConnected(Sim.Buildings[1].Id)||Sim.RobotSupportCapacity<24);
+    const int32 ExpandedSupport=Sim.Buildings.IsEmpty()?0:Sim.Definition(Sim.Buildings[0])->RobotSupportCapacity+Sim.BuildingDefs[TEXT("robot_service_bay")].RobotSupportCapacity;
+    const bool WaitingForService=PresentationSmokeStage==61&&Sim.Buildings.Num()>=2&&(!PowerConnected(Sim.Buildings[1].Id)||Sim.RobotSupportCapacity<ExpandedSupport);
     const auto* TestRoad=Sim.FindRoad(TestRoadId);
     const bool WaitingForRoad=(PresentationSmokeStage==80||PresentationSmokeStage==84||PresentationSmokeStage==87)&&TestRoad&&TestRoad->IsConstructing;
     const bool WaitingForSolar=PresentationSmokeStage==95&&SolarId&&(!PowerConnected(SolarId)||Sim.Energy.Info(Sim,SolarId).GenerationKW<=0);
     const bool WaitingForPort=PresentationSmokeStage==98&&TradePortId&&(!PowerConnected(TradePortId)||!Sim.FindBuilding(TradePortId)||Sim.FindBuilding(TradePortId)->Workers<Sim.Definition(*Sim.FindBuilding(TradePortId))->Jobs);
-    const bool WaitingForExtractor=PresentationSmokeStage==100&&ExtractorId&&(!PowerConnected(ExtractorId)||Sim.ConstructionAvailable(ExportResource)<10);
+    const bool WaitingForExtractor=PresentationSmokeStage==100&&ExtractorId&&(!PowerConnected(ExtractorId)||Sim.FindBuilding(ExtractorId)->Inventory.FindRef(ExportResource)<10);
     const bool WaitingForExport=PresentationSmokeStage==101&&ExportOrdered&&Sim.FindBuilding(TradePortId)&&(!Sim.FindBuilding(TradePortId)->Shipment.Resource.IsEmpty()||Sim.Credits<=CreditsBefore);
     const bool WaitingForImport=PresentationSmokeStage==103&&ImportOrdered&&Sim.FindBuilding(TradePortId)&&(!Sim.FindBuilding(TradePortId)->Shipment.Resource.IsEmpty()||Sim.TotalStock(ImportResource)<ImportBefore+2);
-    if((WaitingForCore||WaitingForService||WaitingForRoad||WaitingForSolar||WaitingForPort||WaitingForExtractor||WaitingForExport||WaitingForImport)&&RenderClock-LastStageTime<900&&!Sim.Failed&&!Sim.Escaped)return;
+    if((WaitingForDeploymentWork||WaitingForCore||WaitingForService||WaitingForRoad||WaitingForSolar||WaitingForPort||WaitingForExtractor||WaitingForExport||WaitingForImport)&&RenderClock-LastStageTime<900&&!Sim.Failed&&!Sim.Escaped)return;
     const int32 Stage=PresentationSmokeStage;
     auto* Controller=Cast<ASeigeController>(UGameplayStatics::GetPlayerController(this,0));
     auto* Hud=Controller?Cast<ASeigeHUD>(Controller->GetHUD()):nullptr;
@@ -109,7 +111,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     };
     auto Capture=[&](const TCHAR* Name)
     {
-        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v08"));
+        const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Review-v09"));
         if(!Require(IFileManager::Get().MakeDirectory(*Directory,true),TEXT("Could not create screenshot directory")))return;
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Name)+TEXT(".png")),true,false);
         UE_LOG(LogTemp,Display,TEXT("UI_SMOKE_CAPTURE %s stage=%d screen=%s"),Name,Stage,*Screen);
@@ -220,8 +222,11 @@ void ASeigeGameMode::RunPresentationSmoke()
         if(Require(Hud!=nullptr,TEXT("Building shortcuts require HUD"))){Hud->HandleShortcut(EKeys::L);Hud->HandleShortcut(EKeys::S);}
         Require(!SelectedBuild.IsEmpty()&&Hud&&!Hud->Ui.BuildOpen,TEXT("Category/build shortcut chain did not select a blueprint"));break;
     case 10:
-        WorldClick(FVector2D(1100,0));Require(Sim.Buildings.Num()==2,TEXT("World click did not construct the selected sensor"));
+    {
+        FVector2D Site;Require(ChooseSite(SelectedBuild,FVector2D(1100,0),Site),TEXT("Sensor world click needs a legal unoccupied plot"));
+        WorldClick(Site);Require(Sim.Buildings.Num()==2,TEXT("World click did not construct the selected sensor"));
         if(Sim.Buildings.Num()==2)Require(Sim.Definition(Sim.Buildings.Last())&&Sim.Definition(Sim.Buildings.Last())->Role==TEXT("sensor"),TEXT("Shortcut constructed the wrong building role"));break;
+    }
     case 11:
     {
         Require(Sim.Buildings.Num()==2,TEXT("Constructed building disappeared before capture"));
@@ -318,32 +323,34 @@ void ASeigeGameMode::RunPresentationSmoke()
         Require(Visuals.Contains(TEXT("placement_")+Sim.CoreDefinition),TEXT("Landing must show the final core footprint as a translucent mesh"));Capture(TEXT("landing_ghost"));break;
     case 56: WorldClick(SmokeLanding);Speed=10;Require(Screen==TEXT("playing")&&Sim.Buildings[0].IsConstructing,TEXT("Landing must begin shuttle deployment"));Zoom=1500;UpdateCamera();break;
     case 57:
-        Require(Sim.Buildings[0].IsConstructing&&Sim.Buildings[0].ConstructionProgress>0&&Sim.Buildings[0].ConstructionProgress<1,TEXT("Shuttle core must assemble over time"));Capture(TEXT("shuttle_deployment"));break;
+        Require(Sim.DeploymentGrounded&&Sim.DeploymentHatchOpen&&Sim.Buildings[0].IsConstructing&&Sim.Buildings[0].ConstructionProgress>0&&Sim.Buildings[0].ConstructionProgress<1,TEXT("Grounded shuttle must open its hatch and receive real worker installation work"));
+        Require(Sim.Buildings[0].BuildersOnSite>0&&Sim.Workers.Bodies.ContainsByPredicate([](const auto& W){return W.State==TEXT("active")&&W.Outdoor&&W.Activity==TEXT("build");}),TEXT("Deployment progress requires actual workers outside the shuttle"));Capture(TEXT("shuttle_deployment"));break;
     case 58:
         Require(!Sim.Buildings[0].IsConstructing,TEXT("Carried core must finish deployment"));
         Zoom=DefaultZoom;UpdateCamera();
         if(Hud){Hud->HandleShortcut(EKeys::B);Hud->HandleShortcut(EKeys::L);Hud->HandleShortcut(EKeys::C);}
         Require(SelectedBuild==TEXT("robot_service_bay"),TEXT("B L C must select worker service hub"));
+        Require(ChooseSite(SelectedBuild,HomePosition()+FVector2D(1300,500),ServicePosition),TEXT("Worker service hub needs a legal unoccupied dry plot"));
         if(Controller)
         {
             if(Controller->PlayerCameraManager)Controller->PlayerCameraManager->UpdateCamera(0);
             FVector2D GhostPixel;
-            if(Controller->ProjectWorldLocationToScreen(RenderPosition(HomePosition()+FVector2D(1300,500)),GhostPixel))Controller->SetMouseLocation(FMath::RoundToInt(GhostPixel.X),FMath::RoundToInt(GhostPixel.Y));
+            if(Controller->ProjectWorldLocationToScreen(RenderPosition(ServicePosition),GhostPixel))Controller->SetMouseLocation(FMath::RoundToInt(GhostPixel.X),FMath::RoundToInt(GhostPixel.Y));
         }
-        CursorOnWorld=true;CursorWorld=HomePosition()+FVector2D(1300,500);SyncVisuals();
+        CursorOnWorld=true;CursorWorld=ServicePosition;SyncVisuals();
         Require(Visuals.Contains(TEXT("placement_robot_service_bay")),TEXT("Service blueprint must display a mesh ghost"));Capture(TEXT("service_ghost_transition"));break;
     case 59:
-        WorldClick(HomePosition()+FVector2D(1300,500));SelectedBuild.Empty();
+        WorldClick(ServicePosition);SelectedBuild.Empty();
         Require(Sim.Buildings.Num()==2&&Sim.Buildings.Last().IsConstructing,TEXT("Service building must start as a construction site"));
         if(Sim.Buildings.Num()==2)SelectedId=Sim.Buildings.Last().Id;
-        CameraCenter=FVector(HomePosition()+FVector2D(1300,500),0);Zoom=1800;UpdateCamera();break;
+        CameraCenter=FVector(ServicePosition,0);Zoom=1800;UpdateCamera();break;
     case 60:
         Require(Sim.Buildings.Num()==2&&Sim.Buildings.Last().IsConstructing,TEXT("Workers must not create a service building instantly"));
-        if(Sim.Buildings.Num()==2){SelectedId=Sim.Buildings.Last().Id;Require(Sim.RobotSupportCapacity==8,TEXT("Unfinished service hub cannot supply charging capacity"));}
+        if(Sim.Buildings.Num()==2){SelectedId=Sim.Buildings.Last().Id;Require(Sim.RobotSupportCapacity==Sim.Definition(Sim.Buildings[0])->RobotSupportCapacity,TEXT("Unfinished service hub cannot supply charging capacity"));}
         ClickAction(TEXT("info-section:Overview"));Capture(TEXT("worker_construction"));break;
     case 61:
         Require(Sim.Buildings.Num()==2&&!Sim.Buildings.Last().IsConstructing,TEXT("Delivered materials and workers must finish the service hub"));
-        Require(Sim.IsRoadGridConnected(Sim.Buildings[0].Id,Sim.Buildings.Last().Id)&&Sim.RobotSupportCapacity==24,TEXT("Completed road-powered service hub must expand worker support capacity"));ClickAction(TEXT("info-section:Maintenance"));Capture(TEXT("service_complete"));break;
+        Require(Sim.IsRoadGridConnected(Sim.Buildings[0].Id,Sim.Buildings.Last().Id)&&Sim.RobotSupportCapacity==ExpandedSupport,TEXT("Completed road-powered service hub must expand worker support capacity"));ClickAction(TEXT("info-section:Maintenance"));Capture(TEXT("service_complete"));break;
     case 62:
         if(Hud)Hud->HandleShortcut(EKeys::F10);MenuTime=Sim.Time;
         Require(MenuOpen&&Screen==TEXT("game-menu")&&Paused,TEXT("F10 must open the paused game menu directly"));break;
@@ -383,16 +390,23 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 76:
     {
         FocusSector(4);CameraCenter=FVector(HomePosition()+FVector2D(-200,300),0);Zoom=3500;UpdateCamera();Paused=false;Speed=1;
+        LastCourierPositions.Reset();LastSimulationPositions.Reset();LastMotionTime=-1;MotionFramesBetweenTicks=0;WalkDistance=WalkSeconds=0;
         // The only1x probe measures true walking and sub-tick presentation.
         // A local sensor site works on every generated resource subset.
-        const bool Placed=Sim.PlaceBuilding(TEXT("sensor"),HomePosition()+FVector2D(-1100,700),Error);
+        FVector2D Site;const bool Placed=ChooseSite(TEXT("sensor"),HomePosition()+FVector2D(-1100,700),Site)&&Sim.PlaceBuilding(TEXT("sensor"),Site,Error);
         Require(Placed,TEXT("Walking probe needs a real material-delivery job"));break;
     }
     case 77: Capture(TEXT("service_work"));break;
     case 78:
+    {
         Require(MotionFramesBetweenTicks>10,TEXT("Visible1x worker movement must update between fixed simulation ticks"));
         Require(WalkSeconds>0&&FMath::IsNearlyEqual(WalkDistance/WalkSeconds*3.6,5.,.1),TEXT("Observed off-road cargo worker walking speed must be5km/h"));
+        int32 ActiveBodies=0;TSet<FString> VisibleBodies;for(const auto& W:Sim.Workers.Bodies)if(W.State==TEXT("active")){++ActiveBodies;if(W.Outdoor){const FString Key=TEXT("home_worker_")+W.Id;VisibleBodies.Add(Key);const auto* Actor=Visuals.FindRef(Key).Get();Require(Actor&&!Actor->IsHidden(),TEXT("Each outdoor worker identity must have exactly its corresponding visible body"));}}
+        Require(ActiveBodies==Sim.Population&&Sim.Couriers.Num()<=ActiveBodies,TEXT("Delivery tasks must share the real worker population"));
+        for(const auto& VisualEntry:Visuals)if(IsValid(VisualEntry.Value.Get())&&!VisualEntry.Value->IsHidden())
+        {const auto& Key=VisualEntry.Key;if(Key.StartsWith(TEXT("home_worker_"))&&!Key.EndsWith(TEXT("_cargo"))&&!Key.EndsWith(TEXT("_carrier"))&&!Key.EndsWith(TEXT("_tool")))Require(VisibleBodies.Contains(Key),TEXT("Worker rendering cannot invent an unaccounted body"));Require(!Key.StartsWith(TEXT("home_courier_")),TEXT("Legacy courier rendering cannot duplicate the worker body"));}
         Speed=10;Paused=false;SelectedId=0;CameraCenter=FVector(HomePosition()+FVector2D(1000,0),0);Zoom=2000;UpdateCamera();break;
+    }
     case 79:
     {
         if(Hud){Hud->HandleShortcut(EKeys::B);Hud->HandleShortcut(EKeys::L);Hud->HandleShortcut(EKeys::R);}
@@ -466,7 +480,7 @@ void ASeigeGameMode::RunPresentationSmoke()
         if(Sim.Buildings.Last().DefId==TEXT("extraction_mine"))ExtractorId=Sim.Buildings.Last().Id;
         Require(ExtractorId>0,TEXT("Local export source was not queued"));break;
     case 100:
-        Require(ExtractorId&&PowerConnected(ExtractorId)&&Sim.ConstructionAvailable(ExportResource)>=10,TEXT("Paid extractor must produce saleable local goods"));
+        Require(ExtractorId&&PowerConnected(ExtractorId)&&Sim.FindBuilding(ExtractorId)->Inventory.FindRef(ExportResource)>=10,TEXT("Paid extractor must physically produce saleable goods in its own inventory"));
         CreditsBefore=Sim.Credits;Require(CreditsBefore==0,TEXT("No credits may be granted before the first external export"));
         ExportOrdered=Sim.TryTrade(TradePortId,ExportResource,10,false,Error);Require(ExportOrdered,TEXT("Actual local goods must queue an export"));SelectedId=TradePortId;Capture(TEXT("export_queued"));break;
     case 101:
@@ -520,7 +534,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 116:
     {
         Require(Ready&&!Observer&&Neighbors.Num()==0&&Screen==TEXT("playing"),TEXT("Final construction scenario state is invalid"));
-        Require(MotionFramesBetweenTicks>10,TEXT("Visible 1x courier movement must update between fixed simulation ticks"));
+        Require(MotionFramesBetweenTicks>10,TEXT("Visible 1x identified worker movement must update between fixed simulation ticks"));
         const float Dt=GetWorld()?GetWorld()->GetDeltaSeconds():0;
         auto Report=MakeShared<FJsonObject>();Report->SetBoolField(TEXT("ready"),Ready);Report->SetNumberField(TEXT("failures"),SmokeFailures);
         TArray<TSharedPtr<FJsonValue>> FailureValues;for(const auto& Message:AssertionFailures)FailureValues.Add(MakeShared<FJsonValueString>(Message));Report->SetArrayField(TEXT("assertion_failures"),FailureValues);
@@ -528,6 +542,7 @@ void ASeigeGameMode::RunPresentationSmoke()
         Report->SetNumberField(TEXT("fps"),Dt>0?1.0/Dt:0);Report->SetNumberField(TEXT("presentation_seconds"),RenderClock);Report->SetNumberField(TEXT("simulation_seconds"),Sim.Time);
         Report->SetStringField(TEXT("screen"),Screen);Report->SetNumberField(TEXT("completed_stages"),PresentationSmokeStage);
         Report->SetNumberField(TEXT("courier_motion_frames_between_ticks_at_1x"),MotionFramesBetweenTicks);
+        Report->SetNumberField(TEXT("worker_motion_frames_between_ticks_at_1x"),MotionFramesBetweenTicks);
         Report->SetNumberField(TEXT("main_test_speed"),10);Report->SetNumberField(TEXT("walking_probe_speed"),1);
         Report->SetNumberField(TEXT("measured_worker_walking_kmh"),WalkSeconds>0?WalkDistance/WalkSeconds*3.6:0);
         Report->SetNumberField(TEXT("transport_segments"),Sim.Roads.Num());

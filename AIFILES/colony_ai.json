@@ -17,7 +17,14 @@
     "angles": 16,
     "node_clearance": 210,
     "sensor_overlap": 0.75,
-    "defense_distance": 1100
+    "defense_distance": 1100,
+    "defense_coverage_policy": "prefer_covered_approaches",
+    "coverage_samples": 24,
+    "coverage_probe_distance_meters": 8,
+    "coverage_excluded_roles": [
+      "defense",
+      "sensor"
+    ]
   },
   "build_targets": [
     {
@@ -51,6 +58,11 @@
       "placement_index": 12
     },
     {
+      "definition": "fuel_generator",
+      "count": 1,
+      "placement_index": 25
+    },
+    {
       "definition": "worker_factory",
       "count": 1,
       "placement_index": 13
@@ -69,6 +81,11 @@
       "definition": "robot_service_bay",
       "count": 2,
       "placement_index": 16
+    },
+    {
+      "definition": "solar_array",
+      "count": 2,
+      "placement_index": 26
     },
     {
       "definition": "alloy_refinery",
@@ -101,6 +118,11 @@
       "placement_index": 22
     },
     {
+      "definition": "battery_bank",
+      "count": 1,
+      "placement_index": 27
+    },
+    {
       "definition": "depot",
       "count": 1,
       "placement_index": 23
@@ -111,20 +133,35 @@
       "placement_index": 24
     }
   ],
-  "developed_setup_seconds": 64800,
+  "developed_setup_seconds": 129600,
   "target_policy": "complete_and_staff_in_order",
   "support_recovery_policy": "restore_capacity_before_expansion",
   "economy": {
     "solar_definition": "solar_array",
     "trade_definition": "trading_port",
-    "export_batch": 20,
-    "import_batch": 10,
+    "export_batch": 1000,
+    "import_batch": 1000,
     "reserve_targets": {
       "alloy": 80,
       "circuits": 16,
       "components": 12
     },
     "recipe_input_buffer_cycles": 4,
-    "credit_buffer_batches": 3
-  }
+    "credit_buffer_batches": 3,
+    "fuel_import_buffer_cycles": 4,
+    "fuel_import_refill_fraction": 0.5,
+    "core_replication_policy": "funded_shortage_first",
+    "core_replication_recipes": [
+      "refine_biofuel",
+      "make_components",
+      "smelt_alloy",
+      "draw_conductors",
+      "make_substrates",
+      "make_circuits",
+      "make_batteries"
+    ],
+    "bulk_input_policy": "remaining_output_bill",
+    "export_policy": "surplus_shipment_value"
+  },
+  "developed_initialization": "established_manifest"
 }

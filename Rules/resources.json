@@ -1,6 +1,6 @@
 {
-  "version": "prototype-8.1",
-  "quantity_note": "Raw/product quantities are kg or L. Stored workers are indivisible counts with external mass and berth volume. The current 1 kg worker material bill and 50 L occupied berth are provisional accounting values, not finished robot engineering. Grid energy and credits remain separate ledgers.",
+  "version": "prototype-9.0",
+  "quantity_note": "Raw/product quantities are kg or L. Stored workers are indivisible counts with external mass and berth volume. The accepted provisional worker body is 80 kg with a 160 L packed berth; assembly consumes its full material mass. These are gameplay accounting values, not finished robot engineering. Grid energy and credits remain separate ledgers.",
   "resources": [
     {
       "id": "water",
@@ -343,8 +343,8 @@
       "name": "Inactive workers",
       "class": "manufactured",
       "unit": "workers",
-      "unit_mass_kg": 1,
-      "litres_per_unit": 50,
+      "unit_mass_kg": 80,
+      "litres_per_unit": 160,
       "tier": 2,
       "color": [
         0.64,

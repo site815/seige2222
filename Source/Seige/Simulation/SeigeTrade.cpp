@@ -1,7 +1,22 @@
 #include "SeigeTrade.h"
 #include "SeigeSimulation.h"
 #include "Dom/JsonObject.h"
-namespace{bool N(const TSharedPtr<FJsonObject>& O,const TCHAR* K,double& V,double Min=0){return O&&O->TryGetNumberField(K,V)&&FMath::IsFinite(V)&&V>=Min;}}
+namespace
+{
+bool N(const TSharedPtr<FJsonObject>& O,const TCHAR* K,double& V,double Min=0){return O&&O->TryGetNumberField(K,V)&&FMath::IsFinite(V)&&V>=Min;}
+}
+double FSeigeTradeSystem::ExportableStock(const FSeigeSimulation& Sim,const FSeigeBuilding& B,const FString& Resource,bool OwnShipment) const
+{
+    const double ExportDemand=Sim.Trade.Demand(Sim,B.Id,Resource);
+    // A port may sell its worker export buffer. The colony reserve is checked
+    // separately; queued recycling and other shipments still retain their stock.
+    const double OtherDemand=Resource==Sim.TextRule(TEXT("inactive_worker_resource"))
+        ? FMath::Max(0,B.DisassemblyQueued-(B.DisassemblyCommitted?1:0))+(OwnShipment?0.:ExportDemand)
+        : FMath::Max(0.,Sim.Demand(B,Resource,false)-(OwnShipment?ExportDemand:0.));
+    // Accepted construction bills and physical workers walking to a pickup
+    // claim the same local inventory, including inventory already at this port.
+    return FMath::Max(0.,Sim.Spendable(B,Resource)-OtherDemand);
+}
 bool FSeigeTradeSystem::Initialize(const TSharedPtr<FJsonObject>& Doc,const FSeigeSimulation& Sim,FString& Error)
 {
     Prices.Empty();Ports.Empty();const TSharedPtr<FJsonObject>* O=nullptr,*Ps=nullptr,*Ds=nullptr;
@@ -18,20 +33,30 @@ bool FSeigeTradeSystem::CanTrade(const FSeigeSimulation& Sim,int32 Id,const FStr
     if(!B||!D||B->Health<=0||B->IsConstructing||!B->Enabled){Error=TEXT("A completed enabled trading port is required");return false;}
     if(!Resource||!Prices.Contains(R)||(Resource->Discrete&&Q!=FMath::FloorToDouble(Q))||!FMath::IsFinite(Q)||Q<=0||Q*Resource->UnitMassKg>D->CapacityKg+1.e-8){Error=TEXT("Shipment exceeds port cargo capacity or has an invalid resource");return false;}
     if(!B->Shipment.Resource.IsEmpty()){Error=TEXT("This trading port already has a shipment");return false;}
-    if(Buy){if(Sim.Credits<Quote(R,Q,true)){Error=TEXT("Not enough credits; export local goods first");return false;}if(Sim.Occupied(*B)+Q*Resource->LitresPerUnit>Sim.Definition(*B)->StorageCapacity+1.e-8){Error=TEXT("Trading port has insufficient import storage");return false;}}
-    else{double Available=0;for(const auto& S:Sim.Buildings)if(S.Health>0&&!S.IsConstructing)Available+=S.Id==Id?FMath::Max(0.,S.Inventory.FindRef(R)-Sim.Demand(S,R,false)):FMath::Max(0.,Sim.Spendable(S,R)-Sim.Demand(S,R,false));
-        if(R==Sim.TextRule(TEXT("inactive_worker_resource"))){Available=0;for(const auto& S:Sim.Buildings)if(S.Health>0&&!S.IsConstructing)Available+=FMath::Max(0.,S.Inventory.FindRef(R)-(S.DisassemblyQueued-(S.DisassemblyCommitted?1:0))-Demand(Sim,S.Id,R));Available=FMath::Max(0.,Available-Sim.WorkerSurplusTarget-FMath::Max(0,FMath::Min(Sim.TotalJobs,Sim.RobotSupportCapacity)-Sim.Population));}
+    if(Buy){if(Sim.Credits<Quote(R,Q,true)){Error=TEXT("Not enough credits; export local goods first");return false;}if(Q*Resource->LitresPerUnit>Sim.StorageRoom(*B)+1.e-8){Error=TEXT("Trading port has insufficient unreserved import storage");return false;}}
+    else{double Available=0;for(const auto& S:Sim.Buildings)if(S.Health>0&&!S.IsConstructing)Available+=ExportableStock(Sim,S,R);
+        if(R==Sim.TextRule(TEXT("inactive_worker_resource")))Available=FMath::Max(0.,Available-Sim.WorkerSurplusTarget-FMath::Max(0,FMath::Min(Sim.TotalJobs,Sim.RobotSupportCapacity)-Sim.Population));
         if(Available+1.e-8<Q){Error=TEXT("Not enough unreserved goods for export");return false;}if(Q*Resource->LitresPerUnit>Sim.Definition(*B)->StorageCapacity){Error=TEXT("Export exceeds local port storage");return false;}}
     Error.Empty();return true;
 }
 bool FSeigeTradeSystem::TryTrade(FSeigeSimulation& Sim,int32 Id,const FString& R,double Q,bool Buy,FString& Error)
 {if(!CanTrade(Sim,Id,R,Q,Buy,Error))return false;auto* B=Sim.FindBuilding(Id);B->Shipment={};B->Shipment.Resource=R;B->Shipment.Quantity=Q;B->Shipment.Buy=Buy;B->Shipment.PriceCredits=Quote(R,Q,Buy);if(Buy)Sim.Credits-=B->Shipment.PriceCredits;Sim.AddEvent(Buy?TEXT("Import ordered; credits reserved"):TEXT("Export ordered; awaiting local cargo"));return true;}
+
+bool FSeigeTradeSystem::CancelPendingExport(FSeigeSimulation& Sim,int32 Id,FString& Error)
+{
+    auto* B=Sim.FindBuilding(Id);
+    if(Sim.Escaped||Sim.Failed||!B||B->Health<=0||!Ports.Contains(B->DefId)||B->Shipment.Resource.IsEmpty()||B->Shipment.Buy||B->Shipment.Departed||B->Shipment.GoodsEscrow>0)
+    {Error=TEXT("Only an export still awaiting local cargo can be cancelled");return false;}
+    // No money or cargo has left yet. Existing delivery bodies and their cargo
+    // keep their ordinary destination; cancellation only releases future demand.
+    B->Shipment={};Error.Empty();Sim.AddEvent(TEXT("Pending export cancelled; local goods retained"));return true;
+}
 double FSeigeTradeSystem::Demand(const FSeigeSimulation& Sim,int32 Id,const FString& R)const{const auto* B=Sim.FindBuilding(Id);return B&&!B->Shipment.Resource.IsEmpty()&&!B->Shipment.Buy&&!B->Shipment.Departed&&B->Shipment.Resource==R?B->Shipment.Quantity:0;}
 void FSeigeTradeSystem::Tick(FSeigeSimulation& Sim,double Seconds)
 {
     for(auto& B:Sim.Buildings){auto& S=B.Shipment;if(S.Resource.IsEmpty()||B.Health<=0||B.IsConstructing||!B.Enabled)continue;const auto* D=Ports.Find(B.DefId);if(!D)continue;const double F=Sim.WorkFraction(B);if(F<=0){B.Status=TEXT("Trade awaiting workers or grid power");continue;}
-        if(!S.Departed){if(!S.Buy&&B.Inventory.FindRef(S.Resource)+1.e-8<S.Quantity){B.Status=TEXT("Awaiting export cargo deliveries");continue;}if(!Sim.Energy.Consume(Sim,B.Id,D->EnergyKWh)){B.Status=TEXT("Awaiting shipment energy");continue;}if(!S.Buy){B.Inventory.FindOrAdd(S.Resource)=FMath::Max(0.,B.Inventory.FindRef(S.Resource)-S.Quantity);S.GoodsEscrow=S.Quantity;}S.Departed=true;}
+        if(!S.Departed){if(!S.Buy&&ExportableStock(Sim,B,S.Resource,true)+1.e-8<S.Quantity){B.Status=TEXT("Awaiting unreserved export cargo deliveries");continue;}if(!Sim.Energy.Consume(Sim,B.Id,D->EnergyKWh)){B.Status=TEXT("Awaiting shipment energy");continue;}if(!S.Buy){if(S.Resource==Sim.TextRule(TEXT("inactive_worker_resource"))&&!Sim.Workers.MoveStored(B.Id,TEXT("shipment"),B.Id,FMath::RoundToInt(S.Quantity)))continue;B.Inventory.FindOrAdd(S.Resource)=FMath::Max(0.,B.Inventory.FindRef(S.Resource)-S.Quantity);S.GoodsEscrow=S.Quantity;}S.Departed=true;}
         S.Progress=FMath::Min(1.,S.Progress+Seconds*F/D->ShipmentSeconds);B.Status=TEXT("External trade shipment in flight");
-        if(S.Progress>=1.){if(S.Buy)B.Inventory.FindOrAdd(S.Resource)+=S.Quantity;else Sim.Credits+=S.PriceCredits;Sim.AddEvent((S.Buy?TEXT("Import received: "):TEXT("Export paid: "))+Sim.Resources[S.Resource].Name);S={};}
+        if(S.Progress>=1.){if(S.Buy){B.Inventory.FindOrAdd(S.Resource)+=S.Quantity;if(S.Resource==Sim.TextRule(TEXT("inactive_worker_resource")))Sim.Workers.NewStored(Sim,B.Id,FMath::RoundToInt(S.Quantity));}else{Sim.Credits+=S.PriceCredits;if(S.Resource==Sim.TextRule(TEXT("inactive_worker_resource")))for(auto& W:Sim.Workers.Bodies)if(W.State==TEXT("shipment")&&W.ContainerId==B.Id){W.State=TEXT("exported");W.Activity=TEXT("terminal");W.ContainerKind=TEXT("external");}}Sim.AddEvent((S.Buy?TEXT("Import received: "):TEXT("Export paid: "))+Sim.Resources[S.Resource].Name);S={};}
     }
 }

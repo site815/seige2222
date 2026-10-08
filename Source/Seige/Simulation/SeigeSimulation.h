@@ -5,6 +5,9 @@
 #include "SeigeCompanions.h"
 #include "SeigeCombat.h"
 #include "SeigeWalls.h"
+#include "SeigeWorkers.h"
+#include "SeigeWorldCalendar.h"
+#include "SeigeEnvironment.h"
 
 struct FSeigeResourceDef
 {
@@ -113,12 +116,18 @@ struct FSeigeCourier
     bool ForConstruction = false;
     int32 RoadTargetId = 0, NextWaypoint = 0, RouteRevision = 0;
     TArray<FVector2D> Route;
+    FString WorkerId, Phase=TEXT("pickup");
+    double ReservedAmount=0, PhaseSeconds=0;
+    bool SourceDeployment=false, SelfTransfer=false;
 };
 struct FSeigeEnemy
 {
     int32 Id = 0;
     FVector2D Position = FVector2D::ZeroVector;
     double Health = 1;
+    // Derived presentation state: recomputed by combat, not save authority.
+    int32 TargetBuildingId = 0;
+    double LastAttackTime = -1;
 };
 struct FSeigeEvent
 {
@@ -134,7 +143,7 @@ struct FSeigeBuildingInfoRow
 class SEIGE_API FSeigeSimulation
 {
 public:
-    bool Initialize(const FString& RulesDirectory, FString& Error, bool bBackgroundBugs = true, bool bPeriodicAttacks = true, int32 SeedOverride=INDEX_NONE);
+    bool Initialize(const FString& RulesDirectory, FString& Error, bool bBackgroundBugs = true, bool bPeriodicAttacks = true, int32 SeedOverride=INDEX_NONE, FVector2D WorldOffset=FVector2D::ZeroVector);
     bool SetInitialCorePosition(FVector2D Position, FString& Error);
     bool CanSetInitialCorePosition(FVector2D Position, FString& Error) const;
     void Tick(double Seconds);
@@ -171,8 +180,10 @@ public:
     TArray<FString> ProductionOptions(int32 BuildingId) const;
     FString ActiveProductionRecipe(const FSeigeBuilding& Building) const;
     TMap<FString,double> ProductionInputs(const FSeigeBuilding& Building,const FString& RecipeId) const;
+    double ProductionInputBuffer(const FSeigeBuilding& Building,const FString& RecipeId,const FString& Resource) const;
     double ProductionSeconds(const FSeigeBuilding& Building,const FString& RecipeId) const;
     double ProductionEnergy(const FSeigeBuilding& Building,const FString& RecipeId) const;
+    bool CanCommitProduction(const FSeigeBuilding& Building,const FString& RecipeId) const;
     int32 InactiveWorkerCount() const;
     int32 WorkerReserveTarget() const;
     double DisassemblyEnergyKWh() const;
@@ -182,10 +193,12 @@ public:
     bool DisassembleWorkers(int32 BuildingId,int32 Count,FString& Error);
     bool CanTrade(int32 PortId,const FString& Resource,double Quantity,bool Buy,FString& Error) const{return Trade.CanTrade(*this,PortId,Resource,Quantity,Buy,Error);}
     bool TryTrade(int32 PortId,const FString& Resource,double Quantity,bool Buy,FString& Error){return Trade.TryTrade(*this,PortId,Resource,Quantity,Buy,Error);}
+    bool CancelPendingExport(int32 PortId,FString& Error){return Trade.CancelPendingExport(*this,PortId,Error);}
     double TradeQuote(const FString& Resource,double Quantity,bool Buy,int32 PortId=0) const{return Trade.Quote(Resource,Quantity,Buy);}
     double InventoryLitres(const TMap<FString,double>& Inventory) const;
     double InventoryMassKg(const TMap<FString,double>& Inventory) const;
     double StorageUsed(const FSeigeBuilding& Building) const{return Occupied(Building);}
+    double StorageRoom(const FSeigeBuilding& Building,int32 ArrivingCourierId=0,const FString& ArrivingWorkerId=FString()) const;
     const TMap<FString,double>& ConstructionCost(const FSeigeBuilding& Building) const;
     double ConstructionSeconds(const FSeigeBuilding& Building) const;
     int32 RequiredBuilders(const FSeigeBuilding& Building) const;
@@ -196,17 +209,21 @@ public:
     FSeigeWallSystem Walls;
     double Credits=0;
     int32 GenerationSeed=0;
-    bool GenerateResourceNodesForSeed(int32 Seed,TArray<FSeigeNode>& OutNodes,FString& Error) const;
-    bool CanPlaceRoad(FVector2D A, FVector2D B, FString& Error) const;
+    bool GenerateResourceNodesForSeed(int32 Seed,TArray<FSeigeNode>& OutNodes,FString& Error,FVector2D WorldOffset=FVector2D::ZeroVector) const;
+    // Planning may omit affordability only; PlaceRoad always performs the full check.
+    bool CanPlaceRoad(FVector2D A, FVector2D B, FString& Error, bool CheckMaterials=true) const;
     bool PlaceRoad(FVector2D A, FVector2D B, FString& Error);
     bool CanUpgradeRoad(int32 Id, FString& Error) const;
     bool UpgradeRoad(int32 Id, FString& Error);
     FSeigeTransportSegment* FindRoad(int32 Id);
     const FSeigeTransportSegment* FindRoad(int32 Id) const;
     TMap<FString,double> RoadCost(FVector2D A, FVector2D B, const FString& Tier) const;
+    FString InitialRoadTier() const;
+    double MinimumRoadLength() const; // Simulation world units, matching route coordinates.
     double RoadConstructionSeconds(const FSeigeTransportSegment& Road) const;
-    bool FindRoute(FVector2D From, FVector2D To, TArray<FVector2D>& Route, double ClearanceOverride=-1, bool RoadPlan=false) const;
-    bool FindRoadRoute(FVector2D From,FVector2D To,TArray<FVector2D>& Route) const;
+    bool FindRoute(FVector2D From, FVector2D To, TArray<FVector2D>& Route, double ClearanceOverride=-1, bool RoadPlan=false, const FSeigeBuilding* ProspectivePlot=nullptr) const;
+    bool FindRoadRoute(FVector2D From,FVector2D To,TArray<FVector2D>& Route,const FSeigeBuilding* ProspectivePlot=nullptr) const;
+    bool ClearRoadLine(FVector2D From,FVector2D To,const FSeigeBuilding* ProspectivePlot=nullptr) const;
     bool IsRoadGridConnected(int32 A,int32 B) const {const auto X=Energy.Info(*this,A),Y=Energy.Info(*this,B);return X.Connected&&Y.Connected&&X.ComponentId==Y.ComponentId;}
     double RouteSpeedMultiplier(FVector2D A, FVector2D B) const;
     int32 CourierRoadId(const FSeigeCourier& Courier) const;
@@ -214,6 +231,7 @@ public:
     TMap<FString,FSeigeTransportTier> TransportTiers;
     TArray<FSeigeTransportSegment> Roads;
     double ConstructionAvailable(const FString& Resource) const;
+    double OperatingBuffer(const FString& Resource) const;
     double OperatingEfficiency() const { return WorkforceEfficiency; }
     bool HasActiveWork(const FSeigeBuilding& Building) const;
     TArray<FSeigeBuildingInfoRow> BuildingInfo(const FString& DefinitionId, int32 BuildingId = 0, double CentimetersPerUnit = 1) const;
@@ -225,6 +243,11 @@ public:
     TArray<FSeigeBuilding> Buildings;
     TArray<FSeigeNode> Nodes;
     TArray<FSeigeCourier> Couriers;
+    FSeigeWorkerSystem Workers;
+    FSeigeWorldCalendar Calendar;
+    FSeigeEnvironment Environment;
+    double DeploymentElapsed=0;
+    bool DeploymentGrounded=false, DeploymentHatchOpen=false;
     TArray<FSeigeEnemy> Enemies;
     TArray<FSeigeEvent> Events;
     FString Title, RulesVersion, CoreDefinition, RulesPath;
@@ -240,16 +263,26 @@ public:
     TMap<FString, double> ProducedUnits;
 
 private:
+    friend class FSeigeScenarioAI;
+    bool CanPlaceBuildingGeometry(const FString& DefinitionId,FVector2D Position,FString& Error) const;
+    bool CanPlaceRoadGeometry(FVector2D A,FVector2D B,FString& Error) const;
     friend class FSeigeEnergySystem;
     friend class FSeigeTradeSystem;
     friend class FSeigeCombatSystem;
     friend class FSeigeWallSystem;
+    friend class FSeigeWorkerSystem;
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FSeigeTransportNetworkTest;
     friend class FSeigeReplicatorWorkforceTest;
     friend class FSeigeStoredWorkerLifecycleTest;
+    friend class FSeigeRobotSupportTest;
     friend class FSeigeRoadRepairTest;
     friend class FSeigeExtractionMineTest;
+    friend class FSeigeMineIncomingStorageTest;
+    friend class FSeigeLogisticsPriorityTest;
+    friend class FSeigeConstructionSourceTest;
+    friend class FSeigeRawInputBufferTest;
+    friend class FSeigeEnemyContactTest;
 #endif
     TSharedPtr<class FJsonObject> Policy, Scenario, Transport;
     int32 NextId = 1;
@@ -287,6 +320,8 @@ private:
     FSeigeBuilding* Core();
     const FSeigeBuilding* Core() const;
     double Demand(const FSeigeBuilding& Building, const FString& Resource, bool IncludeCoreReserve) const;
+    double DeliveryDemand(const FSeigeBuilding& Building,const FString& Resource,const FString& Category) const;
+    TArray<FString> DeliveryPriorities;
     double Incoming(int32 Target, const FString& Resource) const;
     double Occupied(const FSeigeBuilding& Building) const;
     double WorkFraction(const FSeigeBuilding& Building) const;

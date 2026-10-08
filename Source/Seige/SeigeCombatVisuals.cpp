@@ -1,11 +1,39 @@
 #include "SeigeGameMode.h"
+#include "SeigeHardpointLayout.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
+#include "Math/RotationMatrix.h"
 
 namespace
 {
 const FLinearColor Hull(.57f,.64f,.64f),Panel(.29f,.37f,.38f),Dark(.055f,.07f,.075f),Trim(.72f,.79f,.75f),Glass(.025f,.09f,.12f);
 FLinearColor WeaponColor(const FString& Family){return Family==TEXT("energy")?FLinearColor(.25f,.8f,.95f):Family==TEXT("plasma")?FLinearColor(.55f,.27f,.95f):Family==TEXT("missile")?FLinearColor(.95f,.55f,.15f):FLinearColor(.9f,.82f,.56f);}
+FName BarrelTag(int32 Slot,const FString& Weapon){return FName(*FString::Printf(TEXT("seige_barrel_%d_%s"),Slot,*Weapon));}
+void TagLastBarrel(AActor* Actor,int32 Slot,const FString& Weapon)
+{
+    TInlineComponentArray<UStaticMeshComponent*> Parts(Actor);
+    if(!Parts.IsEmpty())Parts.Last()->ComponentTags.Add(BarrelTag(Slot,Weapon));
+}
+UStaticMeshComponent* FindBarrel(AActor* Actor,int32 Slot,const FString& Weapon)
+{
+    if(!Actor||Actor->IsHidden())return nullptr;
+    TInlineComponentArray<UStaticMeshComponent*> Parts(Actor);
+    const FName Tag=BarrelTag(Slot,Weapon);
+    for(auto* Part:Parts)if(Part->ComponentHasTag(Tag))return Part;
+    return nullptr;
+}
+FVector AimBarrel(UStaticMeshComponent* Barrel,FVector Pivot,FVector End,double CenterDistance)
+{
+    const FVector Direction=(End-Pivot).GetSafeNormal();
+    if(!Direction.IsNearlyZero())
+    {
+        Barrel->SetWorldLocation(Pivot+Direction*CenterDistance);
+        // Engine cylinders extend along local Z. Only the barrel pitches;
+        // its support and the vehicle/building stay planted on the ground.
+        Barrel->SetWorldRotation(FRotationMatrix::MakeFromZ(Direction).Rotator());
+    }
+    return Barrel->GetComponentTransform().TransformPosition(FVector(0,0,50));
+}
 }
 void ASeigeGameMode::ConfigureCombatTerrain()
 {
@@ -72,6 +100,7 @@ void ASeigeGameMode::SyncCombatVisuals(const FSeigeSimulation& Colony,FVector2D 
                 const double Scale=Weapon->Size==TEXT("large")?4.:Weapon->Size==TEXT("medium")?2.:1.;
                 Part(A,TEXT("Cube"),P,FVector(Scale*.50,Scale*.5,Scale*.5),Panel);
                 Part(A,Weapon->Family==TEXT("missile")?TEXT("Cube"):TEXT("Cylinder"),P+FVector(Scale*65,0,0),Weapon->Family==TEXT("missile")?FVector(Scale*1.5,Scale*.43,Scale*.43):FVector(Scale*.10,Scale*.10,Scale*1.6),WeaponColor(Weapon->Family),Weapon->Family==TEXT("missile")?FRotator::ZeroRotator:FRotator(90,0,0));
+                if(Weapon->Family!=TEXT("missile"))TagLastBarrel(A,I,V.Weapons[I]);
             }
         }
         A->SetActorLocation(RenderPosition(Position,3));A->SetActorRotation(FRotator(0,V.Heading,0));
@@ -82,15 +111,37 @@ void ASeigeGameMode::SyncCombatVisuals(const FSeigeSimulation& Colony,FVector2D 
         const auto* Platform=C.BuildingPlatforms.Find(B.DefId);if(!Platform)continue;const auto* D=Colony.Definition(B);if(!D)continue;
         const FVector2D P=B.Position+Offset;if(!Observer&&!Offset.IsNearlyZero()&&!IsWorldVisible(P))continue;
         const auto* State=C.BuildingState.Find(B.Id);const auto& Weapons=State?State->Weapons:Platform->Weapons;
+        TArray<FIntVector> CoreMountCells;
+        if(D->Role==TEXT("core"))
+        {
+            TArray<int32> Sizes;Sizes.Reserve(Weapons.Num());
+            for(const auto& Id:Weapons){const auto* Mounted=C.Weapons.Find(Id);Sizes.Add(!Mounted?0:Mounted->Size==TEXT("large")?4:Mounted->Size==TEXT("medium")?2:1);}
+            if(!SeigePackHardpointBanks(Sizes,CoreMountCells))continue;
+        }
         for(int32 I=0;I<Weapons.Num();++I)if(const auto* Weapon=C.Weapons.Find(Weapons[I]))
         {
             const FString Key=Prefix+FString::Printf(TEXT("mount_%d_%d_%s"),B.Id,I,*Weapons[I]);const bool New=!Visuals.Contains(Key);auto* A=Actor(Key);
             const double S=Weapon->Size==TEXT("large")?4.:Weapon->Size==TEXT("medium")?2.:1.;
-            if(New){Part(A,TEXT("Cylinder"),FVector(0,0,12*S),FVector(S*.48,S*.48,S*.22),Panel);Part(A,TEXT("Cube"),FVector(0,0,34*S),FVector(S*.50,S*.5,S*.35),Trim);Part(A,Weapon->Family==TEXT("missile")?TEXT("Cube"):TEXT("Cylinder"),FVector(70*S,0,34*S),Weapon->Family==TEXT("missile")?FVector(S*1.4,S*.45,S*.45):FVector(S*.12,S*.12,S*1.6),WeaponColor(Weapon->Family),Weapon->Family==TEXT("missile")?FRotator::ZeroRotator:FRotator(90,0,0));}
+            if(New){Part(A,TEXT("Cylinder"),FVector(0,0,12*S),FVector(S*.48,S*.48,S*.22),Panel);Part(A,TEXT("Cube"),FVector(0,0,34*S),FVector(S*.50,S*.5,S*.35),Trim);Part(A,Weapon->Family==TEXT("missile")?TEXT("Cube"):TEXT("Cylinder"),FVector(70*S,0,34*S),Weapon->Family==TEXT("missile")?FVector(S*1.4,S*.45,S*.45):FVector(S*.12,S*.12,S*1.6),WeaponColor(Weapon->Family),Weapon->Family==TEXT("missile")?FRotator::ZeroRotator:FRotator(90,0,0));if(Weapon->Family!=TEXT("missile"))TagLastBarrel(A,I,Weapons[I]);}
             const int32 Cols=FMath::Max(1,FMath::CeilToInt(FMath::Sqrt(double(Weapons.Num()))));
-            const FVector2D Mount((I/Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols,(I%Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols);
-            A->SetActorLocation(RenderPosition(P+Mount,D->Role==TEXT("core")?D->Footprint*RenderScale*.28:250));
+            FVector2D Mount((I/Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols,(I%Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols);
+            double MountZ=250;
+            if(D->Role==TEXT("core"))
+            {
+                double Footprint=D->Footprint;for(const auto& Pair:Colony.BuildingDefs)if(Pair.Value.Role==TEXT("core")&&Pair.Value.Level==1){Footprint=Pair.Value.Footprint;break;}
+                const double ShipSize=Footprint*2*RenderScale,ShipScale=ShipSize/848.586975;
+                // Locations are computed largest-first, then mapped back to
+                // each unchanged simulation weapon/shot-event slot.
+                const FIntVector& Cell=CoreMountCells[I];
+                const int32 Bank=Cell.X,CellX=Cell.Y,CellY=Cell.Z;
+                const double CellWidth=50.; // Authored 50 cm small socket; module dimensions are physical, not map-scaled.
+                Mount=FVector2D(309*ShipScale,((Bank==0?267.:-267.)*ShipScale)+(CellX+S*.5-2)*CellWidth)/RenderScale;
+                MountZ=1120*ShipScale+(CellY+S*.5-2)*CellWidth;
+                if(!Colony.DeploymentGrounded)MountZ+=(1.-FMath::SmoothStep(0.,1.,Colony.DeploymentElapsed/Colony.Workers.DeploymentDescentSeconds()))*ShipSize*1.7;
+            }
+            A->SetActorLocation(RenderPosition(P+Mount,MountZ));
             A->SetActorRotation(FVector(B.LastShotPosition-B.Position,0).Rotation());A->SetActorHiddenInGame(B.IsConstructing&&!D->DeploymentDefense);
+            if(B.LastShotTime>=0)if(auto* Barrel=FindBarrel(A,I,Weapons[I]))AimBarrel(Barrel,A->GetActorTransform().TransformPosition(FVector(0,0,34*S)),RenderPosition(B.LastShotPosition+Offset,150),70*S);
         }
     }
     for(const auto& P:C.Projectiles)
@@ -108,6 +159,35 @@ void ASeigeGameMode::SyncCombatVisuals(const FSeigeSimulation& Colony,FVector2D 
         if(Colony.Time-Shot.Time>.15)continue;if(!Observer&&!IsWorldVisible(Shot.Start+Offset)&&!IsWorldVisible(Shot.End+Offset))continue;
         const FString Key=Prefix+FString::Printf(TEXT("shot_%d_%s"),EventIndex++,*Shot.Family);const bool New=!Visuals.Contains(Key);auto* A=Actor(Key);
         if(New)Part(A,TEXT("Cube"),FVector::ZeroVector,FVector::OneVector,WeaponColor(Shot.Family));
-        const FVector Start=RenderPosition(Shot.Start+Offset,150),End=RenderPosition(Shot.End+Offset,150);A->SetActorLocation((Start+End)*.5);A->SetActorRotation((End-Start).Rotation());A->SetActorScale3D(FVector((End-Start).Size()/100.,.045,.045));
+        FVector Start=RenderPosition(Shot.Start+Offset,150);const FVector End=RenderPosition(Shot.End+Offset,150);
+        const FString SourcePrefix=Shot.OwnerSector==4?Prefix:FString::Printf(TEXT("zone_%d_"),Shot.OwnerSector);
+        const auto* Weapon=C.Weapons.Find(Shot.WeaponId);
+        if(Weapon&&Shot.WeaponSlot!=INDEX_NONE)
+        {
+            const double WeaponScale=Weapon->Size==TEXT("large")?4.:Weapon->Size==TEXT("medium")?2.:1.;
+            if(Shot.OwnerKind==TEXT("building"))
+            {
+                auto* Mount=Visuals.FindRef(SourcePrefix+FString::Printf(TEXT("mount_%d_%d_%s"),Shot.OwnerId,Shot.WeaponSlot,*Shot.WeaponId)).Get();
+                if(Mount&&Live.Contains(SourcePrefix+FString::Printf(TEXT("mount_%d_%d_%s"),Shot.OwnerId,Shot.WeaponSlot,*Shot.WeaponId)))
+                    if(auto* Barrel=FindBarrel(Mount,Shot.WeaponSlot,Shot.WeaponId))Start=AimBarrel(Barrel,Mount->GetActorTransform().TransformPosition(FVector(0,0,34*WeaponScale)),End,70*WeaponScale);
+            }
+            else if(Shot.OwnerKind==TEXT("vehicle"))
+            {
+                const FSeigeCombatSystem* SourceCombat=&C;
+                if(Shot.OwnerSector!=4)if(const auto* Neighbor=Neighbors.FindByPredicate([&](const auto& N){return N.Index==Shot.OwnerSector;}))SourceCombat=&Neighbor->Sim.Combat;
+                const auto* Vehicle=SourceCombat->FindVehicle(Shot.OwnerId);
+                const auto* Chassis=Vehicle?SourceCombat->Chassis.Find(Vehicle->ChassisId):nullptr;
+                const FString VehicleKey=SourcePrefix+FString::Printf(TEXT("vehicle_%d"),Shot.OwnerId);
+                auto* VehicleActor=Visuals.FindRef(VehicleKey).Get();
+                if(Vehicle&&Chassis&&VehicleActor&&Live.Contains(VehicleKey))if(auto* Barrel=FindBarrel(VehicleActor,Shot.WeaponSlot,Shot.WeaponId))
+                {
+                    const double Width=Chassis->RadiusMeters*130.,Length=Width*(Chassis->Family==TEXT("tracked")?1.85:1.65),Height=Chassis->Family==TEXT("mech")?Width*.85:Width*.33;
+                    const int32 Columns=FMath::Max(1,FMath::CeilToInt(FMath::Sqrt(double(Vehicle->Weapons.Num()))));
+                    const FVector Pivot((Shot.WeaponSlot/Columns-(Columns-1)*.5)*Length*.6/Columns,(Shot.WeaponSlot%Columns-(Columns-1)*.5)*Width*.7/Columns,Height+Width*.42);
+                    Start=AimBarrel(Barrel,VehicleActor->GetActorTransform().TransformPosition(Pivot),End,65*WeaponScale);
+                }
+            }
+        }
+        A->SetActorLocation((Start+End)*.5);A->SetActorRotation((End-Start).Rotation());A->SetActorScale3D(FVector((End-Start).Size()/100.,.045,.045));
     }
 }

@@ -18,10 +18,11 @@
 #include "GlobalRenderResources.h"
 #include "EngineFontServices.h"
 #include "Fonts/FontMeasure.h"
+#include "Engine/Texture2D.h"
 
 namespace {
-const FLinearColor Ink(.023f,.029f,.033f,.93f),Panel(.043f,.052f,.057f,.95f),Raised(.105f,.124f,.133f,.99f);
-const FLinearColor Gold(.86f,.80f,.63f),Green(.55f,.79f,.68f),Text(.94f,.92f,.85f),Muted(.65f,.70f,.70f),Red(.96f,.46f,.38f);
+const FLinearColor Ink(.012f,.025f,.037f,.96f),Panel(.022f,.043f,.058f,.96f),Raised(.060f,.114f,.140f,.99f);
+const FLinearColor Gold(.91f,.72f,.39f),Green(.35f,.85f,.78f),Text(.91f,.95f,.96f),Muted(.58f,.71f,.76f),Red(1.f,.40f,.32f);
 bool Contains(const FSeigeButton& R,float X,float Y) {return X>=R.Position.X&&X<=R.Position.X+R.Size.X&&Y>=R.Position.Y&&Y<=R.Position.Y+R.Size.Y;}
 bool OutcomeModal(const ASeigeGameMode& G) {return !G.Ready||(!G.Observer&&(G.Sim.Escaped||G.Sim.Failed||(G.Sim.Won&&!G.WinAcknowledged)));}
 bool CanIssueCoreCommands(const ASeigeGameMode& G)
@@ -296,12 +297,28 @@ FVector2D ASeigeHUD::MeasureLabel(const FString& Value,float Size) const
     return FVector2D(TW,TH)*(Size/FMath::Max(BH,1.f));
 }
 void ASeigeHUD::Region(const FString& A,float X,float Y,float W,float H,const FString& Tip){Ui.HitRegions.Add({FVector2D(X,Y),FVector2D(W,H),A,Tip});}
-void ASeigeHUD::Frame(float X,float Y,float W,float H){Box(X+3,Y+5,W,H,FLinearColor(0,0,0,.28f));Box(X,Y,W,H,Panel);Box(X,Y,W,1,FLinearColor(.43f,.47f,.46f,.7f));Box(X,Y+H-1,W,1,FLinearColor(.24f,.29f,.29f,.7f));Region(TEXT("panel"),X,Y,W,H);}
+void ASeigeHUD::Frame(float X,float Y,float W,float H)
+{
+    // A shared orbital-instrument casing for every panel, including trade and outfitting.
+    const float Cut=FMath::Min(8.f,H*.16f);
+    Box(X+4,Y+6,W,H,FLinearColor(0,0,0,.32f));
+    Box(X+Cut,Y,W-Cut*2,H,Panel);Box(X,Y+Cut,W,H-Cut*2,Panel);
+    auto Edge=[&](float A,float B,float C,float D,FLinearColor Color){Color.A*=DrawOpacity;DrawLine(A*Scale,B*Scale,C*Scale,D*Scale,Color,Scale);};
+    const FLinearColor Rim(.24f,.43f,.49f,.85f),Dim(.10f,.21f,.26f,.85f);
+    Edge(X+Cut,Y,X+W-Cut,Y,Rim);Edge(X+W-Cut,Y,X+W,Y+Cut,Rim);Edge(X,Y+Cut,X+Cut,Y,Rim);
+    Edge(X,Y+Cut,X,Y+H-Cut,Dim);Edge(X+W,Y+Cut,X+W,Y+H-Cut,Dim);
+    Edge(X,Y+H-Cut,X+Cut,Y+H,Dim);Edge(X+Cut,Y+H,X+W-Cut,Y+H,Dim);Edge(X+W-Cut,Y+H,X+W,Y+H-Cut,Dim);
+    Box(X+Cut+3,Y+2,FMath::Min(32.f,W*.14f),2,FLinearColor(.34f,.77f,.76f,.8f));
+    Region(TEXT("panel"),X,Y,W,H);
+}
 void ASeigeHUD::Button(const FString& Value,const FString& A,float X,float Y,float W,float H,bool Active,const FString& Tip)
 {
     float MX=0,MY=0;auto* PC=GetOwningPlayerController();const bool Hover=PC&&PC->GetMousePosition(MX,MY)&&MX/Scale>=X&&MX/Scale<=X+W&&MY/Scale>=Y&&MY/Scale<=Y+H;
-    Box(X,Y,W,H,Active||Hover?Raised:Panel);if(Active||Hover)Box(X,Y,2,H,Gold);
-    Label(Value,X+12,Y+(H-16)/2,16,Active?Gold:Text);Region(A,X,Y,W,H,Tip);
+    Box(X+1,Y+1,W-2,H-2,Active||Hover?Raised:Ink);
+    Box(X+1,Y+H-2,W-2,1,Active||Hover?FLinearColor(.29f,.70f,.72f,.85f):FLinearColor(.13f,.27f,.32f,.65f));
+    if(Active||Hover){Box(X,Y+4,2,H-8,Active?Green:Gold);Box(X+W-5,Y+H-6,3,3,Active?Green:Gold);}
+    const float LabelSize=FMath::Min(16.f,16.f*(W-24)/FMath::Max(1.f,float(MeasureLabel(Value,16).X)));
+    Label(Value,X+12,Y+(H-LabelSize)/2,LabelSize,Active?Green:Text);Region(A,X,Y,W,H,Tip);
 }
 TArray<FString> ASeigeHUD::WrapLines(const FString& Value,float Width,float Size) const
 {
@@ -326,9 +343,18 @@ float ASeigeHUD::DrawNotice(ASeigeGameMode& G,float W,float H)
     NoticeVisibleSeconds+=FMath::Max(0.f,GetWorld()->GetDeltaSeconds());return NH+12;
 }
 
+bool ASeigeHUD::Portrait(const FString& Name,float X,float Y,float W,float H,float Opacity)
+{
+    if(!PortraitTextures.Contains(Name))PortraitTextures.Add(Name,LoadObject<UTexture2D>(nullptr,*FString::Printf(TEXT("/Game/Art/Interface/%s.%s"),*Name,*Name)));
+    UTexture2D* Texture=PortraitTextures.FindRef(Name);if(!Texture||!Texture->GetResource())return false;
+    FCanvasTileItem Tile(FVector2D(X*Scale,Y*Scale),Texture->GetResource(),FVector2D(W*Scale,H*Scale),FLinearColor(1,1,1,Opacity*DrawOpacity));
+    Tile.BlendMode=SE_BLEND_Translucent;Canvas->DrawItem(Tile);return true;
+}
 void ASeigeHUD::Icon(const FString& Visual,float X,float Y,float S,FLinearColor C)
 {
-    Box(X,Y,S,S,FLinearColor(.11f,.13f,.10f));
+    Box(X,Y,S,S,FLinearColor(.03f,.075f,.09f,.8f));
+    FString Mesh=Visual;if(!Mesh.IsEmpty())Mesh[0]=FChar::ToUpper(Mesh[0]);
+    if(Visual!=TEXT("road")&&Visual!=TEXT("upgrade_road")&&Portrait(TEXT("T_Building_")+Mesh,X-2,Y-2,S+4,S+4))return;
     auto L=[&](float A,float B,float D,float E){DrawLine((X+A*S)*Scale,(Y+B*S)*Scale,(X+D*S)*Scale,(Y+E*S)*Scale,C,1.7f*Scale);};
     if(Visual==TEXT("sensor")){L(.5f,.8f,.5f,.3f);L(.25f,.8f,.75f,.8f);L(.25f,.3f,.5f,.15f);L(.5f,.15f,.75f,.3f);L(.15f,.18f,.5f,.03f);L(.5f,.03f,.85f,.18f);}
     else if(Visual==TEXT("turret")){L(.22f,.78f,.78f,.78f);L(.3f,.75f,.4f,.45f);L(.7f,.75f,.6f,.45f);L(.3f,.4f,.72f,.4f);L(.72f,.4f,.88f,.22f);L(.45f,.3f,.45f,.52f);}
@@ -343,7 +369,14 @@ void ASeigeHUD::Description(const FSeigeBuildingDef& D,ASeigeGameMode& G,float X
     Frame(X,Y,W,360);Icon(D.Visual,X+18,Y+20,40,D.Color);Label(D.Name,X+72,Y+25,20,Gold);float TY=Y+80;
     Wrapped(D.Description,X+18,TY,W-36,15,Text);TY+=10;Label(TEXT("CONSTRUCTION MATERIALS"),X+18,TY,12,Muted);TY+=24;
     TArray<FString> Keys;D.Cost.GetKeys(Keys);Keys.Sort();
-    for(const FString& Id:Keys){const double Held=G.Sim.ConstructionAvailable(Id);Label(FString::Printf(TEXT("%.0f  %s"),D.Cost[Id],*ResourceName(G.Sim,Id)),X+18,TY,15,Held>=D.Cost[Id]?Text:Red);TY+=24;}
+    for(int32 I=0;I<Keys.Num();++I)
+    {
+        const FString& Id=Keys[I];const double Held=G.Sim.ConstructionAvailable(Id);const auto* R=G.Sim.Resources.Find(Id);
+        const FString Bill=FString::Printf(TEXT("%.0f %s  %s"),D.Cost[Id],R?*R->Unit:TEXT(""),*ResourceName(G.Sim,Id));
+        const float CW=(W-36)*.5f,Font=FMath::Min(12.f,12.f*(CW-8)/FMath::Max(1.f,float(MeasureLabel(Bill,12).X)));
+        Label(Bill,X+18+(I%2)*CW,TY+(I/2)*23,Font,Held>=D.Cost[Id]?Text:Red);
+    }
+    TY+=FMath::DivideAndRoundUp(Keys.Num(),2)*23;
     TY+=7;Label(FString::Printf(TEXT("%.0fs assembly / %d builders / %d jobs"),D.ConstructionSeconds,D.ConstructionWorkers,D.Jobs),X+18,TY,13,Muted);TY+=27;
     if(const auto* R=G.Sim.Recipes.Find(D.Recipe))
     {
@@ -371,7 +404,7 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
         Label(TEXT("YOUR NEXT COLONY"),X+30,Y+25,12,Gold);
         Label(TEXT("Preparing the neighborhood"),X+30,Y+57,27,Text);
         float TY=Y+105;
-        Wrapped(TEXT("Developed colonies are building their industry through the same construction, supply and defense rules as your colony."),X+30,TY,PW-60,15,Muted);
+        Wrapped(TEXT("Developed neighbors begin with established industry and a full workforce. Once loaded, every colony follows the same supply, energy and defense rules."),X+30,TY,PW-60,15,Muted);
         const double Progress=FMath::Clamp(G.ScenarioPreparationProgress(),0.,1.);
         Label(TEXT("SIMULATED PREPARATION"),X+30,Y+177,11,Muted);
         Label(FString::Printf(TEXT("%.0f%%"),Progress*100),X+PW-83,Y+175,14,Gold);
@@ -385,6 +418,14 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
     }
     if(Navigation)
     {
+        if(G.Screen==TEXT("main"))
+        {
+            const float HeroSize=FMath::Min(H*.82f,W*.52f),HeroX=W*.68f-HeroSize*.5f,HeroY=(H-HeroSize)*.42f;
+            // A baked rendering of the real ship: no extra live capture or scene pass.
+            Portrait(TEXT("T_OrbitalHero"),HeroX,HeroY,HeroSize,HeroSize,.97f);
+            Box(HeroX+HeroSize*.20f,HeroY+HeroSize*.82f,HeroSize*.60f,1,FLinearColor(.35f,.72f,.74f,.5f));
+            Label(TEXT("ORBITAL COMMAND / SURVEY 2222"),HeroX+HeroSize*.25f,HeroY+HeroSize*.85f,11,Muted);
+        }
         // Shared triangle edges interpolate alpha continuously, without the
         // dark seams caused by overlapping translucent rectangles.
         const float FadeW=FMath::Min(840.f,W*.57f);
@@ -402,13 +443,13 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
         }
         FCanvasTriangleItem Scrim(Gradient,GWhiteTexture);Scrim.BlendMode=SE_BLEND_Translucent;Canvas->DrawItem(Scrim);
         const float X=88,Y=H*.135f,MW=370;
-        Label(G.Screen==TEXT("main")?Ui.Eyebrow:TEXT("COLONY / GAME MENU"),X,Y,14,Gold);
+        Label(G.Screen==TEXT("main")?TEXT("ORBITAL SETTLEMENT AUTHORITY"):TEXT("COMMAND LINK / PAUSED"),X,Y,12,Green);
         Box(X,Y+30,54,2,Gold);
         // Cache glyphs at their final pixel size, instead of magnifying the
         // engine's small bitmap font for a large menu heading.
         FSlateFontInfo TitleFont=FCoreStyle::GetDefaultFontStyle(TEXT("Bold"),(G.Screen==TEXT("main")?52.f:30.f)*Scale);
         TitleFont.FontObject=GEngine->GetLargeFont();
-        FCanvasTextItem TitleItem(FVector2D(X*Scale,(Y+56)*Scale),FText::FromString(G.Screen==TEXT("main")?Ui.Title:TEXT("A moment of quiet.")),TitleFont,Text);
+        FCanvasTextItem TitleItem(FVector2D(X*Scale,(Y+56)*Scale),FText::FromString(G.Screen==TEXT("main")?Ui.Title:TEXT("COMMAND")),TitleFont,Text);
         TitleItem.DisableShadow();Canvas->DrawItem(TitleItem);
         float TY=Y+143;
         Wrapped(G.Screen==TEXT("main")?Ui.Tagline:TEXT("The simulation is paused while this menu is open."),X,TY,430,19,Muted);
@@ -426,8 +467,8 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
         };
         if(G.Screen==TEXT("main"))
         {
-            Item(TEXT("Begin a colony"),TEXT("screen:scenario"),true);
-            Item(TEXT("Load colony"),TEXT("load"));Item(TEXT("Settings"),TEXT("screen:settings"));
+            Item(TEXT("Single player / New colony"),TEXT("screen:scenario"),true);
+            Item(TEXT("Load single player"),TEXT("load"));Item(TEXT("Settings"),TEXT("screen:settings"));
             Item(TEXT("Credits"),TEXT("screen:credits"));Item(TEXT("Exit game"),TEXT("exit"));
             Label(TEXT("MULTIPLAYER / COMING LATER"),X+16,NY+19,11,Muted);
             Label(TEXT("BUILD. SUSTAIN. DEFEND."),W-360,H-127,14,Gold);
@@ -505,10 +546,20 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
     }
     else if(G.Screen==TEXT("credits"))
     {
-        const float X=W/2-450,Y=H/2-340;Frame(X,Y,900,700);Label(TEXT("CREDITS"),X+28,Y+26,28,Gold);float TY=Y+90;
-        if(Ui.Credits.IsEmpty())Wrapped(InterfaceError,X+28,TY,844,16,Red);
-        for(const auto& Credit:Ui.Credits){Label(Credit.Heading,X+28,TY,18,Gold);TY+=31;Wrapped(Credit.Text,X+28,TY,844,15,Text);TY+=26;}
-        Button(TEXT("Back"),TEXT("back-screen"),X+28,Y+628,844,45);
+        // Two balanced columns leave room for the complete creator/license
+        // notices without running text into the fixed navigation button.
+        const float PW=1160,CW=534,X=W/2-PW/2,Y=H/2-365;
+        Frame(X,Y,PW,730);Label(TEXT("CREDITS / THE PEOPLE AND TOOLS BEHIND THE COLONY"),X+28,Y+28,24,Gold);
+        Box(X+PW/2,Y+90,1,520,FLinearColor(.16f,.26f,.29f,.7f));
+        float Columns[2]={Y+94,Y+94};
+        if(Ui.Credits.IsEmpty())Wrapped(InterfaceError,X+28,Columns[0],CW,16,Red);
+        for(const auto& Credit:Ui.Credits)
+        {
+            const int32 Column=Columns[0]<=Columns[1]?0:1;const float CX=X+28+Column*570;
+            Wrapped(Credit.Heading,CX,Columns[Column],CW,18,Gold);Columns[Column]+=10;
+            Wrapped(Credit.Text,CX,Columns[Column],CW,15,Text);Columns[Column]+=25;
+        }
+        Button(TEXT("Back"),TEXT("back-screen"),X+28,Y+656,PW-56,45);
     }
     else {Label(TEXT("This screen is unavailable"),W/2-200,H/2,24,Gold);Button(TEXT("Main menu"),TEXT("main-menu"),W/2-200,H/2+60,400,46);}
     return true;
@@ -757,12 +808,7 @@ void ASeigeHUD::DrawHUD()
     {
         if(!NeighborhoodOverview&&!G->SelectedBuild.IsEmpty()&&G->CursorOnWorld&&!WasOverUi)if(const auto* D=G->Sim.BuildingDefs.Find(G->SelectedBuild)){FString Why;Circle(G->CursorWorld,D->Footprint,G->Sim.CanPlaceBuilding(G->SelectedBuild,G->CursorWorld,Why)?Green:Red);}
         if(!RegionMap&&Readable)if(const auto* B=Local.FindBuilding(G->SelectedId))if(const auto* D=Local.Definition(*B)){Circle(B->Position+SectorOffset,D->Footprint+20,Green);if(D->AttackRange>0)Circle(B->Position+SectorOffset,D->AttackRange,Gold);if(D->SensorRange>0)Circle(B->Position+SectorOffset,D->SensorRange,FLinearColor(.35f,.68f,.85f));}
-        if(!RegionMap&&Readable)for(const auto& B:Local.Buildings)
-        {
-            const auto* D=Local.Definition(B);if(!D||B.Health<=0||B.LastShotTime<0||Local.Time-B.LastShotTime>.12)continue;
-            if(!G->Observer&&!Local.IsVisible(B.LastShotPosition))continue;
-            WorldLine(Ground(B.Position+SectorOffset,D->Footprint*.7f),Ground(B.LastShotPosition+SectorOffset,50),Green,2);
-        }
+        // Weapon beams are rendered once by the actual 3D hardpoint actors.
         if(!NeighborhoodOverview)DrawDeposits(false,{});
     }
     // Five separate resource groups keep owned quantities visible; detail stays on hover.
@@ -818,7 +864,9 @@ void ASeigeHUD::DrawHUD()
     DockButton(G->Observer||G->DetailedSectorIndex()!=4?TEXT("Observe"):RegionMap?TEXT("Map"):TEXT("Build [B]"),G->Observer||G->DetailedSectorIndex()!=4||RegionMap?TEXT("observer"):TEXT("build-menu"),TEXT("factory"),DockX+6,108,Ui.BuildOpen);
     DockButton(TEXT("Regions"),TEXT("region-map"),TEXT("sensor"),DockX+118,105,RegionMap);
     Box(DockX+231,DockY+13,1,34,FLinearColor(.23f,.28f,.28f,.7f));
-    Label(FString::Printf(TEXT("%02d:%02d"),int32(G->Sim.Time)/60,int32(G->Sim.Time)%60),DockX+245,DockY+13,19,Text);Label(TEXT("LOCAL TIME"),DockX+246,DockY+39,8,Muted);
+    Label(FString::Printf(TEXT("%02d:%02d"),int32(G->Sim.Time)/60,int32(G->Sim.Time)%60),DockX+245,DockY+13,19,Text);Label(TEXT("COLONY AGE"),DockX+246,DockY+39,8,Muted);
+    const FString WorldDate=G->CalendarLabel();const float DateW=MeasureLabel(WorldDate,11).X;
+    Frame((W-DateW-32)*.5f,DockY-33,DateW+32,27);Label(WorldDate,(W-DateW)*.5f,DockY-26,11,Text);
     Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+328,DockY+6,76,48,G->Paused);
     Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+410,DockY+6,84,48,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
     Button(TEXT("Menu"),TEXT("game-menu"),DockX+500,DockY+6,90,48,false,TEXT("Esc / F10 opens the game menu. Space pauses; + / - cycles playback speed."));
@@ -849,8 +897,9 @@ void ASeigeHUD::DrawHUD()
                     const float EX=X+20+(EI%6)*(CardW+Gap),EY=Y+104+(EI/6)*108;++EI;
                     const FString Tip=Wall?TEXT("Plan a contiguous wall; edit joints, flip inside with E, commit with Enter. Materials and builders are required."):Road?TEXT("Choose two endpoints to build a transport road. Workers and materials travel to the site."):Upgrade?TEXT("Upgrade a selected existing road, or choose a road in the world. Road 2x / Road + rail 4x / Road + rail + vacuum 8x."):D->Description;
                     Button(TEXT(""),TEXT("build:")+Entry.Definition,EX,EY,CardW,101,false,Tip);
-                    Icon(D?D->Visual:Entry.Definition,EX+12,EY+8,28,D?D->Color:Gold);Label(Entry.Shortcut,EX+CardW-25,EY+14,15,Gold);
-                    float NY=EY+43;Wrapped(Wall?TEXT("Wall plan"):Road?TEXT("Road"):Upgrade?TEXT("Upgrade road"):D->Name,EX+10,NY,CardW-20,12,Text);
+                    Icon(D?D->Visual:Entry.Definition,EX+44,EY+2,53,D?D->Color:Gold);Label(Entry.Shortcut,EX+CardW-25,EY+14,15,Gold);
+                    const auto NameLines=WrapLines(Wall?TEXT("Wall plan"):Road?TEXT("Road"):Upgrade?TEXT("Upgrade road"):D->Name,CardW-20,10);
+                    for(int32 N=0;N<FMath::Min(2,NameLines.Num());++N)Label(NameLines[N]+(N==1&&NameLines.Num()>2?TEXT("..."):TEXT("")),EX+10,EY+57+N*14,10,Text);
                     Label(Wall?TEXT("Plan / commit"):Road?TEXT("2x transport"):Upgrade?TEXT("4x / 8x transport"):FString::Printf(TEXT("%d jobs"),D->Jobs),EX+10,EY+85,10,Muted);
                 }
                 if(PreviousHover.StartsWith(TEXT("build:")))if(const auto* D=G->Sim.BuildingDefs.Find(PreviousHover.RightChop(6)))Description(*D,*G,FMath::Min(X+BW-410,W-430),FMath::Max(90.f,Y-372),410);
@@ -907,7 +956,13 @@ void ASeigeHUD::DrawHUD()
             if(!G->Observer&&G->DetailedSectorIndex()==4)DrawWorkforceControls(*G,X+18,Y+PH-154,PW-36);
             else{TY+=20;Wrapped(FString::Printf(TEXT("Stored: %d / colony spare target: %d / all targets: %d"),Local.InactiveWorkerCount(),Local.WorkerSurplusTarget,Local.WorkerReserveTarget()),X+18,TY,PW-36,14,Text);}
         }
-        else if(Ui.HoverPanel==TEXT("logistics")){Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(TEXT("Factories consume locally delivered stock. Construction reserves core materials, then couriers carry them to the site. Workers assemble buildings once supplies arrive."),X+18,TY,PW-36,14,Muted);}
+        else if(Ui.HoverPanel==TEXT("logistics"))
+        {
+            Label(TEXT("PHYSICAL LOGISTICS"),X+18,TY,18,Gold);TY+=43;
+            Wrapped(FString::Printf(TEXT("Automatic hauling jobs: %d (included in total jobs)."),Local.Workers.LogisticsJobs(Local)),X+18,TY,PW-36,14,Text);TY+=12;
+            Wrapped(FString::Printf(TEXT("%d couriers moving / %.0f units delivered / %d couriers lost"),Local.Couriers.Num(),Local.DeliveredUnits,Local.LostCouriers),X+18,TY,PW-36,16,Text);TY+=12;
+            Wrapped(TEXT("Factories consume locally delivered stock. Construction reserves core materials, then couriers carry them to the site. Workers assemble buildings once supplies arrive."),X+18,TY,PW-36,14,Muted);
+        }
         else if(Ui.HoverPanel==TEXT("threats")){Label(TEXT("SECTOR PRESSURE"),X+18,TY,18,Gold);TY+=43;Wrapped(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Pulse %d / Next pulse in %.0f seconds"),Local.Wave,FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Periodic attacks: disabled for this scenario.")),X+18,TY,PW-36,16,Text);TY+=12;Wrapped(Local.BackgroundBugsEnabled?TEXT("Background bugs: enabled. Roaming bugs can arrive between invasion pulses."):TEXT("Background bugs: disabled for this scenario."),X+18,TY,PW-36,14,Muted);TY+=12;Wrapped(TEXT("Sensors reveal live contacts; defenses require staffing. Repairs consume local materials."),X+18,TY,PW-36,14,Muted);}
         else{Label(TEXT("FIRST LANDING OBJECTIVES"),X+18,TY,18,Gold);TY+=43;TArray<FString> Goals;Local.ObjectiveText().ParseIntoArray(Goals,TEXT(" | "),true);for(const FString& Goal:Goals){Wrapped(Goal,X+18,TY,PW-36,16,Text);TY+=7;}}
     }

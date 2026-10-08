@@ -112,65 +112,40 @@ void ASeigeGameMode::SyncInventoryVisuals(const FSeigeSimulation& Colony,const F
     }
 }
 
-void ASeigeGameMode::SyncWorkerVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live)
+void ASeigeGameMode::SyncWorkerVisuals(const FSeigeSimulation&,const FSeigeBuilding&,const FSeigeBuildingDef&,FVector2D,const FString&,TSet<FString>&) {}
+
+void ASeigeGameMode::SyncWorkerAgents(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live)
 {
-    if(Building.IsConstructing||!Building.Enabled||Building.Workers<=0)return;
-    const int32 Count=FMath::Min(Building.Workers,3);const double Time=RenderSimulationTime(Colony);
-    // Read the same inputs, space, staffing and support gates as the simulation;
-    // diagnostic status strings are not a second production-state machine.
-    const bool Active=Colony.HasActiveWork(Building);
-    const bool Extraction=Definition.WorkerActivity==TEXT("extraction");
-    TArray<FSeigeWorksiteBounds> Occupied=KnownBuildingBounds(*this,Colony,Building.Id);
-    const double Clearance=110./FMath::Max(RenderScale,1.f);
-    for(const auto& Resource:Colony.Resources)
+    const auto* Snapshot=PresentationSnapshot(Colony);const double Alpha=PresentationAlpha(),Time=RenderSimulationTime(Colony);
+    for(const auto& W:Colony.Workers.Bodies)
     {
-        const FString PileKey=Key+TEXT("_inventory_")+Resource.Key;
-        if(Live.Contains(PileKey))if(const auto* Pile=Visuals.FindRef(PileKey).Get())Occupied.Add({FVector2D(Pile->GetActorLocation())/RenderScale,Clearance});
-    }
-    for(int32 I=0;I<Count;++I)
-    {
-        FVector2D Station;
-        if(!SeigeFindExteriorPosition(WorldPosition,Definition.Footprint,5+I,Clearance,Occupied,Station))continue;
-        FVector2D Tools=Station+(Station-WorldPosition).GetSafeNormal()*30.;
-        for(const auto& Area:Occupied)
+        if(W.State!=TEXT("active")||!W.Outdoor)continue;
+        const FVector2D P=(Snapshot?Snapshot->Worker(W,Alpha):W.Position)+Offset;
+        if(!Observer&&!Offset.IsNearlyZero()&&(!IsWorldVisible(P)||!IsWorldVisible(W.Position+Offset)))continue;
+        const FString Key=Prefix+TEXT("worker_")+W.Id;Live.Add(Key);
+        auto* Actor=Visual(Key,TEXT("Robot"),RenderPosition(P,30),WorkAmber,95);
+        Actor->SetActorRotation(FVector(W.Heading,0).Rotation());
+        const auto* C=Colony.Couriers.FindByPredicate([&](const auto& Delivery){return Delivery.Id==W.DeliveryId;});
+        if(C&&C->Amount>0)
         {
-            const FVector2D Low(FMath::Min(Station.X,Tools.X)-Clearance,FMath::Min(Station.Y,Tools.Y)-Clearance);
-            const FVector2D High(FMath::Max(Station.X,Tools.X)+Clearance,FMath::Max(Station.Y,Tools.Y)+Clearance);
-            if(Low.X<Area.Position.X+Area.HalfWidth&&High.X>Area.Position.X-Area.HalfWidth&&Low.Y<Area.Position.Y+Area.HalfWidth&&High.Y>Area.Position.Y-Area.HalfWidth){Tools=Station;break;}
+            const FString CargoKey=Key+TEXT("_cargo");Live.Add(CargoKey);auto* Cargo=Visuals.FindRef(CargoKey).Get();
+            if(!Cargo){Cargo=WorkActor(GetWorld(),FVector::ZeroVector);Visuals.Add(CargoKey,Cargo);Part(Cargo,TEXT("Cube"),FVector::ZeroVector,FVector(.54,.47,.40),Colony.Resources[C->Resource].Color);}
+            Cargo->SetActorHiddenInGame(false);Cargo->SetActorRotation(Actor->GetActorRotation());Cargo->SetActorLocation(Actor->GetActorLocation()+Actor->GetActorForwardVector()*48+FVector(0,0,24));
+            const double Fraction=C->Amount/FMath::Max(Colony.Workers.HaulUnits(Colony,C->Resource),1.e-8);Cargo->SetActorScale3D(FVector(1,1,FMath::Clamp(Fraction,.08,1.)));
         }
-        Occupied.Add({Station,Clearance});
-        const double Trip=FVector2D::Distance(Station,Tools)/FMath::Max(Colony.WalkingSpeed(),.001);
-        const double Cycle=Trip*2+8.;
-        const double Phase=FMath::Fmod(Time+I*2.7+Building.Id*.31,Cycle);
-        double Travel=0;
-        if(Active&&Trip>0&&Phase<Trip)Travel=Phase/Trip;
-        else if(Active&&Phase<Trip+2)Travel=1;
-        else if(Active&&Trip>0&&Phase<2*Trip+2)Travel=1-(Phase-Trip-2)/Trip;
-        const FVector2D Position=FMath::Lerp(Station,Tools,Travel);
-        if(!Observer&&DetailedSectorIndex()!=4&&!IsWorldVisible(Position))continue;
-        const FString WorkerKey=Key+FString::Printf(TEXT("_operator_%d"),I);Live.Add(WorkerKey);
-        auto* Worker=Visual(WorkerKey,TEXT("Robot"),RenderPosition(Position,3),WorkAmber,95);
-        const FVector2D Facing=Travel>.01?(Phase<Trip+2?Tools-Station:Station-Tools):WorldPosition-Position;
-        Worker->SetActorRotation(FVector(Facing,0).Rotation());
-        if(!Worker->ActorHasTag(TEXT("OperatorTool")))
+        const auto* Road=Colony.FindRoad(Colony.Workers.RoadId(Colony,W));const auto* Tier=Road?Colony.TransportTiers.Find(Road->Tier):nullptr;
+        if(Tier&&Tier->SpeedMultiplier>1&&Colony.Energy.RoadPowered(Road->Id))
         {
-            Part(Worker,TEXT("Cube"),FVector(40,0,42),Extraction?FVector(.42,.1,.1):FVector(.29,.22,.24),ToolSteel);
-            TArray<UStaticMeshComponent*> Parts;Worker->GetComponents(Parts);Parts.Last()->ComponentTags.Add(TEXT("OperatorTool"));
-            Worker->Tags.Add(TEXT("OperatorTool"));
+            const FString CarrierKey=Key+TEXT("_carrier");Live.Add(CarrierKey);auto* Carrier=Visuals.FindRef(CarrierKey).Get();
+            if(!Carrier){Carrier=WorkActor(GetWorld(),FVector::ZeroVector);Visuals.Add(CarrierKey,Carrier);Part(Carrier,TEXT("Cube"),FVector(0,0,8),FVector(1.25,.92,.16),ToolSteel);}
+            Carrier->SetActorHiddenInGame(false);Carrier->SetActorLocation(RenderPosition(P,5));Carrier->SetActorRotation(Actor->GetActorRotation());
         }
-        TArray<UStaticMeshComponent*> Parts;Worker->GetComponents(Parts);
-        for(auto* Part:Parts)if(Part->ComponentHasTag(TEXT("OperatorTool")))
-            Part->SetRelativeRotation(FRotator(Active&&Phase>=2*Trip+2?FMath::Sin(Time*(Extraction?7:3)+I)*18:0,0,0));
-        // Tool stations represent the existing assigned workers and their tools;
-        // material transfer remains exclusively the simulation's cargo couriers.
-        const FString BenchKey=Key+FString::Printf(TEXT("_workbench_%d"),I);Live.Add(BenchKey);
-        auto* Bench=Visuals.FindRef(BenchKey).Get();
-        if(!Bench)
+        const auto* B=Colony.FindBuilding(W.BuildingId);const bool Working=W.Activity==TEXT("build")||W.Activity==TEXT("road_build")||(W.Activity==TEXT("operate")&&B&&Colony.HasActiveWork(*B));
+        if(Working)
         {
-            Bench=WorkActor(GetWorld(),RenderPosition(Station));Visuals.Add(BenchKey,Bench);
-            Part(Bench,TEXT("Cube"),FVector(55,0,45),FVector(.55,.75,.08),ToolSteel);
-            Part(Bench,TEXT("Cube"),FVector(55,0,23),FVector(.08,.45,.46),ToolSteel);
+            const FString ToolKey=Key+TEXT("_tool");Live.Add(ToolKey);auto* Tool=Visuals.FindRef(ToolKey).Get();
+            if(!Tool){Tool=WorkActor(GetWorld(),FVector::ZeroVector);Visuals.Add(ToolKey,Tool);Part(Tool,TEXT("Cube"),FVector::ZeroVector,FVector(.36,.10,.10),ToolSteel);}
+            Tool->SetActorHiddenInGame(false);Tool->SetActorLocation(Actor->GetActorLocation()+Actor->GetActorForwardVector()*52+FVector(0,0,38));Tool->SetActorRotation(Actor->GetActorRotation()+FRotator(FMath::Sin(Time*6)*12,0,0));
         }
-        Bench->SetActorLocation(RenderPosition(Station));Bench->SetActorHiddenInGame(false);
     }
 }

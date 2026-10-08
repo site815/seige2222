@@ -64,6 +64,8 @@ struct FSeigeProjectile
     FString OwnerKind,WeaponId,TargetKind=TEXT("enemy");
     FVector2D Position=FVector2D::ZeroVector,PreviousPosition=FVector2D::ZeroVector,Velocity=FVector2D::ZeroVector;
     double RemainingMeters=0,AgeSeconds=0;
+    // Presentation-only source socket; absent on restored in-flight rounds.
+    int32 WeaponSlot=INDEX_NONE;
 };
 struct FSeigeFabrication
 {
@@ -86,6 +88,8 @@ struct FSeigeCombatShot
     FString OwnerKind,Family;
     FVector2D Start=FVector2D::ZeroVector,End=FVector2D::ZeroVector;
     bool Hit=false;
+    FString WeaponId;
+    int32 WeaponSlot=INDEX_NONE,OwnerSector=4;
 };
 
 // Authoritative, deterministic combat and fleet state. Renderers only read it.
@@ -93,10 +97,13 @@ class SEIGE_API FSeigeCombatSystem
 {
 public:
     bool Initialize(const FString& Directory,FSeigeSimulation& Sim,FString& Error);
-    void Tick(FSeigeSimulation& Sim,double Seconds);
+    void Tick(FSeigeSimulation& Sim,double Seconds,bool DefensiveReservePrepared=false);
     double Demand(const FSeigeSimulation& Sim,int32 BuildingId,const FString& Resource) const;
+    double AmmoDemand(const FSeigeSimulation& Sim,int32 BuildingId,const FString& Resource) const;
     double CargoStock(const FString& Resource) const;
     bool IsVisible(FVector2D Position) const;
+    FString BuildingFireStatus(const FSeigeSimulation& Sim,int32 BuildingId) const;
+    void CollectPendingShotEnergy(const FSeigeSimulation& Sim,double Seconds,TMap<int32,double>& ByGrid) const;
     void Save(const TSharedPtr<FJsonObject>& Root) const;
     bool Load(const TSharedPtr<FJsonObject>& Root,FSeigeSimulation& Sim,FString& Error);
     void ShiftHome(FVector2D Delta);
@@ -143,6 +150,7 @@ public:
     int32 FleetCapacity=50;
     double ShotsFired=0,Hits=0,EnergySpentKWh=0,AmmoSpent=0;
 private:
+    friend class FSeigeEnergySystem;
     FString Fingerprint,BugWeapon;
     int32 NextId=1,MaximumVehicles=150,MaximumProjectiles=2048,MaximumQueue=8;
     double MetresPerUnit=.06,SectorHalfSize=30000,ServiceMeters=20,ChargeKW=40,AmmoBufferShots=16,EnemyRadiusMeters=1.2;
@@ -157,11 +165,14 @@ private:
     TFunction<double(FVector2D)> TerrainHeight;
     TFunction<const FSeigeSimulation*(int32)> SectorResolver;
     bool Fits(int32 Points,double Mass,const TArray<FString>& Loadout,FString& Error) const;
-    bool ClearFriendlyFire(const FSeigeSimulation& Sim,const FString& OwnerKind,int32 OwnerId,FVector2D From,FVector2D Aim) const;
+    struct FFireControl {int32 TargetId=0;FString Status;bool Ready=false;};
+    double BuildingWeaponWork(const FSeigeSimulation& Sim,int32 BuildingId) const;
+    FFireControl QueryFire(const FSeigeSimulation& Sim,const FString& OwnerKind,int32 OwnerId,FVector2D Position,const FSeigeWeaponDef& Weapon,double Cooldown,bool RequireStoredEnergy=true) const;
+    bool ClearFriendlyFire(const FSeigeSimulation& Sim,const FString& OwnerKind,int32 OwnerId,FVector2D From,FVector2D Aim,FString* Blocker=nullptr) const;
     bool DefensivePosition(const FSeigeSimulation& Sim,const FSeigeVehicle& Vehicle,FVector2D Anchor,FVector2D& Position) const;
     void EnsureBuildings(const FSeigeSimulation& Sim);
     void AdvanceProjectile(FSeigeSimulation& Sim,FSeigeProjectile& P,double Seconds,bool& Remove);
-    bool Fire(FSeigeSimulation& Sim,const FString& Kind,int32 Owner,FVector2D Position,int32 Target,const FSeigeWeaponDef& Weapon);
+    bool Fire(FSeigeSimulation& Sim,const FString& Kind,int32 Owner,FVector2D Position,int32 Target,const FSeigeWeaponDef& Weapon,int32 WeaponSlot);
     void Impact(FSeigeSimulation& Sim,const FSeigeProjectile& P,const FString& HitKind,int32 HitId,FVector2D Position);
     void MoveVehicles(FSeigeSimulation& Sim,double Seconds);
     void ServiceVehicles(FSeigeSimulation& Sim,double Seconds);

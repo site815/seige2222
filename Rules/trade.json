@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.1",
+  "version": "prototype-9.0",
   "trade": {
     "prices": {
       "water": {
@@ -87,26 +87,26 @@
         "sell_credits": 0.0005
       },
       "stored_workers": {
-        "buy_credits": 0.0015,
-        "sell_credits": 0.0007
+        "buy_credits": 0.08,
+        "sell_credits": 0.036
       }
     },
     "ports": {
       "trading_port": {
         "level": 1,
-        "capacity_kg": 100,
+        "capacity_kg": 1000,
         "shipment_seconds": 120,
         "energy_kwh": 0.25
       },
       "trading_port_2": {
         "level": 2,
-        "capacity_kg": 200,
+        "capacity_kg": 2000,
         "shipment_seconds": 120,
         "energy_kwh": 0.25
       },
       "trading_port_3": {
         "level": 3,
-        "capacity_kg": 300,
+        "capacity_kg": 3000,
         "shipment_seconds": 120,
         "energy_kwh": 0.25
       }

@@ -30,6 +30,8 @@ bool ASeigeHUD::HandleTradeAction(const FString& Action,ASeigeGameMode& G)
     else if(Action==TEXT("trade:more"))TradeQuantity=FMath::Min(10000.,TradeQuantity+Step);
     else if(Action==TEXT("trade:reserve-less")||Action==TEXT("trade:reserve-more"))
     {FString Error;G.Notice=G.Sim.SetPortWorkerTarget(Port->Id,FMath::Clamp(Port->WorkerExportTarget+(Action.EndsWith(TEXT("more"))?1:-1),0,100000),Error)?TEXT("Trading-port worker stock target updated."):Error;}
+    else if(Action==TEXT("trade:cancel-export"))
+    {FString Error;G.Notice=G.Sim.Trade.CancelPendingExport(G.Sim,Port->Id,Error)?TEXT("Pending export cancelled. Goods already in transit will still arrive."):Error;}
     else if(Action==TEXT("trade:import")||Action==TEXT("trade:export"))
     {
         FString Error;const bool Buy=Action==TEXT("trade:import");
@@ -48,7 +50,7 @@ void ASeigeHUD::DrawTradeInfo(ASeigeGameMode& G,float W,float H)
     if(!Ids.Contains(TradeResourceSelection))TradeResourceSelection=Ids[0];
     const auto& Resource=G.Sim.Resources[TradeResourceSelection];const auto* Definition=G.Sim.Definition(*Port);
     const auto* PortDefinition=G.Sim.Trade.Definition(Port->DefId);
-    const FLinearColor Text(.89f,.92f,.9f),Muted(.56f,.65f,.64f),Gold(.89f,.75f,.43f),Mint(.46f,.84f,.68f),Red(.91f,.48f,.39f);
+    const FLinearColor Text(.91f,.95f,.96f),Muted(.58f,.71f,.76f),Gold(.91f,.72f,.39f),Mint(.35f,.85f,.78f),Red(.91f,.48f,.39f);
     const float X=24,Y=Ui.ContentTop,PW=410,PH=FMath::Min(590.f,H-Y-96.f);if(PH<500)return;
     Frame(X,Y,PW,PH);Region(TEXT("trade:panel"),X,Y,PW,PH);
     Label(TEXT("EXTERNAL TRADE"),X+18,Y+16,18,Gold);
@@ -87,6 +89,8 @@ void ASeigeHUD::DrawTradeInfo(ASeigeGameMode& G,float W,float H)
     Button(TEXT("-"),TEXT("trade:reserve-less"),X+18,Y+PH-124,38,34);
     Button(TEXT("+"),TEXT("trade:reserve-more"),X+62,Y+PH-124,38,34);
     Label(TEXT("Manufacture and deliver spare workers"),X+112,Y+PH-115,11,Muted);
+    if(!Port->Shipment.Resource.IsEmpty()&&!Port->Shipment.Buy&&!Port->Shipment.Departed&&Port->Shipment.GoodsEscrow<=0)
+        Button(TEXT("Cancel pending export"),TEXT("trade:cancel-export"),X+18,Y+PH-88,PW-36,28,false,TEXT("Cancel before departure. Existing delivery workers keep their physical cargo and destination."));
     if(!Definition->NextUpgrade.IsEmpty())
     {
         FString Reason;const bool Upgrade=G.Sim.CanUpgradeBuilding(Port->Id,Reason);

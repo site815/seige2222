@@ -28,7 +28,7 @@ param(
     [switch]$NaniteBaseline, [switch]$EpicReference,
     [switch]$Orbit, [switch]$Travel, [switch]$SimpleTerrain, [switch]$HideSward, [switch]$Clearing,
     [ValidateSet('colony','meadow','ground','hills','boundary')][string]$View,
-    [switch]$NativeResolution,
+    [switch]$NativeResolution, [switch]$Winter, [switch]$DevelopedNeighbors,
     [int]$Width=1600, [int]$Height=900,
     [string]$ExecutablePath,
     [string]$BaselineReport
@@ -83,7 +83,9 @@ $arguments="-GraphicsBenchmark -BenchmarkName=$Name -RenderOffscreen -windowed -
 if($NaniteBaseline){$arguments+=' -BenchmarkNaniteBaseline'}
 if($EpicReference){$arguments+=' -BenchmarkV05Epic'}
 if($Orbit){$arguments+=' -BenchmarkOrbit'}
+if($DevelopedNeighbors){$arguments+=' -BenchmarkDevelopedNeighbors'}
 if($Travel){$arguments+=' -BenchmarkTravel'}
+if($Winter){$arguments+=' -BenchmarkWinter'}
 if($SimpleTerrain){$arguments+=' -BenchmarkSimpleTerrain'}
 if($HideSward){$arguments+=' -BenchmarkHideSward'}
 if($Clearing){if($View -ne 'colony'){throw 'Clearing diagnostic requires -View colony'}; $arguments+=' -BenchmarkClearing'}
@@ -104,6 +106,8 @@ $reportedMode=if($report.camera_mode){$report.camera_mode}else{'static'}
 if($reportedMode -ne $mode){throw 'Package does not support the requested camera benchmark mode'}
 if($SimpleTerrain -and (!$report.diagnostic_simple_terrain -or @($report.views | Where-Object {$_.simple_terrain_components -le 0}).Count -gt 0)){throw 'Simple terrain diagnostic was not applied'}
 if($HideSward -and !$report.diagnostic_sward_hidden){throw 'Hidden sward diagnostic was not applied'}
+if($Winter -and (!$report.diagnostic_winter -or $report.season_index_at_finish -ne 3 -or $report.snow_coverage_at_finish -lt .5 -or $report.snowflake_instances_at_finish -le 0)){throw 'Winter benchmark did not render midwinter cover and snowfall'}
+if($DevelopedNeighbors -and (!$report.diagnostic_developed_neighbors -or $report.simulated_neighbor_count -ne 8 -or $report.neighbor_worker_bodies -le 0)){throw 'Developed-neighbor benchmark did not simulate eight populated colonies'}
 $shadowQuality=if($EpicReference){3}else{2}
 if($report.quality.runtime_resolution_quality -ne 100 -or $report.quality.'sg.ShadowQuality' -ne $shadowQuality){throw 'Unexpected benchmark quality settings'}
 Copy-Item -LiteralPath $reportPath -Destination (Join-Path $projectRoot "Saved/GraphicsBenchmark-$Name.json")
@@ -114,6 +118,8 @@ if($BaselineReport){
     $currentSpeed=if($null -ne $report.simulation_speed){$report.simulation_speed}else{0}
     if($baselineSpeed -ne $currentSpeed){throw 'Baseline simulation workload differs: compare benchmarks at the same simulation speed'}
     if($baselineMode -ne $reportedMode -or $baseline.width -ne $report.width -or $baseline.height -ne $report.height){throw 'Baseline must have the same camera mode and output dimensions'}
+    if([bool]$baseline.diagnostic_winter -ne [bool]$report.diagnostic_winter){throw 'Baseline weather fixture differs; compare matching seasons'}
+    if([bool]$baseline.diagnostic_developed_neighbors -ne [bool]$report.diagnostic_developed_neighbors){throw 'Baseline neighboring-colony workload differs'}
     if($Orbit -and ($baseline.camera_path_version -ne $report.camera_path_version -or $baseline.orbit_degrees_per_second -ne $report.orbit_degrees_per_second -or $baseline.orbit_pitch_amplitude_degrees -ne $report.orbit_pitch_amplitude_degrees)){throw 'Orbit trajectories differ'}
     if($Travel -and ($baseline.camera_path_version -ne $report.camera_path_version -or $baseline.travel_meters_per_second -ne $report.travel_meters_per_second)){throw 'Travel trajectories differ'}
     if($baseline.quality.runtime_resolution_quality -ne $report.quality.runtime_resolution_quality){throw 'Baseline render resolution differs'}

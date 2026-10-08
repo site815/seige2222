@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "ambient_cubemap": "/Game/Art/WeatherV09/T_AmbientDaylight.T_AmbientDaylight",
+  "night_sky_intensity_fraction": 0.5,
+  "night_exposure_offset_ev": 2,
+  "sunrise_sunset_softness": 0.12,
+  "winter_accumulation_fraction": 0.08,
+  "winter_melt_fraction": 0.12,
+  "maximum_snow_coverage": 0.92,
+  "snowflake_count": 384,
+  "snow_radius_meters": 32,
+  "snow_height_meters": 24,
+  "snow_fall_meters_per_second": 1.4,
+  "snowflake_size_centimeters": 2.2,
+  "snow_collection": "/Game/Art/WeatherV09/MPC_Weather.MPC_Weather",
+  "snowflake_material": "/Game/Art/WeatherV09/M_Snowflake.M_Snowflake",
+  "sun_direction_update_degrees": 0.15,
+  "sun_shadow_update_seconds": 0.5
+}

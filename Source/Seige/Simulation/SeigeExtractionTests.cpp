@@ -19,10 +19,9 @@ bool WriteMineSave(const FString& Path,const TSharedPtr<FJsonObject>& Object)
 // kit and site bill are installed from carried stock, as in workforce fixtures.
 bool LandBeside(FSeigeSimulation& S,const FSeigeNode& Node,FString& Error)
 {
-    if(!S.SetInitialCorePosition(Node.Position-FVector2D(1200,0),Error))return false;
-    auto& C=S.Buildings[0];C.InstalledMaterials=C.ConstructionMaterials;C.ConstructionMaterials.Empty();
-    C.IsConstructing=false;C.ConstructionProgress=1;C.Builders=C.BuildersOnSite=C.TravellingBuilders=0;
-    S.Tick(S.FixedStepSeconds());return true;
+    bool Landed=false;for(int32 I=0;I<16&&!Landed;++I){const double Angle=2*PI*I/16;Landed=S.SetInitialCorePosition(Node.Position+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*1500,Error);}if(!Landed)return false;
+    for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
+    if(S.Buildings[0].IsConstructing){Error=TEXT("Finite crew did not deploy at dry mine fixture location");return false;}return true;
 }
 void InstallMine(FSeigeSimulation& S,int32 Id)
 {
@@ -30,7 +29,7 @@ void InstallMine(FSeigeSimulation& S,int32 Id)
     for(const auto& P:B.InstalledMaterials)S.Buildings[0].Inventory.FindOrAdd(P.Key)-=P.Value;
     B.ConstructionMaterials.Empty();B.IsConstructing=false;B.ConstructionProgress=1;
     B.Builders=B.BuildersOnSite=B.TravellingBuilders=0;B.BuilderRoute.Empty();B.BuilderNextWaypoint=0;
-    S.Population=S.Definition(S.Buildings[0])->Jobs+S.Definition(B)->Jobs;B.Workers=S.Definition(B)->Jobs;
+    int32 Need=S.Definition(B)->Jobs,Slot=0;for(auto& W:S.Workers.Bodies)if(W.State==TEXT("active")){W.Activity=TEXT("operate");W.BuildingId=Need-->0?Id:S.Buildings[0].Id;W.RoadId=W.DeliveryId=W.ContainerId=0;W.ContainerKind.Empty();W.Outdoor=true;W.Route.Empty();W.NextWaypoint=0;W.StationSlot=Slot++;W.Position=S.BuildingAccessPoint(*S.FindBuilding(W.BuildingId))+FVector2D(0,20+Slot*12);}S.Workers.RefreshMetrics(S);
 }
 bool ConnectMineFixture(FSeigeSimulation& S,int32 Id,FString& Error)
 {
@@ -38,7 +37,7 @@ bool ConnectMineFixture(FSeigeSimulation& S,int32 Id,FString& Error)
     if(!S.FindRoadRoute(Last,S.BuildingAccessPoint(*S.FindBuilding(Id)),Route))return false;
     for(const auto& End:Route)
     {
-        if(!S.PlaceRoad(Last,End,Error))return false;
+        if(FVector2D::Distance(Last,End)<.001)continue;if(!S.PlaceRoad(Last,End,Error))return false;
         auto& R=S.Roads.Last();R.InstalledMaterials=S.RoadCost(R.A,R.B,R.TargetTier);
         for(const auto& P:R.InstalledMaterials)S.Buildings[0].Inventory.FindOrAdd(P.Key)-=P.Value;
         R.Tier=R.TargetTier;R.IsConstructing=false;R.ConstructionProgress=1;
@@ -87,6 +86,48 @@ bool FSeigeExtractionMineTest::RunTest(const FString&)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeMineIncomingStorageTest,"Seige.Simulation.ExtractionMine.IncomingRepairPreservesStorage",Flags)
+bool FSeigeMineIncomingStorageTest::RunTest(const FString&)
+{
+    FString Error;FSeigeSimulation S;if(!S.Initialize(MineRules(),Error,false,false)){AddError(Error);return false;}
+    const auto Node=S.Nodes[0];FString Mine;
+    for(const auto& Id:S.BuildMenu)if(S.BuildingDefs[Id].ExtractionRates.Contains(Node.Resource)){Mine=Id;break;}
+    if(!LandBeside(S,Node,Error)||!S.PlaceBuilding(Mine,Node.Position,Error)){AddError(Error);return false;}
+    const int32 Id=S.Buildings.Last().Id,CoreId=S.Buildings[0].Id;InstallMine(S,Id);
+    if(!ConnectMineFixture(S,Id,Error)){AddError(Error);return false;}S.AllocateWorkers();S.Energy.Tick(S,0);
+    auto& B=*S.FindBuilding(Id);const FString Repair=S.TextRule(TEXT("repair_resource"));
+    const double Amount=FMath::Min(5.,S.Workers.HaulUnits(S,Repair));
+    const double Litres=Amount*S.Resources[Repair].LitresPerUnit,Capacity=S.Definition(B)->StorageCapacity;
+    if(!TestTrue(TEXT("Remaining finite kit funds an actual repair load"),Amount>0&&S.FindBuilding(CoreId)->Inventory.FindRef(Repair)>=Amount)||!TestTrue(TEXT("The mine is powered and physically staffed"),S.WorkFraction(B)>0))return false;
+    // This is a nearly full output-store fixture, not an economy solvability
+    // grant. The incoming repair load is taken from the genuine landed kit.
+    B.Inventory.Empty();B.Inventory.Add(Node.Resource,(Capacity-Litres-.25)/S.Resources[Node.Resource].LitresPerUnit);B.Health-=1;
+    const int32 Bodies=S.Workers.Bodies.Num();const double RepairBefore=S.TotalStock(Repair),OutputBefore=B.Inventory.FindRef(Node.Resource);
+    if(!S.Workers.Dispatch(S,CoreId,Id,0,Repair,Amount,false)){AddError(TEXT("A real available worker must collect the repair load"));return false;}
+    const int32 CourierId=S.Couriers.Last().Id;const FString Carrier=S.Couriers.Last().WorkerId;
+    TestTrue(TEXT("Pickup promises the destination volume before the source is debited"),FMath::IsNearlyEqual(S.StorageRoom(B),.25,1.e-8));
+    S.FindBuilding(CoreId)->Enabled=false;S.StepProduction(10);S.FindBuilding(CoreId)->Enabled=true;
+    TestTrue(TEXT("Extraction fills only genuinely uncommitted space"),B.Inventory.FindRef(Node.Resource)>OutputBefore&&FMath::IsNearlyEqual(S.StorageUsed(B),Capacity-Litres,1.e-8));
+    TestFalse(TEXT("The mine waits instead of consuming the incoming repair berth"),S.HasActiveWork(B));
+    TestFalse(TEXT("A second dispatch cannot reserve the same final space"),S.Workers.Dispatch(S,CoreId,Id,0,Repair,Amount,false));
+    double MaximumSpeed=S.WalkingSpeed();for(const auto& Tier:S.TransportTiers)MaximumSpeed=FMath::Max(MaximumSpeed,S.WalkingSpeed()*Tier.Value.SpeedMultiplier);
+    bool SawCarried=false;FVector2D Previous=S.Workers.Find(Carrier)->Position;
+    for(int32 I=0;I<20000&&S.Couriers.ContainsByPredicate([&](const auto& C){return C.Id==CourierId;});++I)
+    {
+        const double Step=S.FixedStepSeconds();S.Time+=Step;S.Workers.Tick(S,Step);S.Calendar.Advance(Step);
+        if(const auto* C=S.Couriers.FindByPredicate([&](const auto& V){return V.Id==CourierId;}))SawCarried|=C->Amount>0;
+        const auto Position=S.Workers.Find(Carrier)->Position;
+        if(FVector2D::Distance(Position,Previous)>MaximumSpeed*Step+1.e-6){AddError(TEXT("The real repair carrier teleported"));return false;}Previous=Position;
+        if(!FMath::IsNearlyEqual(S.TotalStock(Repair),RepairBefore,1.e-7)){AddError(TEXT("Reserved repair material was lost or duplicated during pickup/unloading"));return false;}
+    }
+    TestTrue(TEXT("The existing worker physically carries and completely unloads its promised repair stock"),SawCarried&&!S.Couriers.ContainsByPredicate([&](const auto& C){return C.Id==CourierId;}));
+    TestTrue(TEXT("The full mine receives the complete paid load without expanding storage"),FMath::IsNearlyEqual(B.Inventory.FindRef(Repair),Amount,1.e-8)&&FMath::IsNearlyEqual(S.StorageUsed(B),Capacity,1.e-8));
+    TestEqual(TEXT("Unloading does not spawn an extra hauling body"),S.Workers.Bodies.Num(),Bodies);
+    const double Health=B.Health;S.FindBuilding(CoreId)->Enabled=false;S.StepProduction(1);S.FindBuilding(CoreId)->Enabled=true;
+    TestTrue(TEXT("Delivered local repair stock can restore the damaged mine"),B.Health>Health&&B.Inventory.FindRef(Repair)<Amount);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeMinePersistenceTest,"Seige.Simulation.ExtractionMine.BindingPersistenceAndAtomicRejection",Flags)
 bool FSeigeMinePersistenceTest::RunTest(const FString&)
 {
@@ -121,7 +162,7 @@ bool FSeigeMinePersistenceTest::RunTest(const FString&)
         }
         if(!WriteMineSave(Bad,Document))return false;
         TestFalse(TEXT("Invalid deposit binding or previous save format is rejected"),Loaded.Load(Bad,Error));
-        TestTrue(TEXT("Rejection identifies the binding or explicitly incompatible format"),Error.Contains(Case==2?TEXT("format 6"):TEXT("deposit binding")));
+        TestTrue(TEXT("Rejection identifies the binding or explicitly incompatible format"),Error.Contains(Case==2?TEXT("format 7"):TEXT("deposit binding")));
         TestTrue(TEXT("Rejected load leaves the current mine and inventory untouched"),Loaded.Time==Before&&Loaded.FindBuilding(Id)->DepositId==Node.Id&&Loaded.FindBuilding(Id)->Inventory.FindRef(Node.Resource)==7.25);
     }
     FString After;if(!FFileHelper::LoadFileToString(After,*Bad))return false;

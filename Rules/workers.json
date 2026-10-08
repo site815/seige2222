@@ -1,0 +1,22 @@
+{
+  "version": "prototype-9.0",
+  "scheduler_policy": "finite_shared_pool",
+  "haul_mass_kg": 40,
+  "body_radius_meters": 0.475,
+  "haul_volume_litres": 60,
+  "logistics_workers": 1,
+  "logistics_scaling_policy": "completed_facilities",
+  "logistics_facilities_per_worker": 4,
+  "logistics_max_workers": 8,
+  "logistics_excluded_roles": ["core", "wall"],
+  "core_minimum_operators": 1,
+  "loading_seconds": 1,
+  "unloading_seconds": 1,
+  "route_retry_seconds": 2,
+  "deployment_ground_seconds": 12,
+  "deployment_hatch_seconds": 3,
+  "hatch_exit_spacing_seconds": 1,
+  "core_hatch_fraction": 0.71177,
+  "workstation_spacing_meters": 1.2,
+  "idle_return_seconds": 5
+}

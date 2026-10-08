@@ -4,8 +4,12 @@ $root = Split-Path $PSScriptRoot -Parent
 $project = Join-Path $root 'seige2222.uproject'
 & node (Join-Path $PSScriptRoot 'validate_configuration.mjs') $root
 if ($LASTEXITCODE -ne 0) { throw 'Rules, AI, interface or graphics configuration validation failed' }
-& "$Engine\Engine\Build\BatchFiles\Build.bat" SeigeEditor Win64 Development "-Project=$project" -WaitMutex -NoHotReloadFromIDE
+& "$Engine\Engine\Build\BatchFiles\Build.bat" SeigeEditor Win64 Development "-Project=$project" -WaitMutex -NoHotReloadFromIDE -NoUBA
 if ($LASTEXITCODE -ne 0) { throw 'Editor build failed' }
+if (-not (Test-Path -LiteralPath (Join-Path $root 'Content/Art/WeatherV09/T_AmbientDaylight.uasset'))) {
+  & "$Engine\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\prepare_engine_assets.py" -unattended -nop4 -nosplash -NullRHI -stdout -FullStdOutLogOutput
+  if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $root 'Content/Art/WeatherV09/T_AmbientDaylight.uasset'))) { throw 'Local licensed engine asset preparation failed' }
+}
 if (-not (Test-Path (Join-Path $root 'Content\Maps\Colony.umap'))) {
   & "$Engine\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\create_map.py" -unattended -nop4 -nosplash -NullRHI -stdout -FullStdOutLogOutput
   if ($LASTEXITCODE -ne 0) { throw 'Map generation failed' }
@@ -17,6 +21,6 @@ if ($Package) {
     if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'ProjectVersion must be a semantic version' }
     $ArchiveDirectory = Join-Path $root "Builds\v$version"
   }
-  & "$Engine\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Shipping -build -cook -stage -pak -iostore -package -archive "-archivedirectory=$ArchiveDirectory" -map=/Game/Maps/Colony -unattended -utf8output
+  & "$Engine\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Shipping -build -cook -stage -pak -iostore -package -archive "-archivedirectory=$ArchiveDirectory" -map=/Game/Maps/Colony -unattended -utf8output -ubtargs=-NoUBA
   if ($LASTEXITCODE -ne 0) { throw 'Packaging failed' }
 }

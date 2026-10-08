@@ -14,7 +14,7 @@ The persistent multiplayer design baseline, single-player-first implementation s
 
 AI neighboring factions serve as stand-ins for human neighbors and should share their rules. Aliens are a separate primary hostile faction.
 
-**Authorized local prototype expansion:** Scenario setup offers empty neighbors by default and starting/developed AI colony options, including an AI-controlled center for observer play. The first controller runs each colony through the same local simulation rules and keeps AI choices and finite developed-start setup in [AIFILES](../../AIFILES/README.md). Independent local colonies do not establish cross-sector combat, trade, multiplayer authority, or persistent services. See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for implementation limits and verification status.
+**Authorized local prototype expansion:** Scenario setup offers empty neighbors by default and starting/developed AI colony options, including an AI-controlled center for observer play. Developed AI loads an authored established state from [AIFILES](../../AIFILES/README.md); player and Starting AI retain the finite landing kit. From that initialization boundary onward, all use the same local simulation and ordinary paid AI commands. The player-directed privateering bridge is separate from general inter-colony trade, multiplayer authority and persistent services. See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for implementation limits and verification status.
 
 **Confirmed direction:** Single-player can represent a persistent world containing players at different stages of development. During AI selection, the player can choose developed neighbors representing established players or newly founded neighbors starting out like the player. Exact starting development profiles remain open; see [AI-neighbor setup](WORLD_AND_RELOCATION.md).
 
@@ -22,7 +22,7 @@ AI neighboring factions serve as stand-ins for human neighbors and should share 
 
 **Confirmed direction:** Single-player is a version of the persistent-world game with AI opponents, not a different colony design. There is no separate protection period for a new colony in either version. Roaming threats can arrive immediately; main alien invasions occur periodically and allocate forces proportionate to each colony's strength. The starting core's ability to repel ordinary attacks, and its vulnerability to repeated unrepaired damage, fit those shared rules. The final invasion interval and scaling method remain open.
 
-**Current single-player options:** v0.7 independently enables or disables background bugs and periodic attacks before a scenario starts, with both ON by default. Every occupied colony and developed AI preparation uses the same selection, which is restored on loading. These are whole-scenario choices, not temporary protection periods; persistent-server configuration remains open. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
+**Current single-player options:** Independently enable or disable background bugs and periodic attacks before a scenario starts, with both ON by default. Every occupied colony uses the same selection during live play, restored on loading. Established setup does not replay historical attacks. These are whole-scenario choices, not temporary protection periods; persistent-server configuration remains open. See [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md).
 
 In the intended persistent multiplayer game, colonies and expeditions continue while their players are offline. They can be attacked, lose assets, and be destroyed.
 

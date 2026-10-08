@@ -40,6 +40,7 @@ bool GenerateSeigeResourceNodes(const TMap<FString, FSeigeResourceDef>& Resource
         {
             const FVector2D Position((Random.GetFraction() * 2. - 1.) * InnerHalfSize,
                 (Random.GetFraction() * 2. - 1.) * InnerHalfSize);
+            if(Settings.CanPlace&&!Settings.CanPlace(Position))continue;
             if (Generated.ContainsByPredicate([&](const FSeigeNode& Node)
                 { return FVector2D::DistSquared(Node.Position, Position) < FMath::Square(MinimumSeparation); })) continue;
             FSeigeNode Node; Node.Id = Generated.Num() + 1; Node.Resource = Resource; Node.Position = Position;

@@ -14,6 +14,12 @@
 namespace
 {
 constexpr EAutomationTestFlags CameraFlags=EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter;
+bool DeployCameraFixture(FSeigeSimulation& S,FString& Error)
+{
+    for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
+    if(S.Buildings[0].IsConstructing){Error=TEXT("Physical camera-fixture deployment did not complete");return false;}
+    S.Tick(20);return true;
+}
 struct FCameraWorld : FTestWorldWrapper
 {
     ASeigeGameMode* Game=nullptr;
@@ -23,7 +29,7 @@ struct FCameraWorld : FTestWorldWrapper
         FURL Url;Url.AddOption(*FString::Printf(TEXT("game=%s"),*ASeigeGameMode::StaticClass()->GetPathName()));
         if(!GetTestWorld()->SetGameMode(Url)){Test.AddError(TEXT("Cannot create camera test game mode"));return false;}
         Game=Cast<ASeigeGameMode>(GetTestWorld()->GetAuthGameMode());
-        if(!Game||!Game->Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Game->Error))
+        if(!Game||!Game->Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Game->Error,false,false))
         {Test.AddError(Game?Game->Error:TEXT("Missing camera test game mode"));return false;}
         Game->Ready=true;Game->Screen=TEXT("playing");
         // Exercise the same triangle-height cache as rendering without creating
@@ -348,7 +354,7 @@ bool FSeigeCompactBuildingPadTest::RunTest(const FString& Parameters)
     G.MenuOpen=false;G.Screen=TEXT("playing");G.RebuildTerrainHeights();double LandedChange=0;
     for(int32 I=0;I<LandingSamples.Num();++I)LandedChange=FMath::Max(LandedChange,FMath::Abs(G.GroundHeight(LandingSamples[I])-LandingHeights[I]));
     TestTrue(TEXT("The confirmed time-zero core creates a real foundation, so the backdrop regression is meaningful"),LandedChange>.1);
-    G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
+    if(!DeployCameraFixture(G.Sim,G.Error)){AddError(G.Error);return false;}
     if(!G.Sim.PlaceBuilding(TEXT("alloy_refinery"),FVector2D(-713,319),G.Error))
     {AddError(G.Error);return false;}
     const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
@@ -428,7 +434,7 @@ bool FSeigeIncrementalSectorSeamTest::RunTest(const FString& Parameters)
         for(double Side:{-Epsilon,0.,Epsilon})Samples.Add(FVector2D(Half+Side,EdgeY+Sign*Fraction*CoarseStep));
     TArray<double> Natural;
     for(const auto& P:Samples)Natural.Add(G.GroundHeight(P));
-    G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
+    if(!DeployCameraFixture(G.Sim,G.Error)){AddError(G.Error);return false;}
     if(!G.Sim.PlaceBuilding(TEXT("sensor"),FVector2D(Half-130,EdgeY),G.Error))
     {AddError(G.Error);return false;}
     const int32 SensorId=G.Sim.Buildings.Last().Id;
@@ -465,7 +471,7 @@ bool FSeigeRoadTerrainTest::RunTest(const FString& Parameters)
     FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
     const double Half=G.Sim.WorldHalfSize,CoarseStep=Half*2/128,Step=Half*2/G.DetailedTerrainResolution,Epsilon=.001;
     if(!G.Sim.SetInitialCorePosition(FVector2D(Half-2000,CoarseStep),G.Error)){AddError(G.Error);return false;}
-    G.Sim.Tick(G.Sim.BuildingDefs[G.Sim.CoreDefinition].ConstructionSeconds+G.Sim.FixedStepSeconds());
+    if(!DeployCameraFixture(G.Sim,G.Error)){AddError(G.Error);return false;}
     G.RebuildTerrainHeights();
     const FVector2D Center(Half-30,CoarseStep),A=Center-FVector2D(0,600),B=Center+FVector2D(0,600);
     const double Width=G.Sim.TransportTiers[TEXT("road")].WidthMeters*.5/G.Sim.MetersPerWorldUnit();
@@ -500,22 +506,30 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRoadTerrainPrivacyTest,"Seige.Camera.Road
 bool FSeigeRoadTerrainPrivacyTest::RunTest(const FString& Parameters)
 {
     FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    if(!DeployCameraFixture(G.Sim,G.Error)){AddError(G.Error);return false;}
     const double Half=G.Sim.WorldHalfSize;const FVector2D Offset(Half*2,0);
     FSeigeNeighbor Neighbor;Neighbor.Index=5;Neighbor.Offset=Offset;Neighbor.Type=TEXT("starting");
-    if(!Neighbor.Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),G.Error)){AddError(G.Error);return false;}
+    if(!Neighbor.Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),G.Error,false,false,INDEX_NONE,Offset)){AddError(G.Error);return false;}
     G.Neighbors.Add(MoveTemp(Neighbor));
     // Isolated visibility fixture: two live home sensors reveal the endpoints
     // across the boundary while the middle of the neighboring route stays dark.
     G.Sim.BuildingDefs[TEXT("sensor")].SensorRange=600;
+    int32 SensorWorker=0;
     for(double Y:{-1600.,1600.})
     {
         FSeigeBuilding Sensor;Sensor.Id=100+G.Sim.Buildings.Num();Sensor.DefId=TEXT("sensor");
         Sensor.Position=FVector2D(Half-100,Y);Sensor.Health=G.Sim.BuildingDefs[TEXT("sensor")].Health;
-        Sensor.Workers=G.Sim.BuildingDefs[TEXT("sensor")].Jobs;G.Sim.Buildings.Add(Sensor);
+        G.Sim.Buildings.Add(Sensor);
+        if(!G.Sim.Workers.Bodies.IsValidIndex(SensorWorker)){AddError(TEXT("Visibility fixture lacks a physical sensor worker"));return false;}
+        auto& Worker=G.Sim.Workers.Bodies[SensorWorker++];Worker.State=TEXT("active");Worker.Activity=TEXT("operate");Worker.BuildingId=Sensor.Id;
+        Worker.RoadId=Worker.DeliveryId=Worker.ContainerId=0;Worker.ContainerKind.Empty();Worker.Route.Empty();Worker.NextWaypoint=0;Worker.Outdoor=false;Worker.Position=G.Sim.BuildingAccessPoint(Sensor);
         FSeigeBuilding Solar;Solar.Id=Sensor.Id+1000;Solar.DefId=TEXT("solar_array");Solar.Position=Sensor.Position-FVector2D(1000,0);Solar.Health=G.Sim.BuildingDefs[Solar.DefId].Health;G.Sim.Buildings.Add(Solar);
         FSeigeTransportSegment Wire;Wire.Id=Sensor.Id+2000;Wire.A=G.Sim.BuildingAccessPoint(Solar);Wire.B=G.Sim.BuildingAccessPoint(Sensor);Wire.Tier=TEXT("road");Wire.IsConstructing=false;Wire.ConstructionProgress=1;G.Sim.Roads.Add(Wire);
     }
-    G.Sim.Energy.Invalidate();G.Sim.Energy.Tick(G.Sim,0);
+    // This is a powered visibility fixture, not a night-energy test. Use actual
+    // midday solar and the existing body identities rather than free Workers.
+    G.Sim.Calendar.SetElapsedMicroseconds(G.Sim.Calendar.GetRules().DaylightMicroseconds/2);
+    G.Sim.Workers.RefreshMetrics(G.Sim);G.Sim.Energy.Invalidate();G.Sim.Energy.Tick(G.Sim,0);G.Sim.Workers.RefreshMetrics(G.Sim);
     G.FocusSector(5);G.RebuildTerrainHeights();
     FSeigeTransportSegment Road;Road.Id=200;Road.A=FVector2D(-Half+100,-1600);Road.B=FVector2D(-Half+100,1600);
     Road.Tier=TEXT("road");Road.IsConstructing=false;Road.ConstructionProgress=1;

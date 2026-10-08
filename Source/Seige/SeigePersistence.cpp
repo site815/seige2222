@@ -19,11 +19,12 @@ bool WriteObject(const TSharedPtr<FJsonObject>& Object,const FString& Filename)
 void ASeigeGameMode::SaveGame()
 {
     if(!Ready||(Screen!=TEXT("playing")&&!(MenuOpen&&MenuReturnScreen==TEXT("playing")))) { Notice=TEXT("Begin a scenario before saving."); return; }
+    BindScenarioCalendar();
     const FString Generation=FGuid::NewGuid().ToString(EGuidFormats::Digits);
     const FString Directory=FPaths::Combine(SaveRoot(),TEXT("Scenarios"),Generation);
     if(!IFileManager::Get().MakeDirectory(*Directory,true)) { Notice=TEXT("Could not create the save directory."); return; }
     if(!Sim.Save(FPaths::Combine(Directory,TEXT("center.json")),Error)) { Notice=Error; return; }
-    auto Metadata=MakeShared<FJsonObject>(); Metadata->SetNumberField(TEXT("format"),6); Metadata->SetStringField(TEXT("generation"),Generation);
+    auto Metadata=MakeShared<FJsonObject>(); Metadata->SetNumberField(TEXT("format"),7); Metadata->SetNumberField(TEXT("calendar_elapsed_us"),double(ScenarioCalendar.ElapsedMicroseconds())); Metadata->SetStringField(TEXT("generation"),Generation);
     const FVector SavedFocus=CompanionView?SavedColonyCamera:CameraCenter;
     Metadata->SetNumberField(TEXT("camera_x"),SavedFocus.X); Metadata->SetNumberField(TEXT("camera_y"),SavedFocus.Y);
     Metadata->SetNumberField(TEXT("camera_yaw"),CompanionView?SavedColonyYaw:CameraYaw); Metadata->SetNumberField(TEXT("camera_pitch"),CompanionView?SavedColonyPitch:CameraPitch);
@@ -56,13 +57,15 @@ void ASeigeGameMode::LoadGame()
     if(!FFileHelper::LoadFileToString(Raw,*Filename)) { Notice=TEXT("No saved scenario yet. Start Single player, then save from Menu [Esc / F10]."); return; }
     if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Metadata)||!Metadata.IsValid()) { Notice=TEXT("The scenario save is unreadable."); return; }
     double Format=0,CameraX=0,CameraY=0,StoredZoom=0,StoredSpeed=1;
-    double StoredYaw=0,StoredPitch=0;
+    double StoredYaw=0,StoredPitch=0,StoredCalendar=0;
     FString Generation,CenterFingerprint;
     bool StoredPaused=false,StoredAcknowledged=false,StoredBackgroundBugs=true,StoredPeriodicAttacks=true;
     const TArray<TSharedPtr<FJsonValue>>* Slots=nullptr; const TArray<TSharedPtr<FJsonValue>>* Fingerprints=nullptr;
     FGuid GenerationId;
-    if(!Metadata->HasTypedField<EJson::Number>(TEXT("format"))||!Metadata->TryGetNumberField(TEXT("format"),Format)||Format!=6)
-    {Notice=TEXT("This scenario save is incompatible with version 0.8.1 (Extraction Mine saves). The existing save was not changed; start a new scenario.");return;}
+    if(!Metadata->HasTypedField<EJson::Number>(TEXT("format"))||!Metadata->TryGetNumberField(TEXT("format"),Format)||Format!=7)
+    {Notice=TEXT("This scenario save is incompatible with version 0.9.0 (individual workers and world calendar). The existing save was not changed; start a new scenario.");return;}
+    if(!Metadata->TryGetNumberField(TEXT("calendar_elapsed_us"),StoredCalendar)||!FMath::IsFinite(StoredCalendar)||StoredCalendar<0||StoredCalendar>double(FSeigeWorldCalendar::MaximumElapsedMicroseconds)||StoredCalendar!=FMath::FloorToDouble(StoredCalendar))
+    {Notice=TEXT("Saved scenario calendar is invalid.");return;}
     for(const TCHAR* Field:{TEXT("camera_x"),TEXT("camera_y"),TEXT("zoom"),TEXT("speed")})
         if(!Metadata->HasTypedField<EJson::Number>(Field)){Notice=TEXT("Scenario save metadata is invalid.");return;}
     if(!Metadata->TryGetStringField(TEXT("generation"),Generation)||!FGuid::ParseExact(Generation,EGuidFormats::Digits,GenerationId)||
@@ -104,6 +107,8 @@ void ASeigeGameMode::LoadGame()
     }
     else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Error,StoredBackgroundBugs,StoredPeriodicAttacks)) { Notice=Error; return; }
     if(!NewCenter.Load(FPaths::Combine(Directory,TEXT("center.json")),Error)) { Notice=Error; return; }
+    if(NewCenter.Calendar.ElapsedMicroseconds()!=static_cast<int64>(StoredCalendar))
+    {Notice=TEXT("Saved center and world calendars disagree.");return;}
     if(FMath::Abs(CameraX)>NewCenter.WorldHalfSize*2.8||FMath::Abs(CameraY)>NewCenter.WorldHalfSize*2.8)
     {Notice=TEXT("Saved camera position is outside the scenario.");return;}
     if(NewCenter.BackgroundBugsEnabled!=StoredBackgroundBugs||NewCenter.PeriodicAttacksEnabled!=StoredPeriodicAttacks)
@@ -113,11 +118,13 @@ void ASeigeGameMode::LoadGame()
         if(Index==4||NewSlots[Index]==TEXT("empty")) continue;
         FSeigeNeighbor N; N.Index=Index; N.Type=NewSlots[Index]; N.Offset=FVector2D(Index%3-1,Index/3-1)*NewCenter.WorldHalfSize*2;
         N.Brain=MakeShared<FSeigeScenarioAI>();
-        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error,StoredBackgroundBugs,StoredPeriodicAttacks,SeigeSectorResourceSeed(NewCenter.GenerationSeed,Index))) { Notice=Error; return; }
+        if(!N.Brain->Initialize(N.Sim,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),false,Error,StoredBackgroundBugs,StoredPeriodicAttacks,SeigeSectorResourceSeed(NewCenter.GenerationSeed,Index),N.Offset)) { Notice=Error; return; }
         if(SavedFingerprints.FindRef(Index)!=N.Brain->GetConfigFingerprint()) { Notice=TEXT("AI files have changed since this save. Restore those files or start a new scenario."); return; }
         if(!N.Sim.Load(FPaths::Combine(Directory,FString::Printf(TEXT("sector_%d.json"),Index)),Error)) { Notice=Error; return; }
         if(N.Sim.BackgroundBugsEnabled!=StoredBackgroundBugs||N.Sim.PeriodicAttacksEnabled!=StoredPeriodicAttacks)
         {Notice=TEXT("Scenario threat settings disagree with a saved neighbor.");return;}
+        if(N.Sim.Calendar.ElapsedMicroseconds()!=static_cast<int64>(StoredCalendar))
+        {Notice=TEXT("Saved neighbor and world calendars disagree.");return;}
         NewNeighbors.Add(MoveTemp(N));
     }
     if(SavedFingerprints.Num()!=NewNeighbors.Num()) { Notice=TEXT("Scenario save has inconsistent neighbor records."); return; }
@@ -128,6 +135,7 @@ void ASeigeGameMode::LoadGame()
     for(auto It=Materials.CreateIterator();It;++It)if(It.Key().StartsWith(TEXT("construction_original_")))It.RemoveCurrent();
     ExitCompanionView();
     Sim=MoveTemp(NewCenter); CenterBrain=MoveTemp(NewBrain); Neighbors=MoveTemp(NewNeighbors); ScenarioSlots=MoveTemp(NewSlots);
+    ScenarioCalendar=Sim.Calendar;BindScenarioCalendar();
     EmptyRegionResources=MoveTemp(NewEmptyRegions);ConfigureCombatTerrain();SelectedFleetId=0;FleetOrderActive=false;
     ScenarioBackgroundBugs=StoredBackgroundBugs;ScenarioPeriodicAttacks=StoredPeriodicAttacks;
     Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=SelectedRoadId=0; CancelRoadTool();CancelWallTool(); SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed; WinAcknowledged=StoredAcknowledged;

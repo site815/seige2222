@@ -1,5 +1,5 @@
 {
-  "version": "prototype-8.1",
+  "version": "prototype-9.0",
   "dog": {
     "name": "Rex",
     "initial_count": 1,
