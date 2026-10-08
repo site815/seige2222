@@ -223,6 +223,9 @@ void ASeigeGameMode::RunPresentationSmoke()
         Require(!SelectedBuild.IsEmpty()&&Hud&&!Hud->Ui.BuildOpen,TEXT("Category/build shortcut chain did not select a blueprint"));break;
     case 10:
     {
+        // v0.9 deploys the core physically over several seconds; placement needs
+        // its live coverage, so let ordinary 10x time finish the deployment first.
+        if(const auto* CoreDef=Sim.BuildingDefs.Find(Sim.CoreDefinition)){const double Deadline=Sim.Time+CoreDef->ConstructionSeconds*6;while(!Sim.Buildings.IsEmpty()&&Sim.Buildings[0].IsConstructing&&Sim.Time<Deadline&&!Sim.Failed)Sim.Tick(1.);}
         FVector2D Site;Require(ChooseSite(SelectedBuild,FVector2D(1100,0),Site),TEXT("Sensor world click needs a legal unoccupied plot"));
         WorldClick(Site);Require(Sim.Buildings.Num()==2,TEXT("World click did not construct the selected sensor"));
         if(Sim.Buildings.Num()==2)Require(Sim.Definition(Sim.Buildings.Last())&&Sim.Definition(Sim.Buildings.Last())->Role==TEXT("sensor"),TEXT("Shortcut constructed the wrong building role"));break;

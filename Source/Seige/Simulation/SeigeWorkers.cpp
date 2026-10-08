@@ -190,7 +190,10 @@ void FSeigeWorkerSystem::Schedule(FSeigeSimulation& S)
         // reachable, fully funded job to finish rather than deadlocking every
         // worker behind the support capacity that this construction can unlock.
         // Other idle haulers remain available whenever the population permits.
-        const bool ProgressLoan=J.SuppliedConstruction&&!FreightPending&&!ConstructionCrewActive&&Idle>0&&Idle+WorkingHaulers<=Reserve&&S.OperatingEfficiency()>0;
+        // Spare arrived core operators are lent before the hauling reserve, so
+        // the loan only applies when no operator above the minimum remains.
+        bool SpareOperator=false;if(const auto* Core=S.Core()){int32 Operators=0;for(const auto& W:Bodies)if(W.State==TEXT("active")&&W.BuildingId==Core->Id&&W.Activity==TEXT("operate"))++Operators;SpareOperator=Operators>Number(TEXT("core_minimum_operators"));}
+        const bool ProgressLoan=J.SuppliedConstruction&&!FreightPending&&!ConstructionCrewActive&&!SpareOperator&&Idle>0&&Idle+WorkingHaulers<=Reserve&&S.OperatingEfficiency()>0;
         // The reserve includes bodies already hauling. A finished delivery can
         // join construction while other haulers keep logistics running; intact
         // stored bodies relocating themselves are not available haulers.

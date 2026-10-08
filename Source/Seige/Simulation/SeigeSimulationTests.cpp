@@ -308,8 +308,14 @@ bool FSeigePlayableTest::RunTest(const FString& Parameters)
     if(!Controller.Initialize(S,TestRules(),FPaths::Combine(FPaths::ProjectDir(),TEXT("AIFILES")),false,Error)){AddError(Error);return false;}
     // The controller uses only ordinary placement/toggle commands. No inventory, population,
     // construction-progress or threat overrides: the entire shipped bootstrap must survive.
-    for(int32 I=0;I<6480&&!S.Won&&!S.Escaped;++I)Controller.Tick(S,10);
+    TSet<int32> Lost;TArray<FString> Losses;
+    for(int32 I=0;I<6480&&!S.Won&&!S.Escaped;++I)
+    {
+        Controller.Tick(S,10);
+        for(const auto& B:S.Buildings)if(B.Health<=0&&!Lost.Contains(B.Id)){Lost.Add(B.Id);Losses.Add(FString::Printf(TEXT("%s id=%d at %.0f,%.0f lost at t=%.0f wave=%d population=%d enemies=%d"),*B.DefId,B.Id,B.Position.X,B.Position.Y,S.Time,S.Wave,S.Population,S.Enemies.Num()));}
+    }
     AddInfo(S.ObjectiveText()); AddInfo(S.WorkforceStatus());AddInfo(Controller.GetStatus());
+    for(const FString& Loss:Losses)AddInfo(Loss);
     S.Save(TestSave(TEXT("first-playable-final")),Error);
     if(!S.Won)for(const auto& B:S.Buildings)if(B.Health>0)AddInfo(FString::Printf(TEXT("%s at %.0f,%.0f: %s; construction %.3f, health %.0f"),*B.DefId,B.Position.X,B.Position.Y,*B.Status,B.ConstructionProgress,B.Health));
     TestTrue(TEXT("Shipped first-playable scenario is winnable with only normal build actions"),S.Won);

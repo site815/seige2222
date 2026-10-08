@@ -96,6 +96,13 @@ bool FSeigeReplicatorWorkforceTest::RunTest(const FString&)
     for(int32 I=0;I<2;++I)Distributed.StepRecipe(*Donor,Distributed.ProductionSeconds(*Donor,Worker)/Distributed.WorkFraction(*Donor)+.01);
     TestTrue(TEXT("A promised bill can remain physically present entirely inside operating refill buffers"),Distributed.Buildings[0].Inventory.FindRef(Parts)<=Distributed.Demand(Distributed.Buildings[0],Parts,false)+1.e-8&&Donor->Inventory.FindRef(Parts)<=Distributed.Demand(*Donor,Parts,false)+1.e-8);
     const double BufferedStock=Distributed.TotalStock(Parts);Distributed.StepLogistics(Distributed.Number(TEXT("dispatch_interval")));
+    if(!Distributed.Couriers.ContainsByPredicate([&](const auto& C){return C.TargetId==BufferedSite&&C.Resource==Parts&&C.ForConstruction&&C.ReservedAmount>0;}))
+    {
+        FString Diag=FString::Printf(TEXT("Distributed probe: hatch=%d clock=%.2f reserved=%.2f available=%.2f core=%.2f/%.2f donor=%.2f/%.2f haul=%.2f couriers=%d"),Distributed.DeploymentHatchOpen?1:0,Distributed.DispatchClock,Distributed.ConstructionReserved(Parts),Distributed.ConstructionAvailable(Parts),Distributed.Buildings[0].Inventory.FindRef(Parts),Distributed.Demand(Distributed.Buildings[0],Parts,false),Donor->Inventory.FindRef(Parts),Distributed.Demand(*Donor,Parts,false),Distributed.Workers.HaulUnits(Distributed,Parts),Distributed.Couriers.Num());
+        for(const auto& C:Distributed.Couriers)Diag+=FString::Printf(TEXT(" | courier src=%d dst=%d road=%d %s reserved=%.2f amount=%.2f construction=%d phase=%s"),C.SourceId,C.TargetId,C.RoadTargetId,*C.Resource,C.ReservedAmount,C.Amount,C.ForConstruction?1:0,*C.Phase);
+        for(const auto& W:Distributed.Workers.Bodies)Diag+=FString::Printf(TEXT(" | %s %s/%s b=%d d=%d"),*W.Id,*W.State,*W.Activity,W.BuildingId,W.DeliveryId);
+        AddInfo(Diag);
+    }
     TestTrue(TEXT("Construction still claims its protected bill from distributed buffer stock"),Distributed.Couriers.ContainsByPredicate([&](const auto& C){return C.TargetId==BufferedSite&&C.Resource==Parts&&C.ForConstruction&&C.ReservedAmount>0;}));
     TestEqual(TEXT("Claiming distributed stock does not create or debit goods before pickup"),Distributed.TotalStock(Parts),BufferedStock);
     FSeigeSimulation Upgrade;if(!CoreFixture(Upgrade,Error)){AddError(Error);return false;}const int CoreId=Upgrade.Buildings[0].Id;const double ReservedPlot=Upgrade.Definition(Upgrade.Buildings[0])->ReservedFootprint;

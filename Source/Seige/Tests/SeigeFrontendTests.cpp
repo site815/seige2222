@@ -193,7 +193,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Scenario slot configuration restores"),G.ScenarioSlots[0],FString(TEXT("starting")));
     TestTrue(TEXT("Camera focus, orbit, zoom, speed, pause and objective acknowledgment restore"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Zoom==27000&&G.CameraYaw==224&&G.CameraPitch==67&&G.Speed==5&&G.Paused&&G.WinAcknowledged);
     TSharedPtr<FJsonObject> Metadata;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(MetadataText),Metadata)){AddError(TEXT("Could not read emitted metadata"));return false;}
-    TestEqual(TEXT("Neighborhood saves use strict version-6 metadata"),Metadata->GetNumberField(TEXT("format")),6.);
+    TestEqual(TEXT("Neighborhood saves use strict version-7 metadata"),Metadata->GetNumberField(TEXT("format")),7.);
     const auto Fingerprints=Metadata->GetArrayField(TEXT("neighbor_ai"));
     if(!TestTrue(TEXT("Metadata contains neighbor identities"),Fingerprints.Num()>0))return false;
     Fingerprints[0]->AsObject()->SetStringField(TEXT("ai"),TEXT("corrupted-fingerprint"));
@@ -305,9 +305,10 @@ bool FSeigeScenarioThreatSettingsTest::RunTest(const FString& Parameters)
             TestTrue(TEXT("Starting and developed neighbors receive the same settings"),N.Sim.BackgroundBugsEnabled==Background&&N.Sim.PeriodicAttacksEnabled==Periodic);
             if(N.Type==TEXT("developed"))
             {
-                TestTrue(TEXT("Developed preparation actually advances the simulation"),N.Sim.Time>0&&N.Sim.DeliveredUnits>0);
-                TestEqual(TEXT("Periodic waves honor the selection during preparation, not just afterward"),N.Sim.Wave>0,Periodic);
-                if(!Background&&!Periodic)TestTrue(TEXT("Peaceful developed preparation creates no bugs"),N.Sim.Enemies.IsEmpty());
+                // v0.9: developed neighbours start from the established manifest instead of
+                // hours of simulated growth, so there is no preparation time or wave history.
+                TestTrue(TEXT("Developed neighbors begin with established industry and a workforce"),N.Sim.Buildings.Num()>1&&N.Sim.Population>0);
+                if(!Background&&!Periodic)TestTrue(TEXT("Peaceful developed start creates no bugs"),N.Sim.Enemies.IsEmpty());
             }
         }
         W.ClickAction(TEXT("scenario-threat:background"));W.ClickAction(TEXT("scenario-threat:periodic"));

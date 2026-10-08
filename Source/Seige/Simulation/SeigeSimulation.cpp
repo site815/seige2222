@@ -306,6 +306,34 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error,
     TArray<FString> Required; Recipes[PopulationRecipe].Inputs.GetKeys(Required);
     Required.Append({TextRule(TEXT("repair_resource")),TextRule(TEXT("upkeep_resource")),TextRule(TEXT("objective_resource"))});
     for (const FString& Id : Required) if (!Renewable.Contains(Id)) { Error = TEXT("No renewable resource path for recurring requirement: ") + Id; return false; }
+    // Catalogue reachability without the paid-import shortcut: every raw type has a
+    // buildable extractor and the recurring requirements follow from buildable and
+    // core recipes alone. This mirrors Tools/validate_rules.mjs so the native check
+    // cannot be satisfied by the trade port on its own.
+    TSet<FString> Catalogue;
+    for (const auto& Pair : Resources) if (Pair.Value.Tier == 0)
+    {
+        bool Extractable = false;
+        for (const FString& Id : BuildMenu) if (BuildingDefs[Id].ExtractionRates.FindRef(Pair.Key) > 0) Extractable = true;
+        if (!Extractable) { Error = TEXT("No buildable extractor for raw resource: ") + Pair.Key; return false; }
+        Catalogue.Add(Pair.Key);
+    }
+    TArray<FString> Usable;
+    for (const auto& Pair : BuildingDefs) if (BuildMenu.Contains(Pair.Key) || Pair.Value.Role == TEXT("core"))
+    { if (!Pair.Value.Recipe.IsEmpty()) Usable.AddUnique(Pair.Value.Recipe); for (const FString& R : Pair.Value.AllowedRecipes) Usable.AddUnique(R); }
+    for (int32 Before = -1; Before != Catalogue.Num();)
+    {
+        Before = Catalogue.Num();
+        for (const FString& RecipeId : Usable)
+        {
+            const FSeigeRecipeDef* R = Recipes.Find(RecipeId); if (!R) continue; bool Reachable = true;
+            for (const auto& Pair : R->Inputs) if (!Catalogue.Contains(Pair.Key)) Reachable = false;
+            if (!Reachable) continue;
+            for (const auto& Pair : R->Outputs) Catalogue.Add(Pair.Key);
+            if (R->WorkerOutput > 0 && Resources.Contains(TEXT("stored_workers"))) Catalogue.Add(TEXT("stored_workers"));
+        }
+    }
+    for (const FString& Id : Required) if (!Catalogue.Contains(Id)) { Error = TEXT("No recipe path from raw deposits to recurring requirement: ") + Id; return false; }
     for (const auto& Pair : BuildingDefs)
     {
         const FSeigeBuildingDef& D = Pair.Value;
@@ -467,8 +495,18 @@ double FSeigeSimulation::TotalStock(const FString& Resource) const
 }
 bool FSeigeSimulation::IsVisible(FVector2D P) const
 {
+    // Sensor coverage needs power and, for staffed sensors, an assigned operator.
+    // The command core keeps its coverage while powered even when its crew is
+    // out building or hauling (persistent workers leave the hull physically), and
+    // a deploying core covers its surroundings as soon as it has power.
     for (const FSeigeBuilding& B : Buildings)
-    { const FSeigeBuildingDef* D = Definition(B); if (D && D->SensorRange > 0 && (WorkFraction(B) > 0 || (B.IsConstructing&&B.Enabled&&B.Health>0&&D->DeploymentDefense&&Energy.Fraction(B.Id)>0)) && FVector2D::Distance(P, B.Position) <= D->SensorRange) return true; }
+    {
+        const FSeigeBuildingDef* D = Definition(B); if (!D || D->SensorRange <= 0 || B.Health <= 0 || !B.Enabled) continue;
+        const bool Powered = Energy.Fraction(B.Id) > 0;
+        const bool Staffed = D->Jobs == 0 || B.Workers > 0 || D->Role == TEXT("core");
+        const bool Active = B.IsConstructing ? (D->DeploymentDefense && Powered) : (Powered && Staffed && WorkforceEfficiency > 0);
+        if (Active && FVector2D::Distance(P, B.Position) <= D->SensorRange) return true;
+    }
     return Combat.IsVisible(P);
 }
 bool FSeigeSimulation::CanPlaceBuilding(const FString& Id, FVector2D P, FString& Error) const
