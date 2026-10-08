@@ -51,7 +51,12 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         {TEXT("meadow"),FVector(1200,400,0),150,25,900},
         {TEXT("ground"),FVector(1300,450,0),35,20,180},
         {TEXT("hills"),FVector(3000,-700,0),155,48,7000},
-        {TEXT("boundary"),FVector(29000,0,0),0,60,14000}};
+        {TEXT("boundary"),FVector(29000,0,0),0,60,14000},
+        // Companion review view: follows Rex at ground level. Opt-in only
+        // (-BenchmarkView=rex); the standard five-view runs never include it.
+        {TEXT("rex"),FVector(0,0,0),120,12,150}};
+    constexpr int32 StandardViews=5;
+    constexpr int32 RexView=5;
     static TWeakObjectPtr<ASeigeGameMode> BenchmarkOwner;
     static int32 View=-1;
     static int32 SelectedView=INDEX_NONE;
@@ -95,7 +100,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
                 if(RequestedView.Equals(Views[Index].Name,ESearchCase::IgnoreCase)){SelectedView=Index;break;}
             if(SelectedView==INDEX_NONE)
             {
-                UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK invalid BenchmarkView='%s'; expected colony, meadow, ground, hills or boundary"),*RequestedView);
+                UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK invalid BenchmarkView='%s'; expected colony, meadow, ground, hills, boundary or rex"),*RequestedView);
                 View=UE_ARRAY_COUNT(Views);FPlatformMisc::RequestExitWithStatus(false,1);return;
             }
         }
@@ -163,10 +168,18 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         if(Visible==0&&InitialVisibleReadySeconds<0)InitialVisibleReadySeconds=CurrentTime-ViewSetupStarted;
         if(Near==0&&InitialNearReadySeconds<0)InitialNearReadySeconds=CurrentTime-ViewSetupStarted;
     };
+    auto FollowRex=[&]()
+    {
+        if(View!=RexView||Sim.Companions.Dogs.IsEmpty())return;
+        const auto& Dog=Sim.Companions.Dogs[0];
+        const auto* Snapshot=PresentationSnapshot(Sim);
+        CameraCenter=FVector(Snapshot?Snapshot->Companion(Dog,PresentationAlpha()):Dog.Position,0);
+    };
     auto BeginView=[&]()
     {
         ViewSetupStarted=FPlatformTime::Seconds();
         CameraCenter=Views[View].Center;CameraYaw=Views[View].Yaw;CameraPitch=Views[View].Pitch;Zoom=Views[View].Distance;
+        FollowRex();
         if(View==0&&FParse::Param(FCommandLine::Get(),TEXT("BenchmarkClearing")))
         {CameraCenter=FVector(HomePosition(),0);CameraPitch=50;}
         UpdateCamera();RefreshEnvironment();SyncVisuals();
@@ -320,6 +333,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         }
         return;
     }
+    if(View==RexView&&(Phase==EPhase::Warmup||Phase==EPhase::Sample)){FollowRex();UpdateCamera();}
     if(Phase==EPhase::Sample)
     {
         if(Travel)
@@ -329,7 +343,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             CameraCenter=Views[View].Center+FVector((Now-Started)*3600./RenderScale,0,0);
             UpdateCamera();ApplySwardDiagnostic();
         }
-        if(!Orbit&&!Travel&&!IsSceneryStreamingReady())
+        if(!Orbit&&!Travel&&View!=RexView&&!IsSceneryStreamingReady())
         {
             UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK %s scenery became incomplete during sampling (%d cells pending)"),Views[View].Name,PendingSceneryCells());
             View=UE_ARRAY_COUNT(Views);FPlatformMisc::RequestExitWithStatus(false,1);return;
@@ -426,6 +440,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         return;
     }
     View=SelectedView==INDEX_NONE?View+1:UE_ARRAY_COUNT(Views);
+    if(SelectedView==INDEX_NONE&&View>=StandardViews)View=UE_ARRAY_COUNT(Views);
     if(View<UE_ARRAY_COUNT(Views))
     {
         BeginView();return;
