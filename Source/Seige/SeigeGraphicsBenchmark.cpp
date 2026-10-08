@@ -54,9 +54,14 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         {TEXT("boundary"),FVector(29000,0,0),0,60,14000},
         // Companion review view: follows Rex at ground level. Opt-in only
         // (-BenchmarkView=rex); the standard five-view runs never include it.
-        {TEXT("rex"),FVector(0,0,0),120,12,150}};
+        {TEXT("rex"),FVector(0,0,0),120,12,150},
+        // Building-art review: -BenchmarkShowcase drops one completed building
+        // per blueprint into a grid beside the core and frames it. Opt-in only.
+        {TEXT("showcase"),FVector(0,0,0),150,42,9000}};
     constexpr int32 StandardViews=5;
     constexpr int32 RexView=5;
+    constexpr int32 ShowcaseView=6;
+    static FVector2D ShowcaseCenter=FVector2D::ZeroVector;
     static TWeakObjectPtr<ASeigeGameMode> BenchmarkOwner;
     static int32 View=-1;
     static int32 SelectedView=INDEX_NONE;
@@ -100,7 +105,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
                 if(RequestedView.Equals(Views[Index].Name,ESearchCase::IgnoreCase)){SelectedView=Index;break;}
             if(SelectedView==INDEX_NONE)
             {
-                UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK invalid BenchmarkView='%s'; expected colony, meadow, ground, hills, boundary or rex"),*RequestedView);
+                UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK invalid BenchmarkView='%s'; expected colony, meadow, ground, hills, boundary, rex or showcase"),*RequestedView);
                 View=UE_ARRAY_COUNT(Views);FPlatformMisc::RequestExitWithStatus(false,1);return;
             }
         }
@@ -179,7 +184,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     {
         ViewSetupStarted=FPlatformTime::Seconds();
         CameraCenter=Views[View].Center;CameraYaw=Views[View].Yaw;CameraPitch=Views[View].Pitch;Zoom=Views[View].Distance;
-        if(View==RexView)
+        if(View==ShowcaseView)CameraCenter=FVector(ShowcaseCenter,0);
+        if(View==RexView||View==ShowcaseView)
         {
             // Review-only camera overrides. A zoom below the player minimum is
             // allowed here so the companion can be inspected at close range.
@@ -275,6 +281,30 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         {
             UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK failed to deploy fresh player core: %s"),*Error);
             View=UE_ARRAY_COUNT(Views);FPlatformMisc::RequestExitWithStatus(false,1);return;
+        }
+        if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkShowcase"))&&Command)
+        {
+            // Completed instances of every ordinary blueprint, plus the core upgrade
+            // levels, on a grid east of the core. Review geometry only: nothing is
+            // paid for, staffed or powered, and no save is written in benchmark runs.
+            // Core levels are 29-86 m wide and have their own review coverage.
+            TArray<FString> Ids=Sim.BuildMenu;Ids.Sort();
+            const int32 Columns=6;const double Pitch=700;const FVector2D Origin=Command->Position+FVector2D(900,-Pitch*(Columns-1)*.5);
+            int32 Placed=0;
+            for(const FString& Id:Ids)
+            {
+                const auto* D=Sim.BuildingDefs.Find(Id);if(!D||D->Role==TEXT("wall"))continue;
+                if(Sim.AddReviewBuilding(Id,Origin+FVector2D((Placed/Columns)*Pitch,(Placed%Columns)*Pitch)))++Placed;
+            }
+            const int32 Rows=FMath::DivideAndRoundUp(Placed,Columns);
+            ShowcaseCenter=Origin+FVector2D((Rows-1)*Pitch*.5,(Columns-1)*Pitch*.5);
+            SyncVisuals();
+            UE_LOG(LogTemp,Display,TEXT("GRAPHICS_BENCHMARK showcase placed %d buildings around (%.0f, %.0f)"),Placed,ShowcaseCenter.X,ShowcaseCenter.Y);
+            // -BenchmarkBuildMenu=<group> opens the construction palette on that
+            // category so the capture also reviews the cards and portraits.
+            FString MenuGroup;
+            if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkBuildMenu="),MenuGroup))
+                if(auto* PC=UGameplayStatics::GetPlayerController(this,0))if(auto* HUD=Cast<ASeigeHUD>(PC->GetHUD())){HUD->Ui.BuildOpen=true;HUD->Ui.Category=MenuGroup;HUD->Ui.GroupFocused=true;}
         }
         View=SelectedView==INDEX_NONE?0:SelectedView;BeginView();
         return;

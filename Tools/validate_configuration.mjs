@@ -26,6 +26,7 @@ export function readConfiguration(root = defaultRoot) {
     ui: read('Interface/ui.json'),
     graphics: read('Graphics/scene.json'),
     weather: read('Graphics/weather.json'),
+    buildingVisuals: fs.existsSync(path.join(root, 'Graphics/building_visuals.json')) ? read('Graphics/building_visuals.json') : null,
     availableAssetPackages,
   };
 }
@@ -77,6 +78,17 @@ export function validateConfiguration(data) {
   const weather=object(data.weather,'Graphics/weather.json');version(weather,'Graphics/weather.json');
   const weatherBounds={night_exposure_offset_ev:[0,4],sun_direction_update_degrees:[.01,2],sun_shadow_update_seconds:[.05,10],night_sky_intensity_fraction:[.05,1],sunrise_sunset_softness:[.01,.5],winter_accumulation_fraction:[.001,.49],winter_melt_fraction:[.001,.49],maximum_snow_coverage:[0,1],snowflake_count:[0,2048,true],snow_radius_meters:[5,100],snow_height_meters:[5,100],snow_fall_meters_per_second:[.1,10],snowflake_size_centimeters:[.1,10]};
   for(const [key,[min,max,integer]]of Object.entries(weatherBounds))number(weather[key],`Weather ${key}`,min,max,!!integer);
+  // Optional building art overrides: every key must be a building definition and every kind an imported mesh.
+  if (data.buildingVisuals !== null && data.buildingVisuals !== undefined) {
+    const visuals = object(data.buildingVisuals, 'Graphics/building_visuals.json'); version(visuals, 'Graphics/building_visuals.json');
+    const entries = object(visuals.visuals, 'Graphics/building_visuals.json visuals');
+    for (const [id, kind] of Object.entries(entries)) {
+      if (!buildings.has(id)) fail(`building_visuals references an unknown building: ${id}`);
+      text(kind, `building_visuals.${id}`); if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(kind)) fail(`building_visuals.${id} kind must be alphanumeric`);
+      const mesh = `/Game/Art/SM_${kind[0].toUpperCase()}${kind.slice(1)}`;
+      if (!data.availableAssetPackages.has(mesh)) fail(`building_visuals.${id} references a missing Content mesh: ${mesh}`);
+    }
+  }
   for(const key of ['ambient_cubemap','snow_collection','snowflake_material']){text(weather[key],`Weather ${key}`);if(!/^\/Game\/(?:[A-Za-z0-9_]+\/)*[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?$/.test(weather[key]))fail(`Weather ${key} requires a game asset`);}
   version(graphics, 'Graphics/scene.json');
   number(graphics.world_centimeters_per_unit, 'Graphics world_centimeters_per_unit', 1, 20);

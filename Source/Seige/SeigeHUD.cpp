@@ -366,7 +366,7 @@ void ASeigeHUD::Icon(const FString& Visual,float X,float Y,float S,FLinearColor 
 }
 void ASeigeHUD::Description(const FSeigeBuildingDef& D,ASeigeGameMode& G,float X,float Y,float W)
 {
-    Frame(X,Y,W,360);Icon(D.Visual,X+18,Y+20,40,D.Color);Label(D.Name,X+72,Y+25,20,Gold);float TY=Y+80;
+    Frame(X,Y,W,360);Icon(G.BuildingVisualKind(D),X+18,Y+20,40,D.Color);Label(D.Name,X+72,Y+25,20,Gold);float TY=Y+80;
     Wrapped(D.Description,X+18,TY,W-36,15,Text);TY+=10;Label(TEXT("CONSTRUCTION MATERIALS"),X+18,TY,12,Muted);TY+=24;
     TArray<FString> Keys;D.Cost.GetKeys(Keys);Keys.Sort();
     for(int32 I=0;I<Keys.Num();++I)
@@ -383,6 +383,17 @@ void ASeigeHUD::Description(const FSeigeBuildingDef& D,ASeigeGameMode& G,float X
         FString Recipe;TArray<FString> Inputs;R->Inputs.GetKeys(Inputs);Inputs.Sort();
         for(const FString& Id:Inputs){if(!Recipe.IsEmpty())Recipe+=TEXT(" + ");Recipe+=FString::Printf(TEXT("%.0f %s"),R->Inputs[Id],*ResourceName(G.Sim,Id));}
         Recipe+=FString::Printf(TEXT("  /  %.0fs per batch"),R->Seconds);Wrapped(Recipe,X+18,TY,W-36,13,Green);
+        FString Produces;TArray<FString> Outputs;R->Outputs.GetKeys(Outputs);Outputs.Sort();
+        for(const FString& Id:Outputs){if(!Produces.IsEmpty())Produces+=TEXT(" + ");Produces+=FString::Printf(TEXT("%.0f %s"),R->Outputs[Id],*ResourceName(G.Sim,Id));}
+        if(R->WorkerOutput>0)Produces+=FString::Printf(TEXT("%s%d worker%s"),Produces.IsEmpty()?TEXT(""):TEXT(" + "),R->WorkerOutput,R->WorkerOutput==1?TEXT(""):TEXT("s"));
+        if(!Produces.IsEmpty()&&TY<Y+318){Wrapped(TEXT("Produces ")+Produces+(D.AllowedRecipes.Num()>1?FString::Printf(TEXT(" (%d selectable recipes)"),D.AllowedRecipes.Num()):TEXT("")),X+18,TY,W-36,13,Muted);}
+    }
+    if(!D.NextUpgrade.IsEmpty()&&TY<Y+330)
+    {
+        const auto* Next=G.Sim.BuildingDefs.Find(D.NextUpgrade);
+        TArray<FString> Up;D.UpgradeCost.GetKeys(Up);Up.Sort();FString Bill;
+        for(const FString& Id:Up){if(!Bill.IsEmpty())Bill+=TEXT(", ");Bill+=FString::Printf(TEXT("%.0f %s"),D.UpgradeCost[Id],*ResourceName(G.Sim,Id));}
+        Wrapped(FString::Printf(TEXT("Upgrades to %s%s%s"),Next?*Next->Name:*D.NextUpgrade,Bill.IsEmpty()?TEXT(""):TEXT(" for "),*Bill),X+18,TY,W-36,13,Muted);
     }
     else if(D.Role==TEXT("extractor"))
     {
@@ -582,7 +593,7 @@ void ASeigeHUD::DrawBuildingInfo(ASeigeGameMode& G,float W,float H)
     BuildingInfoPage=FMath::Clamp(BuildingInfoPage,0,Pages.Num()-1);
     float PageHeight=0;for(int32 I:Pages[BuildingInfoPage])PageHeight+=RowHeight(Rows[I]);
     const float PH=FMath::Max(350.f,FMath::Min(MaxH,PageHeight+230));
-    Frame(X,Y,PW,PH);Icon(D->Visual,X+17,Y+18,37,D->Color);Label(D->Name,X+68,Y+21,19,Gold);
+    Frame(X,Y,PW,PH);Icon(G.BuildingVisualKind(*D),X+17,Y+18,37,D->Color);Label(D->Name,X+68,Y+21,19,Gold);
     Button(TEXT("x"),TEXT("deselect"),X+PW-39,Y+9,29,29);
     Label(!B?TEXT("BLUEPRINT / BUILDING SPECIFICATION"):G.Observer||G.DetailedSectorIndex()!=4?TEXT("BUILDING DOSSIER / READ ONLY"):TEXT("BUILDING DOSSIER"),X+68,Y+49,10,Muted);
     const float TabW=(PW-34)/3;for(int32 I=0;I<Sections.Num();++I)
@@ -897,10 +908,27 @@ void ASeigeHUD::DrawHUD()
                     const float EX=X+20+(EI%6)*(CardW+Gap),EY=Y+104+(EI/6)*108;++EI;
                     const FString Tip=Wall?TEXT("Plan a contiguous wall; edit joints, flip inside with E, commit with Enter. Materials and builders are required."):Road?TEXT("Choose two endpoints to build a transport road. Workers and materials travel to the site."):Upgrade?TEXT("Upgrade a selected existing road, or choose a road in the world. Road 2x / Road + rail 4x / Road + rail + vacuum 8x."):D->Description;
                     Button(TEXT(""),TEXT("build:")+Entry.Definition,EX,EY,CardW,101,false,Tip);
-                    Icon(D?D->Visual:Entry.Definition,EX+44,EY+2,53,D?D->Color:Gold);Label(Entry.Shortcut,EX+CardW-25,EY+14,15,Gold);
+                    // Readiness: placement needs the unreserved bill in stock, so a
+                    // short card is drawn dim with its first missing material named;
+                    // a processor whose default feedstock is absent gets an amber note.
+                    TArray<FString> Short;int32 Feedless=0,Feeds=0;
+                    if(D)
+                    {
+                        TArray<FString> Keys;D->Cost.GetKeys(Keys);Keys.Sort();
+                        for(const FString& Id:Keys)if(G->Sim.ConstructionAvailable(Id)+1e-9<D->Cost[Id])Short.Add(ResourceName(G->Sim,Id));
+                        if(const auto* R=G->Sim.Recipes.Find(D->Recipe))for(const auto& In:R->Inputs){++Feeds;if(G->Sim.ConstructionAvailable(In.Key)<=0)++Feedless;}
+                    }
+                    Icon(D?G->BuildingVisualKind(*D):Entry.Definition,EX+44,EY+2,53,D?D->Color:Gold);
+                    if(!Short.IsEmpty())Box(EX+42,EY,57,57,FLinearColor(.02f,.05f,.06f,.55f));
+                    Label(Entry.Shortcut,EX+CardW-25,EY+14,15,Gold);
                     const auto NameLines=WrapLines(Wall?TEXT("Wall plan"):Road?TEXT("Road"):Upgrade?TEXT("Upgrade road"):D->Name,CardW-20,10);
-                    for(int32 N=0;N<FMath::Min(2,NameLines.Num());++N)Label(NameLines[N]+(N==1&&NameLines.Num()>2?TEXT("..."):TEXT("")),EX+10,EY+57+N*14,10,Text);
-                    Label(Wall?TEXT("Plan / commit"):Road?TEXT("2x transport"):Upgrade?TEXT("4x / 8x transport"):FString::Printf(TEXT("%d jobs"),D->Jobs),EX+10,EY+85,10,Muted);
+                    for(int32 N=0;N<FMath::Min(2,NameLines.Num());++N)Label(NameLines[N]+(N==1&&NameLines.Num()>2?TEXT("..."):TEXT("")),EX+10,EY+57+N*14,10,Short.IsEmpty()?Text:Muted);
+                    FString Footer=Wall?TEXT("Plan / commit"):Road?TEXT("2x transport"):Upgrade?TEXT("4x / 8x transport"):FString::Printf(TEXT("%d jobs"),D->Jobs);
+                    FLinearColor FooterColor=Muted;
+                    if(!Short.IsEmpty()){Footer=FString::Printf(TEXT("Short: %s%s"),*Short[0],Short.Num()>1?*FString::Printf(TEXT(" +%d"),Short.Num()-1):TEXT(""));FooterColor=Red;}
+                    else if(Feeds>0&&Feedless==Feeds){Footer=TEXT("Ready / no feedstock yet");FooterColor=FLinearColor(.95f,.72f,.35f);}
+                    else if(D){Footer=FString::Printf(TEXT("Ready / %d jobs"),D->Jobs);FooterColor=Green;}
+                    Box(EX+10,EY+86,4,4,FooterColor);Label(Footer,EX+18,EY+83,10,FooterColor);
                 }
                 if(PreviousHover.StartsWith(TEXT("build:")))if(const auto* D=G->Sim.BuildingDefs.Find(PreviousHover.RightChop(6)))Description(*D,*G,FMath::Min(X+BW-410,W-430),FMath::Max(90.f,Y-372),410);
             }
@@ -1017,7 +1045,7 @@ void ASeigeHUD::DrawHUD()
         }
         if(!NeighborhoodOverview&&!G->SelectedBuild.IsEmpty())if(const auto* D=G->Sim.BuildingDefs.Find(G->SelectedBuild))
         {
-            const float PW=410,PH=136,X=(W-PW)*.5f,Y=DockY-PH-12;Frame(X,Y,PW,PH);Icon(D->Visual,X+16,Y+17,38,D->Color);Label(D->Name,X+69,Y+20,19,Gold);
+            const float PW=410,PH=136,X=(W-PW)*.5f,Y=DockY-PH-12;Frame(X,Y,PW,PH);Icon(G->BuildingVisualKind(*D),X+16,Y+17,38,D->Color);Label(D->Name,X+69,Y+20,19,Gold);
             float TY=Y+72;FString Why;const bool Valid=G->CursorOnWorld&&G->Sim.CanPlaceBuilding(D->Id,G->CursorWorld,Why);Wrapped(Valid?TEXT("Click terrain to place. Esc cancels."):Why,X+18,TY,PW-36,14,Valid?Green:Muted);
         }
     }

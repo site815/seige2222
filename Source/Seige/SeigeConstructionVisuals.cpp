@@ -56,7 +56,7 @@ void ASeigeGameMode::SyncPlacementGhost(TSet<FString>& Live)
     const FString DefinitionId=Landing?Sim.CoreDefinition:SelectedBuild;
     const auto* Definition=Sim.BuildingDefs.Find(DefinitionId);if(!Definition)return;
     FString Reason;const bool Valid=Landing?CanLand(CursorWorld,Reason):Sim.CanPlaceBuilding(DefinitionId,CursorWorld,Reason);
-    FString Kind=Definition->Visual;if(Kind.IsEmpty())Kind=TEXT("Factory");Kind[0]=FChar::ToUpper(Kind[0]);
+    FString Kind=BuildingVisualKind(*Definition);if(Kind.IsEmpty())Kind=TEXT("Factory");Kind[0]=FChar::ToUpper(Kind[0]);
     const FString Key=TEXT("placement_")+DefinitionId;Live.Add(Key);
     auto* Ghost=Visual(Key,Kind,RenderPosition(CursorWorld,4),Valid?BuildMint:BuildRed,Definition->Footprint*2*RenderScale);
     GhostMaterials(Ghost,ConstructionMaterial(Valid?BuildMint:BuildRed));

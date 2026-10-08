@@ -148,6 +148,9 @@ public:
     bool CanSetInitialCorePosition(FVector2D Position, FString& Error) const;
     void Tick(double Seconds);
     bool PlaceBuilding(const FString& DefinitionId, FVector2D Position, FString& Error);
+    // Review tooling only (graphics showcase): adds a completed, unpaid, unstaffed
+    // building without placement checks. Gameplay never calls this.
+    int32 AddReviewBuilding(const FString& DefinitionId, FVector2D Position);
     bool CanPlaceBuilding(const FString& DefinitionId, FVector2D Position, FString& Error) const;
     void ToggleBuilding(int32 Id);
     bool Save(const FString& Filename, FString& Error) const;

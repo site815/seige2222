@@ -1,0 +1,110 @@
+{
+  "AmmunitionWorks": {
+    "source_mesh": "SM_AmmunitionWorks",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_AmmunitionWorks",
+    "size": 384
+  },
+  "BatteryBank": {
+    "source_mesh": "SM_BatteryBank",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_BatteryBank",
+    "size": 384
+  },
+  "ChipWorks": {
+    "source_mesh": "SM_ChipWorks",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_ChipWorks",
+    "size": 384
+  },
+  "FuelGenerator": {
+    "source_mesh": "SM_FuelGenerator",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_FuelGenerator",
+    "size": 384
+  },
+  "FuelRefinery": {
+    "source_mesh": "SM_FuelRefinery",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_FuelRefinery",
+    "size": 384
+  },
+  "FusionWorks": {
+    "source_mesh": "SM_FusionWorks",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_FusionWorks",
+    "size": 384
+  },
+  "Greenhouse": {
+    "source_mesh": "SM_Greenhouse",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Greenhouse",
+    "size": 384
+  },
+  "Hangar": {
+    "source_mesh": "SM_Hangar",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Hangar",
+    "size": 384
+  },
+  "HangarMech": {
+    "source_mesh": "SM_HangarMech",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_HangarMech",
+    "size": 384
+  },
+  "HangarTracked": {
+    "source_mesh": "SM_HangarTracked",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_HangarTracked",
+    "size": 384
+  },
+  "Refinery": {
+    "source_mesh": "SM_Refinery",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Refinery",
+    "size": 384
+  },
+  "SolarArray": {
+    "source_mesh": "SM_SolarArray",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_SolarArray",
+    "size": 384
+  },
+  "SolarArray2": {
+    "source_mesh": "SM_SolarArray2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_SolarArray2",
+    "size": 384
+  },
+  "SolarArray3": {
+    "source_mesh": "SM_SolarArray3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_SolarArray3",
+    "size": 384
+  },
+  "TradingPort": {
+    "source_mesh": "SM_TradingPort",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TradingPort",
+    "size": 384
+  },
+  "TradingPort2": {
+    "source_mesh": "SM_TradingPort2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TradingPort2",
+    "size": 384
+  },
+  "TradingPort3": {
+    "source_mesh": "SM_TradingPort3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TradingPort3",
+    "size": 384
+  },
+  "Works": {
+    "source_mesh": "SM_Works",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Works",
+    "size": 384
+  }
+}

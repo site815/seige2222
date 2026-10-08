@@ -1,0 +1,483 @@
+{
+  "version": 1,
+  "units": "centimeters",
+  "forward": "-Y",
+  "generator": "Tools/create_building_kit_v092.py",
+  "materials": "IM_* slots from Art/IndustryExports/industry_manifest.json (MI_Industry_* in Unreal)",
+  "meshes": {
+    "SM_SolarArray": {
+      "fbx": "SM_SolarArray.fbx",
+      "sha256": "81fa877cfef911bbdbcf3a4e72e60d47fc897173e6abfadd0a48bc6cca855f5f",
+      "dimensions": [
+        2460.0,
+        2460.0,
+        533.0
+      ],
+      "triangles": 11772,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Glass",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber"
+      ],
+      "description": "Fixed-tilt photovoltaic field on A-frames with an inverter kiosk",
+      "unreal_path": "/Game/Art/SM_SolarArray",
+      "building_families": [
+        "solar_array"
+      ]
+    },
+    "SM_SolarArray2": {
+      "fbx": "SM_SolarArray2.fbx",
+      "sha256": "0d1b796b8952ffa211beb562367786f0a85b366aba1caf4fffadc209d5df3908",
+      "dimensions": [
+        2460.0,
+        2460.0,
+        533.0
+      ],
+      "triangles": 12148,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Glass",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber"
+      ],
+      "description": "Single-axis tracker photovoltaic field on torque tubes",
+      "unreal_path": "/Game/Art/SM_SolarArray2",
+      "building_families": [
+        "solar_array_2"
+      ]
+    },
+    "SM_SolarArray3": {
+      "fbx": "SM_SolarArray3.fbx",
+      "sha256": "0f44b3d45503985390fddee8e072c806b945c4a90a3aec5d3bf4fd474156e8cb",
+      "dimensions": [
+        2460.0,
+        2460.0,
+        533.0
+      ],
+      "triangles": 11708,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Ceramic",
+        "IM_Amber"
+      ],
+      "description": "Dual-axis tracker photovoltaic field on slewing masts",
+      "unreal_path": "/Game/Art/SM_SolarArray3",
+      "building_families": [
+        "solar_array_3"
+      ]
+    },
+    "SM_BatteryBank": {
+      "fbx": "SM_BatteryBank.fbx",
+      "sha256": "8b0a42a92f27bf5f15b6b923ad291cd31c1f727fdcd4282ac3be7517d0c324c8",
+      "dimensions": [
+        2460.0,
+        2460.0,
+        497.0
+      ],
+      "triangles": 40992,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Copper"
+      ],
+      "description": "Twelve battery container modules under busbar gantries, with a power-conversion hall and grid transformer",
+      "unreal_path": "/Game/Art/SM_BatteryBank",
+      "building_families": [
+        "battery_bank"
+      ]
+    },
+    "SM_TradingPort": {
+      "fbx": "SM_TradingPort.fbx",
+      "sha256": "a72238f7ab2e0322980d70c20372132600258f2601bc6cbbbd797b2c5e6e6a55",
+      "dimensions": [
+        2491.7320556640625,
+        2460.0,
+        1250.0
+      ],
+      "triangles": 8804,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Amber",
+        "IM_Blue"
+      ],
+      "description": "Shuttle landing pad with edge lighting, control tower, cargo gantry crane, container stacks and a dispatch office",
+      "unreal_path": "/Game/Art/SM_TradingPort",
+      "building_families": [
+        "trading_port"
+      ]
+    },
+    "SM_TradingPort2": {
+      "fbx": "SM_TradingPort2.fbx",
+      "sha256": "a23b434f861edd942ee3b37feea2f2b25d3c2599c0b307072552475ecc105750",
+      "dimensions": [
+        2491.7320556640625,
+        2460.0,
+        1250.0
+      ],
+      "triangles": 9252,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Amber",
+        "IM_Blue"
+      ],
+      "description": "Shuttle landing pad with edge lighting, control tower, cargo gantry crane, container stacks and a dispatch office",
+      "unreal_path": "/Game/Art/SM_TradingPort2",
+      "building_families": [
+        "trading_port_2"
+      ]
+    },
+    "SM_TradingPort3": {
+      "fbx": "SM_TradingPort3.fbx",
+      "sha256": "694e60429b7d9cd0ebe5c60328aeb9c997044a1b9fa341dde5eb5905d7697a08",
+      "dimensions": [
+        2491.7320556640625,
+        2460.0,
+        1250.0
+      ],
+      "triangles": 9592,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Amber",
+        "IM_Blue"
+      ],
+      "description": "Shuttle landing pad with edge lighting, control tower, cargo gantry crane, container stacks and a dispatch office",
+      "unreal_path": "/Game/Art/SM_TradingPort3",
+      "building_families": [
+        "trading_port_3"
+      ]
+    },
+    "SM_Refinery": {
+      "fbx": "SM_Refinery.fbx",
+      "sha256": "519bbd99e695ce4a5e530bbe998b1d81f125bc9ffe8371523f47445605e9e595",
+      "dimensions": [
+        2117.0,
+        2060.0,
+        1608.0
+      ],
+      "triangles": 14476,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Copper",
+        "IM_Ceramic"
+      ],
+      "description": "Smelting hall with twin blast furnaces, hot-blast mains, tall stacks, inclined ore conveyor, receiving hopper, dust cyclone and slag pit",
+      "unreal_path": "/Game/Art/SM_Refinery",
+      "building_families": [
+        "alloy_refinery"
+      ]
+    },
+    "SM_FuelRefinery": {
+      "fbx": "SM_FuelRefinery.fbx",
+      "sha256": "1df8cc042e1df0fa8e2f92ede827883d9d897c5ab497bfacfd955198b3c6bbd4",
+      "dimensions": [
+        2151.382568359375,
+        2240.0,
+        1883.0
+      ],
+      "triangles": 23968,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Yellow",
+        "IM_Amber",
+        "IM_Glass",
+        "IM_Light",
+        "IM_Copper"
+      ],
+      "description": "Bunded tank farm, distillation column with platforms, overhead condenser, reflux drum, flare stack, pump house and pipe racks",
+      "unreal_path": "/Game/Art/SM_FuelRefinery",
+      "building_families": [
+        "fuel_refinery",
+        "biofuel_refinery"
+      ]
+    },
+    "SM_Greenhouse": {
+      "fbx": "SM_Greenhouse.fbx",
+      "sha256": "c8473d6f90e82eada669b70312924318a30cba8f42b1efaefdf32506eacc5dc7",
+      "dimensions": [
+        2060.0,
+        2375.0,
+        527.0
+      ],
+      "triangles": 32080,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Blue",
+        "IM_Ceramic",
+        "IM_Yellow",
+        "IM_Light"
+      ],
+      "description": "Four glazed gable greenhouse bays with grow benches, a processing block, irrigation tanks and mains",
+      "unreal_path": "/Game/Art/SM_Greenhouse",
+      "building_families": [
+        "food_producer"
+      ]
+    },
+    "SM_Works": {
+      "fbx": "SM_Works.fbx",
+      "sha256": "33beb4fb629af90042c4668d35243d8d2d5b8e330c7bbdb50a0a98f24c0238a4",
+      "dimensions": [
+        2060.0,
+        2060.0,
+        815.0
+      ],
+      "triangles": 20864,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Glass",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Blue"
+      ],
+      "description": "White clean production hall with a window band, roof skylights, rooftop air handling, chilled-water plant and process-gas cabinet",
+      "unreal_path": "/Game/Art/SM_Works",
+      "building_families": [
+        "conductor_works",
+        "substrate_works",
+        "circuit_works",
+        "component_works",
+        "battery_works"
+      ]
+    },
+    "SM_ChipWorks": {
+      "fbx": "SM_ChipWorks.fbx",
+      "sha256": "6d36d43fac798e0b0a0747e950616f780e7a5e95be4ee44952061d987d3fb2ae",
+      "dimensions": [
+        2064.0,
+        2082.5,
+        1554.0
+      ],
+      "triangles": 14684,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Glass",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Light",
+        "IM_Blue"
+      ],
+      "description": "Two-storey cleanroom block with interstitial floor, roof plenum, external exhaust ducts, scrubber stack, nitrogen tank and gowning wing",
+      "unreal_path": "/Game/Art/SM_ChipWorks",
+      "building_families": [
+        "ai_chip_works"
+      ]
+    },
+    "SM_FusionWorks": {
+      "fbx": "SM_FusionWorks.fbx",
+      "sha256": "ee061f7767741951369234ce91a050ded0fd222ad6b51fc15c1f51d5685e1de5",
+      "dimensions": [
+        2160.0,
+        2200.0,
+        1043.0
+      ],
+      "triangles": 8476,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Light",
+        "IM_Slate",
+        "IM_Amber",
+        "IM_Copper",
+        "IM_Glass"
+      ],
+      "description": "Containment dome on a concrete drum with buttresses, barrel-roofed turbine hall, twin cooling towers, coolant and steam mains, control annex and switchyard",
+      "unreal_path": "/Game/Art/SM_FusionWorks",
+      "building_families": [
+        "fusion_reactor_works"
+      ]
+    },
+    "SM_AmmunitionWorks": {
+      "fbx": "SM_AmmunitionWorks.fbx",
+      "sha256": "fdb5b645c645bcc42c285fb36ea66d7f9e50e233736824d3eeb8b983083e8388",
+      "dimensions": [
+        2060.0,
+        2272.0,
+        958.0
+      ],
+      "triangles": 16412,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Ceramic",
+        "IM_Light",
+        "IM_Glass"
+      ],
+      "description": "Three bermed magazine cells behind blast walls and doors, lightning masts, a filling hall and a transfer road",
+      "unreal_path": "/Game/Art/SM_AmmunitionWorks",
+      "building_families": [
+        "ammunition_works"
+      ]
+    },
+    "SM_FuelGenerator": {
+      "fbx": "SM_FuelGenerator.fbx",
+      "sha256": "8f8a1a1ffae6716b0f27813a75accef0035fc70d44263741272792d651686742",
+      "dimensions": [
+        2060.0,
+        2075.0,
+        1240.0
+      ],
+      "triangles": 21876,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Ceramic",
+        "IM_Light",
+        "IM_Copper",
+        "IM_Glass",
+        "IM_Yellow"
+      ],
+      "description": "Twin containerised generator sets with radiators and silenced exhaust stacks, a bunded day tank and a switchgear room",
+      "unreal_path": "/Game/Art/SM_FuelGenerator",
+      "building_families": [
+        "fuel_generator"
+      ]
+    },
+    "SM_Hangar": {
+      "fbx": "SM_Hangar.fbx",
+      "sha256": "ac3fda6e6aeefdb5e34d7ac654f2ac5b35da8bccc0e3fa0c7a8dfad418bec1e5",
+      "dimensions": [
+        3210.0,
+        3330.0,
+        995.0
+      ],
+      "triangles": 14268,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "description": "Barrel-roofed assembly hangar with a wide roller door, marked apron, parts store and container yard",
+      "unreal_path": "/Game/Art/SM_Hangar",
+      "building_families": [
+        "vehicle_factory",
+        "vehicle_factory_2",
+        "vehicle_factory_3"
+      ]
+    },
+    "SM_HangarTracked": {
+      "fbx": "SM_HangarTracked.fbx",
+      "sha256": "343670c88f6fcaa9fb62f4e592471ab5fe58c80c1a50b81565ed26888368433f",
+      "dimensions": [
+        3310.0,
+        3580.0,
+        1055.0
+      ],
+      "triangles": 15368,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "description": "Heavier barrel-roofed hangar with a reinforced ramp, wide roller door, parts store and container yard",
+      "unreal_path": "/Game/Art/SM_HangarTracked",
+      "building_families": [
+        "tank_factory",
+        "tank_factory_2",
+        "tank_factory_3"
+      ]
+    },
+    "SM_HangarMech": {
+      "fbx": "SM_HangarMech.fbx",
+      "sha256": "a11f7619503fa40bbb5b1b2903bc9cfbb61fee6a717193d5f4e1d43f19f37f12",
+      "dimensions": [
+        3140.0,
+        3280.0,
+        1658.0
+      ],
+      "triangles": 16152,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "description": "Tall assembly hangar with a high door and an external erection gantry for walking chassis",
+      "unreal_path": "/Game/Art/SM_HangarMech",
+      "building_families": [
+        "mech_factory",
+        "mech_factory_2",
+        "mech_factory_3"
+      ]
+    }
+  }
+}

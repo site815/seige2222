@@ -529,6 +529,14 @@ bool FSeigeSimulation::PlaceBuilding(const FString& Id, FVector2D P, FString& Er
     Buildings.Add(B);++TransportRevision;
     if(!FindRoute(Buildings.Last().BuilderPosition,BuildingAccessPoint(Buildings.Last()),Buildings.Last().BuilderRoute)){Buildings.Pop();Error=TEXT("Workers cannot reach the building access port");return false;} AllocateWorkers(); AddEvent(D.Name + TEXT(" construction queued")); return true;
 }
+int32 FSeigeSimulation::AddReviewBuilding(const FString& Id, FVector2D P)
+{
+    const FSeigeBuildingDef* D=BuildingDefs.Find(Id);if(!D)return 0;
+    FSeigeBuilding B;B.Id=NextId++;B.DefId=Id;B.Position=P;B.Health=D->Health;B.Status=TEXT("Review placement");
+    B.SelectedRecipe=D->Recipe.IsEmpty()?(D->AllowedRecipes.IsEmpty()?FString():D->AllowedRecipes[0]):D->Recipe;
+    B.IsConstructing=false;B.ConstructionProgress=1;B.InstalledMaterials=D->Cost;
+    Buildings.Add(B);++TransportRevision;return B.Id;
+}
 void FSeigeSimulation::ToggleBuilding(int32 Id)
 {
     if (Escaped || Failed) return;

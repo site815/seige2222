@@ -46,6 +46,11 @@ public:
     void BindScenarioCalendar();
     FString CalendarLabel() const;
     bool LoadWeatherSettings();
+    // Optional Graphics/building_visuals.json: building id -> mesh kind (SM_<Kind>, T_Building_<Kind>)
+    // so families can get distinct art without editing the fingerprinted Rules.
+    bool LoadBuildingVisuals();
+    TMap<FString,FString> BuildingVisualOverrides;
+    FString BuildingVisualKind(const FSeigeBuildingDef& Definition) const;
     void UpdateWeather(float DeltaSeconds=0);
     double SnowCoverage() const;
     float NightSkyFraction=.5f,NightExposureOffsetEV=2.f,SunriseSoftness=.12f,WinterAccumulationFraction=.08f,WinterMeltFraction=.12f,MaximumSnowCoverage=.92f;

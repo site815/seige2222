@@ -37,6 +37,34 @@ bool ASeigeGameMode::LoadWeatherSettings()
     SnowflakeCount=int32(Count);return true;
 }
 
+bool ASeigeGameMode::LoadBuildingVisuals()
+{
+    BuildingVisualOverrides.Reset();
+    const FString Path=FPaths::Combine(DataDirectory(TEXT("Graphics")),TEXT("building_visuals.json"));
+    if(!FPaths::FileExists(Path))return true;      // older checkouts keep the Rules visuals
+    FString Raw;TSharedPtr<FJsonObject> Doc;
+    if(!FFileHelper::LoadFileToString(Raw,*Path)||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Doc)||!Doc)
+    {Error=TEXT("Could not read Graphics/building_visuals.json");return false;}
+    double Version=0;
+    if(!Doc->TryGetNumberField(TEXT("version"),Version)||Version!=1){Error=TEXT("Unsupported building visuals version");return false;}
+    const TSharedPtr<FJsonObject>* Entries=nullptr;
+    if(!Doc->TryGetObjectField(TEXT("visuals"),Entries)||!Entries||!Entries->IsValid()){Error=TEXT("building_visuals.visuals must be an object");return false;}
+    for(const TPair<FString,TSharedPtr<FJsonValue>>& Entry:(*Entries)->Values)
+    {
+        FString Kind;
+        if(!Entry.Value.IsValid()||!Entry.Value->TryGetString(Kind)||Kind.IsEmpty()||Entry.Key.IsEmpty()){Error=TEXT("building_visuals entries must map building ids to mesh kinds");return false;}
+        for(const TCHAR C:Kind)if(!FChar::IsAlnum(C)&&C!=TEXT('_')){Error=TEXT("building_visuals kind must be alphanumeric: ")+Kind;return false;}
+        const FString Id=Entry.Key;
+        BuildingVisualOverrides.Add(Id,Kind);
+    }
+    return true;
+}
+FString ASeigeGameMode::BuildingVisualKind(const FSeigeBuildingDef& Definition) const
+{
+    if(const FString* Override=BuildingVisualOverrides.Find(Definition.Id))return *Override;
+    return Definition.Visual;
+}
+
 double ASeigeGameMode::SnowCoverage() const
 {
     const auto Date=ScenarioCalendar.Sample();

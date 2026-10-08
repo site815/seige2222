@@ -44,7 +44,7 @@ ASeigeGameMode::ASeigeGameMode()
 void ASeigeGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    if(!LoadGraphicsSettings()||!LoadWeatherSettings())
+    if(!LoadGraphicsSettings()||!LoadWeatherSettings()||!LoadBuildingVisuals())
     {
         GraphicsSettingsValid=false;Notice=Error;Screen=TEXT("main");
         if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark"))||FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("WorldReview"))||FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke")))
@@ -303,7 +303,7 @@ void ASeigeGameMode::SyncVisuals()
             const FVector2D P=B.Position+Offset;
             if(!Observer&&!Offset.IsNearlyZero()&&!IsWorldVisible(P)) continue;
             Live.Add(Key);
-            FString Kind=Appearance->Visual; if(Kind.IsEmpty()) Kind=TEXT("Factory"); Kind[0]=FChar::ToUpper(Kind[0]);
+            FString Kind=BuildingVisualKind(*Appearance); if(Kind.IsEmpty()) Kind=TEXT("Factory"); Kind[0]=FChar::ToUpper(Kind[0]);
             const FName DefinitionTag(*(FString(TEXT("definition_"))+Appearance->Id));
             if(auto* Existing=Visuals.FindRef(Key).Get())if(!Existing->ActorHasTag(DefinitionTag)){Existing->Destroy();Visuals.Remove(Key);}
             if(!Visuals.Contains(Key)) ClearSceneryAt(P,D->ReservedFootprint);

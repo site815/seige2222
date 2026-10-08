@@ -34,3 +34,6 @@ Tools/_job-*.cmd
 Tools/_job-*.ps1
 Tools/_runner-start.cmd
 Tools/claude-runner.ps1
+Art/BuildingKitV092/Exports/*.fbx
+Art/BuildingKitV092/Source/*.blend
+Art/BuildingKitV092/Previews/*.png
