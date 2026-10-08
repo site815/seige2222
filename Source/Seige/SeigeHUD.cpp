@@ -149,6 +149,7 @@ bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
     {
         if(G.FleetOrderActive){G.FleetOrderActive=false;return true;}
         if(CombatPanelOpen){CombatPanelOpen=false;return true;}
+        if(ProgressionOpen){ProgressionOpen=false;return true;}
         if(G.IsRoadToolActive()){G.CancelRoadTool();G.CancelWallTool();return true;}
         if(!G.SelectedBuild.IsEmpty()){G.SelectedBuild.Empty();return true;}
         if(Ui.BuildOpen&&Ui.GroupFocused){Ui.GroupFocused=false;return true;}
@@ -177,9 +178,14 @@ bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
     if(Key==EKeys::B)
     {
         if(G.Observer||G.IsRegionMap()||G.DetailedSectorIndex()!=4)return true;
-        const bool Open=!Ui.BuildOpen;Ui.CloseMenus();Ui.BuildOpen=Open;
+        const bool Open=!Ui.BuildOpen;Ui.CloseMenus();Ui.BuildOpen=Open;ProgressionOpen=false;
         if(Open){G.CancelRoadTool();G.CancelWallTool();G.SelectedBuild.Empty();G.SelectedId=0;G.SelectedCompanionId=0;if(Ui.Categories.Num())Ui.Category=Ui.Categories[0].Id;}
         return true;
+    }
+    if(Key==EKeys::P&&!Ui.BuildOpen)
+    {
+        if(G.IsRegionMap()||G.DetailedSectorIndex()!=4)return true;
+        const bool Open=!ProgressionOpen;Ui.CloseMenus();ProgressionOpen=Open;return true;
     }
     if(Ui.BuildOpen)
     {
@@ -251,7 +257,8 @@ bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
     if(A==TEXT("build-menu"))return ProcessShortcut(EKeys::B,G);
     if(A.StartsWith(TEXT("group:"))){Ui.Category=A.RightChop(6);Ui.GroupFocused=true;return true;}
     if(A.StartsWith(TEXT("summary:"))){Ui.HoverPanel=A.RightChop(8);return true;}
-    if(A==TEXT("back")){Ui.GroupFocused=false;return true;}if(A==TEXT("close")){Ui.CloseMenus();return true;}
+    if(A==TEXT("back")){Ui.GroupFocused=false;return true;}if(A==TEXT("close")){Ui.CloseMenus();ProgressionOpen=false;return true;}
+    if(A==TEXT("progression")){const bool Open=!ProgressionOpen;Ui.CloseMenus();ProgressionOpen=Open;return true;}
     if(A==TEXT("deselect")){G.SelectedId=0;G.SelectedRoadId=0;G.SelectedCompanionId=0;G.SelectedBuild.Empty();G.CancelRoadTool();G.CancelWallTool();BuildingInfoSection.Empty();return true;}
     if(A.StartsWith(TEXT("info-section:"))){BuildingInfoSection=A.RightChop(13);BuildingInfoPage=0;return true;}
     if(A==TEXT("info-next")){++BuildingInfoPage;return true;}
@@ -866,7 +873,7 @@ void ASeigeHUD::DrawHUD()
     Summary(TEXT("logistics"),Readable?FString::Printf(TEXT("%d couriers in transit"),Local.Couriers.Num()):TEXT("Logistics unavailable"),300,175,Text);
     Summary(TEXT("threats"),Readable?(Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Next pulse  %.0fs"),FMath::Max(0.,Local.NextWaveTime-Local.Time)):FString(TEXT("Invasions disabled"))):TEXT("Threats unavailable"),475,210,Gold);
     Summary(TEXT("objective"),G->Observer||G->DetailedSectorIndex()!=4?TEXT("Observation / read only"):G->Sim.Won?TEXT("First landing complete"):TEXT("First landing objectives"),685,215,Green);
-    const float DockW=596,DockX=(W-DockW)*.5f,DockY=H-75;
+    const float DockW=708,DockX=(W-DockW)*.5f,DockY=H-75;
     Frame(DockX,DockY,DockW,60);
     auto DockButton=[&](const FString& Name,const FString& A,const FString& Visual,float X,float Width,bool Active)
     {
@@ -874,18 +881,20 @@ void ASeigeHUD::DrawHUD()
     };
     DockButton(G->Observer||G->DetailedSectorIndex()!=4?TEXT("Observe"):RegionMap?TEXT("Map"):TEXT("Build [B]"),G->Observer||G->DetailedSectorIndex()!=4||RegionMap?TEXT("observer"):TEXT("build-menu"),TEXT("factory"),DockX+6,108,Ui.BuildOpen);
     DockButton(TEXT("Regions"),TEXT("region-map"),TEXT("sensor"),DockX+118,105,RegionMap);
-    Box(DockX+231,DockY+13,1,34,FLinearColor(.23f,.28f,.28f,.7f));
-    Label(FString::Printf(TEXT("%02d:%02d"),int32(G->Sim.Time)/60,int32(G->Sim.Time)%60),DockX+245,DockY+13,19,Text);Label(TEXT("COLONY AGE"),DockX+246,DockY+39,8,Muted);
+    DockButton(TEXT("Chain [P]"),TEXT("progression"),TEXT("extractor"),DockX+227,112,ProgressionOpen);
+    Box(DockX+343,DockY+13,1,34,FLinearColor(.23f,.28f,.28f,.7f));
+    Label(FString::Printf(TEXT("%02d:%02d"),int32(G->Sim.Time)/60,int32(G->Sim.Time)%60),DockX+357,DockY+13,19,Text);Label(TEXT("COLONY AGE"),DockX+358,DockY+39,8,Muted);
     const FString WorldDate=G->CalendarLabel();const float DateW=MeasureLabel(WorldDate,11).X;
     Frame((W-DateW-32)*.5f,DockY-33,DateW+32,27);Label(WorldDate,(W-DateW)*.5f,DockY-26,11,Text);
-    Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+328,DockY+6,76,48,G->Paused);
-    Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+410,DockY+6,84,48,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
-    Button(TEXT("Menu"),TEXT("game-menu"),DockX+500,DockY+6,90,48,false,TEXT("Esc / F10 opens the game menu. Space pauses; + / - cycles playback speed."));
+    Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+440,DockY+6,76,48,G->Paused);
+    Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+522,DockY+6,84,48,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
+    Button(TEXT("Menu"),TEXT("game-menu"),DockX+612,DockY+6,90,48,false,TEXT("Esc / F10 opens the game menu. Space pauses; + / - cycles playback speed."));
     if(!G->Ready)
     {
         Ui.HitRegions.Reset();Frame(W/2-340,H/2-160,680,320);Label(TEXT("RULE FILE ERROR"),W/2-310,H/2-130,26,Red);float Y=H/2-78;Wrapped(G->Error,W/2-310,Y,610,16,Text);Button(TEXT("Reload corrected rules"),TEXT("reset"),W/2-310,H/2+88,610,42);return;
     }
     DrawWallPlan(*G,W,H);
+    if(ProgressionOpen&&!RegionMap)DrawProgression(*G,W,H);
     if(Ui.BuildOpen)
     {
         Ui.HoverPanel.Empty();const float BW=980,BH=354,X=(W-BW)*.5f,Y=DockY-BH-12;
@@ -1058,4 +1067,93 @@ void ASeigeHUD::DrawHUD()
         else{Button(TEXT("New colony"),TEXT("reset"),W/2-304,H/2+41,291,39);Button(TEXT("Main menu"),TEXT("main-menu"),W/2+13,H/2+41,291,39);}
     }
     DrawNotice(*G,W,H);
+}
+
+// Production chain: the progression view the design decisions allow. No research
+// state exists; capability follows from deposits, buildings and upgrade levels,
+// so the panel shows exactly that from the live colony and the live stock.
+void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
+{
+    const FSeigeSimulation& S=G.Sim;
+    const FLinearColor Amber(.95f,.72f,.35f);
+    const float PW=FMath::Min(1400.f,W-40),PH=FMath::Min(610.f,H-190),X=(W-PW)*.5f,Y=FMath::Max(96.f,H-75-PH-12);
+    Frame(X,Y,PW,PH);Label(TEXT("PRODUCTION CHAIN"),X+20,Y+18,17,Gold);Button(TEXT("Close"),TEXT("close"),X+PW-87,Y+9,69,31);
+    Label(TEXT("Material access replaces research: a capability unlocks by building what makes its inputs.  Green running, white buildable now, amber buildable without feedstock, red short of materials."),X+20,Y+PH-24,10,Muted);
+    TMap<FString,int32> Built,Constructing,FamilyLevel,Deposits,Mined;TMap<int32,FString> NodeResource;
+    for(const auto& N:S.Nodes){NodeResource.Add(N.Id,N.Resource);if(G.IsWorldVisible(N.Position))Deposits.FindOrAdd(N.Resource)++;}
+    for(const auto& B:S.Buildings)
+    {
+        if(B.Health<=0)continue;const auto* D=S.Definition(B);if(!D)continue;
+        if(B.IsConstructing){Constructing.FindOrAdd(B.DefId)++;continue;}
+        Built.FindOrAdd(B.DefId)++;int32& Level=FamilyLevel.FindOrAdd(D->Family);Level=FMath::Max(Level,D->Level);
+        if(B.DepositId)if(const FString* Resource=NodeResource.Find(B.DepositId))Mined.FindOrAdd(*Resource)++;
+    }
+    auto Short=[&](const TMap<FString,double>& Bill){TArray<FString> Missing;TArray<FString> Keys;Bill.GetKeys(Keys);Keys.Sort();for(const FString& Id:Keys)if(S.ConstructionAvailable(Id)+1e-9<Bill[Id])Missing.Add(ResourceName(S,Id));return Missing;};
+    auto Names=[&](const TMap<FString,double>& Items){FString Out;TArray<FString> Keys;Items.GetKeys(Keys);Keys.Sort();for(const FString& Id:Keys){if(!Out.IsEmpty())Out+=TEXT(" + ");Out+=ResourceName(S,Id);}return Out;};
+    auto Strip=[](FString Name){const int32 At=Name.Find(TEXT(" \u00B7 Level"));return At>0?Name.Left(At):Name;};
+    struct FRow{FString Name,Detail;FLinearColor Color;};
+    TArray<FRow> Columns[4];const TCHAR* Titles[4]={TEXT("RAW DEPOSITS"),TEXT("PROCESSING AND POWER"),TEXT("ADVANCED AND DEFENCE"),TEXT("LEVELS")};
+    TArray<FString> ResourceIds;S.Resources.GetKeys(ResourceIds);ResourceIds.Sort();
+    for(const FString& Id:ResourceIds)
+    {
+        const auto& R=S.Resources[Id];if(R.Tier!=0)continue;
+        const int32 Seen=Deposits.FindRef(Id),Working=Mined.FindRef(Id);
+        Columns[0].Add({R.Name,FString::Printf(TEXT("%.0f %s in stock  /  %d deposit%s in sensor range, %d mined"),S.ConstructionAvailable(Id),*R.Unit,Seen,Seen==1?TEXT(""):TEXT("s"),Working),Working>0?Green:Seen>0?Text:Muted});
+    }
+    auto Status=[&](const FSeigeBuildingDef& D,FString& Detail,FLinearColor& Color)
+    {
+        const int32 Count=Built.FindRef(D.Id),Pending=Constructing.FindRef(D.Id);
+        const TArray<FString> Missing=Short(D.Cost);
+        const auto* R=S.Recipes.Find(D.Recipe);int32 Feeds=0,Feedless=0;if(R)for(const auto& In:R->Inputs){++Feeds;if(S.ConstructionAvailable(In.Key)<=0)++Feedless;}
+        if(Count>0){Color=Green;Detail=FString::Printf(TEXT("%d built"),Count)+(Pending?FString::Printf(TEXT(", %d under construction"),Pending):FString());}
+        else if(Pending>0){Color=Gold;Detail=FString::Printf(TEXT("%d under construction"),Pending);}
+        else if(Missing.Num()>0){Color=Red;Detail=TEXT("Short: ")+Missing[0]+(Missing.Num()>1?FString::Printf(TEXT(" +%d"),Missing.Num()-1):FString());}
+        else if(Feeds>0&&Feedless==Feeds){Color=Amber;Detail=TEXT("Buildable, no feedstock stored yet");}
+        else{Color=Text;Detail=TEXT("Buildable now");}
+    };
+    for(const FString& Id:S.BuildMenu)
+    {
+        const auto* D=S.BuildingDefs.Find(Id);if(!D||D->Level!=1)continue;
+        int32 Column=-1;FString Chain;
+        if(D->Role==TEXT("processor")||D->Role==TEXT("extractor"))
+        {
+            int32 Tier=0;
+            if(const auto* R=S.Recipes.Find(D->Recipe)){for(const auto& Out:R->Outputs)if(const auto* Res=S.Resources.Find(Out.Key))Tier=FMath::Max(Tier,Res->Tier);Chain=Names(R->Inputs)+TEXT("  ->  ")+Names(R->Outputs);}
+            else if(D->Role==TEXT("extractor"))Chain=TEXT("Any raw deposit  ->  that resource");
+            Column=Tier>=2?2:1;
+        }
+        else if(D->Role==TEXT("vehicle_factory")||D->Role==TEXT("defense")||D->Role==TEXT("generator")){Column=D->Role==TEXT("generator")?1:2;if(const auto* R=S.Recipes.Find(D->Recipe))Chain=Names(R->Inputs)+(R->Outputs.Num()?TEXT("  ->  ")+Names(R->Outputs):FString());else Chain=D->Role==TEXT("defense")?TEXT("Mounts weapons from the combat catalog"):D->Role==TEXT("generator")?TEXT("Generates power"):TEXT("Assembles chassis from robotic parts and alloys");}
+        if(Column<0)continue;
+        FString Detail;FLinearColor Color;Status(*D,Detail,Color);
+        Columns[Column].Add({Strip(D->Name),Chain.IsEmpty()?Detail:Detail+TEXT("  /  ")+Chain,Color});
+    }
+    TSet<FString> Families;TArray<FString> DefIds;S.BuildingDefs.GetKeys(DefIds);DefIds.Sort();
+    for(const FString& Id:DefIds)
+    {
+        const auto& D=S.BuildingDefs[Id];if(D.Level!=1||D.NextUpgrade.IsEmpty()||Families.Contains(D.Family))continue;
+        Families.Add(D.Family);
+        int32 Levels=0;for(const auto& Pair:S.BuildingDefs)if(Pair.Value.Family==D.Family)Levels=FMath::Max(Levels,Pair.Value.Level);
+        const int32 Have=FamilyLevel.FindRef(D.Family);
+        const FSeigeBuildingDef* Current=&D;for(const auto& Pair:S.BuildingDefs)if(Pair.Value.Family==D.Family&&Pair.Value.Level==FMath::Max(1,Have))Current=&Pair.Value;
+        FString Detail;FLinearColor Color;
+        if(Have<=0){Color=Muted;Detail=FString::Printf(TEXT("Not built  /  %d levels"),Levels);}
+        else if(Current->NextUpgrade.IsEmpty()){Color=Green;Detail=FString::Printf(TEXT("Level %d of %d, top level reached"),Have,Levels);}
+        else{const TArray<FString> Missing=Short(Current->UpgradeCost);Color=Missing.Num()?Amber:Green;Detail=FString::Printf(TEXT("Level %d of %d  /  next upgrade %s"),Have,Levels,Missing.Num()?*(TEXT("short of ")+Missing[0]):TEXT("affordable now"));}
+        Columns[3].Add({Strip(D.Name),Detail,Color});
+    }
+    const float ColumnW=(PW-40)/4,RowH=34,Top=Y+78;const int32 MaxRows=int32((PH-118)/RowH);
+    for(int32 C=0;C<4;++C)
+    {
+        const float CX=X+20+C*ColumnW;Label(Titles[C],CX,Top-22,11,Gold);Box(CX,Top-6,ColumnW-14,1,FLinearColor(.24f,.43f,.49f,.7f));
+        for(int32 I=0;I<Columns[C].Num()&&I<MaxRows;++I)
+        {
+            const FRow& Row=Columns[C][I];const float RY=Top+I*RowH;
+            Box(CX,RY+5,5,5,Row.Color);Label(Row.Name,CX+11,RY,11,Row.Color);
+            // Long chains are cut with an ellipsis rather than shrunk below legibility.
+            FString Detail=Row.Detail;const float Limit=ColumnW-26;
+            if(MeasureLabel(Detail,9).X>Limit){while(Detail.Len()>8&&MeasureLabel(Detail+TEXT("..."),9).X>Limit)Detail.LeftChopInline(1);Detail=Detail.TrimEnd()+TEXT("...");}
+            Label(Detail,CX+11,RY+15,9,Muted);
+        }
+        if(Columns[C].Num()>MaxRows)Label(FString::Printf(TEXT("+%d more"),Columns[C].Num()-MaxRows),CX+11,Top+MaxRows*RowH,10,Muted);
+    }
 }

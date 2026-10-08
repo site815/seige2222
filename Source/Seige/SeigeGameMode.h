@@ -352,6 +352,7 @@ public:
     bool IsPointerOverUI() const;
     bool LoadInterface(const FString& Directory,FString& Error);
     FSeigeUiState Ui;
+    bool ProgressionOpen=false;   // production-chain panel (P / dock button); review captures set it directly
 private:
     float Scale=1;
     float DrawOpacity=1;
@@ -376,6 +377,7 @@ private:
     void DrawCombatInfo(ASeigeGameMode& GameMode,float Width,float Height);
     bool HandleCombatAction(const FString& Action,ASeigeGameMode& GameMode);
     bool CombatPanelOpen=false;
+    void DrawProgression(ASeigeGameMode& GameMode,float Width,float Height);
     FString CombatTab=TEXT("fleet"),ChosenChassis,ChosenWeapon,LoadoutContext;
     int32 OutfitVehicleId=0;
     bool OutfitBuilding=false;

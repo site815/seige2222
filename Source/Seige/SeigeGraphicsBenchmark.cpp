@@ -306,6 +306,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkBuildMenu="),MenuGroup))
                 if(auto* PC=UGameplayStatics::GetPlayerController(this,0))if(auto* HUD=Cast<ASeigeHUD>(PC->GetHUD())){HUD->Ui.BuildOpen=true;HUD->Ui.Category=MenuGroup;HUD->Ui.GroupFocused=true;}
         }
+        if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkProgression")))
+            if(auto* PC=UGameplayStatics::GetPlayerController(this,0))if(auto* HUD=Cast<ASeigeHUD>(PC->GetHUD()))HUD->ProgressionOpen=true;
         View=SelectedView==INDEX_NONE?0:SelectedView;BeginView();
         return;
     }
