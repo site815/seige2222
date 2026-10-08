@@ -14,7 +14,8 @@
       "metallic": 0.38,
       "roughness": 0.43,
       "surface": "Paint",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Slate": {
       "color": [
@@ -26,7 +27,8 @@
       "metallic": 0.65,
       "roughness": 0.43,
       "surface": "Paint",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Steel": {
       "color": [
@@ -38,7 +40,8 @@
       "metallic": 0.92,
       "roughness": 0.31,
       "surface": "Steel",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Concrete": {
       "color": [
@@ -50,7 +53,8 @@
       "metallic": 0,
       "roughness": 0.86,
       "surface": "Concrete",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Carbon": {
       "color": [
@@ -62,7 +66,8 @@
       "metallic": 0.36,
       "roughness": 0.62,
       "surface": "Paint",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Glass": {
       "color": [
@@ -74,7 +79,8 @@
       "metallic": 0.65,
       "roughness": 0.17,
       "surface": "Steel",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Copper": {
       "color": [
@@ -86,7 +92,8 @@
       "metallic": 0.8,
       "roughness": 0.46,
       "surface": "Steel",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Yellow": {
       "color": [
@@ -98,7 +105,8 @@
       "metallic": 0.35,
       "roughness": 0.5,
       "surface": "Paint",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Blue": {
       "color": [
@@ -110,7 +118,8 @@
       "metallic": 0.45,
       "roughness": 0.48,
       "surface": "Paint",
-      "emission": 0
+      "emission": 0,
+      "normal_strength": 0.85
     },
     "IM_Light": {
       "color": [
@@ -122,7 +131,8 @@
       "metallic": 0.1,
       "roughness": 0.25,
       "surface": "",
-      "emission": 2.0
+      "emission": 2.0,
+      "normal_strength": 0.0
     },
     "IM_Amber": {
       "color": [
@@ -134,7 +144,8 @@
       "metallic": 0.1,
       "roughness": 0.25,
       "surface": "",
-      "emission": 1.5
+      "emission": 1.5,
+      "normal_strength": 0.0
     }
   },
   "meshes": {
@@ -284,6 +295,70 @@
       "Color": "Textures/Industry/T_Industry_Concrete_Color.png",
       "Roughness": "Textures/Industry/T_Industry_Concrete_Roughness.png",
       "Normal": "Textures/Industry/T_Industry_Concrete_Normal.png"
+    }
+  },
+  "texture_pass": {
+    "version": 3,
+    "generator": "Tools/create_industry_textures_v092.py",
+    "date": "2026-10-09",
+    "surfaces": {
+      "Paint": {
+        "description": "Painted steel cladding: 80 cm panels with V-seams, washer-bolted edges, batch tone variation, groove grime, drips and scuffs",
+        "pixels": 1024,
+        "tile_cm": 160,
+        "stats": {
+          "Color": {
+            "mean": 0.808,
+            "std": 0.042
+          },
+          "Roughness": {
+            "mean": 0.629,
+            "std": 0.075
+          },
+          "Normal": {
+            "mean": 0.665,
+            "std": 0.237
+          }
+        }
+      },
+      "Steel": {
+        "description": "Brushed steel plate: drifting brush lines, weld beads with ripple, bolted plate edges, oxide bloom and run-off",
+        "pixels": 1024,
+        "tile_cm": 160,
+        "stats": {
+          "Color": {
+            "mean": 0.826,
+            "std": 0.04
+          },
+          "Roughness": {
+            "mean": 0.402,
+            "std": 0.069
+          },
+          "Normal": {
+            "mean": 0.666,
+            "std": 0.236
+          }
+        }
+      },
+      "Concrete": {
+        "description": "Board-formed concrete: 80 cm form panels, tie holes, aggregate pits, hairline cracks, run-off stains",
+        "pixels": 1024,
+        "tile_cm": 160,
+        "stats": {
+          "Color": {
+            "mean": 0.791,
+            "std": 0.036
+          },
+          "Roughness": {
+            "mean": 0.854,
+            "std": 0.03
+          },
+          "Normal": {
+            "mean": 0.665,
+            "std": 0.237
+          }
+        }
+      }
     }
   }
 }

@@ -81,6 +81,7 @@ else:
         ME.set_material_instance_scalar_parameter_value(mi,"Metallic",p["metallic"])
         ME.set_material_instance_scalar_parameter_value(mi,"RoughnessScale",p["roughness"]/.55)
         ME.set_material_instance_scalar_parameter_value(mi,"Emission",p["emission"])
+        if "normal_strength" in p:ME.set_material_instance_scalar_parameter_value(mi,"NormalStrength",p["normal_strength"]) # v0.9.2 texture pass: authored seams and bolts
         for channel,t in textures[p["surface"] or "Paint"].items():ME.set_material_instance_texture_parameter_value(mi,channel,t)
         ME.update_material_instance(mi);ED.save_loaded_asset(mi,only_if_is_dirty=False);instances[slot]=mi
 
