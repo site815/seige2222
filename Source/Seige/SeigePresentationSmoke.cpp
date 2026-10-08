@@ -240,8 +240,16 @@ void ASeigeGameMode::RunPresentationSmoke()
         FVector2D RoofPixel;
         if(Require(CoreVisual&&Controller&&Controller->ProjectWorldLocationToScreen(BodyCenter,RoofPixel),TEXT("Could not project the actual parked command-shuttle body")))
         {
-            FVector RayOrigin,RayDirection;
-            Require(Controller->ScreenRay(RoofPixel,RayOrigin,RayDirection)&&SelectBuildingRay(RayOrigin,RayDirection),TEXT("Visible building geometry did not answer a selection ray"));
+            // The landed hull stands on legs, so the bounds centre can fall in
+            // the open space under the fuselage at a low tilt. Probe the hull
+            // from its centre upwards and click the first pixel that answers.
+            FVector RayOrigin,RayDirection;bool Answered=false;
+            for(const double Lift:{0.,.35,.6,.8,-.25})
+            {
+                FVector2D Pixel;if(!Controller->ProjectWorldLocationToScreen(BodyCenter+FVector(0,0,BodyExtent.Z*Lift),Pixel))continue;
+                SelectedId=0;if(Controller->ScreenRay(Pixel,RayOrigin,RayDirection)&&SelectBuildingRay(RayOrigin,RayDirection)){RoofPixel=Pixel;Answered=true;break;}
+            }
+            Require(Answered,TEXT("Visible building geometry did not answer a selection ray"));
             SelectedId=0;Controller->SetMouseLocation(FMath::RoundToInt(RoofPixel.X),FMath::RoundToInt(RoofPixel.Y));Controller->HandlePrimaryClick(RoofPixel.X,RoofPixel.Y);Require(SelectedId==Sim.Buildings[0].Id,TEXT("Clicking the parked command shuttle at low tilt did not select it"));
         }
         SelectedId=0;CameraYaw=135;CameraPitch=52;Zoom=DefaultZoom;UpdateCamera();Capture(TEXT("placed"));break;
