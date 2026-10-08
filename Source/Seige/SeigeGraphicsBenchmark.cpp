@@ -179,6 +179,17 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     {
         ViewSetupStarted=FPlatformTime::Seconds();
         CameraCenter=Views[View].Center;CameraYaw=Views[View].Yaw;CameraPitch=Views[View].Pitch;Zoom=Views[View].Distance;
+        if(View==RexView)
+        {
+            // Review-only camera overrides. A zoom below the player minimum is
+            // allowed here so the companion can be inspected at close range.
+            float Value=0;
+            if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkZoom="),Value)&&Value>0){MinimumZoom=FMath::Min(MinimumZoom,Value);Zoom=Value;}
+            if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkYaw="),Value))CameraYaw=Value;
+            // The close-range camera blends toward the minimum pitch, so the
+            // requested pitch becomes that minimum for the review run.
+            if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkPitch="),Value)){MinimumCameraPitch=FMath::Clamp(Value,1.f,MaximumCameraPitch);CameraPitch=MinimumCameraPitch;}
+        }
         FollowRex();
         if(View==0&&FParse::Param(FCommandLine::Get(),TEXT("BenchmarkClearing")))
         {CameraCenter=FVector(HomePosition(),0);CameraPitch=50;}
