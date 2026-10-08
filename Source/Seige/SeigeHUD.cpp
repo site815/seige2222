@@ -271,7 +271,7 @@ bool ASeigeHUD::ExecuteAction(const FString& A,ASeigeGameMode& G)
         if(Id==TEXT("wall")){Ui.CloseMenus();G.BeginWallPlacement();return true;}
         if(Id==TEXT("road")){Ui.CloseMenus();G.BeginRoadPlacement();return true;}
         if(Id==TEXT("upgrade_road")){Ui.CloseMenus();G.BeginRoadUpgrade();return true;}
-        if(G.Sim.BuildMenu.Contains(Id)){G.CancelRoadTool();G.CancelWallTool();G.SelectedRoadId=0;G.SelectedBuild=Id;G.SelectedId=0;Ui.CloseMenus();G.Notice=TEXT("Place ")+G.Sim.BuildingDefs[Id].Name+TEXT(". Right-click or Esc cancels.");}
+        if(G.Sim.BuildMenu.Contains(Id)){G.CancelRoadTool();G.CancelWallTool();G.SelectedRoadId=0;G.SelectedBuild=Id;G.SelectedId=0;Ui.CloseMenus();ProgressionOpen=false;G.Notice=TEXT("Place ")+G.Sim.BuildingDefs[Id].Name+TEXT(". Right-click or Esc cancels.");}
         return true;
     }
     if(A==TEXT("pause"))G.Paused=!G.Paused;else if(A==TEXT("speed")){G.GameSpeeds=Ui.SpeedSteps;G.CycleGameSpeed();}
@@ -907,14 +907,15 @@ void ASeigeHUD::DrawHUD()
             for(const auto& Group:Ui.Categories){Button(Group.Shortcut+TEXT("  ")+Group.Name,TEXT("group:")+Group.Id,X+20+GI++*TabW,Y+51,TabW-6,39,Ui.Category==Group.Id,Group.Description);}
             if(const auto* Group=Ui.Categories.FindByPredicate([this](const FSeigeMenuGroup& I){return I.Id==Ui.Category;}))
             {
-                int32 EI=0;const float CardW=150,Gap=8;
+                // Up to 12 cards keep the 6x2 grid; 13-14 entries use seven narrower columns.
+                const int32 Cols=Group->Entries.Num()>12?7:6;int32 EI=0;const float CardW=Cols==7?129.f:150.f,Gap=Cols==7?6.f:8.f;
                 for(const auto& Entry:Group->Entries)
                 {
                     const bool Wall=Entry.Definition==TEXT("wall");
                     const bool Road=Entry.Definition==TEXT("road"),Upgrade=Entry.Definition==TEXT("upgrade_road");
                     const auto* D=G->Sim.BuildingDefs.Find(Entry.Definition);
                     if(!D&&!Road&&!Upgrade&&!Wall)continue;
-                    const float EX=X+20+(EI%6)*(CardW+Gap),EY=Y+104+(EI/6)*108;++EI;
+                    const float EX=X+20+(EI%Cols)*(CardW+Gap),EY=Y+104+(EI/Cols)*108;++EI;
                     const FString Tip=Wall?TEXT("Plan a contiguous wall; edit joints, flip inside with E, commit with Enter. Materials and builders are required."):Road?TEXT("Choose two endpoints to build a transport road. Workers and materials travel to the site."):Upgrade?TEXT("Upgrade a selected existing road, or choose a road in the world. Road 2x / Road + rail 4x / Road + rail + vacuum 8x."):D->Description;
                     Button(TEXT(""),TEXT("build:")+Entry.Definition,EX,EY,CardW,101,false,Tip);
                     // Readiness: placement needs the unreserved bill in stock, so a
@@ -1069,16 +1070,21 @@ void ASeigeHUD::DrawHUD()
     DrawNotice(*G,W,H);
 }
 
-// Production chain: the progression view the design decisions allow. No research
-// state exists; capability follows from deposits, buildings and upgrade levels,
-// so the panel shows exactly that from the live colony and the live stock.
+// Production chain: the dependency tree the design decisions allow instead of a
+// research tree. Nodes are resources and blueprints from the loaded rules, laid
+// out left to right by how far they sit from the landing kit; edges are
+// extraction, recipes, ammunition and chassis materials. States come from the
+// live colony and stock. Hovering a node lights its whole upstream and
+// downstream chain; clicking a buildable blueprint starts placing it.
 void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
 {
     const FSeigeSimulation& S=G.Sim;
-    const FLinearColor Amber(.95f,.72f,.35f);
-    const float PW=FMath::Min(1400.f,W-40),PH=FMath::Min(610.f,H-190),X=(W-PW)*.5f,Y=FMath::Max(96.f,H-75-PH-12);
+    if(ChainGraphBuildings!=S.BuildingDefs.Num()){ChainGraph.Build(S);ChainGraphBuildings=S.BuildingDefs.Num();}
+    const FSeigeDependencyGraph& Graph=ChainGraph;
+    const FLinearColor Amber(.95f,.72f,.35f),Blue(.52f,.70f,1.f),Dim(.30f,.40f,.44f);
+    const float PW=FMath::Min(1440.f,W-40),PH=FMath::Min(640.f,H-190),X=(W-PW)*.5f,Y=FMath::Max(96.f,H-75-PH-12);
     Frame(X,Y,PW,PH);Label(TEXT("PRODUCTION CHAIN"),X+20,Y+18,17,Gold);Button(TEXT("Close"),TEXT("close"),X+PW-87,Y+9,69,31);
-    Label(TEXT("Material access replaces research: a capability unlocks by building what makes its inputs.  Green running, white buildable now, amber buildable without feedstock, red short of materials."),X+20,Y+PH-24,10,Muted);
+    // Live state
     TMap<FString,int32> Built,Constructing,FamilyLevel,Deposits,Mined;TMap<int32,FString> NodeResource;
     for(const auto& N:S.Nodes){NodeResource.Add(N.Id,N.Resource);if(G.IsWorldVisible(N.Position))Deposits.FindOrAdd(N.Resource)++;}
     for(const auto& B:S.Buildings)
@@ -1089,71 +1095,118 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
         if(B.DepositId)if(const FString* Resource=NodeResource.Find(B.DepositId))Mined.FindOrAdd(*Resource)++;
     }
     auto Short=[&](const TMap<FString,double>& Bill){TArray<FString> Missing;TArray<FString> Keys;Bill.GetKeys(Keys);Keys.Sort();for(const FString& Id:Keys)if(S.ConstructionAvailable(Id)+1e-9<Bill[Id])Missing.Add(ResourceName(S,Id));return Missing;};
-    auto Names=[&](const TMap<FString,double>& Items){FString Out;TArray<FString> Keys;Items.GetKeys(Keys);Keys.Sort();for(const FString& Id:Keys){if(!Out.IsEmpty())Out+=TEXT(" + ");Out+=ResourceName(S,Id);}return Out;};
-    auto Strip=[](FString Name){const int32 At=Name.Find(TEXT(" \u00B7 Level"));return At>0?Name.Left(At):Name;};
-    struct FRow{FString Name,Detail;FLinearColor Color;};
-    TArray<FRow> Columns[4];const TCHAR* Titles[4]={TEXT("RAW DEPOSITS"),TEXT("PROCESSING AND POWER"),TEXT("ADVANCED AND DEFENCE"),TEXT("LEVELS")};
-    TArray<FString> ResourceIds;S.Resources.GetKeys(ResourceIds);ResourceIds.Sort();
-    for(const FString& Id:ResourceIds)
-    {
-        const auto& R=S.Resources[Id];if(R.Tier!=0)continue;
-        const int32 Seen=Deposits.FindRef(Id),Working=Mined.FindRef(Id);
-        Columns[0].Add({R.Name,FString::Printf(TEXT("%.0f %s in stock  /  %d deposit%s in sensor range, %d mined"),S.ConstructionAvailable(Id),*R.Unit,Seen,Seen==1?TEXT(""):TEXT("s"),Working),Working>0?Green:Seen>0?Text:Muted});
-    }
-    auto Status=[&](const FSeigeBuildingDef& D,FString& Detail,FLinearColor& Color)
+    auto Strip=[](FString Name){const int32 At=Name.Find(TEXT(" · Level"));return At>0?Name.Left(At):Name;};
+    auto Fit=[&](FString Value,float Limit,float Size){if(MeasureLabel(Value,Size).X<=Limit)return Value;while(Value.Len()>4&&MeasureLabel(Value+TEXT("..."),Size).X>Limit)Value.LeftChopInline(1);return Value.TrimEnd()+TEXT("...");};
+    struct FState{FLinearColor Color;FString Text;};
+    auto BuildingState=[&](const FSeigeBuildingDef& D)->FState
     {
         const int32 Count=Built.FindRef(D.Id),Pending=Constructing.FindRef(D.Id);
+        if(D.Role==TEXT("core"))return {Green,FString::Printf(TEXT("Level %d of 3; runs every recipe at a quarter speed"),FMath::Max(1,FamilyLevel.FindRef(D.Family)))};
         const TArray<FString> Missing=Short(D.Cost);
         const auto* R=S.Recipes.Find(D.Recipe);int32 Feeds=0,Feedless=0;if(R)for(const auto& In:R->Inputs){++Feeds;if(S.ConstructionAvailable(In.Key)<=0)++Feedless;}
-        if(Count>0){Color=Green;Detail=FString::Printf(TEXT("%d built"),Count)+(Pending?FString::Printf(TEXT(", %d under construction"),Pending):FString());}
-        else if(Pending>0){Color=Gold;Detail=FString::Printf(TEXT("%d under construction"),Pending);}
-        else if(Missing.Num()>0){Color=Red;Detail=TEXT("Short: ")+Missing[0]+(Missing.Num()>1?FString::Printf(TEXT(" +%d"),Missing.Num()-1):FString());}
-        else if(Feeds>0&&Feedless==Feeds){Color=Amber;Detail=TEXT("Buildable, no feedstock stored yet");}
-        else{Color=Text;Detail=TEXT("Buildable now");}
+        if(Count>0)return {Green,FString::Printf(TEXT("%d built%s"),Count,Pending?*FString::Printf(TEXT(", %d under construction"),Pending):TEXT(""))};
+        if(Pending>0)return {Gold,FString::Printf(TEXT("%d under construction"),Pending)};
+        if(Missing.Num()>0)return {Red,TEXT("Short of ")+Missing[0]+(Missing.Num()>1?FString::Printf(TEXT(" and %d more"),Missing.Num()-1):FString())};
+        if(Feeds>0&&Feedless==Feeds)return {Amber,TEXT("Buildable; no feedstock stored yet")};
+        return {Text,TEXT("Buildable now; click to place")};
     };
-    for(const FString& Id:S.BuildMenu)
+    // Layout
+    const int32 Columns=FMath::Max(1,Graph.Layers.Num());
+    const float Left=X+20,Top=Y+58,Bottom=Y+PH-62,ColumnW=(PW-40)/Columns,NodeW=FMath::Min(150.f,ColumnW-14);
+    TArray<FVector2D> Pos;Pos.SetNum(Graph.Nodes.Num());TArray<float> NodeH;NodeH.SetNum(Graph.Nodes.Num());
+    for(int32 C=0;C<Columns;++C)
     {
-        const auto* D=S.BuildingDefs.Find(Id);if(!D||D->Level!=1)continue;
-        int32 Column=-1;FString Chain;
-        if(D->Role==TEXT("processor")||D->Role==TEXT("extractor"))
-        {
-            int32 Tier=0;
-            if(const auto* R=S.Recipes.Find(D->Recipe)){for(const auto& Out:R->Outputs)if(const auto* Res=S.Resources.Find(Out.Key))Tier=FMath::Max(Tier,Res->Tier);Chain=Names(R->Inputs)+TEXT("  ->  ")+Names(R->Outputs);}
-            else if(D->Role==TEXT("extractor"))Chain=TEXT("Any raw deposit  ->  that resource");
-            Column=Tier>=2?2:1;
-        }
-        else if(D->Role==TEXT("vehicle_factory")||D->Role==TEXT("defense")||D->Role==TEXT("generator")){Column=D->Role==TEXT("generator")?1:2;if(const auto* R=S.Recipes.Find(D->Recipe))Chain=Names(R->Inputs)+(R->Outputs.Num()?TEXT("  ->  ")+Names(R->Outputs):FString());else Chain=D->Role==TEXT("defense")?TEXT("Mounts weapons from the combat catalog"):D->Role==TEXT("generator")?TEXT("Generates power"):TEXT("Assembles chassis from robotic parts and alloys");}
-        if(Column<0)continue;
-        FString Detail;FLinearColor Color;Status(*D,Detail,Color);
-        Columns[Column].Add({Strip(D->Name),Chain.IsEmpty()?Detail:Detail+TEXT("  /  ")+Chain,Color});
+        const auto& Column=Graph.Layers[C];float Total=0;
+        for(int32 Idx:Column){NodeH[Idx]=30.f;Total+=NodeH[Idx]+8;}
+        const float Avail=Bottom-Top;const float Gap=Column.Num()>1?FMath::Clamp((Avail-Total)/(Column.Num()-1),0.f,26.f):0.f;
+        float CY=Top+FMath::Max(0.f,(Avail-Total-Gap*(Column.Num()-1))*.5f);
+        for(int32 Idx:Column){Pos[Idx]=FVector2D(Left+C*ColumnW+(ColumnW-NodeW)*.5f,CY);CY+=NodeH[Idx]+8+Gap;}
     }
-    TSet<FString> Families;TArray<FString> DefIds;S.BuildingDefs.GetKeys(DefIds);DefIds.Sort();
-    for(const FString& Id:DefIds)
+    // Hover
+    float MX=0,MY=0;auto* PC=GetOwningPlayerController();const bool HaveMouse=PC&&PC->GetMousePosition(MX,MY);MX/=Scale;MY/=Scale;
+    int32 Hover=INDEX_NONE;
+    if(HaveMouse)for(int32 I=0;I<Graph.Nodes.Num();++I)if(MX>=Pos[I].X&&MX<=Pos[I].X+NodeW&&MY>=Pos[I].Y&&MY<=Pos[I].Y+NodeH[I]){Hover=I;break;}
+    TSet<int32> Lit;if(Hover!=INDEX_NONE){Lit=Graph.Upstream(Hover);Lit.Append(Graph.Downstream(Hover));Lit.Add(Hover);}
+    // Edges first
+    for(const auto& E:Graph.Edges)
     {
-        const auto& D=S.BuildingDefs[Id];if(D.Level!=1||D.NextUpgrade.IsEmpty()||Families.Contains(D.Family))continue;
-        Families.Add(D.Family);
-        int32 Levels=0;for(const auto& Pair:S.BuildingDefs)if(Pair.Value.Family==D.Family)Levels=FMath::Max(Levels,Pair.Value.Level);
-        const int32 Have=FamilyLevel.FindRef(D.Family);
-        const FSeigeBuildingDef* Current=&D;for(const auto& Pair:S.BuildingDefs)if(Pair.Value.Family==D.Family&&Pair.Value.Level==FMath::Max(1,Have))Current=&Pair.Value;
-        FString Detail;FLinearColor Color;
-        if(Have<=0){Color=Muted;Detail=FString::Printf(TEXT("Not built  /  %d levels"),Levels);}
-        else if(Current->NextUpgrade.IsEmpty()){Color=Green;Detail=FString::Printf(TEXT("Level %d of %d, top level reached"),Have,Levels);}
-        else{const TArray<FString> Missing=Short(Current->UpgradeCost);Color=Missing.Num()?Amber:Green;Detail=FString::Printf(TEXT("Level %d of %d  /  next upgrade %s"),Have,Levels,Missing.Num()?*(TEXT("short of ")+Missing[0]):TEXT("affordable now"));}
-        Columns[3].Add({Strip(D.Name),Detail,Color});
+        const bool On=Hover==INDEX_NONE||(Lit.Contains(E.From)&&Lit.Contains(E.To)&&(E.From==Hover||E.To==Hover||Lit.Contains(E.From)));
+        const bool Emphasis=Hover!=INDEX_NONE&&(E.From==Hover||E.To==Hover||(Lit.Contains(E.From)&&Lit.Contains(E.To)));
+        FLinearColor C=E.Kind==FSeigeDependencyEdge::EKind::Ammunition?Gold:E.Kind==FSeigeDependencyEdge::EKind::Chassis?Blue:E.Kind==FSeigeDependencyEdge::EKind::Extraction?Muted:E.Kind==FSeigeDependencyEdge::EKind::Workers?Text:Green;
+        C.A=(Hover==INDEX_NONE?.30f:Emphasis?.95f:.08f)*DrawOpacity;
+        // Straight runs with short horizontal stubs read better than orthogonal
+        // routing when many edges share a column gap.
+        const FVector2D A(Pos[E.From].X+NodeW,Pos[E.From].Y+NodeH[E.From]*.5f),B(Pos[E.To].X,Pos[E.To].Y+NodeH[E.To]*.5f);
+        const float Stub=FMath::Min(10.f,(B.X-A.X)*.25f);
+        DrawLine(A.X*Scale,A.Y*Scale,(A.X+Stub)*Scale,A.Y*Scale,C,(Emphasis?2.f:1.f)*Scale);
+        DrawLine((A.X+Stub)*Scale,A.Y*Scale,(B.X-Stub)*Scale,B.Y*Scale,C,(Emphasis?2.f:1.f)*Scale);
+        DrawLine((B.X-Stub)*Scale,B.Y*Scale,B.X*Scale,B.Y*Scale,C,(Emphasis?2.f:1.f)*Scale);
     }
-    const float ColumnW=(PW-40)/4,RowH=34,Top=Y+78;const int32 MaxRows=int32((PH-118)/RowH);
-    for(int32 C=0;C<4;++C)
+    // Nodes
+    for(int32 I=0;I<Graph.Nodes.Num();++I)
     {
-        const float CX=X+20+C*ColumnW;Label(Titles[C],CX,Top-22,11,Gold);Box(CX,Top-6,ColumnW-14,1,FLinearColor(.24f,.43f,.49f,.7f));
-        for(int32 I=0;I<Columns[C].Num()&&I<MaxRows;++I)
+        const auto& N=Graph.Nodes[I];const FVector2D P=Pos[I];const float NH=NodeH[I];
+        const bool Faded=Hover!=INDEX_NONE&&!Lit.Contains(I);
+        FLinearColor Color=Muted;FString Sub;
+        if(N.Building)
         {
-            const FRow& Row=Columns[C][I];const float RY=Top+I*RowH;
-            Box(CX,RY+5,5,5,Row.Color);Label(Row.Name,CX+11,RY,11,Row.Color);
-            // Long chains are cut with an ellipsis rather than shrunk below legibility.
-            FString Detail=Row.Detail;const float Limit=ColumnW-26;
-            if(MeasureLabel(Detail,9).X>Limit){while(Detail.Len()>8&&MeasureLabel(Detail+TEXT("..."),9).X>Limit)Detail.LeftChopInline(1);Detail=Detail.TrimEnd()+TEXT("...");}
-            Label(Detail,CX+11,RY+15,9,Muted);
+            if(const auto* D=S.BuildingDefs.Find(N.Id)){const FState State=BuildingState(*D);Color=State.Color;}
         }
-        if(Columns[C].Num()>MaxRows)Label(FString::Printf(TEXT("+%d more"),Columns[C].Num()-MaxRows),CX+11,Top+MaxRows*RowH,10,Muted);
+        else
+        {
+            const double Stock=S.ConstructionAvailable(N.Id);const int32 Working=Mined.FindRef(N.Id);
+            Color=Working>0?Green:Stock>0?Text:Muted;
+            if(const auto* R=S.Resources.Find(N.Id))Sub=FString::Printf(TEXT("%.0f %s"),Stock,*R->Unit);
+        }
+        FLinearColor Fill=N.Building?FLinearColor(.07f,.14f,.17f,.96f):FLinearColor(.05f,.09f,.11f,.92f);
+        if(I==Hover)Fill=FLinearColor(.12f,.24f,.28f,.98f);
+        if(Faded){Fill.A*=.35f;Color.A*=.35f;}
+        Box(P.X,P.Y,NodeW,NH,Fill);Box(P.X,P.Y,2,NH,Color);
+        if(N.Building)
+        {
+            Label(Fit(Strip(N.Name),NodeW-14,10),P.X+8,P.Y+4,10,Color);
+            FString Foot;const auto* D=S.BuildingDefs.Find(N.Id);
+            if(D){if(D->Role==TEXT("core"))Foot=TEXT("landing kit");else{const FState State=BuildingState(*D);Foot=State.Text;}}
+            Label(Fit(Foot,NodeW-14,8),P.X+8,P.Y+18,8,Faded?Dim:Muted);
+            if(D&&D->Role!=TEXT("core")&&!G.Observer&&S.BuildMenu.Contains(N.Id))Region(TEXT("build:")+N.Id,P.X,P.Y,NodeW,NH);
+        }
+        else
+        {
+            Label(Fit(N.Name,NodeW-14,10),P.X+8,P.Y+4,10,Color);
+            Label(Fit(Sub+TEXT(" in stock"),NodeW-14,8),P.X+8,P.Y+18,8,Faded?Dim:Muted);
+        }
+    }
+    // Detail strip
+    const float DY=Y+PH-54;Box(X+20,DY-8,PW-40,1,FLinearColor(.24f,.43f,.49f,.7f));
+    if(Hover!=INDEX_NONE)
+    {
+        const auto& N=Graph.Nodes[Hover];FString Line1,Line2;
+        if(N.Building)
+        {
+            if(const auto* D=S.BuildingDefs.Find(N.Id))
+            {
+                const FState State=BuildingState(*D);Line1=Strip(D->Name)+TEXT("  /  ")+State.Text;
+                TArray<FString> Keys;D->Cost.GetKeys(Keys);Keys.Sort();FString Bill;
+                for(const FString& Id:Keys){if(!Bill.IsEmpty())Bill+=TEXT(", ");Bill+=FString::Printf(TEXT("%.0f %s"),D->Cost[Id],*ResourceName(S,Id));}
+                if(const auto* R=S.Recipes.Find(D->Recipe)){TArray<FString> In;R->Inputs.GetKeys(In);In.Sort();TArray<FString> Out;R->Outputs.GetKeys(Out);Out.Sort();FString Chain;for(const FString& Id:In){if(!Chain.IsEmpty())Chain+=TEXT(" + ");Chain+=FString::Printf(TEXT("%.0f %s"),R->Inputs[Id],*ResourceName(S,Id));}Chain+=TEXT("  ->  ");for(const FString& Id:Out){Chain+=FString::Printf(TEXT("%.0f %s  "),R->Outputs[Id],*ResourceName(S,Id));}Line2=Chain+FString::Printf(TEXT(" per %.0fs batch"),R->Seconds)+TEXT("   /   Bill: ")+Bill;}
+                else Line2=TEXT("Bill: ")+Bill;
+                if(!D->NextUpgrade.IsEmpty())if(const auto* Next=S.BuildingDefs.Find(D->NextUpgrade))Line2+=TEXT("   /   Upgrades to ")+Next->Name;
+            }
+        }
+        else if(const auto* R=S.Resources.Find(N.Id))
+        {
+            FString Makers,Users;
+            for(const auto& E:Graph.Edges){if(E.To==Hover&&Graph.Nodes[E.From].Building){if(!Makers.IsEmpty())Makers+=TEXT(", ");Makers+=Strip(Graph.Nodes[E.From].Name);}if(E.From==Hover&&Graph.Nodes[E.To].Building){if(!Users.IsEmpty())Users+=TEXT(", ");Users+=Strip(Graph.Nodes[E.To].Name);}}
+            Line1=FString::Printf(TEXT("%s  /  %.0f %s in stock"),*R->Name,S.ConstructionAvailable(N.Id),*R->Unit);
+            if(R->Tier==0)Line1+=FString::Printf(TEXT("  /  %d deposit%s in sensor range, %d mined"),Deposits.FindRef(N.Id),Deposits.FindRef(N.Id)==1?TEXT(""):TEXT("s"),Mined.FindRef(N.Id));
+            Line2=(Makers.IsEmpty()?TEXT("Not produced by any blueprint"):TEXT("Made by ")+Makers)+(Users.IsEmpty()?FString():TEXT("   /   Used by ")+Users);
+        }
+        Label(Fit(Line1,PW-40,12),X+20,DY,12,Text);Label(Fit(Line2,PW-40,10),X+20,DY+20,10,Muted);
+    }
+    else
+    {
+        Label(TEXT("Hover a node to light its chain; click a buildable blueprint to place it.  Green running, white buildable, amber no feedstock, red short of materials.  Lines: teal recipes, grey extraction, gold ammunition, blue chassis materials."),X+20,DY,10,Muted);
+        FString Outside;for(const FString& Name:Graph.OutsideChain){if(!Outside.IsEmpty())Outside+=TEXT(", ");Outside+=Strip(Name);}
+        if(!Outside.IsEmpty())Label(Fit(TEXT("Outside the chain (power, storage, sensing, trade): ")+Outside,PW-40,10),X+20,DY+20,10,Muted);
     }
 }

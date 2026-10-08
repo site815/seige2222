@@ -16,8 +16,16 @@ Distinct silhouettes for the building families that previously shared one factor
 | SM_AmmunitionWorks | ammunition_works | Three bermed magazines behind blast walls, lightning masts, filling hall |
 | SM_FuelGenerator | fuel_generator | Twin containerised gen-sets, silenced stacks, bunded day tank, switchgear |
 | SM_Hangar / Tracked / Mech | vehicle, tank and mech factories L1–3 | Barrel-roofed assembly hangars; ramp for tracked, erection gantry for mechs |
+| SM_TowerLaser | turret L1–3 | Octagonal mast with heat-sink fins and capacitor rings under a round deck (2026-10-09) |
+| SM_TowerKinetic | kinetic_tower L1–3 | Squat armoured bunker with sloped plates and a shell hoist under a square deck |
+| SM_TowerMissile | missile_tower L1–3 | Raised launcher platform over a reload magazine, reload crane, fire-control cabin |
+| SM_TowerPlasma | plasma_tower L1–3 | Stacked copper induction coils on a containment column with cooling vanes |
+| SM_DepotYard | depot | Barrel-roofed warehouse, three marked loading docks, dispatch office, gantry-served container yard |
+| SM_WorkerFactory | worker_factory | Dark assembly hall with a glazed front, roof clerestories, receiving dock and a test track |
 
-Not covered: worker_factory and depot (still the factory hall and warehouse), sensor, robot service bay, and the twelve tower definitions (one turret base plus procedural mounts). See `docs/TODO.md`.
+The tower bases are authored at the 1080 cm tower plot with their weapon deck at **250 cm**, the fixed height at which `SeigeCombatVisuals.cpp` places the procedural mounts, so every level's mounts sit on the deck. The 2026-10-09 contrast pass gave the halls dark roof membranes, dark aprons with lane markings in front of doors and light hangar walls under dark barrel roofs, so buildings separate from the ground and from each other at colony zoom.
+
+Not covered: sensor and robot service bay (their earlier meshes). See `docs/TODO.md`.
 
 ## Pipeline
 

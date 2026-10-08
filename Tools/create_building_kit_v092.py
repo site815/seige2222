@@ -263,6 +263,7 @@ def battery_bank():
         for x in (-1100, 1100): beam('Gantry column', (x, y + 150, 40), (x, y + 150, 40 + 420), 24, mat='Steel')
         for x in (-820, -275, 275, 820): pipe('Busbar riser', [(x, y + 150, 40 + 395), (x, y + 150, 40 + 320), (x, y + 60, 40 + 320)], 8, 'Copper')
     box('Power conversion hall', (0, -1050, 40 + 160), (1500, 300, 320), 'Ceramic', 8); vent_y(0, -1205, 200, 900, 160)
+    box('Conversion hall roof', (0, -1050, 40 + 324), (1520, 320, 10), 'Slate', 2)
     for x in (-500, 0, 500): hvac(x, -1050, 40 + 320, 180, 240, 110)
     box('Grid interface transformer', (1050, -1050, 40 + 130), (300, 260, 260), 'Slate', 6)
     for k in range(6): box('Transformer cooling fin', (1050 - 125 + k * 50, -1050, 40 + 130), (8, 300, 220), 'Steel', .5)
@@ -295,7 +296,7 @@ def trading_port(level):
     for i, (x, y) in enumerate(stacks):
         for k in range(2 if i == 0 else 1): box('Cargo container', (x, y, 40 + 122 + k * 245), (600, 245, 245), ['Blue', 'Yellow', 'Ceramic'][(i + k) % 3], 5)
     box('Customs and dispatch office', (-900, 950, 40 + 150), (700, 400, 300), 'Ceramic', 8); window_y(-900, 748, 40 + 190, 460, 110); door_y(-650, 748, 40, 96, 206)
-    roof_barrel(-900, 950, 40 + 300, 720, 420, 60)
+    roof_barrel(-900, 950, 40 + 300, 720, 420, 60, 'Slate')
     for x in (-500, 400, 900):
         tube('Apron floodlight mast', (x, -1150, 40), (x, -1150, 40 + 700), 8, 'Steel'); box('Floodlight head', (x, -1150, 40 + 710), (90, 30, 30), 'Light', 2)
     export('SM_TradingPort' + ('' if level == 1 else str(level)), 'Shuttle landing pad with edge lighting, control tower, cargo gantry crane, container stacks and a dispatch office', ['trading_port' if level == 1 else 'trading_port_%d' % level])
@@ -305,6 +306,8 @@ def trading_port(level):
 def refinery():
     foundation(2060, 2060)
     box('Smelting hall', (-380, 120, 48 + 260), (1250, 1400, 520), 'Slate', 8)
+    box('Smelting hall roof', (-380, 120, 48 + 524), (1270, 1420, 12), 'Ceramic', 2)
+    box('Smelting hall apron', (-380, -820, 48 + 6), (700, 420, 12), 'Carbon', 1)
     for x in range(-900, 200, 220): window_y(x, -587, 48 + 400, 160, 90)
     shutter_y(-380, -590, 48, 520, 380)
     for i, x in enumerate((420, 780)):
@@ -352,6 +355,7 @@ def fuel_refinery():
     for a in range(0, 360, 120):
         t = math.radians(a); beam('Flare guy wire', (fx + math.cos(t) * 260, fy + math.sin(t) * 260, 48), (fx, fy, 48 + 1300), 3, mat='Steel')
     box('Pump house', (300, 760, 48 + 150), (520, 420, 300), 'Slate', 8); vent_y(300, 548, 48 + 170, 360, 140); door_y(520, 548, 48, 96, 206)
+    box('Pump house roof', (300, 760, 48 + 304), (540, 440, 10), 'Ceramic', 2)
     for x in (-800, -200, 400): pipe('Pipe rack run', [(x, -900, 48 + 230), (x, 900, 48 + 230)], 11, 'Steel'); pipe('Pipe rack run', [(x + 40, -900, 48 + 230), (x + 40, 900, 48 + 230)], 8, 'Copper')
     for y in range(-900, 901, 450):
         beam('Pipe rack portal', (-1000, y, 48), (-1000, y, 48 + 250), 16, mat='Steel'); beam('Pipe rack portal', (1000, y, 48), (1000, y, 48 + 250), 16, mat='Steel'); beam('Pipe rack cross', (-1000, y, 48 + 250), (1000, y, 48 + 250), 14, 20, 'Steel')
@@ -367,6 +371,8 @@ def greenhouse():
         gable_glass(x, 160, 30, 420, 1560, 300)
         for y in range(-560, 900, 300): box('Grow bench', (x, y, 30 + 60), (340, 240, 100), 'Carbon', 2); box('Crop canopy', (x, y, 30 + 130), (320, 220, 40), 'Blue', 6)
     box('Processing and packing block', (0, -860, 30 + 180), (1900, 420, 360), 'Ceramic', 8)
+    box('Packing block roof', (0, -860, 30 + 364), (1920, 440, 10), 'Slate', 2)
+    box('Dispatch apron', (-620, -1250, 30 + 6), (520, 330, 12), 'Carbon', 1)
     for x in (-700, -350, 0, 350, 700): window_y(x, -1072, 30 + 230, 220, 110)
     shutter_y(-620, -1075, 30, 360, 260); door_y(620, -1075, 30, 96, 206)
     for x in (-600, 0, 600): hvac(x, -860, 30 + 360, 180, 240, 110)
@@ -380,6 +386,8 @@ def greenhouse():
 def works():
     foundation(2060, 2060)
     box('Production hall', (-120, 100, 48 + 290), (1560, 1500, 580), 'Ceramic', 8)
+    box('Dark roof membrane', (-120, 100, 48 + 584), (1580, 1520, 10), 'Slate', 2)
+    box('Delivery apron', (-520, -860, 48 + 6), (640, 380, 12), 'Carbon', 1)
     for x in range(-760, 561, 220):
         box('Facade cassette seam', (x - 110, -652, 48 + 290), (3, 6, 560), 'Carbon', 0); window_y(x, -652, 48 + 440, 160, 100)
     box('Window band', (-120, -654, 48 + 180), (1500, 8, 120), 'Glass', 1)
@@ -413,6 +421,8 @@ def chip_works():
     cyl('Nitrogen vaporizer', (820, 350, 48 + 160), 60, 320, 'Steel', 12)
     for k in range(6): box('Vaporizer fin', (820, 350, 48 + 160), (170, 10, 300), 'Steel', .5, rotation=k * math.pi / 6)
     box('Gowning and office wing', (-150, -850, 48 + 160), (1000, 320, 320), 'Ceramic', 8); window_y(-350, -1012, 48 + 200, 300, 110); door_y(100, -1012, 48, 96, 206)
+    box('Office wing roof', (-150, -850, 48 + 324), (1020, 340, 10), 'Slate', 2)
+    box('Airlock apron', (-1100, 200, 48 + 6), (260, 460, 12), 'Carbon', 1)
     box('Loading airlock', (-900, 200, 48 + 170), (260, 400, 340), 'Slate', 6)
     box('Airlock door', (-1031, 200, 48 + 150), (6, 220, 280), 'Carbon', 2)
     text('Works identity', 'CHIP FAB', (-150, -1015, 48 + 300), 50, mat='Blue')
@@ -456,6 +466,8 @@ def ammunition_works():
         tube('Lightning mast', (x + 300, 800, 48), (x + 300, 800, 48 + 900), 7, 'Steel'); box('Mast finial', (x + 300, 800, 48 + 905), (10, 10, 10), 'Steel', 1)
     for x in (-320, 320): box('Blast wall', (x, 200, 48 + 210), (60, 1200, 420), 'Concrete', 6)
     box('Filling and assembly hall', (0, -820, 48 + 160), (1600, 380, 320), 'Ceramic', 8)
+    box('Filling hall roof', (0, -820, 48 + 324), (1620, 400, 10), 'Slate', 2)
+    box('Dispatch apron', (-500, -1250, 48 + 6), (520, 300, 12), 'Carbon', 1)
     for x in (-600, -200, 200, 600): vent_y(x, -1012, 48 + 190, 180, 120)
     shutter_y(-500, -1012, 48, 300, 240); door_y(500, -1012, 48, 96, 206)
     for x in (-400, 400): hvac(x, -820, 48 + 320, 180, 240, 100)
@@ -482,6 +494,7 @@ def fuel_generator():
     pipe('Fuel supply line', [(tx, 200, 40 + 190), (tx, 500, 40 + 190), (-150, 500, 40 + 190), (-150, 380, 40 + 190)], 10, 'Copper')
     box('Fuel bund', (tx, -100, 40 + 20), (420, 1060, 40), 'Concrete', 4)
     box('Switchgear room', (-150, 800, 40 + 150), (1000, 300, 300), 'Ceramic', 8); vent_y(-150, 645, 40 + 160, 600, 140); door_y(250, 645, 40, 96, 206)
+    box('Switchgear roof', (-150, 800, 40 + 304), (1020, 320, 10), 'Slate', 2)
     for x in (-500, -100, 300): box('Outdoor breaker', (x, 1000, 40 + 120), (120, 90, 240), 'Slate', 4)
     text('Generator identity', 'GEN', (-150, -590, 40 + 300), 60, mat='Yellow')
     export('SM_FuelGenerator', 'Twin containerised generator sets with radiators and silenced exhaust stacks, a bunded day tank and a switchgear room', ['fuel_generator'])
@@ -492,8 +505,9 @@ def hangar(kind):
     foundation(3100, 3100)
     w, d, h = {'wheeled': (2300, 2200, 760), 'tracked': (2500, 2300, 820), 'mech': (2100, 2100, 1150)}[kind]
     hx, hy = -150, 250
-    box('Assembly hangar', (hx, hy, 48 + h / 2), (w, d, h), 'Slate', 10)
-    roof_barrel(hx, hy, 48 + h, w + 20, d + 20, {'wheeled': 160, 'tracked': 150, 'mech': 110}[kind], 'Ceramic')
+    box('Assembly hangar', (hx, hy, 48 + h / 2), (w, d, h), 'Ceramic', 10)
+    roof_barrel(hx, hy, 48 + h, w + 20, d + 20, {'wheeled': 160, 'tracked': 150, 'mech': 110}[kind], 'Slate')
+    box('Hangar base band', (hx, hy, 48 + 60), (w + 8, d + 8, 120), 'Slate', 4)
     for x in range(int(hx - w / 2 + 150), int(hx + w / 2 - 100), 300): box('Hangar rib', (x, hy, 48 + h / 2), (24, d + 30, h), 'Steel', 2)
     dw, dh = {'wheeled': (1300, 560), 'tracked': (1500, 600), 'mech': (900, 980)}[kind]
     shutter_y(hx, hy - d / 2, 48, dw, dh)
@@ -519,12 +533,115 @@ def hangar(kind):
            {'wheeled': ['vehicle_factory', 'vehicle_factory_2', 'vehicle_factory_3'], 'tracked': ['tank_factory', 'tank_factory_2', 'tank_factory_3'], 'mech': ['mech_factory', 'mech_factory_2', 'mech_factory_3']}[kind])
 
 
+
+# ------------------------------------------------------------------ TOWER BASES (footprint 90 -> 1080 cm; mounts sit at z=250)
+def tower_base(kind):
+    """Four weapon-family bases sharing one 760 cm deck at 250 cm, where the
+    procedural weapon mounts of every level are placed by SeigeCombatVisuals."""
+    foundation(1080, 1080, 24)
+    deck_z = 250
+    if kind == 'laser':
+        cyl('Octagonal mast', (0, 0, 24 + 108), 230, 216, 'Slate', 8)
+        for a in range(0, 360, 45):
+            t = math.radians(a); box('Heat-sink fin', (math.cos(t) * 262, math.sin(t) * 262, 24 + 120), (18, 70, 200), 'Steel', 1, rotation=t)
+        torus('Capacitor ring', (0, 0, 24 + 60), 250, 14, 'Copper'); torus('Capacitor ring', (0, 0, 24 + 170), 250, 14, 'Copper')
+        cyl('Mast deck', (0, 0, deck_z - 10), 380, 20, 'Steel', 8); torus('Deck lip', (0, 0, deck_z - 2), 378, 5, 'Yellow')
+        box('Power conditioning cabinet', (420, -300, 24 + 95), (220, 180, 190), 'Ceramic', 5); vent_y(420, -392, 24 + 110, 150, 110)
+        pipe('Mast feed conduit', [(420, -210, 24 + 150), (260, -150, 24 + 150), (260, -150, 24 + 215)], 10, 'Copper')
+        box('Status beacon', (0, 0, deck_z + 6), (24, 24, 8), 'Light', 1)
+        beam('Access ladder rail', (-300, 0, 24), (-300, 0, deck_z), 6, mat='Yellow'); beam('Access ladder rail', (-300, 40, 24), (-300, 40, deck_z), 6, mat='Yellow')
+        for z in range(50, deck_z - 10, 30): beam('Ladder rung', (-300, 0, 24 + z - 24), (-300, 40, 24 + z - 24), 4, mat='Steel')
+        export('SM_TowerLaser', 'Octagonal laser mast with heat-sink fins and capacitor rings under a round weapon deck', ['turret', 'turret_2', 'turret_3'])
+    elif kind == 'kinetic':
+        box('Armoured bunker', (0, 0, 24 + 108), (620, 620, 216), 'Concrete', 40)
+        for a in range(0, 360, 90):
+            t = math.radians(a); box('Sloped armour plate', (math.cos(t) * 330, math.sin(t) * 330, 24 + 90), (24, 560, 180), 'Slate', 6, rotation=t, tilt=0)
+        box('Bunker deck', (0, 0, deck_z - 10), (760, 760, 20), 'Steel', 4)
+        for sx in (-1, 1):
+            for sy in (-1, 1): box('Deck corner block', (sx * 350, sy * 350, deck_z - 20), (60, 60, 40), 'Slate', 4)
+        box('Shell hoist house', (0, 420, 24 + 110), (160, 140, 220), 'Slate', 6); beam('Hoist arm', (0, 420, 24 + 230), (0, 300, deck_z + 30), 12, mat='Yellow')
+        box('Ammunition door', (0, -312, 24 + 90), (140, 10, 180), 'Carbon', 3)
+        for sx in (-1, 1): box('Door stripe', (sx * 60, -318, 24 + 90), (10, 2, 170), 'Yellow', .5)
+        for i, a in enumerate(range(0, 360, 60)):
+            t = math.radians(a); cyl('Berm bollard', (math.cos(t) * 480, math.sin(t) * 480, 24 + 40), 14, 80, 'Yellow', 10)
+        export('SM_TowerKinetic', 'Squat armoured bunker with sloped plates, a shell hoist and a square weapon deck', ['kinetic_tower', 'kinetic_tower_2', 'kinetic_tower_3'])
+    elif kind == 'missile':
+        for sx in (-1, 1):
+            for sy in (-1, 1): beam('Platform leg', (sx * 300, sy * 300, 24), (sx * 300, sy * 300, deck_z - 20), 40, mat='Steel')
+        for sx in (-1, 1): beam('Platform brace', (sx * 300, -300, 24 + 40), (sx * 300, 300, deck_z - 60), 14, mat='Steel'); beam('Platform brace', (-300, sx * 300, 24 + 40), (300, sx * 300, deck_z - 60), 14, mat='Steel')
+        box('Launcher platform', (0, 0, deck_z - 10), (760, 760, 20), 'Steel', 4)
+        for sx in (-1, 1): box('Platform edge stripe', (sx * 372, 0, deck_z + 1), (16, 760, 2), 'Yellow', 0); box('Platform edge stripe', (0, sx * 372, deck_z + 1), (760, 16, 2), 'Yellow', 0)
+        box('Reload magazine container', (0, 0, 24 + 110), (520, 240, 220), 'Slate', 6)
+        for k in range(3): box('Magazine door', (-170 + k * 170, -122, 24 + 100), (120, 6, 160), 'Carbon', 2)
+        box('Magazine hazard band', (0, -124, 24 + 200), (500, 4, 14), 'Yellow', .5)
+        beam('Reload crane mast', (-450, 0, 24), (-450, 0, deck_z + 160), 20, mat='Yellow'); beam('Reload crane jib', (-450, 0, deck_z + 150), (-40, 0, deck_z + 120), 14, mat='Yellow')
+        tube('Crane hook cable', (-100, 0, deck_z + 118), (-100, 0, deck_z + 20), 3, 'Steel', sides=6)
+        box('Fire-control cabin', (430, 330, 24 + 90), (220, 180, 180), 'Ceramic', 5); window_y(430, 239, 24 + 110, 150, 70)
+        export('SM_TowerMissile', 'Raised steel launcher platform over a reload magazine, with a reload crane and fire-control cabin', ['missile_tower', 'missile_tower_2', 'missile_tower_3'])
+    else:
+        cyl('Containment column', (0, 0, 24 + 108), 150, 216, 'Slate', 24)
+        for i, z in enumerate((24 + 60, 24 + 125, 24 + 190)): torus('Plasma induction coil', (0, 0, z), 280 - i * 25, 26, 'Copper')
+        torus('Coil energiser ring', (0, 0, 24 + 220), 220, 8, 'Light')
+        for a in range(0, 360, 60):
+            t = math.radians(a); beam('Coil support strut', (math.cos(t) * 330, math.sin(t) * 330, 24), (math.cos(t) * 190, math.sin(t) * 190, deck_z - 20), 18, mat='Steel')
+        cyl('Plasma deck', (0, 0, deck_z - 10), 380, 20, 'Steel', 24); torus('Deck rim', (0, 0, deck_z), 378, 5, 'Yellow')
+        for a in range(0, 360, 90):
+            t = math.radians(a); box('Cooling vane', (math.cos(t) * 460, math.sin(t) * 460, 24 + 100), (40, 140, 200), 'Steel', 2, rotation=t)
+        box('Plasma reactor cabinet', (0, 470, 24 + 95), (260, 160, 190), 'Ceramic', 5); vent_y(0, 388, 24 + 110, 180, 110)
+        pipe('Coolant loop', [(0, 390, 24 + 60), (0, 300, 24 + 60), (0, 300, 24 + 200), (0, 220, 24 + 200)], 10, 'Copper')
+        export('SM_TowerPlasma', 'Stacked copper induction coils on a containment column with cooling vanes under a round weapon deck', ['plasma_tower', 'plasma_tower_2', 'plasma_tower_3'])
+
+
+# ------------------------------------------------------------------ DEPOT (plot 2460)
+def depot():
+    foundation(2460, 2460, 40)
+    box('Warehouse hall', (-300, 150, 40 + 290), (1600, 1700, 580), 'Ceramic', 8)
+    roof_barrel(-300, 150, 40 + 580, 1620, 1720, 120, 'Slate')
+    for x in range(-1000, 401, 200): box('Wall pilaster', (x, 150, 40 + 290), (20, 1730, 560), 'Slate', 2)
+    for i, x in enumerate((-800, -300, 200)): shutter_y(x, 150 - 850, 40, 360, 320)
+    box('Loading apron', (-300, 150 - 850 - 420, 40 + 6), (1500, 700, 12), 'Carbon', 1)
+    for x in (-800, -300, 200):
+        for sx in (-1, 1): box('Dock lane line', (x + sx * 190, 150 - 850 - 420, 40 + 13), (8, 640, 1), 'Yellow', 0)
+    box('Dispatch office', (660, -600, 40 + 150), (420, 320, 300), 'Ceramic', 6); window_y(660, -762, 40 + 190, 300, 100); door_y(820, -762, 40, 96, 206)
+    for i in range(3):
+        for k in range(2 if i < 2 else 1): box('Stacked container', (780 + (i % 2) * 0, 100 + i * 270, 40 + 122 + k * 245), (620, 245, 245), ['Blue', 'Yellow', 'Ceramic'][(i + k) % 3], 5)
+    beam('Yard gantry column', (560, -60, 40), (560, -60, 40 + 640), 36, mat='Yellow'); beam('Yard gantry column', (1120, -60, 40), (1120, -60, 40 + 640), 36, mat='Yellow')
+    beam('Yard gantry column', (560, 860, 40), (560, 860, 40 + 640), 36, mat='Yellow'); beam('Yard gantry column', (1120, 860, 40), (1120, 860, 40 + 640), 36, mat='Yellow')
+    beam('Yard gantry rail', (560, -80, 40 + 640), (560, 880, 40 + 640), 30, 40, 'Yellow'); beam('Yard gantry rail', (1120, -80, 40 + 640), (1120, 880, 40 + 640), 30, 40, 'Yellow')
+    beam('Yard gantry bridge', (540, 400, 40 + 660), (1140, 400, 40 + 660), 40, 50, 'Yellow'); box('Yard trolley', (840, 400, 40 + 700), (160, 140, 60), 'Slate', 4)
+    for y in range(-500, 1001, 300): box('Roof ridge vent', (-300, y, 40 + 580 + 124), (220, 120, 30), 'Steel', 3)
+    text('Depot identity', 'DEPOT', (-300, -703, 40 + 520), 70, mat='Carbon')
+    export('SM_DepotYard', 'Barrel-roofed warehouse with three loading docks and a marked apron, dispatch office and a gantry-served container yard', ['depot'])
+
+
+# ------------------------------------------------------------------ WORKER FACTORY (processor plot 2060)
+def worker_factory():
+    foundation(2060, 2060)
+    box('Assembly hall', (-120, 200, 48 + 300), (1500, 1300, 600), 'Slate', 8)
+    box('Hall roof', (-120, 200, 48 + 606), (1540, 1340, 16), 'Ceramic', 3)
+    for y in (-250, 150, 550): box('Roof clerestory', (-120, y, 48 + 660), (1300, 160, 90), 'Glass', 2); box('Clerestory cap', (-120, y, 48 + 712), (1320, 180, 14), 'Steel', 2)
+    box('Glazed assembly front', (-120, -454, 48 + 330), (1300, 10, 420), 'Glass', 1)
+    for x in range(-700, 461, 130): box('Front mullion', (x, -456, 48 + 330), (10, 14, 430), 'Steel', .5)
+    box('Front lintel', (-120, -456, 48 + 560), (1400, 30, 60), 'Ceramic', 3)
+    shutter_y(-620, -456, 48, 300, 260); door_y(480, -456, 48, 96, 206)
+    cyl('Test track', (-120, -870, 48 + 4), 560, 8, 'Carbon', 48); cyl('Test track infield', (-120, -870, 48 + 5), 440, 8, 'Concrete', 48)
+    torus('Track edge line', (-120, -870, 48 + 9), 500, 3, 'Yellow')
+    for a in range(0, 360, 45):
+        t = math.radians(a)
+        if abs(math.sin(t)) > .3: beam('Charging post', (-120 + math.cos(t) * 700, -870 + math.sin(t) * 300, 48), (-120 + math.cos(t) * 700, -870 + math.sin(t) * 300, 48 + 140), 14, mat='Steel')
+    for x in (-700, -300, 100, 500): hvac(x, 750, 48 + 600, 180, 240, 110)
+    box('Parts receiving dock', (820, 300, 48 + 150), (300, 800, 300), 'Ceramic', 6); shutter_y(820, -100, 48, 220, 220)
+    text('Factory identity', 'WORKER ASSEMBLY', (-120, -462, 48 + 590), 44, mat='Carbon')
+    export('SM_WorkerFactory', 'Dark assembly hall with a glazed front, roof clerestories, a receiving dock and a test track with charging posts', ['worker_factory'])
+
 BUILDERS = {
     'solarArray': lambda: solar_array(1), 'solarArray2': lambda: solar_array(2), 'solarArray3': lambda: solar_array(3),
     'batteryBank': battery_bank, 'tradingPort': lambda: trading_port(1), 'tradingPort2': lambda: trading_port(2), 'tradingPort3': lambda: trading_port(3),
     'refinery': refinery, 'fuelRefinery': fuel_refinery, 'greenhouse': greenhouse, 'works': works, 'chipWorks': chip_works,
     'fusionWorks': fusion_works, 'ammunitionWorks': ammunition_works, 'fuelGenerator': fuel_generator,
     'hangar': lambda: hangar('wheeled'), 'hangarTracked': lambda: hangar('tracked'), 'hangarMech': lambda: hangar('mech'),
+    'towerLaser': lambda: tower_base('laser'), 'towerKinetic': lambda: tower_base('kinetic'), 'towerMissile': lambda: tower_base('missile'), 'towerPlasma': lambda: tower_base('plasma'),
+    'depotYard': depot, 'workerFactory': worker_factory,
 }
 for kind, build in BUILDERS.items():
     if wanted(kind):

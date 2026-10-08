@@ -7,7 +7,7 @@
   "meshes": {
     "SM_SolarArray": {
       "fbx": "SM_SolarArray.fbx",
-      "sha256": "81fa877cfef911bbdbcf3a4e72e60d47fc897173e6abfadd0a48bc6cca855f5f",
+      "sha256": "d7e7dcaedf1bd24dadd203e45fda0230b8b934ebabc3012e53bbc51f5d6b822e",
       "dimensions": [
         2460.0,
         2460.0,
@@ -31,7 +31,7 @@
     },
     "SM_SolarArray2": {
       "fbx": "SM_SolarArray2.fbx",
-      "sha256": "0d1b796b8952ffa211beb562367786f0a85b366aba1caf4fffadc209d5df3908",
+      "sha256": "17d753986dd597f589825a82685396dc9d670712db4ac64de95e9afcfe1ad3dd",
       "dimensions": [
         2460.0,
         2460.0,
@@ -55,7 +55,7 @@
     },
     "SM_SolarArray3": {
       "fbx": "SM_SolarArray3.fbx",
-      "sha256": "0f44b3d45503985390fddee8e072c806b945c4a90a3aec5d3bf4fd474156e8cb",
+      "sha256": "5c6a098429f4833ed1096e0edf107e7ca59ed1dfe49599bf773b9e34d286a4bd",
       "dimensions": [
         2460.0,
         2460.0,
@@ -79,13 +79,13 @@
     },
     "SM_BatteryBank": {
       "fbx": "SM_BatteryBank.fbx",
-      "sha256": "8b0a42a92f27bf5f15b6b923ad291cd31c1f727fdcd4282ac3be7517d0c324c8",
+      "sha256": "53050b696bd2a4c24087b0c42eb0b684281b5c89e4310c41adcc89c815001e9b",
       "dimensions": [
         2460.0,
         2460.0,
         497.0
       ],
-      "triangles": 40992,
+      "triangles": 41100,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
@@ -104,7 +104,7 @@
     },
     "SM_TradingPort": {
       "fbx": "SM_TradingPort.fbx",
-      "sha256": "a72238f7ab2e0322980d70c20372132600258f2601bc6cbbbd797b2c5e6e6a55",
+      "sha256": "bc91143b39d10b7ade0ea7c502dea8679b80e688e56fbc9e11593a740884b1c0",
       "dimensions": [
         2491.7320556640625,
         2460.0,
@@ -131,7 +131,7 @@
     },
     "SM_TradingPort2": {
       "fbx": "SM_TradingPort2.fbx",
-      "sha256": "a23b434f861edd942ee3b37feea2f2b25d3c2599c0b307072552475ecc105750",
+      "sha256": "1c9d3e9d764fbfd77d76b6bde9fd1f9334ae09ad76076f715b6640a6342dd7a0",
       "dimensions": [
         2491.7320556640625,
         2460.0,
@@ -158,7 +158,7 @@
     },
     "SM_TradingPort3": {
       "fbx": "SM_TradingPort3.fbx",
-      "sha256": "694e60429b7d9cd0ebe5c60328aeb9c997044a1b9fa341dde5eb5905d7697a08",
+      "sha256": "406a03b701582f7abaa6efe3b1f6a8405736561e85747e2934dea5dc2c24c031",
       "dimensions": [
         2491.7320556640625,
         2460.0,
@@ -185,23 +185,23 @@
     },
     "SM_Refinery": {
       "fbx": "SM_Refinery.fbx",
-      "sha256": "519bbd99e695ce4a5e530bbe998b1d81f125bc9ffe8371523f47445605e9e595",
+      "sha256": "1d6ca7a5e32ad41a3f0485606a7245d313ca1f8eecece20c5c84f91bd1f5c6ee",
       "dimensions": [
         2117.0,
         2060.0,
         1608.0
       ],
-      "triangles": 14476,
+      "triangles": 14692,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
         "IM_Slate",
+        "IM_Ceramic",
         "IM_Glass",
         "IM_Steel",
         "IM_Yellow",
         "IM_Light",
-        "IM_Copper",
-        "IM_Ceramic"
+        "IM_Copper"
       ],
       "description": "Smelting hall with twin blast furnaces, hot-blast mains, tall stacks, inclined ore conveyor, receiving hopper, dust cyclone and slag pit",
       "unreal_path": "/Game/Art/SM_Refinery",
@@ -211,13 +211,13 @@
     },
     "SM_FuelRefinery": {
       "fbx": "SM_FuelRefinery.fbx",
-      "sha256": "1df8cc042e1df0fa8e2f92ede827883d9d897c5ab497bfacfd955198b3c6bbd4",
+      "sha256": "ff9921b1674417a3c8a0969fa8753088ee72dec5e9e4571f083f2db3b141fc12",
       "dimensions": [
         2151.382568359375,
         2240.0,
         1883.0
       ],
-      "triangles": 23968,
+      "triangles": 24076,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
@@ -239,13 +239,13 @@
     },
     "SM_Greenhouse": {
       "fbx": "SM_Greenhouse.fbx",
-      "sha256": "c8473d6f90e82eada669b70312924318a30cba8f42b1efaefdf32506eacc5dc7",
+      "sha256": "a09d5b75190c3f3735d2098e27ebe032dd0327c87d5fbe739e3be68b28519a96",
       "dimensions": [
         2060.0,
-        2375.0,
+        2485.0,
         527.0
       ],
-      "triangles": 32080,
+      "triangles": 32296,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
@@ -265,19 +265,19 @@
     },
     "SM_Works": {
       "fbx": "SM_Works.fbx",
-      "sha256": "33beb4fb629af90042c4668d35243d8d2d5b8e330c7bbdb50a0a98f24c0238a4",
+      "sha256": "35df5af2ce9c78d6f7647e3bc5d33cb03f50edd6fad849cc7e2c902bc7029a40",
       "dimensions": [
         2060.0,
-        2060.0,
+        2080.0,
         815.0
       ],
-      "triangles": 20864,
+      "triangles": 21080,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
         "IM_Ceramic",
-        "IM_Glass",
         "IM_Slate",
+        "IM_Glass",
         "IM_Steel",
         "IM_Yellow",
         "IM_Light",
@@ -295,13 +295,13 @@
     },
     "SM_ChipWorks": {
       "fbx": "SM_ChipWorks.fbx",
-      "sha256": "6d36d43fac798e0b0a0747e950616f780e7a5e95be4ee44952061d987d3fb2ae",
+      "sha256": "329520dcf6d0977d7b6ff2ae808d31fd84c71ea209f0846f8aaeec3088caf1dd",
       "dimensions": [
-        2064.0,
+        2260.0,
         2082.5,
         1554.0
       ],
-      "triangles": 14684,
+      "triangles": 14900,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
@@ -320,7 +320,7 @@
     },
     "SM_FusionWorks": {
       "fbx": "SM_FusionWorks.fbx",
-      "sha256": "ee061f7767741951369234ce91a050ded0fd222ad6b51fc15c1f51d5685e1de5",
+      "sha256": "445098bc898c05c7c22f15a7727c89b57e3f5d69c3ff079103808e8dec563253",
       "dimensions": [
         2160.0,
         2200.0,
@@ -346,13 +346,13 @@
     },
     "SM_AmmunitionWorks": {
       "fbx": "SM_AmmunitionWorks.fbx",
-      "sha256": "fdb5b645c645bcc42c285fb36ea66d7f9e50e233736824d3eeb8b983083e8388",
+      "sha256": "cf68d56278467e2077cd985f8011828fcf8a26f99ff7f34b28578cfcd30584ba",
       "dimensions": [
         2060.0,
-        2272.0,
+        2430.0,
         958.0
       ],
-      "triangles": 16412,
+      "triangles": 16628,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
@@ -371,13 +371,13 @@
     },
     "SM_FuelGenerator": {
       "fbx": "SM_FuelGenerator.fbx",
-      "sha256": "8f8a1a1ffae6716b0f27813a75accef0035fc70d44263741272792d651686742",
+      "sha256": "cee3be8ed7fc0a96310ee7cb5ed47d82a19c7622f66bfc389f7a3c65ded17aca",
       "dimensions": [
         2060.0,
         2075.0,
         1240.0
       ],
-      "triangles": 21876,
+      "triangles": 21984,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
@@ -397,18 +397,18 @@
     },
     "SM_Hangar": {
       "fbx": "SM_Hangar.fbx",
-      "sha256": "ac3fda6e6aeefdb5e34d7ac654f2ac5b35da8bccc0e3fa0c7a8dfad418bec1e5",
+      "sha256": "41fb9697f5245719dca6f5ade98d984031f60661aa7539342abd0d8085cf4e25",
       "dimensions": [
         3210.0,
         3330.0,
         995.0
       ],
-      "triangles": 14268,
+      "triangles": 14376,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
-        "IM_Slate",
         "IM_Ceramic",
+        "IM_Slate",
         "IM_Steel",
         "IM_Yellow",
         "IM_Light",
@@ -425,18 +425,18 @@
     },
     "SM_HangarTracked": {
       "fbx": "SM_HangarTracked.fbx",
-      "sha256": "343670c88f6fcaa9fb62f4e592471ab5fe58c80c1a50b81565ed26888368433f",
+      "sha256": "71360c4933e37996e8b90b6be5f3012bc6328ea31eba274a9f6e34f65d7f3856",
       "dimensions": [
         3310.0,
         3580.0,
         1055.0
       ],
-      "triangles": 15368,
+      "triangles": 15476,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
-        "IM_Slate",
         "IM_Ceramic",
+        "IM_Slate",
         "IM_Steel",
         "IM_Yellow",
         "IM_Light",
@@ -453,18 +453,18 @@
     },
     "SM_HangarMech": {
       "fbx": "SM_HangarMech.fbx",
-      "sha256": "a11f7619503fa40bbb5b1b2903bc9cfbb61fee6a717193d5f4e1d43f19f37f12",
+      "sha256": "4a72d00b4c4761edbe9ee375e69a99ec8d574b25c6fb51341864e9351b4cd791",
       "dimensions": [
         3140.0,
         3280.0,
         1658.0
       ],
-      "triangles": 16152,
+      "triangles": 16260,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
-        "IM_Slate",
         "IM_Ceramic",
+        "IM_Slate",
         "IM_Steel",
         "IM_Yellow",
         "IM_Light",
@@ -477,6 +477,161 @@
         "mech_factory",
         "mech_factory_2",
         "mech_factory_3"
+      ]
+    },
+    "SM_TowerLaser": {
+      "fbx": "SM_TowerLaser.fbx",
+      "sha256": "be99c9c7acac0da6ac0cb77dfe4cf75d07f929dc78fcd40d6f27809c8b56a1cb",
+      "dimensions": [
+        1080.0,
+        1080.0,
+        260.0
+      ],
+      "triangles": 5448,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Copper",
+        "IM_Yellow",
+        "IM_Ceramic",
+        "IM_Light"
+      ],
+      "description": "Octagonal laser mast with heat-sink fins and capacitor rings under a round weapon deck",
+      "unreal_path": "/Game/Art/SM_TowerLaser",
+      "building_families": [
+        "turret",
+        "turret_2",
+        "turret_3"
+      ]
+    },
+    "SM_TowerKinetic": {
+      "fbx": "SM_TowerKinetic.fbx",
+      "sha256": "c56081422671e0addea47ded674371576fdfb7a1cf2890b000db72caf3f00926",
+      "dimensions": [
+        1080.0,
+        1080.0,
+        285.4827880859375
+      ],
+      "triangles": 1968,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow"
+      ],
+      "description": "Squat armoured bunker with sloped plates, a shell hoist and a square weapon deck",
+      "unreal_path": "/Game/Art/SM_TowerKinetic",
+      "building_families": [
+        "kinetic_tower",
+        "kinetic_tower_2",
+        "kinetic_tower_3"
+      ]
+    },
+    "SM_TowerMissile": {
+      "fbx": "SM_TowerMissile.fbx",
+      "sha256": "fb7658fbe54bde135b4ffe0aabb27bfbefa18b657e42a3a2f9fc39da1edfed2b",
+      "dimensions": [
+        1080.0,
+        1080.0,
+        410.0
+      ],
+      "triangles": 2252,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Glass"
+      ],
+      "description": "Raised steel launcher platform over a reload magazine, with a reload crane and fire-control cabin",
+      "unreal_path": "/Game/Art/SM_TowerMissile",
+      "building_families": [
+        "missile_tower",
+        "missile_tower_2",
+        "missile_tower_3"
+      ]
+    },
+    "SM_TowerPlasma": {
+      "fbx": "SM_TowerPlasma.fbx",
+      "sha256": "492225e0fa586dd3a42e75a6ebb1fbff17f3fb9bbc87bd79912587160dd0a67d",
+      "dimensions": [
+        1080.0,
+        1090.0,
+        255.0
+      ],
+      "triangles": 6268,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Copper",
+        "IM_Light",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Ceramic"
+      ],
+      "description": "Stacked copper induction coils on a containment column with cooling vanes under a round weapon deck",
+      "unreal_path": "/Game/Art/SM_TowerPlasma",
+      "building_families": [
+        "plasma_tower",
+        "plasma_tower_2",
+        "plasma_tower_3"
+      ]
+    },
+    "SM_DepotYard": {
+      "fbx": "SM_DepotYard.fbx",
+      "sha256": "ce512fc592feca8c601e29d322ff8daed3a10bb5ddef2ee48bae836181b50041",
+      "dimensions": [
+        2460.0,
+        2700.0,
+        770.0
+      ],
+      "triangles": 10420,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "description": "Barrel-roofed warehouse with three loading docks and a marked apron, dispatch office and a gantry-served container yard",
+      "unreal_path": "/Game/Art/SM_DepotYard",
+      "building_families": [
+        "depot"
+      ]
+    },
+    "SM_WorkerFactory": {
+      "fbx": "SM_WorkerFactory.fbx",
+      "sha256": "37ccb3e92e892bcb55e83239334bb6df1a4cf414da31351d09606a0e09c44caa",
+      "dimensions": [
+        2060.0,
+        2460.0,
+        785.0
+      ],
+      "triangles": 21068,
+      "materials": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light"
+      ],
+      "description": "Dark assembly hall with a glazed front, roof clerestories, a receiving dock and a test track with charging posts",
+      "unreal_path": "/Game/Art/SM_WorkerFactory",
+      "building_families": [
+        "worker_factory"
       ]
     }
   }

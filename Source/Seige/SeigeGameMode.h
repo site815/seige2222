@@ -5,6 +5,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Simulation/SeigeSimulation.h"
 #include "Simulation/SeigeRenderInterpolation.h"
+#include "Simulation/SeigeDependencyGraph.h"
 #include "SeigeGameMode.generated.h"
 
 class FSeigeScenarioAI;
@@ -353,6 +354,7 @@ public:
     bool LoadInterface(const FString& Directory,FString& Error);
     FSeigeUiState Ui;
     bool ProgressionOpen=false;   // production-chain panel (P / dock button); review captures set it directly
+    FSeigeDependencyGraph ChainGraph;int32 ChainGraphBuildings=-1;   // rebuilt when the loaded catalog changes
 private:
     float Scale=1;
     float DrawOpacity=1;

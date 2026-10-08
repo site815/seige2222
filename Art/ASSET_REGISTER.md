@@ -1,3 +1,5 @@
+> **Historical.** The meshes described here were superseded by the industrial set (`Art/IndustryExports`, `docs/game-design/GRAPHICS_MILESTONE_0_3.md`), the orbital v0.9 set (`Art/OrbitalV09`) and the v0.9.2 building kit (`Art/BuildingKitV092/README.md`). Kept for provenance only; nothing here is loaded by the game.
+
 # SEIGE — Original Prototype Asset Register
 
 The v0.8 Rex companion is an original authored interpretation guided by the user's private photographs: Blender mesh, rig, animation and procedural surface work, plus an original generated coat-detail bitmap. No photograph pixels are copied into the coat map. The photographs are not repository assets and must not be embedded or redistributed. See the [Rex asset record](CompanionDog/README.md) for provenance and the [companion design](../docs/game-design/COMPANIONS_AND_REX.md) for behavior and pending likeness/runtime acceptance. These original assets follow the project's licensing decisions; the private references are not assigned a public license.

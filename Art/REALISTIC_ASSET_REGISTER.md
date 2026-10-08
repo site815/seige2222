@@ -1,3 +1,5 @@
+> **Historical.** The meshes described here were superseded by the industrial set (`Art/IndustryExports`, `docs/game-design/GRAPHICS_MILESTONE_0_3.md`), the orbital v0.9 set (`Art/OrbitalV09`) and the v0.9.2 building kit (`Art/BuildingKitV092/README.md`). Kept for provenance only; nothing here is loaded by the game.
+
 # SEIGE — Industrial and Temperate Environment Assets
 
 The current environment set replaces the six initial simplified buildings with original industrial architecture and adds temperate trees, understory, grass, and rocks. The meshes were authored procedurally in Blender, with no downloaded building or tree models. Photographic terrain and bark maps are separately licensed CC0 assets; exact sources, authors, download URLs, and hashes are recorded in [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md) and its linked source manifest.

@@ -106,5 +106,41 @@
     "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
     "texture": "/Game/Art/Interface/T_Building_Works",
     "size": 384
+  },
+  "DepotYard": {
+    "source_mesh": "SM_DepotYard",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_DepotYard",
+    "size": 384
+  },
+  "TowerKinetic": {
+    "source_mesh": "SM_TowerKinetic",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerKinetic",
+    "size": 384
+  },
+  "TowerLaser": {
+    "source_mesh": "SM_TowerLaser",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerLaser",
+    "size": 384
+  },
+  "TowerMissile": {
+    "source_mesh": "SM_TowerMissile",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerMissile",
+    "size": 384
+  },
+  "TowerPlasma": {
+    "source_mesh": "SM_TowerPlasma",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerPlasma",
+    "size": 384
+  },
+  "WorkerFactory": {
+    "source_mesh": "SM_WorkerFactory",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_WorkerFactory",
+    "size": 384
   }
 }
