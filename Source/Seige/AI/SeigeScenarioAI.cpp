@@ -431,12 +431,19 @@ bool FSeigeScenarioAI::NextPowerRoad(const FSeigeSimulation& Colony,FVector2D& O
 {
     TargetName.Empty();Error.Empty();const auto* Core=Command(Colony);if(!Core)return false;
     for(const auto& R:Colony.Roads)if(R.Health>0&&R.IsConstructing){Error=TEXT("Constructing road-grid connection");return false;}
+    // Completed worker-support bays and generators unlock the workforce and
+    // power every later connection needs, so they are wired before sensors
+    // and factories; otherwise placement order is kept.
+    TArray<const FSeigeBuilding*> Pending;
     for(const auto& Building:Colony.Buildings)
+        if(Building.Id!=Core->Id&&Building.Health>0&&!Building.IsConstructing&&!Colony.IsRoadGridConnected(Core->Id,Building.Id))Pending.Add(&Building);
+    auto Rank=[&](const FSeigeBuilding& B){const FString& Role=Colony.Definition(B)->Role;return Role==TEXT("service")?0:Role==TEXT("generator")?1:2;};
+    Pending.StableSort([&](const FSeigeBuilding& A,const FSeigeBuilding& B){return Rank(A)<Rank(B);});
+    for(const FSeigeBuilding* Building:Pending)
     {
-        if(Building.Id==Core->Id||Building.Health<=0||Building.IsConstructing||Colony.IsRoadGridConnected(Core->Id,Building.Id))continue;
-        TargetName=Colony.Definition(Building)->Name;
+        TargetName=Colony.Definition(*Building)->Name;
         bool NeedsSegment=false;
-        return FindPowerConnection(Colony,Building,nullptr,OutA,OutB,NeedsSegment,Error)&&NeedsSegment;
+        return FindPowerConnection(Colony,*Building,nullptr,OutA,OutB,NeedsSegment,Error)&&NeedsSegment;
     }
     return false;
 }

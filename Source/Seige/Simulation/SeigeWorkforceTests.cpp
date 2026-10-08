@@ -93,6 +93,9 @@ bool FSeigeReplicatorWorkforceTest::RunTest(const FString&)
     const double SmallBill=Distributed.BuildingDefs[TEXT("sensor")].Cost.FindRef(Parts);
     Distributed.Buildings[0].Inventory[Parts]=Distributed.Demand(Distributed.Buildings[0],Parts,false);Donor->Inventory[Parts]=Distributed.Demand(*Donor,Parts,false)+SmallBill;
     if(!Distributed.PlaceBuilding(TEXT("sensor"),FVector2D(0,1300),Error)){AddError(Error);return false;}const int32 BufferedSite=Distributed.Buildings.Last().Id;Donor=Distributed.FindBuilding(DonorId);
+    // Finite bodies: the rest of the bill is already on site so the first
+    // construction claim of the dispatch round is the buffered parts, not alloy.
+    {auto* Site=Distributed.FindBuilding(BufferedSite);for(const auto& P:Distributed.ConstructionCost(*Site))if(P.Key!=Parts){Distributed.Buildings[0].Inventory.FindOrAdd(P.Key)-=P.Value;Site->ConstructionMaterials.Add(P.Key,P.Value);}}
     for(int32 I=0;I<2;++I)Distributed.StepRecipe(*Donor,Distributed.ProductionSeconds(*Donor,Worker)/Distributed.WorkFraction(*Donor)+.01);
     TestTrue(TEXT("A promised bill can remain physically present entirely inside operating refill buffers"),Distributed.Buildings[0].Inventory.FindRef(Parts)<=Distributed.Demand(Distributed.Buildings[0],Parts,false)+1.e-8&&Donor->Inventory.FindRef(Parts)<=Distributed.Demand(*Donor,Parts,false)+1.e-8);
     const double BufferedStock=Distributed.TotalStock(Parts);Distributed.StepLogistics(Distributed.Number(TEXT("dispatch_interval")));

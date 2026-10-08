@@ -94,9 +94,16 @@ for name,record in mesh_records.items():
     sm=opts.static_mesh_import_data;sm.combine_meshes=True;sm.auto_generate_collision=False;sm.generate_lightmap_u_vs=True
     sm.normal_import_method=unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS;sm.convert_scene=True;sm.convert_scene_unit=True
     t.options=opts;tasks.append(t)
-if "-IndustryMaterialsOnly" not in unreal.SystemLibrary.get_command_line():TOOLS.import_asset_tasks(tasks)
+MATERIALS_ONLY="-IndustryMaterialsOnly" in unreal.SystemLibrary.get_command_line()
+if not MATERIALS_ONLY:TOOLS.import_asset_tasks(tasks)
 editor=unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem) or unreal.get_default_object(unreal.StaticMeshEditorSubsystem)
 report=json.loads((ART/"industry_import_report.json").read_text(encoding="utf-8")) if CORE_ONLY else {"source":"Original Blender-authored industrial architecture and procedural PBR surfaces","meshes":{},"material_master":DEST+"/M_IndustrySurface","textures":9}
+# A materials-only refresh (v0.9.2 texture pass) only rebuilds the master and the
+# MI_Industry_* instances every building mesh already references; it neither
+# rebuilds LODs nor rewrites the mesh import report.
+if MATERIALS_ONLY:
+    unreal.log("SEIGE_INDUSTRY_IMPORT_SUCCESS "+json.dumps({"materials_only":True,"instances":sorted(instances)}))
+    mesh_records={}
 for name,record in mesh_records.items():
     mesh=ED.load_asset(MESH_DEST+"/"+name)
     if not isinstance(mesh,unreal.StaticMesh):raise RuntimeError("Missing imported building "+name)
@@ -121,5 +128,6 @@ for name,record in mesh_records.items():
     bounds=mesh.get_bounding_box();lo,hi=bounds.min,bounds.max;dims=[hi.x-lo.x,hi.y-lo.y,hi.z-lo.z]
     if abs(lo.z)>.5 or any(abs(a-b)>max(.5,b*.01) for a,b in zip(dims,record["dimensions"])):raise RuntimeError("Physical scale/ground pivot mismatch "+name+": "+str(dims))
     report["meshes"][name]={"dimensions_cm":dims,"ground_z":lo.z,"source_triangles":record["triangles"],"lod_count":editor.get_lod_count(mesh),"material_slots":len(slots),"active_material_slots":[imported_names[index] for index in active_slots]}
-(ART/"industry_import_report.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
-unreal.log("SEIGE_INDUSTRY_IMPORT_SUCCESS "+json.dumps(report))
+if not MATERIALS_ONLY:
+    (ART/"industry_import_report.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+    unreal.log("SEIGE_INDUSTRY_IMPORT_SUCCESS "+json.dumps(report))
