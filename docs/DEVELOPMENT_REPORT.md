@@ -1,6 +1,19 @@
 # seige2222 — Development and verification
 
-Updated: **2026-10-06** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
+Updated: **2026-10-08** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
+
+## v0.9.1 graphics candidate — measured, not release-verified
+
+Version **0.9.1** changes only presentation and rendering cost on top of the v0.9 source: it does not touch rules, saves or AI. The package is `Builds/v0.9.1/Windows/Seige.exe`; the launcher still opens v0.8.1. The [v0.9.1 graphics report](game-design/GRAPHICS_PERFORMANCE_0_9_1.md) records the method and every number below; the [grass-card asset record](../Art/EnvironmentV091/README.md) records sources and the Blender/import pipeline.
+
+- **Meadow grass** is now impostor cards: eight Blender-rendered cells of the existing CC0 tufts and turf, nine 4-triangle cards per clump, imported **without Nanite**, faded per instance with a dithered mask, tinted from the same macro photograph and meadow-vigor field as the terrain, with a small wind offset. The 33,632-triangle masked Nanite sward and its ~1.4 million-instance far proxy are retired. The previous sward was the single largest GPU cost (`GPU/NaniteVisBuffer` 12.0 ms in the v0.8.1 ground profile) because masked Nanite geometry uses the programmable rasterizer.
+- **Trees** keep the masked Jacaranda within 60 m and rasterize its leaf cards as solid quads beyond (`forest_programmable_distance_m`); detail trees hand off to the opaque sprays at 150–250 m.
+- **Shadows, clouds and atmosphere:** VSM 2 rays × 2 samples with +0.5 directional LOD bias, sun direction stepped by 0.35° at most every 1.5 s, 45 m grass shadows, rigid shadow caching for terrain chunks, reduced cloud sample counts and half-resolution cloud shadows, HZB occlusion; lower sun (42°), 6000 K, exponential height fog with aerial perspective, filmic contrast, mild vignette, cooler and patchier meadow palette. New `scene.json` / `weather.json` keys are validated by both the C++ loader and `Tools/validate_configuration.mjs` (17 render settings).
+- **Build:** `Seige.Build.cs` disables unity builds; earlier builds only compiled because `git status` (not on this machine's `PATH`) had excluded every file from unity blobs.
+
+Static Shipping benchmark, same harness, machine and session, **3840×1600, Medium, 100% render resolution, 10×**, `GraphicsBenchmark-v090-baseline-static.json` → `GraphicsBenchmark-v091d-static.json`: Colony **44.87 → 67.11 FPS**, Meadow **34.70 → 47.64**, Ground **33.94 → 47.18**, Hills **35.33 → 57.16**, Boundary **39.82 → 62.61** (GPU means 20.6–27.9 ms → 13.7–19.7 ms). Orbit against the retained candidate-7 run: 38.9–52.5 → 49.4–64.9 FPS. Travel against the v0.8.1 final run: 34.7–44.4 → 46.0–59.1 FPS, with the boundary sector-crossing stall reduced from 772 ms to **396 ms** on the game thread but not removed. Captures: `Saved/Screenshots/Benchmark/v090-baseline-static` and `v091d-static`.
+
+Verification so far: `Seige.Camera` native automation **15 / 15 passed** on this source (`Saved/Automation/v091-camera`); Shipping package `BuildCookRun` exit 0 (`Saved/claude-job15.log`). Not rerun for v0.9.1: the remaining native groups, the 117-stage packaged gameplay route, display states and offline observation. The ground and meadow views remain below 60 FPS at native resolution, the near trees are still one 1.8M-triangle masked Nanite asset, the cards have no LOD and repeat eight silhouettes, and sector rebuilds remain synchronous. **No Manor Lords parity is claimed**; the measured gains are from a representation change, not an equal-quality optimization.
 
 ## v0.9 candidate — verification in progress
 

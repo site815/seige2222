@@ -1,0 +1,264 @@
+{
+  "units": "centimeters",
+  "license": "CC0-1.0",
+  "source_manifest": "Art/EnvironmentV04/sources.json",
+  "description": "Impostor card clumps rendered from retained CC0 grass_medium_02 tufts; non-Nanite distance-faded meadow cover.",
+  "atlas": {
+    "file": "T_GrassCardAtlasV091.png",
+    "sha256": "4da5acd20baa18bb236c9a1d382f836a3438e6bd54574437e06f9f30b73beb06",
+    "width": 4096,
+    "height": 2048,
+    "columns": 4,
+    "rows": 2,
+    "cells": [
+      {
+        "index": 0,
+        "tufts": [
+          "e",
+          "d",
+          "b",
+          "c",
+          "c"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_00.png",
+        "size_m": 0.8481241840124131,
+        "group_width_m": 0.8234215378761292,
+        "group_height_m": 0.641612708568573,
+        "atlas_column": 0,
+        "atlas_row": 0,
+        "uv_min": [
+          0.0,
+          0.0
+        ],
+        "uv_max": [
+          0.25,
+          0.5
+        ],
+        "coverage": 0.12308979034423828
+      },
+      {
+        "index": 1,
+        "tufts": [
+          "e",
+          "d",
+          "b",
+          "c",
+          "d"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_01.png",
+        "size_m": 0.8679271325469017,
+        "group_width_m": 0.8426477015018463,
+        "group_height_m": 0.7578874230384827,
+        "atlas_column": 1,
+        "atlas_row": 0,
+        "uv_min": [
+          0.25,
+          0.0
+        ],
+        "uv_max": [
+          0.5,
+          0.5
+        ],
+        "coverage": 0.12492942810058594
+      },
+      {
+        "index": 2,
+        "tufts": [
+          "b",
+          "e",
+          "d",
+          "b",
+          "d"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_02.png",
+        "size_m": 0.7535319319367408,
+        "group_width_m": 0.7315843999385834,
+        "group_height_m": 0.5467513799667358,
+        "atlas_column": 2,
+        "atlas_row": 0,
+        "uv_min": [
+          0.5,
+          0.0
+        ],
+        "uv_max": [
+          0.75,
+          0.5
+        ],
+        "coverage": 0.15285968780517578
+      },
+      {
+        "index": 3,
+        "tufts": [
+          "e",
+          "b",
+          "b",
+          "c",
+          "d"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_03.png",
+        "size_m": 0.9687497699260712,
+        "group_width_m": 0.9405337572097778,
+        "group_height_m": 0.6031644940376282,
+        "atlas_column": 3,
+        "atlas_row": 0,
+        "uv_min": [
+          0.75,
+          0.0
+        ],
+        "uv_max": [
+          1.0,
+          0.5
+        ],
+        "coverage": 0.09221172332763672
+      },
+      {
+        "index": 4,
+        "tufts": [
+          "e",
+          "e",
+          "e",
+          "e",
+          "c"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_04.png",
+        "size_m": 0.8902860161662102,
+        "group_width_m": 0.8643553555011749,
+        "group_height_m": 0.6090688705444336,
+        "atlas_column": 0,
+        "atlas_row": 1,
+        "uv_min": [
+          0.0,
+          0.5
+        ],
+        "uv_max": [
+          0.25,
+          1.0
+        ],
+        "coverage": 0.11952018737792969
+      },
+      {
+        "index": 5,
+        "tufts": [
+          "d",
+          "d",
+          "d",
+          "e",
+          "b"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_05.png",
+        "size_m": 0.8163595575094224,
+        "group_width_m": 0.792582094669342,
+        "group_height_m": 0.6244288086891174,
+        "atlas_column": 1,
+        "atlas_row": 1,
+        "uv_min": [
+          0.25,
+          0.5
+        ],
+        "uv_max": [
+          0.5,
+          1.0
+        ],
+        "coverage": 0.1403484344482422
+      },
+      {
+        "index": 6,
+        "tufts": [
+          "d",
+          "d",
+          "d",
+          "c",
+          "d"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_06.png",
+        "size_m": 0.8913968572020531,
+        "group_width_m": 0.8654338419437408,
+        "group_height_m": 0.424304336309433,
+        "atlas_column": 2,
+        "atlas_row": 1,
+        "uv_min": [
+          0.5,
+          0.5
+        ],
+        "uv_max": [
+          0.75,
+          1.0
+        ],
+        "coverage": 0.10508918762207031
+      },
+      {
+        "index": 7,
+        "tufts": [
+          "d",
+          "d",
+          "c",
+          "b",
+          "b"
+        ],
+        "turf": "grass_bermuda_01",
+        "file": "cell_07.png",
+        "size_m": 0.9226581856608391,
+        "group_width_m": 0.8957846462726593,
+        "group_height_m": 0.4120804965496063,
+        "atlas_column": 3,
+        "atlas_row": 1,
+        "uv_min": [
+          0.75,
+          0.5
+        ],
+        "uv_max": [
+          1.0,
+          1.0
+        ],
+        "coverage": 0.10270404815673828
+      }
+    ],
+    "mean_blade_colour_srgb": [
+      0.4574147164821625,
+      0.4667622148990631,
+      0.27114003896713257
+    ],
+    "uv_origin": "bottom-left (Blender)"
+  },
+  "meshes": {
+    "SM_GrassCardV091A": {
+      "fbx": "SM_GrassCardV091A.fbx",
+      "sha256": "9088d4d0be3d79178ee0beabf970d0cec30d7e66b89f880fe7f3b7989edd2750",
+      "triangles": 36,
+      "vertices": 54,
+      "cards": 9,
+      "dimensions_cm": [
+        108.70967864990234,
+        103.73566055297852,
+        64.0
+      ],
+      "materials": [
+        "PH_grass_card_v091"
+      ],
+      "ground_z": 0.0
+    },
+    "SM_GrassCardV091B": {
+      "fbx": "SM_GrassCardV091B.fbx",
+      "sha256": "1176f085c6e5eeee6efe6e55e866849c985cd3151a6c399c5c58050f92bff393",
+      "triangles": 36,
+      "vertices": 54,
+      "cards": 9,
+      "dimensions_cm": [
+        88.42037200927734,
+        94.76053237915039,
+        58.000003814697266
+      ],
+      "materials": [
+        "PH_grass_card_v091"
+      ],
+      "ground_z": 0.0
+    }
+  }
+}

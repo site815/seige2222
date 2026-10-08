@@ -1,0 +1,40 @@
+{
+  "atlas": "/Game/Art/NatureV091/Textures/T_GrassCardAtlasV091.T_GrassCardAtlasV091",
+  "material": "/Game/Art/NatureV091/M_GrassCardV091.M_GrassCardV091",
+  "meshes": {
+    "SM_GrassCardV091A": {
+      "path": "/Game/Art/NatureV091/SM_GrassCardV091A.SM_GrassCardV091A",
+      "dimensions_cm": [
+        108.70968246459961,
+        103.73566055297852,
+        64.0
+      ],
+      "ground_z": 0.0,
+      "triangles": 36,
+      "cards": 9,
+      "nanite": false,
+      "uv_channels": 1
+    },
+    "SM_GrassCardV091B": {
+      "path": "/Game/Art/NatureV091/SM_GrassCardV091B.SM_GrassCardV091B",
+      "dimensions_cm": [
+        88.42037200927734,
+        94.76052856445312,
+        58.000003814697266
+      ],
+      "ground_z": 0.0,
+      "triangles": 36,
+      "cards": 9,
+      "nanite": false,
+      "uv_channels": 1
+    }
+  },
+  "nanite": false,
+  "atlas_mean_linear": [
+    0.1767200894926337,
+    0.1845560969548009,
+    0.059753587116292355
+  ],
+  "rendering_path": "masked non-Nanite ISM cards with per-instance dithered fade",
+  "source": "CC0 grass_medium_02 tufts rendered orthographically; no new downloads"
+}

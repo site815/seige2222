@@ -99,7 +99,7 @@ public:
     int32 GroundCoverCandidates=350000;
     float GrassScaleMin=1.f,GrassScaleMax=1.3f;
     float GrassShadowDistanceMeters=100;
-    float GrassProgrammableDistanceMeters=0;
+    float GrassProgrammableDistanceMeters=0,ForestProgrammableDistanceMeters=0;
     float GrassDetailDistanceMeters=45,GrassLodTransitionMeters=35,GrassStreamRadiusMeters=540,GrassStreamBudgetMs=2;
     int32 GrassStreamCellsPerFrame=32;
     float ForestDetailDistanceMeters=300,ForestLodTransitionMeters=120;
@@ -114,6 +114,11 @@ public:
     float SunSourceAngle=.6f,CloudShadowResolutionScale=1;
     float ExposureBias=.25f,ColorSaturation=1.1f,AmbientOcclusionIntensity=.5f,SunElevation=52;
     float FogDensity=0,FogStartDistanceMeters=1000,AtmosphereMieScale=.2f,AtmosphereAerialPerspectiveScale=.15f,BloomIntensity=.03f;
+    // v0.9.1 presentation controls (Graphics/scene.json). Defaults reproduce the
+    // v0.9 look when a key is absent from an older profile.
+    float ColorContrast=1.f,VignetteIntensity=0,AmbientOcclusionRadiusCm=120,SunTemperatureKelvin=6500;
+    float FogHeightFalloff=.15f,FogInscatteringLuminance=.5f,FogMaxOpacity=1.f,SkyLowerHemisphereLuminance=0;
+    bool GrassFarProxy=true;
     bool SkyRealtimeCapture=false;
     TMap<FString,int32> MediumQualityGroups;
     TMap<FString,float> MediumRenderSettings;

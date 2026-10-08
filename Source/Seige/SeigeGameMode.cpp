@@ -66,11 +66,23 @@ void ASeigeGameMode::BeginPlay()
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionIntensity=true;
     Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionIntensity=AmbientOcclusionIntensity;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AmbientOcclusionRadius=true;
-    Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionRadius=120;
+    Camera->GetCameraComponent()->PostProcessSettings.AmbientOcclusionRadius=AmbientOcclusionRadiusCm;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_BloomIntensity=true;
     Camera->GetCameraComponent()->PostProcessSettings.BloomIntensity=BloomIntensity;
     Camera->GetCameraComponent()->PostProcessSettings.bOverride_AutoExposureApplyPhysicalCameraExposure=true;
     Camera->GetCameraComponent()->PostProcessSettings.AutoExposureApplyPhysicalCameraExposure=false;
+    // Filmic grading: a touch more contrast, cooler shadows, warmer highlights and
+    // a soft vignette. These are authored constants; the sun/sky ratio supplies
+    // the actual shadow depth so the grade never has to fake it.
+    {
+        auto& Post=Camera->GetCameraComponent()->PostProcessSettings;
+        Post.bOverride_ColorContrast=true;Post.ColorContrast=FVector4(ColorContrast,ColorContrast,ColorContrast,1);
+        Post.bOverride_VignetteIntensity=true;Post.VignetteIntensity=VignetteIntensity;
+        Post.bOverride_ColorGainShadows=true;Post.ColorGainShadows=FVector4(.97f,.99f,1.04f,1);
+        Post.bOverride_ColorGainHighlights=true;Post.ColorGainHighlights=FVector4(1.02f,1.f,.965f,1);
+        Post.bOverride_AmbientOcclusionPower=true;Post.AmbientOcclusionPower=2.2f;
+        Post.bOverride_BloomThreshold=true;Post.BloomThreshold=.8f;
+    }
     if(auto* PC=UGameplayStatics::GetPlayerController(this,0)) PC->SetViewTarget(Camera);
     auto* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,3000),FRotator(-SunElevation,-28,0));
     Sun->GetLightComponent()->SetIntensity(SunIntensity);
@@ -80,6 +92,8 @@ void ASeigeGameMode::BeginPlay()
     SunComponent->ForwardShadingPriority=1;
     SunComponent->SetAtmosphereSunLight(true);
     SunComponent->LightSourceAngle=SunSourceAngle;
+    // Warm daylight; the weather pass still multiplies its dawn/dusk tint on top.
+    SunComponent->bUseTemperature=true;SunComponent->Temperature=SunTemperatureKelvin;
     SunComponent->bCastCloudShadows=true;
     SunComponent->CloudShadowStrength=CloudShadowStrength;
     SunComponent->CloudShadowOnSurfaceStrength=CloudShadowStrength;
@@ -111,14 +125,30 @@ void ASeigeGameMode::BeginPlay()
     Sky->GetLightComponent()->SourceType=SLS_SpecifiedCubemap;
     Sky->GetLightComponent()->SetCubemap(WeatherAmbientCubemap);
     Sky->GetLightComponent()->SetRealTimeCaptureEnabled(false);
+    // A faint green-brown ground bounce instead of a black lower hemisphere keeps
+    // undersides of canopies and hulls from going flat black under the sun.
+    if(SkyLowerHemisphereLuminance>0)
+    {
+        Sky->GetLightComponent()->bLowerHemisphereIsBlack=false;
+        Sky->GetLightComponent()->SetLowerHemisphereColor(FLinearColor(.42f,.46f,.30f)*SkyLowerHemisphereLuminance);
+    }
     Sky->GetLightComponent()->MarkRenderStateDirty();
     if(FogDensity>0)
     {
+        // Distance haze: exponential height fog with a sky-coloured inscattering
+        // term and a warm directional lobe toward the sun. Volumetric fog stays
+        // off; its cost at native resolution is not justified for a top-down view.
         auto* Fog=GetWorld()->SpawnActor<AExponentialHeightFog>();
-        Fog->GetComponent()->SetFogDensity(FogDensity);
-        Fog->GetComponent()->SetFogHeightFalloff(.15f);
-        Fog->GetComponent()->SetFogInscatteringColor(FLinearColor(.45f,.52f,.58f));
-        Fog->GetComponent()->SetStartDistance(FogStartDistanceMeters*100.f);
+        auto* FogComponent=Fog->GetComponent();
+        FogComponent->SetFogDensity(FogDensity);
+        FogComponent->SetFogHeightFalloff(FogHeightFalloff);
+        FogComponent->SetFogInscatteringColor(FLinearColor(.47f,.56f,.70f)*FogInscatteringLuminance);
+        FogComponent->SetDirectionalInscatteringColor(FLinearColor(1.f,.86f,.66f)*FogInscatteringLuminance*.6f);
+        FogComponent->SetDirectionalInscatteringExponent(6.f);
+        FogComponent->SetDirectionalInscatteringStartDistance(FogStartDistanceMeters*100.f);
+        FogComponent->SetStartDistance(FogStartDistanceMeters*100.f);
+        FogComponent->SetFogMaxOpacity(FogMaxOpacity);
+        FogComponent->SetVolumetricFog(false);
     }
     ResetColony();
     ReturnToMainMenu(); Zoom=DefaultZoom;

@@ -106,6 +106,15 @@ export function validateConfiguration(data) {
   number(graphics.atmosphere_mie_scale, 'Graphics atmosphere_mie_scale', 0, 2);
   number(graphics.atmosphere_aerial_perspective_scale, 'Graphics atmosphere_aerial_perspective_scale', 0, 3);
   number(graphics.bloom_intensity, 'Graphics bloom_intensity', 0, 1);
+  number(graphics.color_contrast, 'Graphics color_contrast', .5, 1.5);
+  number(graphics.vignette_intensity, 'Graphics vignette_intensity', 0, 1);
+  number(graphics.ambient_occlusion_radius_cm, 'Graphics ambient_occlusion_radius_cm', 20, 500);
+  number(graphics.sun_color_temperature_kelvin, 'Graphics sun_color_temperature_kelvin', 2000, 12000);
+  number(graphics.fog_height_falloff, 'Graphics fog_height_falloff', .01, 2);
+  number(graphics.fog_inscattering_luminance, 'Graphics fog_inscattering_luminance', 0, 5);
+  number(graphics.fog_max_opacity, 'Graphics fog_max_opacity', 0, 1);
+  number(graphics.sky_lower_hemisphere_luminance, 'Graphics sky_lower_hemisphere_luminance', 0, 1);
+  if (typeof graphics.grass_far_proxy !== 'boolean') fail('Graphics grass_far_proxy must be boolean');
   number(graphics.camera_yaw, 'Graphics camera_yaw', -360, 360);
   number(graphics.default_zoom, 'Graphics default_zoom', 900, 20000);
   number(graphics.minimum_zoom, 'Graphics minimum_zoom', 60, 2000);
@@ -140,6 +149,7 @@ export function validateConfiguration(data) {
   number(graphics.forest_lod_transition_m, 'Graphics forest_lod_transition_m', 20, 500);
   if (graphics.grass_stream_radius_m <= graphics.grass_detail_distance_m + graphics.grass_lod_transition_m) fail('Grass proxy streaming must extend beyond the detail transition');
   number(graphics.grass_programmable_distance_m, 'Graphics grass_programmable_distance_m', 0, 900);
+  number(graphics.forest_programmable_distance_m, 'Graphics forest_programmable_distance_m', 0, 2000);
   if(typeof graphics.grass_distance_field_lighting !== 'boolean') fail('Graphics grass_distance_field_lighting must be boolean');
   number(graphics.neighboring_forest_candidates_per_sector, 'Graphics neighboring_forest_candidates_per_sector', 0, 12000, true);
   if(typeof graphics.neighboring_forest_shadow !== 'boolean') fail('Graphics neighboring_forest_shadow must be boolean');
@@ -156,7 +166,8 @@ export function validateConfiguration(data) {
   if (Object.keys(quality).length !== mediumGroups.length) fail('Invalid Medium quality groups');
   for (const key of mediumGroups) number(quality[key], `Medium quality ${key}`, 0, 3, true);
   const rendering = object(medium.render_settings, 'Medium render_settings');
-  const ranges = [['r.TSR.History.ScreenPercentage', 100, 200, false], ['r.TSR.ThinGeometryDetection', 0, 1, true], ['r.TSR.ThinGeometryDetection.Coverage.ShadingRange', 0, 3, true], ['r.TSR.Velocity.WeightClampingSampleCount', 1, 8, false], ['r.Tonemapper.Sharpen', 0, 1, false], ['r.MaxAnisotropy', 4, 16, true], ['r.TemporalAA.Quality', 1, 2, true], ['r.TemporalAAFilterSize', .5, 1, false], ['r.TemporalAACurrentFrameWeight', .04, .2, false], ['r.Shadow.Virtual.SMRT.RayCountDirectional', 1, 8, true], ['r.Shadow.Virtual.SMRT.SamplesPerRayDirectional', 1, 8, true]];
+  const ranges = [['r.TSR.History.ScreenPercentage', 100, 200, false], ['r.TSR.ThinGeometryDetection', 0, 1, true], ['r.TSR.ThinGeometryDetection.Coverage.ShadingRange', 0, 3, true], ['r.TSR.Velocity.WeightClampingSampleCount', 1, 8, false], ['r.Tonemapper.Sharpen', 0, 1, false], ['r.MaxAnisotropy', 4, 16, true], ['r.TemporalAA.Quality', 1, 2, true], ['r.TemporalAAFilterSize', .5, 1, false], ['r.TemporalAACurrentFrameWeight', .04, .2, false], ['r.Shadow.Virtual.SMRT.RayCountDirectional', 1, 8, true], ['r.Shadow.Virtual.SMRT.SamplesPerRayDirectional', 1, 8, true],
+    ['r.Shadow.Virtual.ResolutionLodBiasDirectional', -2, 3, false], ['r.Shadow.Virtual.ResolutionLodBiasDirectionalMoving', -2, 3, false], ['r.VolumetricCloud.ViewRaySampleMaxCount', 32, 2048, true], ['r.VolumetricCloud.ShadowMap.RaySampleMaxCount', 8, 512, true], ['r.VolumetricCloud.ReflectionRaySampleMaxCount', 8, 512, true], ['r.HZBOcclusion', 0, 1, true]]; // keep identical to SeigeCamera.cpp
   if (Object.keys(rendering).length !== ranges.length) fail('Invalid Medium rendering settings');
   for (const [key, min, max, integer] of ranges) number(rendering[key], `Medium rendering ${key}`, min, max, integer);
   number(graphics.orbit_yaw_degrees_per_pixel, 'Graphics orbit_yaw_degrees_per_pixel', .05, 2);

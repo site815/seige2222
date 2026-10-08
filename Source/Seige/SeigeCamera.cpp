@@ -62,6 +62,7 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("forest_detail_distance_m"),75,1000,ForestDetailDistanceMeters)||
        !Read(TEXT("forest_lod_transition_m"),20,500,ForestLodTransitionMeters)||
        !Read(TEXT("grass_programmable_distance_m"),0,900,GrassProgrammableDistanceMeters)||
+       !Read(TEXT("forest_programmable_distance_m"),0,2000,ForestProgrammableDistanceMeters)||
        !Read(TEXT("neighboring_forest_candidates_per_sector"),0,12000,NeighborForest)||
        !Read(TEXT("region_map_zoom"),60000,240000,RegionMapZoom)||
        !Read(TEXT("region_map_transition_width"),5000,60000,RegionMapTransitionWidth)||
@@ -79,7 +80,13 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("ridge_center_x"),-90000,90000,RidgeX)||!Read(TEXT("ridge_center_y"),-90000,90000,RidgeY)||
        !Read(TEXT("ridge_angle_degrees"),-360,360,RidgeAngleDegrees)||
        !Read(TEXT("ridge_width"),500,10000,RidgeWidth)||!Read(TEXT("ridge_length"),1000,30000,RidgeLength)||
-       !Read(TEXT("ridge_height"),0,1500,RidgeHeight))return false;
+       !Read(TEXT("ridge_height"),0,1500,RidgeHeight)||
+       !Read(TEXT("color_contrast"),.5,1.5,ColorContrast)||!Read(TEXT("vignette_intensity"),0,1,VignetteIntensity)||
+       !Read(TEXT("ambient_occlusion_radius_cm"),20,500,AmbientOcclusionRadiusCm)||
+       !Read(TEXT("sun_color_temperature_kelvin"),2000,12000,SunTemperatureKelvin)||
+       !Read(TEXT("fog_height_falloff"),.01,2,FogHeightFalloff)||!Read(TEXT("fog_inscattering_luminance"),0,5,FogInscatteringLuminance)||
+       !Read(TEXT("fog_max_opacity"),0,1,FogMaxOpacity)||!Read(TEXT("sky_lower_hemisphere_luminance"),0,1,SkyLowerHemisphereLuminance))return false;
+    if(!Root->TryGetBoolField(TEXT("grass_far_proxy"),GrassFarProxy)){Error=TEXT("Invalid grass far proxy flag");return false;}
     if(!Root->TryGetStringField(TEXT("terrain_material"),TerrainMaterialPath)||!TerrainMaterialPath.StartsWith(TEXT("/Game/")))
     {Error=TEXT("Invalid terrain material path");return false;}
     for(const auto& Entry:{TPair<const TCHAR*,FString*>(TEXT("grass_proxy_asset"),&GrassProxyAsset),TPair<const TCHAR*,FString*>(TEXT("broadleaf_proxy_asset"),&BroadleafProxyAsset),TPair<const TCHAR*,FString*>(TEXT("conifer_proxy_asset"),&ConiferProxyAsset)})
@@ -138,9 +145,14 @@ bool ASeigeGameMode::LoadGraphicsSettings()
         MediumQualityGroups.Add(Key,static_cast<int32>(Value));
     }
     const TSharedPtr<FJsonObject>* Settings=nullptr;
-    if(!(*Profile)->TryGetObjectField(TEXT("render_settings"),Settings)||(*Settings)->Values.Num()!=11){Error=TEXT("Invalid Medium rendering settings");return false;}
+    if(!(*Profile)->TryGetObjectField(TEXT("render_settings"),Settings)||(*Settings)->Values.Num()!=17){Error=TEXT("Invalid Medium rendering settings");return false;}
     struct FSettingRange{const TCHAR* Name;double Min,Max;bool Integer;};
-    for(const auto& Range:{FSettingRange{TEXT("r.TSR.History.ScreenPercentage"),100,200,false},FSettingRange{TEXT("r.TSR.ThinGeometryDetection"),0,1,true},FSettingRange{TEXT("r.TSR.ThinGeometryDetection.Coverage.ShadingRange"),0,3,true},FSettingRange{TEXT("r.TSR.Velocity.WeightClampingSampleCount"),1,8,false},FSettingRange{TEXT("r.Tonemapper.Sharpen"),0,1,false},FSettingRange{TEXT("r.MaxAnisotropy"),4,16,true},FSettingRange{TEXT("r.TemporalAA.Quality"),1,2,true},FSettingRange{TEXT("r.TemporalAAFilterSize"),.5,1,false},FSettingRange{TEXT("r.TemporalAACurrentFrameWeight"),.04,.2,false},FSettingRange{TEXT("r.Shadow.Virtual.SMRT.RayCountDirectional"),1,8,true},FSettingRange{TEXT("r.Shadow.Virtual.SMRT.SamplesPerRayDirectional"),1,8,true}})
+    // Keep this table identical to Tools/validate_configuration.mjs.
+    for(const auto& Range:{FSettingRange{TEXT("r.TSR.History.ScreenPercentage"),100,200,false},FSettingRange{TEXT("r.TSR.ThinGeometryDetection"),0,1,true},FSettingRange{TEXT("r.TSR.ThinGeometryDetection.Coverage.ShadingRange"),0,3,true},FSettingRange{TEXT("r.TSR.Velocity.WeightClampingSampleCount"),1,8,false},FSettingRange{TEXT("r.Tonemapper.Sharpen"),0,1,false},FSettingRange{TEXT("r.MaxAnisotropy"),4,16,true},FSettingRange{TEXT("r.TemporalAA.Quality"),1,2,true},FSettingRange{TEXT("r.TemporalAAFilterSize"),.5,1,false},FSettingRange{TEXT("r.TemporalAACurrentFrameWeight"),.04,.2,false},FSettingRange{TEXT("r.Shadow.Virtual.SMRT.RayCountDirectional"),1,8,true},FSettingRange{TEXT("r.Shadow.Virtual.SMRT.SamplesPerRayDirectional"),1,8,true},
+        FSettingRange{TEXT("r.Shadow.Virtual.ResolutionLodBiasDirectional"),-2,3,false},FSettingRange{TEXT("r.Shadow.Virtual.ResolutionLodBiasDirectionalMoving"),-2,3,false},
+        FSettingRange{TEXT("r.VolumetricCloud.ViewRaySampleMaxCount"),32,2048,true},FSettingRange{TEXT("r.VolumetricCloud.ShadowMap.RaySampleMaxCount"),8,512,true},
+        FSettingRange{TEXT("r.VolumetricCloud.ReflectionRaySampleMaxCount"),8,512,true},
+        FSettingRange{TEXT("r.HZBOcclusion"),0,1,true}})
     {
         double Value=0;
         if(!(*Settings)->TryGetNumberField(Range.Name,Value)||!FMath::IsFinite(Value)||Value<Range.Min||Value>Range.Max||(Range.Integer&&Value!=FMath::FloorToDouble(Value)))

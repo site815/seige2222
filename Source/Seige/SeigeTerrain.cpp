@@ -312,6 +312,14 @@ double MeadowSwardDensity(FVector2D P)
     const double Patch=FMath::PerlinNoise2D(P/130+FVector2D(31.7,-17.2));
     return FMath::Lerp(.25,1.,FMath::SmoothStep(-.6,-.05,Patch));
 }
+double MeadowVigor(FVector2D P)
+{
+    // A broad world-anchored meadow variation, separate from the much smaller
+    // sward-density patches. The terrain vertex alpha and the grass cards'
+    // per-instance tint read the same field, so clumps match the ground.
+    return FMath::Clamp(.5+FMath::PerlinNoise2D(P/1300+FVector2D(7.4,-21.8))*.6+
+        FMath::PerlinNoise2D(P/310+FVector2D(-8.2,5.7))*.18,.15,.85);
+}
 FQuat GroundCoverRotation(const ASeigeGameMode& G,FVector2D P,double Yaw)
 {
     const double DX=G.GroundHeight(P+FVector2D(12,0))-G.GroundHeight(P-FVector2D(12,0));
@@ -390,11 +398,9 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
             // Meadow slopes retain soil. Exposed rock belongs on steep faces or
             // localized outcrops, not every gently rolling hill.
             const double Rock=FMath::Clamp((.82-Normal.Z)*5+FMath::Max(0.,Noise-.42)*.45,0.,.85)*(1-FMath::Max(Dirt,FoundationGrade));
-            // A broad world-anchored meadow variation, separate from the much
-            // smaller sward-density patches. Shared positions give both tile
-            // detail levels the same material input without per-pixel noise.
-            const double Vigor=FMath::Clamp(.5+FMath::PerlinNoise2D(P/1300+FVector2D(7.4,-21.8))*.6+
-                FMath::PerlinNoise2D(P/310+FVector2D(-8.2,5.7))*.18,.15,.85);
+            // Shared positions give both tile detail levels the same material
+            // input without per-pixel noise.
+            const double Vigor=MeadowVigor(P);
             Colors.Add(FLinearColor(float(Dirt*(1-Rock)),float(Rock),float(Woodland),float(Vigor)));
             Tangents.Add(FProcMeshTangent(FVector(1,0,DX).GetSafeNormal(),false));
             if(U<Cells&&V<Cells)
@@ -431,6 +437,10 @@ void ASeigeGameMode::CreateLandscape(bool SectorTransition)
         {
             auto* Terrain=NewObject<UProceduralMeshComponent>(Ground);
             Terrain->SetupAttachment(Root);Terrain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            // Runtime-built components are Movable, which made the virtual shadow
+            // map redraw two million terrain triangles every frame. The surface
+            // never moves; a rebuilt section re-registers and invalidates itself.
+            Terrain->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
             Terrain->ComponentTags={FName(*FString::FromInt(TileIndex)),FName(*FString::FromInt(X)),FName(*FString::FromInt(Y))};
             Terrain->RegisterComponent();Ground->AddInstanceComponent(Terrain);
             BuildTerrainChunk(*this,Tile,X,Y,Terrain,DirtPatches);
@@ -610,7 +620,7 @@ uint32 GroundCellSeed(int32 X,int32 Y)
     uint32 Seed=uint32(X)*0x9e3779b9u^uint32(Y)*0x85ebca6bu^2222u;
     Seed^=Seed>>16;Seed*=0x7feb352du;Seed^=Seed>>15;Seed*=0x846ca68bu;return Seed^(Seed>>16);
 }
-UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind,bool GrassIndirectLighting=false,float GrassProgrammableDistanceMeters=0,float MinDistance=0,float MaxDistance=0)
+UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind,bool GrassIndirectLighting=false,float GrassProgrammableDistanceMeters=0,float MinDistance=0,float MaxDistance=0,float FadeStartDistance=0)
 {
     if(!Mesh)return nullptr;
     // Nanite handles per-instance culling/LOD itself. CPU HISM trees were built
@@ -618,16 +628,30 @@ UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root
     auto* Set=NewObject<UInstancedStaticMeshComponent>(Actor);Set->SetStaticMesh(Mesh);Set->SetupAttachment(Root);
     Set->SetCollisionEnabled(ECollisionEnabled::NoCollision);Set->SetCanEverAffectNavigation(false);Set->SetRemoveSwap();
     const bool Sward=Kind.StartsWith(TEXT("Grass"))||Kind==TEXT("Wildflowers");
+    // Non-Nanite card meshes (v0.9.1 meadow) fade per instance between the
+    // start and end cull distances through the material's dithered mask; Nanite
+    // assets keep a hard cutoff that their proxies cover.
+    const bool Cards=!Mesh->HasValidNaniteData();
+    const float FadeStart=FadeStartDistance>0&&FadeStartDistance<MaxDistance?FadeStartDistance:MaxDistance;
     Set->InstanceMinDrawDistance=FMath::RoundToInt(MinDistance);
-    Set->SetCullDistances(FMath::RoundToInt(MaxDistance),FMath::RoundToInt(MaxDistance));
-    // These assets have no wind/deformation. Rigid still invalidates when a
+    Set->SetCullDistances(FMath::RoundToInt(FadeStart),FMath::RoundToInt(MaxDistance));
+    // Nanite assets here have no wind/deformation. Rigid still invalidates when a
     // foundation moves instances; Static would incorrectly suppress that update.
-    Set->SetEvaluateWorldPositionOffset(false);
+    // Card grass animates in the material; its cached shadow stays rigid, which is
+    // invisible for ankle-high motion and avoids per-frame shadow page redraws.
+    Set->SetEvaluateWorldPositionOffset(Cards&&Sward);
+    if(Cards&&Sward)Set->WorldPositionOffsetDisableDistance=6000;
     Set->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
+    // One float per instance carries the terrain's coherent meadow vigor so the
+    // card tint follows the ground colour beneath it (see M_GrassCardV091).
+    if(Cards&&Sward)Set->NumCustomDataFloats=1;
     // Zero preserves masked rasterization at all distances. Set before scene
-    // registration so the Nanite proxy receives the optional grass-only cutoff.
-    // Wildflower silhouettes remain masked regardless of this experiment.
-    if(Kind==TEXT("Grass")||Kind==TEXT("GrassB"))
+    // registration so the Nanite proxy receives the optional cutoff. Beyond it
+    // Nanite rasterizes alpha-masked leaf cards as solid quads with the fast
+    // fixed-function path; the 1.8M-triangle near Jacaranda is otherwise the
+    // largest remaining programmable-raster cost. Wildflowers stay masked.
+    const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
+    if(Kind==TEXT("Grass")||Kind==TEXT("GrassB")||Tree)
         Set->NanitePixelProgrammableDistance=GrassProgrammableDistanceMeters*100.f;
     if(Sward)
     {
@@ -694,7 +718,7 @@ void ASeigeGameMode::CreateFoliage(int32 PreviousSector)
         // never an invisible band. Configuration validation normally catches it.
         const bool HasProxy=Tree&&ProxyMesh;
         const double Cut=(ForestDetailDistanceMeters+ForestLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
-        auto* Set=VegetationSet(Ground,Root,Proxy?ProxyMesh:Source,Kind,false,0,Proxy?Cut:0,Tree?(Proxy?FarDistance:HasProxy?Cut:FarDistance):FarDistance);
+        auto* Set=VegetationSet(Ground,Root,Proxy?ProxyMesh:Source,Kind,false,Tree&&!Proxy?ForestProgrammableDistanceMeters:0.f,Proxy?Cut:0,Tree?(Proxy?FarDistance:HasProxy?Cut:FarDistance):FarDistance);
         if(!Set)return nullptr;
         Set->ComponentTags.Add(FName(*FString::Printf(TEXT("seige_forest_sector:%d"),ActiveSector)));
         if(Proxy)
@@ -948,15 +972,18 @@ void ASeigeGameMode::CreateGroundCover()
         State.Meshes.Add(TEXT("GrassProxy"),LoadObject<UStaticMesh>(nullptr,*GrassProxyAsset,nullptr,LOAD_NoWarn));
         SceneryMeshReferences.Add(TEXT("GrassProxy"),State.Meshes.FindRef(TEXT("GrassProxy")).Get());
     }
-    const bool HasProxy=State.Meshes.FindRef(TEXT("GrassProxy")).IsValid();
+    // Without far proxies (v0.9.1 card meadow) the detail sets themselves fade
+    // out per instance over the authored transition; nothing is drawn beyond.
+    const bool HasProxy=GrassFarProxy&&State.Meshes.FindRef(TEXT("GrassProxy")).IsValid();
     auto EnsureSet=[&](const FString& Kind,int32 Band)->UInstancedStaticMeshComponent*
     {
         const FName Key=InstancePageKey(State.PendingCell,Kind,Band);
         if(auto* Existing=State.Sets.FindRef(Key).Get())return Existing;
         const bool Proxy=Kind.StartsWith(TEXT("GrassProxy")),Detail=Kind==TEXT("Grass")||Kind==TEXT("GrassB");
         const double Cut=(GrassDetailDistanceMeters+GrassLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
-        const double End=(Detail&&HasProxy)?Cut:Sim.WorldHalfSize*RenderScale*8;
-        auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),State.Meshes.FindRef(Proxy?TEXT("GrassProxy"):Kind).Get(),Kind,GrassDistanceFieldLighting,GrassProgrammableDistanceMeters,Proxy?Cut:0,End);
+        const double End=Detail&&(HasProxy||!GrassFarProxy)?Cut:Sim.WorldHalfSize*RenderScale*8;
+        const double FadeStart=Detail&&!GrassFarProxy?FMath::Max(0.,Cut-GrassLodTransitionMeters*100.*.5):0.;
+        auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),State.Meshes.FindRef(Proxy?TEXT("GrassProxy"):Kind).Get(),Kind,GrassDistanceFieldLighting,GrassProgrammableDistanceMeters,Proxy?Cut:0,End,FadeStart);
         if(!Set)return nullptr;
         // Cheap incremental bounds remain confined to this page. They cannot
         // grow across the whole sector as cells are inserted and retired.
@@ -1071,7 +1098,20 @@ void ASeigeGameMode::CreateGroundCover()
                 {
                     const int32 Band=FCString::Atoi(*BandText);
                     if(auto* Set=EnsureSet(Kind,Band))
-                        Record.Instances.FindOrAdd(InstancePageKey(State.PendingCell,Kind,Band)).Append(Set->AddInstancesById(Transforms,false,false));
+                    {
+                        const TArray<FPrimitiveInstanceId> Added=Set->AddInstancesById(Transforms,false,false);
+                        if(Set->NumCustomDataFloats>0)
+                        {
+                            // Card tint follows the same vigor field as the terrain vertex alpha.
+                            for(int32 I=0;I<Added.Num()&&I<Transforms.Num();++I)
+                            {
+                                const int32 Index=Set->GetInstanceIndexForId(Added[I]);
+                                if(Index>=0)Set->SetCustomDataValue(Index,0,float(MeadowVigor(FVector2D(Transforms[I].GetLocation())/RenderScale)),false);
+                            }
+                            Set->MarkRenderStateDirty();
+                        }
+                        Record.Instances.FindOrAdd(InstancePageKey(State.PendingCell,Kind,Band)).Append(Added);
+                    }
                 }
             }
             if(State.CommitKey<State.CommitKeys.Num())break;

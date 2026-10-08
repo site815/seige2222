@@ -115,7 +115,7 @@ float detail=1-smoothstep(DetailDistance,DetailDistance+DetailBlendWidth,cameraD
 float forestPatternFade=smoothstep(ForestPatternFadeStart,ForestPatternFadeStart+ForestPatternFadeWidth,cameraDistance);
 float vigor=saturate(Vigor);
 float dirt=saturate(Weights.r*SoilStrength), rock=saturate(Weights.g), forest=saturate(Weights.b);
-float meadow=(1-dirt)*(1-forest)*(1-rock), earthMix=lerp(.28,.05,vigor);
+float meadow=(1-dirt)*(1-forest)*(1-rock), earthMix=lerp(.42,.04,vigor);
 float w[5]={meadow*(1-earthMix),meadow*earthMix,(1-dirt)*forest*(1-rock),dirt*(1-rock),rock};
 float3 base=0, nsum=0; float rough=0;
 '''
@@ -195,7 +195,7 @@ code+='''
 float2 macroUV=World.xy/2200;
 float3 macro=Texture2DSampleGrad(MeadowColor,MeadowColorSampler,macroUV,dx/2200,dy/2200).rgb;
 float macroValue=dot(macro,float3(.2126,.7152,.0722))/max(dot(MeadowMean.rgb,float3(.2126,.7152,.0722)),.001);
-base*=lerp(1,clamp(macroValue,.55,1.45)*lerp(.80,1.08,vigor),meadow);
+base*=lerp(1,clamp(macroValue,.55,1.45)*lerp(.70,1.10,vigor),meadow);
 SurfaceNormal=normalize(nsum);
 SurfaceRoughness=saturate(rough);
 return base;

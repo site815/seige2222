@@ -25,6 +25,7 @@ Art/Construction/Exports/*.fbx
 Art/EnvironmentV07/Exports/*.fbx
 Art/CompanionDog/Exports/*.fbx
 Art/EnvironmentV08/Canopies/Exports/*.fbx
+Art/EnvironmentV091/Exports/*.fbx
 Art/EconomyV08/staged/
 # Recreated from the developer's licensed Unreal installation before cooking.
 Content/Art/WeatherV09/T_AmbientDaylight.uasset

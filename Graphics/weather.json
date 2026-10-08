@@ -14,6 +14,6 @@
   "snowflake_size_centimeters": 2.2,
   "snow_collection": "/Game/Art/WeatherV09/MPC_Weather.MPC_Weather",
   "snowflake_material": "/Game/Art/WeatherV09/M_Snowflake.M_Snowflake",
-  "sun_direction_update_degrees": 0.15,
-  "sun_shadow_update_seconds": 0.5
+  "sun_direction_update_degrees": 0.35,
+  "sun_shadow_update_seconds": 1.5
 }

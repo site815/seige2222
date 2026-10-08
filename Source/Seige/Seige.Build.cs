@@ -4,6 +4,11 @@ public class Seige : ModuleRules
     public Seige(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        // Many translation units share anonymous-namespace helper names (Deploy,
+        // Flags, Rules, palette colours). Earlier builds only succeeded because
+        // 'git status' listed every file as modified and the adaptive build
+        // excluded them all from unity blobs. Make that explicit and deterministic.
+        bUseUnity = false;
         PublicIncludePaths.Add(ModuleDirectory);
         PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities", "ProceduralMeshComponent"});
         PrivateDependencyModuleNames.AddRange(new string[] {"SlateCore", "RenderCore", "RHI"});
