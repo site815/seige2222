@@ -1,0 +1,104 @@
+{
+ "version": "0.9.2",
+ "engine": "5.8.3",
+ "platform": "Windows x64 Shipping",
+ "generated_at_utc": "2026-10-08T18:22:50.663354+00:00",
+ "record_date": "2026-10-09",
+ "rules_version": "prototype-9.2",
+ "save_format": 7,
+ "prior_saves_compatible": false,
+ "native": {
+  "status": "single_full_run",
+  "report": {
+   "path": "Saved/Automation/v092-full-3/index.json",
+   "bytes": 85542,
+   "sha256": "E88BABF61DB6F503E391D51738075D325254D95802BE767ED14D0BED53C0B171"
+  },
+  "report_created_on": "2026.10.08-17.55.33",
+  "unique_tests": 153,
+  "succeeded": 151,
+  "succeeded_with_warnings": 0,
+  "failed": 2,
+  "not_run": 0,
+  "duration_seconds": 499.5612487792969,
+  "states": {
+   "Success": 151,
+   "Fail": 2
+  },
+  "failures": [
+   {
+    "full_test_path": "Seige.AI.WorkerSupportRecovery",
+    "state": "Fail",
+    "errors": 1,
+    "messages": [
+     "Expected 'Actual service capacity permits the blocked factory to finish and staff' to be true."
+    ]
+   },
+   {
+    "full_test_path": "Seige.Simulation.FirstPlayableSolvable",
+    "state": "Fail",
+    "errors": 1,
+    "messages": [
+     "Expected 'Shipped first-playable scenario is winnable with only normal build actions' to be true."
+    ]
+   }
+  ],
+  "warnings_in_passing_tests": []
+ },
+ "validators": {
+  "configuration": {
+   "status": "passed",
+   "log": {
+    "path": "Saved/claude-validate-config.log",
+    "bytes": 324,
+    "sha256": "2558554B231AE6225E499C7E62C5AD2F9B6E559B58FE9D4BDE66AA2395B35AD3"
+   },
+   "tail": [
+    "Configuration valid: prototype-9.2; 22 items, 14 recipes, 52 buildings.",
+    "AI: 21 priorities, 24 established buildings, 44 active + 4 stored workers. Interface: 4 groups, 31 building/tool entries, 21 summary resources, 5 credits.",
+    "Graphics: 10 nature roles resolve to Content assets; 6 rendered centimeters per simulation unit."
+   ]
+  },
+  "rules": {
+   "status": "passed",
+   "log": {
+    "path": "Saved/claude-validate-rules.log",
+    "bytes": 189,
+    "sha256": "550D5DD596115C001A73C414CB0000503DEE1A8283736945511EFB78730076EF"
+   },
+   "tail": [
+    "Rules valid: prototype-9.2; 22 items, 14 recipes, 52 buildings.",
+    "Renewable paths verified for 22 items; startup building/worker affordability verified.",
+    "131 negative validation cases passed."
+   ]
+  }
+ },
+ "package": {
+  "status": "succeeded",
+  "build_log": {
+   "path": "Saved/package-v092.log",
+   "bytes": 98313,
+   "sha256": "C8C203EDA30119B5EC140775B3E228095A5B344F66D460BF586D221232A1E0E9"
+  },
+  "build_cook_run_seconds": 62.76,
+  "executable": {
+   "path": "Builds/v0.9.2/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+   "bytes": 167048192,
+   "sha256": "711DE0DB25FAA80A459CD495A02D9B7DE2B80D4C045B0D287D2252CEEEAFC85B"
+  }
+ },
+ "packaged_gameplay": {
+  "status": "passed",
+  "record": {
+   "path": "Saved/packaged-v0.9.2-UiSmoke-verification.json",
+   "bytes": 312296,
+   "sha256": "519ECBD14DD78BCA46390E6102AE555011C36D3D7ECD3FCF6ADBE8FD70F7534B"
+  },
+  "exit_code": 0,
+  "completed_stages": 117,
+  "failures": 0,
+  "socket_samples": 749,
+  "samples_with_endpoints": 0
+ },
+ "status": "not_verified"
+}
