@@ -897,7 +897,8 @@
         "conductors": 240,
         "substrates": 160,
         "circuits": 80,
-        "components": 320
+        "components": 320,
+        "ai_chips": 30
       },
       "jobs": 3,
       "health": 250,
@@ -1562,7 +1563,8 @@
         "conductors": 160,
         "substrates": 400,
         "circuits": 40,
-        "batteries": 100
+        "batteries": 100,
+        "ai_chips": 20
       },
       "jobs": 0,
       "health": 750,
@@ -1679,7 +1681,8 @@
         "conductors": 450.0,
         "substrates": 450.0,
         "circuits": 225.0,
-        "components": 1125.0
+        "components": 1125.0,
+        "batteries": 150.0
       },
       "jobs": 3,
       "health": 900,
@@ -1741,7 +1744,9 @@
         "conductors": 800,
         "substrates": 800,
         "circuits": 400,
-        "components": 2000
+        "components": 2000,
+        "ai_chips": 40,
+        "batteries": 150
       },
       "jobs": 4,
       "health": 1350,
@@ -1859,7 +1864,8 @@
         "conductors": 450.0,
         "substrates": 450.0,
         "circuits": 225.0,
-        "components": 1575.0
+        "components": 1575.0,
+        "batteries": 150.0
       },
       "jobs": 3,
       "health": 900,
@@ -1921,7 +1927,9 @@
         "conductors": 800,
         "substrates": 800,
         "circuits": 400,
-        "components": 2800
+        "components": 2800,
+        "ai_chips": 40,
+        "batteries": 150
       },
       "jobs": 4,
       "health": 1350,
@@ -2039,7 +2047,8 @@
         "conductors": 540.0,
         "substrates": 360.0,
         "circuits": 225.0,
-        "components": 2250.0
+        "components": 2250.0,
+        "batteries": 150.0
       },
       "jobs": 3,
       "health": 900,
@@ -2101,7 +2110,9 @@
         "conductors": 960,
         "substrates": 640,
         "circuits": 400,
-        "components": 4000
+        "components": 4000,
+        "ai_chips": 50,
+        "batteries": 150
       },
       "jobs": 4,
       "health": 1350,
@@ -2333,7 +2344,8 @@
         "conductors": 80,
         "substrates": 80,
         "circuits": 93.0,
-        "components": 352.0
+        "components": 352.0,
+        "ai_chips": 8.0
       },
       "jobs": 2,
       "health": 900,
@@ -2511,7 +2523,8 @@
         "conductors": 80,
         "substrates": 80,
         "circuits": 93.0,
-        "components": 352.0
+        "components": 352.0,
+        "ai_chips": 8.0
       },
       "jobs": 2,
       "health": 900,
@@ -2689,7 +2702,8 @@
         "conductors": 80,
         "substrates": 80,
         "circuits": 93.0,
-        "components": 352.0
+        "components": 352.0,
+        "ai_chips": 8.0
       },
       "jobs": 2,
       "health": 900,
@@ -2868,7 +2882,8 @@
         "conductors": 80,
         "substrates": 80,
         "circuits": 93.0,
-        "components": 352.0
+        "components": 352.0,
+        "ai_chips": 12.0
       },
       "jobs": 2,
       "health": 900,

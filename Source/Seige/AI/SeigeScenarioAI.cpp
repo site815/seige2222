@@ -309,7 +309,21 @@ bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Defini
 {
     const FSeigeBuildingDef& Def = Colony.BuildingDefs[Definition];
     const bool PreferCoverage=DefenseCoveragePolicy==TEXT("prefer_covered_approaches")&&!CoverageExcludedRoles.Contains(Def.Role);
-    struct FPlot{FVector2D Position;int32 Coverage;};TArray<FPlot> Candidates;
+    struct FPlot{FVector2D Position;int32 Coverage;double GridDistance;};TArray<FPlot> Candidates;
+    // Equal coverage is broken by the shortest new road: every plot still needs
+    // a paid, crew-built grid connection, and a support bay placed across the
+    // colony from the existing roads stayed unpowered for hours of simulation.
+    TArray<FVector2D> GridPoints;
+    if(const auto* Core=Command(Colony))
+    {
+        GridPoints.Add(Colony.BuildingAccessPoint(*Core));
+        for(const auto& R:Colony.Roads)if(R.Health>0&&!R.Tier.IsEmpty()&&Colony.Energy.RoadConnectedToBuilding(R.Id,Core->Id)){GridPoints.AddUnique(R.A);GridPoints.AddUnique(R.B);}
+    }
+    auto GridDistance=[&](FVector2D Position)
+    {
+        FSeigeBuilding Plot;Plot.DefId=Definition;Plot.Position=Position;const FVector2D Access=Colony.BuildingAccessPoint(Plot);
+        double Best=TNumericLimits<double>::Max();for(const auto& P:GridPoints)Best=FMath::Min(Best,FVector2D::Distance(P,Access));return Best;
+    };
     auto Consider = [&](FVector2D Position)
     {
         for (const FSeigeNode& Node : Colony.Nodes)
@@ -318,7 +332,7 @@ bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Defini
         if(PreferCoverage)
         {
             if(!Colony.CanPlaceBuilding(Definition,Position,Error)){Status=Error;return false;}
-            Candidates.Add({Position,PlotDefenseCoverage(Colony,Def,Position)});return false;
+            Candidates.Add({Position,PlotDefenseCoverage(Colony,Def,Position),GridDistance(Position)});return false;
         }
         if (!PlaceConnectedBuilding(Colony, Definition, Position, Error)) { Status = Error; return false; }
         Status = TEXT("Built ") + Def.Name; return true;
@@ -333,7 +347,11 @@ bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Defini
     // Road preflight remains mandatory, but only ranked candidates need it.
     // Stable ties retain authored spread; zero coverage is a valid fallback,
     // so bootstrap or an impossible defensive layout never becomes a gate.
-    Candidates.StableSort([](const FPlot& A,const FPlot& B){return A.Coverage>B.Coverage;});
+    // With no fixed gun in range of any plot the ranking is inactive and the
+    // authored search order stands (bootstrap); otherwise equal coverage is
+    // broken by the shorter new road.
+    const bool Ranked=Candidates.ContainsByPredicate([](const FPlot& P){return P.Coverage>0;});
+    Candidates.StableSort([Ranked](const FPlot& A,const FPlot& B){return A.Coverage!=B.Coverage?A.Coverage>B.Coverage:Ranked&&A.GridDistance+1.<B.GridDistance;});
     for(const auto& Candidate:Candidates)
     {
         FString Error;if(!PlaceConnectedBuilding(Colony,Definition,Candidate.Position,Error)){Status=Error;continue;}

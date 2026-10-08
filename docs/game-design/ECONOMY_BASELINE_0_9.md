@@ -121,6 +121,8 @@ These are production dependencies, not research unlocks or a research timer. Rar
 
 ## Construction and upgrade accounting
 
+**prototype-9.2 gates (2026-10-09).** The advanced tier is no longer affordable from the landing kit alone: the AI-chip works needs 300 kg circuits and 120 kg batteries, the battery works 100 kg plastic, the fusion works 40 kg AI chips, the mech factory 20 kg AI chips, the tracked-vehicle factory 300 kg batteries and the plasma tower 6 kg AI chips (22 of 28 blueprints remain day-one affordable, down from 26). Every level-3 upgrade (towers, solar, port, factories) needs AI chips and the three vehicle-factory level-2 upgrades need 150 kg batteries; the cumulative level-2/3 bills below include those additions. `make_fusion_reactors` now also consumes 2 kg radioactive ore per batch (22 kg out), so the deposit class has a consumer. These are the first progression gates after the v0.9 baseline and remain provisional.
+
 The table reports current `cost` totals in kg and local inventory litres. For upgraded definitions, the total includes earlier installed stages; **the actual upgrade consumes only the separately authored incremental `upgrade_cost`**. Tower stage bills include the weapon installed at that stage and do not refund removed modules. Existing local inventory, repair/input reservations, worker berths, equipment bills and construction staging still compete for real storage.
 
 | Building | Level | Cumulative bill (kg) | Next upgrade (kg) | Local storage (L) |
@@ -139,41 +141,41 @@ The table reports current `cost` totals in kg and local inventory litres. For up
 | Solar array · Level 1 | 1 | 575 | 718.75 | 800 |
 | Grid battery bank | 1 | 650 | 0 | 800 |
 | Trading port · Level 1 | 1 | 1000 | 1250 | 3000 |
-| Trading port · Level 2 | 2 | 2250 | 1750 | 6000 |
-| Trading port · Level 3 | 3 | 4000 | 0 | 12000 |
+| Trading port · Level 2 | 2 | 2250 | 1780 | 6000 |
+| Trading port · Level 3 | 3 | 4030 | 0 | 12000 |
 | Biomass refinery | 1 | 1500 | 0 | 1500 |
 | Hydrocarbon refinery | 1 | 1800 | 0 | 1500 |
 | Organic food producer | 1 | 1200 | 0 | 1500 |
-| Battery works | 1 | 1700 | 0 | 1500 |
-| AI chip works | 1 | 2400 | 0 | 1500 |
-| Fusion assembly works | 1 | 4000 | 0 | 3000 |
+| Battery works | 1 | 1800 | 0 | 1500 |
+| AI chip works | 1 | 2720 | 0 | 1500 |
+| Fusion assembly works | 1 | 4040 | 0 | 3000 |
 | Fuel generator | 1 | 925 | 0 | 800 |
 | Command center · Level 2 | 2 | 5100 | 10160 | 60000 |
 | Command center · Level 3 | 3 | 15260 | 0 | 80000 |
-| Solar array · Level 2 | 2 | 1293.75 | 1006.25 | 800 |
-| Solar array · Level 3 | 3 | 2300 | 0 | 800 |
-| Wheeled vehicle factory · Level 1 | 1 | 4000 | 5000 | 5000 |
-| Wheeled vehicle factory · Level 2 | 2 | 9000 | 7000 | 12000 |
-| Wheeled vehicle factory · Level 3 | 3 | 16000 | 0 | 50000 |
-| Tracked vehicle factory · Level 1 | 1 | 5200 | 6500 | 5000 |
-| Tracked vehicle factory · Level 2 | 2 | 11700 | 9100 | 12000 |
-| Tracked vehicle factory · Level 3 | 3 | 20800 | 0 | 50000 |
-| Mech factory · Level 1 | 1 | 5000 | 6250 | 5000 |
-| Mech factory · Level 2 | 2 | 11250 | 8750 | 12000 |
-| Mech factory · Level 3 | 3 | 20000 | 0 | 50000 |
+| Solar array · Level 2 | 2 | 1293.75 | 1026.25 | 800 |
+| Solar array · Level 3 | 3 | 2320 | 0 | 800 |
+| Wheeled vehicle factory · Level 1 | 1 | 4000 | 5150 | 5000 |
+| Wheeled vehicle factory · Level 2 | 2 | 9150 | 7040 | 12000 |
+| Wheeled vehicle factory · Level 3 | 3 | 16190 | 0 | 50000 |
+| Tracked vehicle factory · Level 1 | 1 | 5500 | 6650 | 5000 |
+| Tracked vehicle factory · Level 2 | 2 | 11850 | 9140 | 12000 |
+| Tracked vehicle factory · Level 3 | 3 | 20990 | 0 | 50000 |
+| Mech factory · Level 1 | 1 | 5020 | 6400 | 5000 |
+| Mech factory · Level 2 | 2 | 11400 | 8800 | 12000 |
+| Mech factory · Level 3 | 3 | 20200 | 0 | 50000 |
 | Worker factory | 1 | 1340 | 0 | 3000 |
 | Ammunition works | 1 | 1700 | 0 | 1500 |
-| Laser tower · Level 2 | 2 | 1170 | 3190 | 1200 |
-| Laser tower · Level 3 | 3 | 4360 | 0 | 4000 |
+| Laser tower · Level 2 | 2 | 1170 | 3198 | 1200 |
+| Laser tower · Level 3 | 3 | 4368 | 0 | 4000 |
 | Kinetic tower · Level 1 | 1 | 400 | 770 | 500 |
-| Kinetic tower · Level 2 | 2 | 1170 | 3190 | 1200 |
-| Kinetic tower · Level 3 | 3 | 4360 | 0 | 4000 |
+| Kinetic tower · Level 2 | 2 | 1170 | 3198 | 1200 |
+| Kinetic tower · Level 3 | 3 | 4368 | 0 | 4000 |
 | Missile tower · Level 1 | 1 | 400 | 770 | 500 |
-| Missile tower · Level 2 | 2 | 1170 | 3190 | 1200 |
-| Missile tower · Level 3 | 3 | 4360 | 0 | 4000 |
-| Plasma tower · Level 1 | 1 | 400 | 770 | 500 |
-| Plasma tower · Level 2 | 2 | 1170 | 3190 | 1200 |
-| Plasma tower · Level 3 | 3 | 4360 | 0 | 4000 |
+| Missile tower · Level 2 | 2 | 1170 | 3198 | 1200 |
+| Missile tower · Level 3 | 3 | 4368 | 0 | 4000 |
+| Plasma tower · Level 1 | 1 | 406 | 770 | 500 |
+| Plasma tower · Level 2 | 2 | 1170 | 3202 | 1200 |
+| Plasma tower · Level 3 | 3 | 4372 | 0 | 4000 |
 | Wall segment · Level 1 | 1 | 600 | 750 | 800 |
 | Wall segment · Level 2 | 2 | 1350 | 1050 | 800 |
 | Wall segment · Level 3 | 3 | 2400 | 0 | 800 |
