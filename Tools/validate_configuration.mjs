@@ -271,8 +271,16 @@ export function validateConfiguration(data) {
     buildable(target.definition, `AI build_targets[${index}].definition`);
     number(target.count, `AI build_targets[${index}].count`, 1, 128, true);
     number(target.placement_index, `AI build_targets[${index}].placement_index`, 0, 4096, true);
+    if (target.optional !== undefined && typeof target.optional !== 'boolean') fail(`AI build_targets[${index}].optional must be a boolean`);
     if ((finalCounts.get(target.definition) ?? 0) >= target.count) fail(`Repeated AI target counts must increase: ${target.definition}`);
     finalCounts.set(target.definition, target.count);
+  }
+  const upgrades = object(ai.upgrades, 'AI upgrades'), upgradeFamilies = new Set();
+  number(upgrades.max_concurrent, 'AI upgrades.max_concurrent', 0, 8, true);
+  number(upgrades.defense_quiet_radius, 'AI upgrades.defense_quiet_radius', 0, extent * 2);
+  for (const family of array(upgrades.families, 'AI upgrades.families', 0, 32)) {
+    if (![...buildings.values()].some(b => b.family === family && b.next_upgrade && menu.has(b.id))) fail(`AI upgrades.families names no upgradable buildable family: ${family}`);
+    unique(upgradeFamilies, family, 'AI upgrade family');
   }
   if (!['established_manifest','simulated_history'].includes(ai.developed_initialization)) fail('Invalid AI developed_initialization');
   if (developed.kind !== 'established_colony' || developed.equipment !== 'definition_defaults' || developed.fleet !== 'scenario_guard_manifest') fail('Invalid established kind/equipment/fleet');
@@ -287,7 +295,10 @@ export function validateConfiguration(data) {
   for (const [i, row] of established.entries()) {
     object(row, `Established building ${i}`);
     const def = buildings.get(row.definition);
-    if (!def || (i === 0 ? row.definition !== scenario.core_definition : !menu.has(row.definition) || def.role === 'core')) fail('Established buildings must begin with one valid command core');
+    // Rows after the core are buildable blueprints or upgraded levels of one.
+    let root = def;
+    while (root) { const parent = [...buildings.values()].find(b => b.next_upgrade === root.id); if (!parent) break; root = parent; }
+    if (!def || (i === 0 ? row.definition !== scenario.core_definition : !menu.has(root.id) || def.role === 'core')) fail('Established buildings must begin with one valid command core');
     if (!['core','deposit'].includes(row.anchor) || (def.role === 'extractor') !== (row.anchor === 'deposit')) fail('Invalid established anchor');
     if (row.anchor === 'deposit') mines++;
     array(row.offset_meters, 'Established offset_meters', 2, 2).forEach(v => number(v, 'Established offset_meters', -1800, 1800));

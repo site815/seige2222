@@ -33,7 +33,8 @@ bool FSeigeScenarioAI::LoadEstablishedPreset(const FSeigeSimulation& S,const TSh
            !(*Row)->TryGetStringField(TEXT("anchor"),B.Anchor)||(B.Anchor!=TEXT("core")&&B.Anchor!=TEXT("deposit")))
         {Error=TEXT("Invalid established building definition or anchor");return false;}
         const auto& D=S.BuildingDefs[B.Definition];
-        if((I==0&&(B.Definition!=S.CoreDefinition||B.Anchor!=TEXT("core")))||(I>0&&(!S.BuildMenu.Contains(B.Definition)||D.Role==TEXT("core"))))
+        // Rows after the core are buildable blueprints or upgraded levels of one.
+        if((I==0&&(B.Definition!=S.CoreDefinition||B.Anchor!=TEXT("core")))||(I>0&&(!S.BuildMenu.Contains(S.BaseBlueprint(B.Definition))||D.Role==TEXT("core"))))
         {Error=TEXT("Established manifest must start with exactly one scenario command core");return false;}
         if((D.Role==TEXT("extractor"))!=(B.Anchor==TEXT("deposit"))){Error=TEXT("Established Extraction Mine must bind the actual deposit");return false;}
         if(B.Anchor==TEXT("deposit"))++MineCount;
@@ -87,7 +88,7 @@ bool FSeigeScenarioAI::TryEstablishedLayout(FSeigeSimulation& S,int32 DepositId,
         if(I>0)for(const auto& N:S.Nodes)if(N.Id!=DepositId||Entry.Anchor!=TEXT("deposit"))
             if(FVector2D::Distance(N.Position,Position)<D.ReservedFootprint+NodeClearance){Error=TEXT("Established plot obstructs a deposit");return false;}
         FSeigeBuilding B;B.Id=I==0?S.Buildings[0].Id:S.NextId++;B.DefId=Entry.Definition;B.Position=Position;B.Health=D.Health;
-        B.Status=TEXT("Established scenario installation");B.Inventory=Entry.Inventory;B.InstalledMaterials=S.ConstructionCost(B);B.SelectedRecipe=Entry.Recipe;
+        B.Status=TEXT("Established scenario installation");B.Inventory=Entry.Inventory;B.InstalledMaterials=S.ConstructionCost(B);B.PreviousLevelMaterials=S.PreviousLevelBill(B.DefId);B.SelectedRecipe=Entry.Recipe;
         B.BatteryEnergyKWh=Entry.BatteryKWh;B.Workers=Entry.Operators;B.BuilderPosition=Position;
         if(Entry.Anchor==TEXT("deposit")){const auto* Bound=S.ExtractionNode(B.DefId,Position);if(!Bound||Bound->Id!=DepositId){Error=TEXT("Established mine cannot bind deposit");return false;}B.DepositId=DepositId;}
         Operators.Add(B.Id,Entry.Operators);if(I==0)S.Buildings[0]=MoveTemp(B);else S.Buildings.Add(MoveTemp(B));

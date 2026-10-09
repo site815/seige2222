@@ -428,6 +428,18 @@ double FSeigeSimulation::StorageRoom(const FSeigeBuilding& B,int32 ArrivingCouri
 const TMap<FString,double>& FSeigeSimulation::ConstructionCost(const FSeigeBuilding& B) const {if(!B.UpgradeTarget.IsEmpty())return Definition(B)->UpgradeCost;for(const auto& P:BuildingDefs)if(P.Value.NextUpgrade==B.DefId)return P.Value.UpgradeCost;return Definition(B)->Cost;}
 double FSeigeSimulation::ConstructionSeconds(const FSeigeBuilding& B) const {return BuildingDefs[B.UpgradeTarget.IsEmpty()?B.DefId:B.UpgradeTarget].ConstructionSeconds;}
 int32 FSeigeSimulation::RequiredBuilders(const FSeigeBuilding& B) const {return BuildingDefs[B.UpgradeTarget.IsEmpty()?B.DefId:B.UpgradeTarget].ConstructionWorkers;}
+FString FSeigeSimulation::BaseBlueprint(const FString& Id) const
+{
+    FString Current=Id;
+    for(int32 Guard=0;Guard<16;++Guard){const FSeigeBuildingDef* Parent=nullptr;for(const auto& P:BuildingDefs)if(P.Value.NextUpgrade==Current){Parent=&P.Value;break;}if(!Parent)break;Current=Parent->Id;}
+    return Current;
+}
+TMap<FString,double> FSeigeSimulation::PreviousLevelBill(const FString& Id) const
+{
+    TMap<FString,double> Bill;FString Current=Id;
+    while(true){const FSeigeBuildingDef* Parent=nullptr;for(const auto& P:BuildingDefs)if(P.Value.NextUpgrade==Current){Parent=&P.Value;break;}if(!Parent)break;const FSeigeBuildingDef* Earlier=nullptr;for(const auto& P:BuildingDefs)if(P.Value.NextUpgrade==Parent->Id){Earlier=&P.Value;break;}const auto& Cost=Earlier?Earlier->UpgradeCost:Parent->Cost;for(const auto& P:Cost)Bill.FindOrAdd(P.Key)+=P.Value;Current=Parent->Id;}
+    return Bill;
+}
 bool FSeigeSimulation::CanUpgradeBuilding(int32 Id,FString& Error) const
 {
     const auto* B=FindBuilding(Id);const auto* D=B?Definition(*B):nullptr;
@@ -1059,8 +1071,7 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
         if(B.Shipment.Resource.IsEmpty()){if(B.Shipment.Buy||B.Shipment.Departed||B.Shipment.Quantity!=0||B.Shipment.PriceCredits!=0||B.Shipment.Progress!=0||B.Shipment.GoodsEscrow!=0){Error=TEXT("Empty shipment has outstanding state");return false;}}
         else{const auto* Port=Trade.Definition(B.DefId);const auto* R=Resources.Find(B.Shipment.Resource);if(!Port||!R||B.IsConstructing||B.Shipment.Quantity<=0||(R->Discrete&&B.Shipment.Quantity!=FMath::FloorToDouble(B.Shipment.Quantity))||B.Shipment.Quantity*R->UnitMassKg>Port->CapacityKg+1.e-8||B.Shipment.Progress>=1||(!B.Shipment.Departed&&B.Shipment.Progress!=0)||FMath::Abs(B.Shipment.PriceCredits-Trade.Quote(B.Shipment.Resource,B.Shipment.Quantity,B.Shipment.Buy))>1.e-8||B.Shipment.GoodsEscrow!=(!B.Shipment.Buy&&B.Shipment.Departed?B.Shipment.Quantity:0)){Error=TEXT("Invalid saved trade escrow");return false;}}
         if(!ReadCrew(V,B,Candidate.RequiredBuilders(B),WorldHalfSize,Resources,Error))return false;
-        TMap<FString,double> PreviousBill;FString Current=B.DefId;
-        while(true){const FSeigeBuildingDef* Parent=nullptr;for(const auto& P:BuildingDefs)if(P.Value.NextUpgrade==Current){Parent=&P.Value;break;}if(!Parent)break;const auto* Earlier=static_cast<const FSeigeBuildingDef*>(nullptr);for(const auto& P:BuildingDefs)if(P.Value.NextUpgrade==Parent->Id){Earlier=&P.Value;break;}const auto& Cost=Earlier?Earlier->UpgradeCost:Parent->Cost;for(const auto& P:Cost)PreviousBill.FindOrAdd(P.Key)+=P.Value;Current=Parent->Id;}
+        TMap<FString,double> PreviousBill=PreviousLevelBill(B.DefId);
         if(!B.UpgradeTarget.IsEmpty()){const TMap<FString,double>* Last=&Def.Cost;for(const auto& P:BuildingDefs)if(P.Value.NextUpgrade==B.DefId){Last=&P.Value.UpgradeCost;break;}for(const auto& P:*Last)PreviousBill.FindOrAdd(P.Key)+=P.Value;}
         if(!ValidInstallation(PreviousBill,{},B.PreviousLevelMaterials,1,Error))return false;
         if(B.ConstructionProgress>1 || (!B.IsConstructing&&(B.ConstructionProgress!=1||Sum(B.ConstructionMaterials)>1.e-6)) || (B.IsConstructing&&(B.ConstructionProgress>=1||B.Progress>0))) {Error=TEXT("Inconsistent construction state");return false;}

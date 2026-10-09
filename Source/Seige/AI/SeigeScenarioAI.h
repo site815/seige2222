@@ -7,6 +7,8 @@ struct FSeigeAIBuildTarget
     FString Definition;
     int32 Count = 0;
     int32 PlacementIndex = 0;
+    // Optional targets never hold back later work while their bill is short.
+    bool Optional = false;
 };
 struct FSeigeEstablishedBuilding
 {
@@ -51,6 +53,7 @@ private:
     friend class FSeigeAISurplusExportTest;
     friend class FSeigeAIDevelopedContinuationDiagnostic;
     friend class FSeigeAICoveredPlacementTest;
+    friend class FSeigeAIUpgradeTest;
 #endif
     bool Ready = false;
     bool Preparing=false;
@@ -81,6 +84,9 @@ private:
     FString BulkInputPolicy,SurplusExportPolicy;
     double GuardRechargeBelow=0,GuardResumeAbove=0;
     TMap<FString,double> ReserveTargets;
+    TArray<FString> UpgradeFamilies;
+    int32 MaxConcurrentUpgrades=0;
+    double UpgradeQuietRadius=0;
     bool LoadConfig(const FSeigeSimulation& Colony, const FString& Directory, FString& Error);
     bool MakeDecision(FSeigeSimulation& Colony);
     void RunDecisionCycle(FSeigeSimulation& Colony);
@@ -91,6 +97,10 @@ private:
     bool FindPowerConnection(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuilding* ProspectivePlot,FVector2D& OutA,FVector2D& OutB,bool& NeedsSegment,FString& Error) const;
     bool ExtendSensors(FSeigeSimulation& Colony, FVector2D Destination);
     int32 CountLive(const FSeigeSimulation& Colony, const FString& Definition) const;
+    // True for the target definition itself or a higher level of its family,
+    // so an upgraded building still satisfies its plan entry.
+    bool Meets(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FString& Definition) const;
+    bool ManageUpgrades(FSeigeSimulation& Colony);
     const FSeigeNode* ExportNode(const FSeigeSimulation& Colony) const;
     bool NextPowerRoad(const FSeigeSimulation& Colony,FVector2D& OutA,FVector2D& OutB,FString& TargetName,FString& Error) const;
     bool ConnectPowerRoad(FSeigeSimulation& Colony,bool& Waiting);

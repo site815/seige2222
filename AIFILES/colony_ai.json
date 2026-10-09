@@ -131,6 +131,12 @@
       "definition": "robot_service_bay",
       "count": 3,
       "placement_index": 24
+    },
+    {
+      "definition": "ai_chip_works",
+      "count": 1,
+      "placement_index": 28,
+      "optional": true
     }
   ],
   "developed_setup_seconds": 129600,
@@ -162,6 +168,15 @@
     ],
     "bulk_input_policy": "remaining_output_bill",
     "export_policy": "surplus_shipment_value"
+  },
+  "upgrades": {
+    "families": [
+      "solar_array",
+      "trading_port",
+      "turret"
+    ],
+    "max_concurrent": 1,
+    "defense_quiet_radius": 3000
   },
   "developed_initialization": "established_manifest"
 }

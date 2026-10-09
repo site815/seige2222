@@ -1204,9 +1204,9 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
         if(IsBus(E)&&!Emphasis)
         {
             // Port: a small swatch on the consumer's left edge in the material's colour.
-            FLinearColor PC=PortColors[PortOf(E.From)];PC.A=Hover==INDEX_NONE?.95f:Lit.Contains(E.To)?.95f:.25f;
+            FLinearColor PortColor=PortColors[PortOf(E.From)];PortColor.A=Hover==INDEX_NONE?.95f:Lit.Contains(E.To)?.95f:.25f;
             const int32 Slot=PortsOnNode.FindOrAdd(E.To)++;
-            Box(B.X-7,Pos[E.To].Y+3+Slot*5,5,4,PC);
+            Box(B.X-7,Pos[E.To].Y+3+Slot*5,5,4,PortColor);
             continue;
         }
         // Straight runs with short horizontal stubs read better than orthogonal
@@ -1236,7 +1236,7 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
         if(I==Hover)Fill=FLinearColor(.12f,.24f,.28f,.98f);
         if(Faded){Fill.A*=.35f;Color.A*=.35f;}
         Box(P.X,P.Y,NodeW,NH,Fill);Box(P.X,P.Y,2,NH,Color);
-        if(PortOf(I)!=INDEX_NONE){FLinearColor PC=PortColors[PortOf(I)];PC.A*=Faded?.35f:1.f;Box(P.X+NodeW-5,P.Y,5,NH,PC);}
+        if(PortOf(I)!=INDEX_NONE){FLinearColor PortColor=PortColors[PortOf(I)];PortColor.A*=Faded?.35f:1.f;Box(P.X+NodeW-5,P.Y,5,NH,PortColor);}
         if(I==ChainFocus&&!MouseMoved){const FLinearColor F(Gold.R,Gold.G,Gold.B,.9f);Box(P.X-1,P.Y-1,NodeW+2,1,F);Box(P.X-1,P.Y+NH,NodeW+2,1,F);Box(P.X-1,P.Y,1,NH,F);Box(P.X+NodeW,P.Y,1,NH,F);}
         if(N.Building)
         {

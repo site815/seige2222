@@ -130,9 +130,23 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
         if (!Value->TryGetObject(Entry) || !Entry || !Entry->IsValid() || !(*Entry)->TryGetStringField(TEXT("definition"), Target.Definition) || !Colony.BuildMenu.Contains(Target.Definition))
         { Error = TEXT("AI target references an unknown or unbuildable definition"); return false; }
         if (!Integer(*Entry, TEXT("count"), Target.Count, 1, 128, Error) || !Integer(*Entry,TEXT("placement_index"),Target.PlacementIndex,0,4096,Error)) return false;
+        if ((*Entry)->HasField(TEXT("optional")) && !(*Entry)->TryGetBoolField(TEXT("optional"), Target.Optional)) { Error = TEXT("AI target optional must be a boolean"); return false; }
         if (PreviousCounts.FindRef(Target.Definition) >= Target.Count)
         { Error = TEXT("Repeated AI target counts must increase: ") + Target.Definition; return false; }
         PreviousCounts.Add(Target.Definition, Target.Count); Targets.Add(Target);
+    }
+    // Voluntary in-place upgrades once the plan stands (families in priority order).
+    const FObject* Upgrades=nullptr;const TArray<TSharedPtr<FJsonValue>>* Families=nullptr;
+    if(!Config->TryGetObjectField(TEXT("upgrades"),Upgrades)||!Upgrades||!(*Upgrades)->TryGetArrayField(TEXT("families"),Families)||!Families||Families->Num()>32||
+       !Integer(*Upgrades,TEXT("max_concurrent"),MaxConcurrentUpgrades,0,8,Error)||!Number(*Upgrades,TEXT("defense_quiet_radius"),UpgradeQuietRadius,0,Colony.WorldHalfSize*2,Error))
+    {if(Error.IsEmpty())Error=TEXT("Invalid AI upgrades settings");return false;}
+    UpgradeFamilies.Empty();
+    for(const auto& Value:*Families)
+    {
+        FString Family;bool Upgradable=false;
+        if(Value->TryGetString(Family))for(const auto& P:Colony.BuildingDefs)if(P.Value.Family==Family&&!P.Value.NextUpgrade.IsEmpty()&&Colony.BuildMenu.Contains(P.Value.Id)){Upgradable=true;break;}
+        if(!Upgradable||UpgradeFamilies.Contains(Family)){Error=TEXT("AI upgrades.families must name distinct upgradable, buildable families");return false;}
+        UpgradeFamilies.Add(Family);
     }
     if(!Config->TryGetStringField(TEXT("developed_initialization"),DevelopedInitialization)||(DevelopedInitialization!=TEXT("established_manifest")&&DevelopedInitialization!=TEXT("simulated_history")))
     {Error=TEXT("Unsupported AI developed_initialization");return false;}
@@ -175,7 +189,7 @@ bool FSeigeScenarioAI::DevelopmentComplete(const FSeigeSimulation& Colony) const
     for(const auto& Target:Targets)
     {
         if(!IncludesTarget(Colony,Target.Definition))continue;int32 Count=0;
-        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&B.DefId==Target.Definition&&B.Workers>=Colony.Definition(B)->Jobs&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&Meets(Colony,B,Target.Definition)&&B.Workers>=Colony.Definition(B)->Jobs&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
         if(Count<Target.Count)return false;
     }
     return true;
@@ -189,10 +203,10 @@ bool FSeigeScenarioAI::FinishPreparation(FSeigeSimulation& Colony,FString& Error
     for(const auto& Target:Targets)
     {
         if(!IncludesTarget(Colony,Target.Definition))continue;int32 Count=0;const auto* Core=Command(Colony);
-        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&B.DefId==Target.Definition&&B.Workers>=Colony.Definition(B)->Jobs&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&Meets(Colony,B,Target.Definition)&&B.Workers>=Colony.Definition(B)->Jobs&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
         if(Colony.Failed||Colony.Escaped||Count<Target.Count)
         {
-            int32 Live=0,Destroyed=0,Unfinished=0,TargetDestroyed=0;for(const auto& B:Colony.Buildings){if(B.Health<=0){++Destroyed;if(B.DefId==Target.Definition)++TargetDestroyed;}else{++Live;if(B.IsConstructing)++Unfinished;}}
+            int32 Live=0,Destroyed=0,Unfinished=0,TargetDestroyed=0;for(const auto& B:Colony.Buildings){if(B.Health<=0){++Destroyed;if(Meets(Colony,B,Target.Definition))++TargetDestroyed;}else{++Live;if(B.IsConstructing)++Unfinished;}}
             const FString Diagnostic=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Diagnostics"),FString::Printf(TEXT("developed-ai-failed-%d.json"),Colony.GenerationSeed));FString SaveError;const bool Saved=Colony.Save(Diagnostic,SaveError);
             Ready=false;Error=FString::Printf(TEXT("Developed AI preset cannot finish %s (%d/%d) by %.2f seconds. %s. %s; buildings %d live, %d destroyed, %d unfinished; target destroyed %d; failed %d. %s"),*Target.Definition,Count,Target.Count,Colony.Time,*Status,*Colony.WorkforceStatus(),Live,Destroyed,Unfinished,TargetDestroyed,Colony.Failed?1:0,*(Saved?TEXT("Diagnostic: ")+Diagnostic:TEXT("Diagnostic save failed: ")+SaveError));return false;
         }
@@ -242,7 +256,7 @@ void FSeigeScenarioAI::ReportPreparationMilestone(const FSeigeSimulation& Colony
     for(const auto& Id:Ids)
     {
         int32 Count=0;
-        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&B.Enabled&&B.DefId==Id&&B.Workers>=Colony.Definition(B)->Jobs&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&B.Enabled&&Meets(Colony,B,Id)&&B.Workers>=Colony.Definition(B)->Jobs&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
         Completed+=FMath::Min(Count,FinalCounts[Id]);Required+=FinalCounts[Id];
         if(Count<FinalCounts[Id])Missing.Add(FString::Printf(TEXT("%s:%d/%d"),*Id,Count,FinalCounts[Id]));
     }
@@ -258,8 +272,14 @@ void FSeigeScenarioAI::ReportPreparationMilestone(const FSeigeSimulation& Colony
 int32 FSeigeScenarioAI::CountLive(const FSeigeSimulation& Colony, const FString& Definition) const
 {
     int32 Count = 0;
-    for (const FSeigeBuilding& B : Colony.Buildings) if (B.Health > 0 && B.DefId == Definition) ++Count;
+    for (const FSeigeBuilding& B : Colony.Buildings) if (B.Health > 0 && Meets(Colony, B, Definition)) ++Count;
     return Count;
+}
+bool FSeigeScenarioAI::Meets(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FString& Definition) const
+{
+    if(Building.DefId==Definition)return true;
+    const auto* Have=Colony.BuildingDefs.Find(Building.DefId);const auto* Want=Colony.BuildingDefs.Find(Definition);
+    return Have&&Want&&!Want->Family.IsEmpty()&&Have->Family==Want->Family&&Have->Level>Want->Level;
 }
 
 int32 FSeigeScenarioAI::PlotDefenseCoverage(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Position) const
@@ -809,9 +829,15 @@ const FSeigeAIBuildTarget* FSeigeScenarioAI::NextConstructionTarget(const FSeige
     {
         if(!IncludesTarget(Colony,Target.Definition))continue;
         int32 Living=0,Operational=0;
-        for(const auto& B:Colony.Buildings)if(B.Health>0&&B.DefId==Target.Definition)
-        {if(!B.Enabled)return nullptr;++Living;if(!B.IsConstructing&&B.Workers>=Colony.Definition(B)->Jobs)++Operational;}
-        if(Living<Target.Count)return &Target;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&Meets(Colony,B,Target.Definition))
+        {if(!B.Enabled)return nullptr;++Living;if((!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&B.Workers>=Colony.Definition(B)->Jobs)++Operational;}
+        if(Living<Target.Count)
+        {
+            // An unaffordable optional target is skipped, as in MakeDecision.
+            bool Affordable=true;for(const auto& Cost:Colony.BuildingDefs[Target.Definition].Cost)if(Colony.ConstructionAvailable(Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value)Affordable=false;
+            if(Target.Optional&&!Affordable)continue;
+            return &Target;
+        }
         // Match the ordered construction controller: an already queued or
         // understaffed target must finish before funding downstream expansion.
         if(Operational<Target.Count)return nullptr;
@@ -888,12 +914,13 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
         const FSeigeAIBuildTarget& Target = Targets[Index];
         if(!IncludesTarget(Colony,Target.Definition))continue;
         for (const FSeigeBuilding& B : Colony.Buildings)
-            if (B.DefId == Target.Definition && B.Health > 0 && !B.Enabled)
+            if (Meets(Colony, B, Target.Definition) && B.Health > 0 && !B.Enabled)
             { Colony.ToggleBuilding(B.Id); Status = TEXT("Re-enabled ") + Target.Definition; return true; }
         const int32 Existing = CountLive(Colony, Target.Definition);
         if (Existing >= Target.Count)
         {
-            int32 Operational=0;for(const auto& B:Colony.Buildings)if(B.DefId==Target.Definition&&B.Health>0&&!B.IsConstructing&&B.Enabled&&B.Workers>=Colony.Definition(B)->Jobs)++Operational;
+            // A voluntary upgrade in progress keeps its plan entry satisfied.
+            int32 Operational=0;for(const auto& B:Colony.Buildings)if(Meets(Colony,B,Target.Definition)&&B.Health>0&&(!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&B.Enabled&&B.Workers>=Colony.Definition(B)->Jobs)++Operational;
             if(Operational<Target.Count){Status=TEXT("Waiting for completion and staffing: ")+Target.Definition;return false;}
             continue;
         }
@@ -901,7 +928,11 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
         bool Affordable = true;
         Core = Command(Colony);
         for (const auto& Pair : Def.Cost) if (Colony.ConstructionAvailable(Pair.Key) + UE_DOUBLE_SMALL_NUMBER < Pair.Value) Affordable = false;
-        if (!Affordable) { Status = TEXT("Waiting for construction materials: ")+Target.Definition; return false; }
+        if (!Affordable)
+        {
+            if (Target.Optional) continue;
+            Status = TEXT("Waiting for construction materials: ")+Target.Definition; return false;
+        }
         if (!Def.ExtractionRates.IsEmpty())
         {
             TArray<const FSeigeNode*> Nodes;
@@ -943,7 +974,42 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
         }
         // Do not consume the bootstrap stock on downstream factories while a prerequisite
         // extractor, perimeter sensor or service expansion is still unavailable.
+        if (Target.Optional) continue;
         return false;
+    }
+    return ManageUpgrades(Colony);
+}
+
+bool FSeigeScenarioAI::ManageUpgrades(FSeigeSimulation& Colony)
+{
+    // Voluntary in-place upgrades once every planned building stands: families
+    // in the configured order, lowest level first, only with the whole upgrade
+    // bill spare above the AI reserve targets. An upgrading tower stops firing,
+    // so defensive families wait until no live enemy is within the quiet radius.
+    if(MaxConcurrentUpgrades<=0||UpgradeFamilies.IsEmpty())return false;
+    int32 Active=0;for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.UpgradeTarget.IsEmpty())++Active;
+    if(Active>=MaxConcurrentUpgrades)return false;
+    const auto* Core=Command(Colony);if(!Core)return false;
+    bool Quiet=true;for(const auto& E:Colony.Enemies)if(E.Health>0&&FVector2D::Distance(E.Position,Core->Position)<UpgradeQuietRadius){Quiet=false;break;}
+    for(const FString& Family:UpgradeFamilies)
+    {
+        const FSeigeBuilding* Best=nullptr;
+        for(const auto& B:Colony.Buildings)
+        {
+            const auto* D=Colony.Definition(B);
+            if(!D||D->Family!=Family||D->NextUpgrade.IsEmpty()||B.Health<D->Health||B.IsConstructing||!B.Enabled)continue;
+            const int32 BestLevel=Best?Colony.Definition(*Best)->Level:0;
+            if(!Best||D->Level<BestLevel||(D->Level==BestLevel&&B.Id<Best->Id))Best=&B;
+        }
+        if(!Best)continue;
+        const auto* D=Colony.Definition(*Best);
+        if(!Quiet&&D->Role==TEXT("defense"))continue;
+        bool Affordable=true;
+        for(const auto& Cost:D->UpgradeCost)if(Colony.ConstructionAvailable(Cost.Key)-ReserveTargets.FindRef(Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value){Affordable=false;break;}
+        if(!Affordable)continue;
+        const int32 Id=Best->Id;const FString Name=D->Name;FString Error;
+        if(Colony.UpgradeBuilding(Id,Error)){Status=TEXT("Upgrading ")+Name;return true;}
+        Status=Error;
     }
     return false;
 }

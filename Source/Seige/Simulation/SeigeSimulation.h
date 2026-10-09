@@ -179,6 +179,11 @@ public:
     FString ConstructionStage(const FSeigeBuilding& Building) const;
     double ConstructionPhaseProgress(const FSeigeBuilding& Building, int32 PhaseIndex) const;
     bool CanUpgradeBuilding(int32 Id,FString& Error) const;
+    // Level-1 blueprint an upgraded definition grows from (itself for level 1).
+    FString BaseBlueprint(const FString& DefinitionId) const;
+    // Materials installed by the levels below DefinitionId: what an in-place
+    // upgrade to it keeps as PreviousLevelMaterials.
+    TMap<FString,double> PreviousLevelBill(const FString& DefinitionId) const;
     bool UpgradeBuilding(int32 Id,FString& Error);
     void OnBuildingDestroyed(int32 Id);
     void DamageRoad(int32 Id,double Amount);
