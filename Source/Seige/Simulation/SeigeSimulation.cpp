@@ -595,6 +595,12 @@ int32 FSeigeSimulation::AddReviewBuilding(const FString& Id, FVector2D P)
     B.IsConstructing=false;B.ConstructionProgress=1;B.InstalledMaterials=D->Cost;
     Buildings.Add(B);++TransportRevision;return B.Id;
 }
+int32 FSeigeSimulation::AddReviewWall(const FString& DefinitionId,FVector2D A,FVector2D B,bool InsideLeft)
+{
+    const FSeigeBuildingDef* D=BuildingDefs.Find(DefinitionId);if(!D||D->Role!=TEXT("wall"))return 0;
+    const int32 Id=AddReviewBuilding(DefinitionId,(A+B)*.5);if(!Id)return 0;
+    FSeigeWallSegment Segment;Segment.BuildingId=Id;Segment.A=A;Segment.B=B;Segment.InsideLeft=InsideLeft;Walls.Segments.Add(Segment);return Id;
+}
 bool FSeigeSimulation::AddReviewStoredWorkers(int32 Id,int32 Count)
 {
     FSeigeBuilding* B=FindBuilding(Id);const FSeigeBuildingDef* D=B?Definition(*B):nullptr;

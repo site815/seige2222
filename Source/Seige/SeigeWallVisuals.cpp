@@ -47,10 +47,29 @@ void ASeigeGameMode::SyncWallVisuals(const FSeigeSimulation& Colony,FVector2D Of
         if(!A)
         {
             A=GetWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(A);A->SetRootComponent(Root);Root->RegisterComponent();A->Tags.Add(Signature);Visuals.Add(Key,A);
-            Part(A,TEXT("Cube"),FVector(0,0,Height*.5),FVector(Length/100.,Colony.Walls.WidthMeters,Height/100.),D->Color);
-            Part(A,TEXT("Cube"),FVector(0,0,Height-15),FVector(Length/100.+.12,Colony.Walls.WidthMeters+.2,.3),FLinearColor(.19,.24,.25));
-            for(double X:{-.47,.47})Part(A,TEXT("Cube"),FVector(Length*X,0,Height*.5),FVector(.3,Colony.Walls.WidthMeters+.3,Height/100.+.2),FLinearColor(.32,.37,.38));
-            Part(A,TEXT("Cube"),FVector(0,(S.InsideLeft?1:-1)*(Colony.Walls.WidthMeters*50+2),Height*.7),FVector(Length/100.*.86,.04,.07),FLinearColor(.25,.6,.55));
+            // Kit wall sections (Tools/create_building_kit_v092.py wall_section):
+            // a 6 m section authored with its length on X and its inside on +Y,
+            // scaled to this segment's length and the level's rules height and
+            // turned half round when the inside is on the right. The cube
+            // assembly remains the fallback when the mesh is not imported.
+            FString Kind=BuildingVisualKind(*D);if(Kind.IsEmpty())Kind=TEXT("wall");Kind[0]=FChar::ToUpper(Kind[0]);
+            UStaticMesh* Section=LoadObject<UStaticMesh>(nullptr,*FString::Printf(TEXT("/Game/Art/SM_%s.SM_%s"),*Kind,*Kind),nullptr,LOAD_NoWarn);
+            if(Section)
+            {
+                const FVector Size=Section->GetBoundingBox().GetSize();
+                auto* Mesh=NewObject<UStaticMeshComponent>(A);Mesh->SetMobility(EComponentMobility::Movable);Mesh->SetStaticMesh(Section);
+                Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);Mesh->SetupAttachment(Root);
+                Mesh->SetRelativeScale3D(FVector(Length/FMath::Max(Size.X,1.),1,Height/FMath::Max(Size.Z,1.)));
+                Mesh->SetRelativeRotation(FRotator(0,S.InsideLeft?0:180,0));
+                Mesh->RegisterComponent();A->AddInstanceComponent(Mesh);
+            }
+            else
+            {
+                Part(A,TEXT("Cube"),FVector(0,0,Height*.5),FVector(Length/100.,Colony.Walls.WidthMeters,Height/100.),D->Color);
+                Part(A,TEXT("Cube"),FVector(0,0,Height-15),FVector(Length/100.+.12,Colony.Walls.WidthMeters+.2,.3),FLinearColor(.19,.24,.25));
+                for(double X:{-.47,.47})Part(A,TEXT("Cube"),FVector(Length*X,0,Height*.5),FVector(.3,Colony.Walls.WidthMeters+.3,Height/100.+.2),FLinearColor(.32,.37,.38));
+                Part(A,TEXT("Cube"),FVector(0,(S.InsideLeft?1:-1)*(Colony.Walls.WidthMeters*50+2),Height*.7),FVector(Length/100.*.86,.04,.07),FLinearColor(.25,.6,.55));
+            }
             ClearSceneryAt(B->Position+Offset,D->ReservedFootprint);
         }
         A->SetActorLocation((Start+End)*.5);A->SetActorRotation((End-Start).Rotation());A->SetActorScale3D(FVector(1,1,Progress));

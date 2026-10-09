@@ -154,6 +154,9 @@ public:
     // Review tooling only: real stored identities (with their inventory units) in a
     // building that stores inactive workers, held there by its export target.
     bool AddReviewStoredWorkers(int32 BuildingId, int32 Count);
+    // Review tooling only: one completed wall section of the given level between
+    // two points, registered with the wall system like a committed segment.
+    int32 AddReviewWall(const FString& DefinitionId, FVector2D A, FVector2D B, bool InsideLeft);
     bool CanPlaceBuilding(const FString& DefinitionId, FVector2D Position, FString& Error) const;
     void ToggleBuilding(int32 Id);
     bool Save(const FString& Filename, FString& Error) const;

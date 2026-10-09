@@ -45,6 +45,16 @@ record = {
     'generated_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
     'record_date': datetime.date.today().isoformat(),
 }
+# The source the gate ran on: HEAD, and whether tracked files differed from it.
+try:
+    import subprocess
+    head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True, timeout=30)
+    dirty = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT, capture_output=True, text=True, timeout=60)
+    if head.returncode == 0:
+        record['source_commit'] = head.stdout.strip()
+        record['tracked_changes_at_record'] = [line[3:] for line in dirty.stdout.splitlines()][:50] if dirty.returncode == 0 else 'unknown'
+except (OSError, subprocess.SubprocessError):
+    record['source_commit'] = 'unknown'
 rules = json.loads((ROOT / 'Rules/buildings.json').read_text(encoding='utf-8-sig'))
 record['rules_version'] = rules.get('version')
 record['save_format'] = 7

@@ -312,6 +312,17 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             }
             const int32 Rows=FMath::DivideAndRoundUp(Placed,Columns);
             ShowcaseCenter=Origin+FVector2D((Rows-1)*Pitch*.5,(Columns-1)*Pitch*.5);
+            // One L-shaped line of five sections per wall level beside the grid,
+            // inside (walkways, counterforts) towards the default yaw-135 camera;
+            // -BenchmarkYaw=315 shows the outside faces.
+            const double WallSection=Sim.Walls.SegmentLengthMeters/Sim.MetersPerWorldUnit();
+            for(int32 WallLevel=0;WallLevel<Sim.Walls.LevelDefinitions.Num();++WallLevel)
+            {
+                const FVector2D Corner=Origin+FVector2D(Rows*Pitch+200,WallLevel*WallSection*5);
+                const FVector2D Joints[]={Corner,Corner+FVector2D(0,WallSection),Corner+FVector2D(0,WallSection*2),Corner+FVector2D(0,WallSection*3),
+                    Corner+FVector2D(WallSection,WallSection*3),Corner+FVector2D(WallSection*2,WallSection*3)};
+                for(int32 J=1;J<int32(UE_ARRAY_COUNT(Joints));++J)Sim.AddReviewWall(Sim.Walls.LevelDefinitions[WallLevel],Joints[J-1],Joints[J],false);
+            }
             // -BenchmarkFocus=<building id> frames that one review building instead.
             FString Focus;
             if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkFocus="),Focus))

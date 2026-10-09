@@ -2,7 +2,7 @@
  "version": "0.9.2",
  "engine": "5.8.3",
  "platform": "Windows x64 Shipping",
- "generated_at_utc": "2026-10-09T10:22:00.094571+00:00",
+ "generated_at_utc": "2026-10-09T13:02:30.338797+00:00",
  "record_date": "2026-10-09",
  "rules_version": "prototype-9.3",
  "save_format": 7,
@@ -10,17 +10,17 @@
  "native": {
   "status": "single_full_run",
   "report": {
-   "path": "Saved/Automation/k48-full/index.json",
-   "bytes": 72857,
-   "sha256": "CA79CB0B335528DC6DBE16FFD6AA36DFFE1BD3E9E38F363C97638B633F978ABF"
+   "path": "Saved/Automation/k49-full/index.json",
+   "bytes": 72848,
+   "sha256": "32CAADB263F9913621118A4170445FD824B83BB2AB95E86756C4DB5D91CA7CA2"
   },
-  "report_created_on": "2026.10.09-09.44.12",
+  "report_created_on": "2026.10.09-12.29.13",
   "unique_tests": 154,
   "succeeded": 154,
   "succeeded_with_warnings": 0,
   "failed": 0,
   "not_run": 0,
-  "duration_seconds": 368.88287353515625,
+  "duration_seconds": 369.7887878417969,
   "states": {
    "Success": 154
   },
@@ -59,27 +59,27 @@
   "status": "succeeded",
   "build_log": {
    "path": "Saved/package-v092.log",
-   "bytes": 95769,
-   "sha256": "CBC1AFBE00EBD22E4D2B6B400AEF6DA19783346D8D98124F291013AF0497A165"
+   "bytes": 102159,
+   "sha256": "46C8CD964FD1272CA8804EE059BBA218067C2E1162D342F2755CA90D17E0FBF2"
   },
-  "build_cook_run_seconds": 42.04,
+  "build_cook_run_seconds": 64.46,
   "executable": {
    "path": "Builds/v0.9.2/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
-   "bytes": 167078400,
-   "sha256": "6ABDB1AB3BC250F9F71B0B93A40C69A6B8B79CCFC24FBAD38FA66F6E55D4643A"
+   "bytes": 167082496,
+   "sha256": "1AD7AE2B121A6CBC737E65ABC789B0FB77FAC8A4776224D96873BF037A5FE63B"
   }
  },
  "packaged_gameplay": {
   "status": "passed",
   "record": {
    "path": "Saved/packaged-v0.9.2-UiSmoke-verification.json",
-   "bytes": 312297,
-   "sha256": "B1F6629AE16D1284A2160C7C1738C02E59B278A5922798E89C2955131DE4D8E2"
+   "bytes": 312196,
+   "sha256": "8D5EF731A8AA17C12D356F2486C082C5DD5DE92FFF43943660B3B30FE2136EC3"
   },
   "exit_code": 0,
   "completed_stages": 117,
   "failures": 0,
-  "socket_samples": 749,
+  "socket_samples": 747,
   "samples_with_endpoints": 0
  },
  "status": "locally_verified"

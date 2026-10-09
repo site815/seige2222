@@ -340,22 +340,25 @@ def berth(x, y, z, facing_degrees):
     BERTHS.append((x, y, z, facing_degrees))
 
 
-def export(name, description, families):
+def export(name, description, families, turn_export=True):
     bpy.ops.object.select_all(action='DESELECT')
     for o in PARTS: o.select_set(True)
     bpy.context.view_layer.objects.active = PARTS[0]; bpy.ops.object.join(); o = bpy.context.object
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     # Authored front (-Y) -> +X here -> Unreal +X after the import's Y mirror.
     # transform_apply also turns the custom (weighted) split normals.
-    o.rotation_euler = (0, 0, math.radians(EXPORT_YAW_DEGREES)); bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+    # Wall sections are not turned: their length stays on X, the axis the game
+    # aligns with each segment (see wall_section()).
+    yaw_degrees = EXPORT_YAW_DEGREES if turn_export else 0
+    o.rotation_euler = (0, 0, math.radians(yaw_degrees)); bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
     lo = [min(v.co[i] for v in o.data.vertices) for i in range(3)]; hi = [max(v.co[i] for v in o.data.vertices) for i in range(3)]
     shift = Vector(((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, lo[2]))
     for v in o.data.vertices: v.co -= shift
-    turn = math.radians(EXPORT_YAW_DEGREES); berths = []
+    turn = math.radians(yaw_degrees); berths = []
     for bx, by, bz, facing in BERTHS:
         # Blender (x, y) after the turn and recentring; Unreal mirrors Y.
         x = bx * math.cos(turn) - by * math.sin(turn) - shift.x; y = bx * math.sin(turn) + by * math.cos(turn) - shift.y
-        yaw = -(facing + EXPORT_YAW_DEGREES); yaw = (yaw + 180) % 360 - 180
+        yaw = -(facing + yaw_degrees); yaw = (yaw + 180) % 360 - 180
         berths.append([round(x, 1), round(-y, 1), round(bz - shift.z, 1), round(yaw, 1)])
     BERTHS.clear()
     uv = o.data.uv_layers.active or o.data.uv_layers.new(name='UVMap')
@@ -370,6 +373,8 @@ def export(name, description, families):
                      'materials': [m.name for m in o.data.materials], 'description': description, 'unreal_path': '/Game/Art/' + name, 'building_families': families}
     if berths:
         records[name]['berths_unreal'] = berths  # [x, y, z, yaw] cm/degrees in the Unreal mesh frame
+    if not turn_export:
+        records[name]['export_yaw_degrees'] = 0  # wall section: length on Unreal X, inside on Unreal +Y
     ASSETS[name] = o; PARTS.clear(); print('KIT_MESH ' + name + ' ' + json.dumps({'dims': [round(d) for d in dims], 'tris': records[name]['triangles']}), flush=True)
 
 
@@ -526,7 +531,58 @@ def fuel_refinery():
     text('Refinery identity', 'FUEL', (-430, -985, 48 + 420), 60, mat='Yellow')
     dress_hall(300, 760, 48, 520, 420, 300, ladder='+x', lamps='-y')
     scatter_props(48, 1030, 1030, seed=37, count=6)
-    export('SM_FuelRefinery', 'Bunded tank farm, distillation column with platforms, overhead condenser, reflux drum, flare stack, pump house and pipe racks', ['fuel_refinery', 'biofuel_refinery'])
+    export('SM_FuelRefinery', 'Bunded tank farm, distillation column with platforms, overhead condenser, reflux drum, flare stack, pump house and pipe racks', ['fuel_refinery'])
+
+
+# ------------------------------------------------------------------ BIOFUEL REFINERY (processor plot 2070)
+def biofuel_refinery():
+    """Biomass to fuel, distinct from the hydrocarbon refinery it shared a mesh
+    with: covered biomass reception bunkers and conveyor, two egg-shaped
+    anaerobic digesters, a membrane gas holder, a row of fermentation vats,
+    a short ethanol column, a small flare and a process house."""
+    z0 = 48
+    foundation(2060, 2060)
+    # Biomass reception at the front (-Y): open bunkers under a canopy, feed conveyor.
+    box('Biomass bunker floor', (-520, -760, z0 + 10), (900, 420, 20), 'Concrete', 2)
+    for x in (-940, -640, -340, -100):
+        box('Bunker push wall', (x, -760, z0 + 90), (30, 420, 180), 'Concrete', 4)
+    for x in (-790, -490, -220):
+        box('Chipped biomass heap', (x, -740, z0 + 50), (230, 340, 80), 'Carbon', 30)
+    box('Reception canopy', (-520, -760, z0 + 430), (960, 470, 20), 'Slate', 4)
+    for x in (-960, -80):
+        for y in (-980, -540): beam('Canopy column', (x, y, z0), (x, y, z0 + 420), 22, mat='Steel')
+    beam('Biomass feed conveyor', (-520, -520, z0 + 80), (-520, 160, z0 + 520), 60, 18, 'Steel')
+    beam('Conveyor belt', (-520, -520, z0 + 92), (-520, 160, z0 + 532), 48, 4, 'Carbon')
+    for t in (.33, .66): beam('Conveyor trestle', (-520, -520 + 680 * t, z0), (-520, -520 + 680 * t, z0 + 80 + 440 * t - 10), 14, mat='Slate')
+    # Two egg-shaped anaerobic digesters on concrete skirts.
+    for x in (-700, -300):
+        cyl('Digester skirt', (x, 420, z0 + 60), 230, 120, 'Concrete', 32)
+        cyl('Anaerobic digester body', (x, 420, z0 + 120 + 260), 230, 520, 'Ceramic', 40, 200)
+        dome('Digester crown', (x, 420, z0 + 640), 200, 'Ceramic', 40, 10, 0)
+        cyl('Digester gas dome', (x, 420, z0 + 845), 50, 30, 'Steel', 16)
+        torus('Digester walkway ring', (x, 420, z0 + 500), 236, 5, 'Yellow')
+    pipe('Biogas main', [(-700, 420, z0 + 875), (-700, 700, z0 + 875), (-300, 700, z0 + 875), (-300, 420, z0 + 875)], 10, 'Steel')
+    pipe('Biogas line', [(-500, 700, z0 + 875), (-500, 820, z0 + 875), (300, 820, z0 + 875), (300, 820, z0 + 300)], 10, 'Steel')
+    # Double-membrane gas holder.
+    cyl('Gas holder ring wall', (330, 700, z0 + 60), 300, 120, 'Concrete', 40)
+    dome('Gas holder membrane', (330, 700, z0 + 120), 300, 'Ceramic', 48, 12, 0)
+    # Fermentation vats and a short ethanol column on the +X side.
+    for k, y in enumerate((-640, -400, -160, 80)):
+        cyl('Fermentation vat', (520, y, z0 + 210), 100, 420, 'Steel', 32); cyl('Vat cone roof', (520, y, z0 + 440), 100, 40, 'Steel', 32, 20)
+        torus('Vat band', (520, y, z0 + 120), 102, 4, 'Slate'); torus('Vat band', (520, y, z0 + 320), 102, 4, 'Slate')
+    pipe('Wash header', [(640, -700, z0 + 380), (640, 120, z0 + 380), (820, 120, z0 + 380)], 9, 'Copper')
+    cx, cy = 840, 300
+    cyl('Ethanol column', (cx, cy, z0 + 480), 70, 960, 'Steel', 24); cyl('Column head', (cx, cy, z0 + 975), 70, 30, 'Steel', 24, 20)
+    for zz in (z0 + 380, z0 + 720): cyl('Column platform', (cx, cy, zz), 120, 10, 'Slate', 20); torus('Platform handrail', (cx, cy, zz + 90), 118, 3, 'Yellow')
+    # Process house with control room, small flare in the far corner.
+    box('Process house', (650, -850, z0 + 150), (560, 260, 300), 'Ceramic', 8); window_y(560, -982, z0 + 190, 260, 90); door_y(820, -982, z0, 96, 206)
+    box('Process house roof', (650, -850, z0 + 304), (580, 280, 10), 'Slate', 2)
+    fx, fy = 880, 880
+    tube('Biogas flare', (fx, fy, z0), (fx, fy, z0 + 900), 16, 'Steel'); cyl('Flare tip', (fx, fy, z0 + 915), 24, 30, 'Slate', 12); cyl('Flare flame', (fx, fy, z0 + 965), 18, 70, 'Amber', 12, 4)
+    text('Refinery identity', 'BIOFUEL', (650, -985, z0 + 270), 46, mat='Yellow')
+    dress_hall(650, -850, z0, 560, 260, 300, ladder='+x', lamps='-y')
+    scatter_props(z0, 1030, 1030, seed=117, count=5)
+    export('SM_BiofuelRefinery', 'Biomass reception bunkers under a canopy with a feed conveyor, two egg-shaped anaerobic digesters, a membrane gas holder, fermentation vats, an ethanol column, a biogas flare and a process house', ['biofuel_refinery'])
 
 
 # ------------------------------------------------------------------ FOOD PRODUCER (processor plot 2070)
@@ -585,13 +641,21 @@ def works_hall(cx, w, word, word_size=60, roof='flat', skylights=(-450, -150, 15
     return front
 
 
+def prism(name, verts, mat):
+    """Closed triangular prism from six vertices (two triangles 0-2 and 3-5),
+    with normals recalculated outward (the game materials are one-sided)."""
+    faces = [(0, 1, 2), (3, 5, 4), (0, 3, 4, 1), (1, 4, 5, 2), (2, 5, 3, 0)]
+    me = bpy.data.meshes.new(name); me.from_pydata(verts, [], faces); me.update()
+    ob = bpy.data.objects.new(name, me); bpy.context.collection.objects.link(ob)
+    bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT'); bpy.ops.mesh.normals_make_consistent(inside=False); bpy.ops.object.mode_set(mode='OBJECT')
+    return finish(ob, name, mat)
+
+
 def gable_x(name, x, y0, y1, z, rise, thickness, mat):
     """Right-triangle gable in the YZ plane (low at y0, high at y1), extruded along X."""
-    t = thickness / 2; verts = []
-    for dx in (-t, t): verts += [(x + dx, y0, z), (x + dx, y1, z), (x + dx, y1, z + rise)]
-    faces = [(0, 2, 1), (3, 4, 5), (0, 1, 4, 3), (1, 2, 5, 4), (2, 0, 3, 5)]
-    me = bpy.data.meshes.new(name); me.from_pydata(verts, [], faces); me.update()
-    ob = bpy.data.objects.new(name, me); bpy.context.collection.objects.link(ob); return finish(ob, name, mat)
+    t = thickness / 2
+    return prism(name, [(x - t, y0, z), (x - t, y1, z), (x - t, y1, z + rise), (x + t, y0, z), (x + t, y1, z), (x + t, y1, z + rise)], mat)
 
 
 def drum(x, y, z, r, length, flange='Yellow', wound='Copper'):
@@ -1296,10 +1360,84 @@ def service_bay():
     export('SM_ServiceBay', 'Open three-berth worker charging and service bay: exposed contact plates, pedestals with charge leads and diagnostic arms under a cantilever canopy, plant hall with control gallery, coolant plant and parts cage', ['robot_service_bay'])
 
 
+# ------------------------------------------------------------------ WALL SECTIONS (6 m segment, 1.2 m wide; heights from Rules/walls.json)
+WALL_LENGTH, WALL_WIDTH = 600, 120
+WALL_HEIGHTS = {1: 300, 2: 400, 3: 500}   # Rules/walls.json height_meters; nothing rises above them
+
+
+def wall_section(level):
+    """One 6 m wall segment between joint posts. Not turned at export: the
+    length stays on X (the game aligns X with each segment and scales it to
+    the segment length), the inside (walkways, counterforts) faces authored -Y,
+    which is Unreal +Y, the side SyncWallVisuals treats as inside. The top of
+    every part is at or below the rules height so the game can scale Z to it.
+    L1 precast panels between steel posts with inside counterforts; L2 thicker
+    ribbed wall with an inside fire-step walkway and railing; L3 armour-clad
+    rampart with merlons, embrasures, a lit walkway and end pilasters."""
+    H = WALL_HEIGHTS[level]; half = WALL_LENGTH / 2
+    box('Wall footing', (0, 0, 10), (WALL_LENGTH, WALL_WIDTH, 20), 'Concrete', 3)
+    if level == 1:
+        for x in (-half + 20, 0, half - 20):
+            box('Steel H-post', (x, 10, 20 + (H - 34) / 2), (40, 50, H - 34), 'Slate', 2)   # under the coping: no coplanar tops
+        for x0, x1 in ((-half + 40, -20), (20, half - 40)):
+            box('Precast wall panel', ((x0 + x1) / 2, 10, 20 + (H - 34) / 2), (x1 - x0, 36, H - 34), 'Concrete', 3)
+            for z in (20 + (H - 34) / 3, 20 + 2 * (H - 34) / 3):
+                for sy in (-1, 1): box('Panel joint', ((x0 + x1) / 2, 10 + sy * 19, z), (x1 - x0, 2, 3), 'Carbon', 0)
+        box('Steel coping', (0, 10, H - 7), (WALL_LENGTH, 54, 14), 'Steel', 1)
+        for x in (-half / 2, half / 2):
+            gable_y('Inside counterfort', x, -8, -58, 20, H * .62, 26, 'Concrete')
+        for x in (-half / 2, half / 2): box('Drain slot', (x, 29, 34), (40, 2, 10), 'Carbon', 0)
+    elif level == 2:
+        for x in (-half + 30, half - 30):
+            box('Reinforced end post', (x, 0, 20 + (H - 20) / 2), (60, 70, H - 20), 'Slate', 3)
+        box('Reinforced wall core', (0, 15, 20 + (H - 40) / 2), (WALL_LENGTH - 120, 56, H - 40), 'Concrete', 4)
+        for x in range(-200, 201, 100): box('Outside rib', (x, 47, 20 + (H - 60) / 2), (18, 10, H - 60), 'Slate', 1)
+        box('Parapet coping', (0, 15, H - 10), (WALL_LENGTH - 116, 64, 20), 'Steel', 1)
+        wz = H - 150
+        box('Fire-step walkway', (0, -30, wz), (WALL_LENGTH - 120, 50, 8), 'Steel', 1)
+        for x in range(-220, 221, 110): beam('Walkway bracket', (x, -14, wz - 70), (x, -52, wz - 4), 8, mat='Slate')
+        for x in range(-240, 241, 120): beam('Walkway railing post', (x, -54, wz + 4), (x, -54, wz + 100), 5, mat='Yellow')
+        box('Walkway railing', (0, -54, wz + 100), (WALL_LENGTH - 130, 5, 5), 'Yellow', 0); box('Walkway mid rail', (0, -54, wz + 55), (WALL_LENGTH - 130, 4, 4), 'Yellow', 0)
+        for x in (-150, 150): box('Drain scupper', (x, 44, H - 70), (30, 8, 16), 'Carbon', 0)
+    else:
+        for x in (-half + 40, half - 40):
+            box('Rampart end pilaster', (x, 0, 20 + (H - 36) / 2), (80, 100, H - 36), 'Slate', 4)
+            box('Pilaster cap', (x, 0, H - 8), (80, 110, 16), 'Steel', 1)
+        box('Rampart core', (0, 5, 20 + (H - 100) / 2), (WALL_LENGTH - 160, 70, H - 100), 'Concrete', 4)
+        for i, x in enumerate(range(-180, 181, 120)):
+            box('Outside armour plate', (x, 44, 20 + (H - 120) / 2), (110, 8, H - 140), 'Steel', 2)
+            for bz in (60, H - 140):
+                for bx in (-40, 40): cyl('Armour bolt', (x + bx, 49, bz), 5, 4, 'Slate', 8).rotation_euler = (math.pi / 2, 0, 0)
+        mz = H - 100
+        box('Parapet sill', (0, 25, mz + 6), (WALL_LENGTH - 160, 50, 12), 'Concrete', 2)
+        for x in range(-180, 181, 120):
+            box('Merlon', (x, 25, mz + 12 + 44), (70, 50, 88), 'Concrete', 4)
+            box('Firing slit', (x, 51, mz + 60), (8, 3, 44), 'Carbon', 0)
+        wz = H - 160
+        box('Rampart walkway', (0, -32, wz), (WALL_LENGTH - 160, 56, 10), 'Steel', 1)
+        for x in range(-200, 201, 100): beam('Walkway bracket', (x, -12, wz - 80), (x, -56, wz - 5), 9, mat='Slate')
+        for x in range(-220, 221, 110): beam('Walkway railing post', (x, -57, wz + 5), (x, -57, wz + 100), 5, mat='Yellow')
+        box('Walkway railing', (0, -57, wz + 100), (WALL_LENGTH - 170, 5, 5), 'Yellow', 0)
+        for x in (-110, 110):
+            beam('Walkway lamp post', (x, -55, wz + 5), (x, -55, wz + 130), 6, mat='Slate'); box('Walkway lamp', (x, -47, wz + 128), (24, 16, 10), 'Light', 0)
+        for sx in (-1, 1): box('Pilaster hazard band', (sx * (half - 40), 51, 120), (70, 2, 16), 'Yellow', 0)
+    export('SM_Wall' + ('' if level == 1 else str(level)), ['Precast concrete panels between steel H-posts with a steel coping and inside counterforts',
+           'Reinforced ribbed wall with end posts, parapet coping and an inside fire-step walkway with railing',
+           'Armour-clad rampart with end pilasters, merlons with firing slits and a lit inside walkway'][level - 1],
+           ['wall_segment' if level == 1 else 'wall_segment_%d' % level], turn_export=False)
+
+
+def gable_y(name, x, y0, y1, z, rise, thickness, mat):
+    """Right-triangle counterfort in the YZ plane, extruded along X: full height
+    at y0 (against the wall), sloping to the ground at y1."""
+    t = thickness / 2
+    return prism(name, [(x - t, y0, z), (x - t, y1, z), (x - t, y0, z + rise), (x + t, y0, z), (x + t, y1, z), (x + t, y0, z + rise)], mat)
+
+
 BUILDERS = {
     'solarArray': lambda: solar_array(1), 'solarArray2': lambda: solar_array(2), 'solarArray3': lambda: solar_array(3),
     'batteryBank': battery_bank, 'tradingPort': lambda: trading_port(1), 'tradingPort2': lambda: trading_port(2), 'tradingPort3': lambda: trading_port(3),
-    'refinery': refinery, 'fuelRefinery': fuel_refinery, 'greenhouse': greenhouse, 'chipWorks': chip_works,
+    'refinery': refinery, 'fuelRefinery': fuel_refinery, 'biofuelRefinery': biofuel_refinery, 'greenhouse': greenhouse, 'chipWorks': chip_works,
     'worksConductor': works_conductor, 'worksGlass': works_glass, 'worksCircuit': works_circuit, 'worksParts': works_parts, 'worksBattery': works_battery,
     'fusionWorks': fusion_works, 'ammunitionWorks': ammunition_works, 'fuelGenerator': fuel_generator,
     'hangar': lambda: hangar('wheeled'), 'hangarTracked': lambda: hangar('tracked'), 'hangarMech': lambda: hangar('mech'),
@@ -1310,6 +1448,7 @@ BUILDERS = {
     'towerLaser3': lambda: tower_base('laser', 3), 'towerKinetic3': lambda: tower_base('kinetic', 3), 'towerMissile3': lambda: tower_base('missile', 3), 'towerPlasma3': lambda: tower_base('plasma', 3),
     'depotYard': depot, 'workerFactory': worker_factory, 'serviceBay': service_bay,
     'sensorMast': sensor_mast, 'extractionRig': extraction_rig,
+    'wall': lambda: wall_section(1), 'wall2': lambda: wall_section(2), 'wall3': lambda: wall_section(3),
 }
 for kind, build in BUILDERS.items():
     if wanted(kind):

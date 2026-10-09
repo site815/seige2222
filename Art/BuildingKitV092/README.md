@@ -1,6 +1,6 @@
 # Building kit v0.9.2
 
-Distinct silhouettes for the building families that previously shared one factory hall (23 of 28 blueprints) or the warehouse (solar arrays, battery bank, trading ports), plus the service bay, sensor mast and extraction rig, per-process meshes for the five clean-industry works and level growth for towers and vehicle factories. Forty-five original meshes, generated procedurally in Blender 4.5 on the project's industrial palette; no marketplace models, no photographs.
+Distinct silhouettes for the building families that previously shared one factory hall (23 of 28 blueprints) or the warehouse (solar arrays, battery bank, trading ports), plus the service bay, sensor mast and extraction rig, per-process meshes for the five clean-industry works and level growth for towers and vehicle factories. Forty-nine original meshes, generated procedurally in Blender 4.5 on the project's industrial palette; no marketplace models, no photographs.
 
 | Mesh | Buildings | Reads as |
 | --- | --- | --- |
@@ -8,7 +8,8 @@ Distinct silhouettes for the building families that previously shared one factor
 | SM_BatteryBank | battery_bank | Twelve container modules under busbar gantries, conversion hall, grid transformer |
 | SM_TradingPort / 2 / 3 | trading_port L1–3 | Lit landing pad, control tower, cargo gantry, growing container stacks |
 | SM_Refinery | alloy_refinery | Smelting hall, twin blast furnaces, tall stacks, inclined ore conveyor, slag pit |
-| SM_FuelRefinery | fuel_refinery, biofuel_refinery | Bunded tank farm, distillation column, condenser, flare stack, pipe racks |
+| SM_FuelRefinery | fuel_refinery | Bunded tank farm, distillation column, condenser, flare stack, pipe racks |
+| SM_BiofuelRefinery | biofuel_refinery | Covered biomass bunkers and feed conveyor, two egg-shaped anaerobic digesters, membrane gas holder, fermentation vats, ethanol column, biogas flare (2026-10-09) |
 | SM_Greenhouse | food_producer | Four glazed gable bays, processing block, irrigation tanks |
 | SM_WorksConductor | conductor_works | Clean hall with an upcast rod caster tower and fume stack, copper coil stacks and a yard of cable drums (2026-10-09) |
 | SM_WorksGlass | substrate_works (industrial glass) | Clean hall with a roof ventilation monitor, melting-furnace chimney, two silica batch silos with a bucket elevator, cullet bunkers (2026-10-09) |
@@ -31,10 +32,11 @@ Distinct silhouettes for the building families that previously shared one factor
 | SM_SensorMast | sensor | Tapered lattice mast with phased-array faces, a rotating search radar and beacon whip; equipment shelter, UPS cabinet, cable tray, fenced pad (2026-10-09) |
 | SM_ExtractionRig | extraction_mine | Derrick on a substructure over the wellhead, top drive, pipe rack, process tanks, conveyor to an ore hopper over a loading bay, operator cabin, power skid (2026-10-09) |
 | SM_Tower*2 / *3 | turret, kinetic, missile, plasma L2–3 | Level growth around the unchanged 250 cm deck: deck rails, radar mast, second locker, barrier line (L2); armoured deck skirt, floodlight masts, generator pack, surveillance mast (L3) |
+| SM_Wall / 2 / 3 | wall_segment L1–3 | 6 m sections, not turned at export (length on Unreal X, inside on +Y), scaled by the game to each segment's length and the rules height: precast panels between steel posts with inside counterforts (3 m); ribbed reinforced wall with an inside fire-step walkway (4 m); armour-clad rampart with merlons, firing slits and a lit walkway (5 m). Replaces the four-cube wall assembly, which remains the fallback (2026-10-09) |
 
 The tower bases are authored at the 1080 cm tower plot with their weapon deck at **250 cm**, the fixed height at which `SeigeCombatVisuals.cpp` places the procedural mounts, so every level's mounts sit on the deck. The 2026-10-09 contrast pass gave the halls dark roof membranes, dark aprons with lane markings in front of doors and light hangar walls under dark barrel roofs, so buildings separate from the ground and from each other at colony zoom.
 
-Every buildable blueprint except the procedural wall segments now uses a kit mesh; the command core and its shuttle keep the v0.9 orbital meshes. See `docs/TODO.md`.
+Every buildable blueprint, including the wall sections, now uses a kit mesh; the command core and its shuttle keep the v0.9 orbital meshes. See `docs/TODO.md`.
 
 **Orientation (2026-10-09).** Every kit mesh is authored with its front (doors, docks, berths) toward −Y and turned +90° about Z at export, so in Unreal the front faces **+X** — the side where every building's access port and road arrive (`access_port: [1, 0]` for all 52 definitions) and one of the two faces the default camera (yaw 135°) sees. Before this the fronts faced Unreal +Y, away from the camera: Blender's FBX export and Unreal's import keep X and mirror Y, so authored (x, y) lands at Unreal (−y, −x). The portraits are rendered from the same turned meshes with the studio lights turned with them.
 

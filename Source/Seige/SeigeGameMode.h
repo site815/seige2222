@@ -11,6 +11,7 @@
 class FSeigeScenarioAI;
 class UTexture2D;
 struct FSeigeSceneryStreamState;
+struct FSeigeTerrainUpload;
 struct FSeigeScenarioPreparation;
 struct FSeigeNeighbor
 {
@@ -265,9 +266,13 @@ private:
     void CreateFoliage(int32 PreviousSector=INDEX_NONE);
     void BuildForestSectors(AActor* Ground,const TArray<int32>& Sectors);
     void UploadTerrainTiles(AActor* Ground,const TArray<int32>& Tiles,double& PrepareSeconds,double& UploadSeconds);
-    // A sector crossing rebuilds the sector being entered in the crossing frame
-    // and the sector being left on the following frames (terrain, then forest).
-    int32 DeferredTerrainTile=INDEX_NONE,DeferredForestSector=INDEX_NONE;
+    TSharedPtr<FSeigeTerrainUpload> PrepareTerrainUpload(const TArray<int32>& Tiles) const;
+    void CommitTerrainUpload(AActor* Ground,FSeigeTerrainUpload& Upload);
+    TSharedPtr<FSeigeTerrainUpload> PendingTerrainUpload;
+    // A sector crossing rebuilds the entered sector's terrain in the crossing
+    // frame, then on following frames its forest and ground cover, the left
+    // sector's terrain and the left sector's forest, one step per frame.
+    int32 DeferredFoliageFrom=INDEX_NONE,DeferredTerrainTile=INDEX_NONE,DeferredForestSector=INDEX_NONE;
     bool ContinueDeferredSectorWork(bool Flush);
     void RefreshDepositGeology(bool Force=false);
     FString DepositVisibilitySignature;
