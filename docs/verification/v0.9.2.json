@@ -2,47 +2,29 @@
  "version": "0.9.2",
  "engine": "5.8.3",
  "platform": "Windows x64 Shipping",
- "generated_at_utc": "2026-10-08T18:22:50.663354+00:00",
+ "generated_at_utc": "2026-10-09T10:22:00.094571+00:00",
  "record_date": "2026-10-09",
- "rules_version": "prototype-9.2",
+ "rules_version": "prototype-9.3",
  "save_format": 7,
  "prior_saves_compatible": false,
  "native": {
   "status": "single_full_run",
   "report": {
-   "path": "Saved/Automation/v092-full-3/index.json",
-   "bytes": 85542,
-   "sha256": "E88BABF61DB6F503E391D51738075D325254D95802BE767ED14D0BED53C0B171"
+   "path": "Saved/Automation/k48-full/index.json",
+   "bytes": 72857,
+   "sha256": "CA79CB0B335528DC6DBE16FFD6AA36DFFE1BD3E9E38F363C97638B633F978ABF"
   },
-  "report_created_on": "2026.10.08-17.55.33",
-  "unique_tests": 153,
-  "succeeded": 151,
+  "report_created_on": "2026.10.09-09.44.12",
+  "unique_tests": 154,
+  "succeeded": 154,
   "succeeded_with_warnings": 0,
-  "failed": 2,
+  "failed": 0,
   "not_run": 0,
-  "duration_seconds": 499.5612487792969,
+  "duration_seconds": 368.88287353515625,
   "states": {
-   "Success": 151,
-   "Fail": 2
+   "Success": 154
   },
-  "failures": [
-   {
-    "full_test_path": "Seige.AI.WorkerSupportRecovery",
-    "state": "Fail",
-    "errors": 1,
-    "messages": [
-     "Expected 'Actual service capacity permits the blocked factory to finish and staff' to be true."
-    ]
-   },
-   {
-    "full_test_path": "Seige.Simulation.FirstPlayableSolvable",
-    "state": "Fail",
-    "errors": 1,
-    "messages": [
-     "Expected 'Shipped first-playable scenario is winnable with only normal build actions' to be true."
-    ]
-   }
-  ],
+  "failures": [],
   "warnings_in_passing_tests": []
  },
  "validators": {
@@ -51,11 +33,11 @@
    "log": {
     "path": "Saved/claude-validate-config.log",
     "bytes": 324,
-    "sha256": "2558554B231AE6225E499C7E62C5AD2F9B6E559B58FE9D4BDE66AA2395B35AD3"
+    "sha256": "AC8C52BF46F356B53A9B3E69EF80C3BA92622F7FC8065D95DD6C554C371B7E64"
    },
    "tail": [
-    "Configuration valid: prototype-9.2; 22 items, 14 recipes, 52 buildings.",
-    "AI: 21 priorities, 24 established buildings, 44 active + 4 stored workers. Interface: 4 groups, 31 building/tool entries, 21 summary resources, 5 credits.",
+    "Configuration valid: prototype-9.3; 22 items, 14 recipes, 52 buildings.",
+    "AI: 22 priorities, 24 established buildings, 44 active + 4 stored workers. Interface: 4 groups, 31 building/tool entries, 21 summary resources, 5 credits.",
     "Graphics: 10 nature roles resolve to Content assets; 6 rendered centimeters per simulation unit."
    ]
   },
@@ -64,12 +46,12 @@
    "log": {
     "path": "Saved/claude-validate-rules.log",
     "bytes": 189,
-    "sha256": "550D5DD596115C001A73C414CB0000503DEE1A8283736945511EFB78730076EF"
+    "sha256": "B445BBEF5EDB96F959073FD9AFFC0DE2ACF4D758E85A0145C62BC3C4FA312CF7"
    },
    "tail": [
-    "Rules valid: prototype-9.2; 22 items, 14 recipes, 52 buildings.",
+    "Rules valid: prototype-9.3; 22 items, 14 recipes, 52 buildings.",
     "Renewable paths verified for 22 items; startup building/worker affordability verified.",
-    "131 negative validation cases passed."
+    "133 negative validation cases passed."
    ]
   }
  },
@@ -77,22 +59,22 @@
   "status": "succeeded",
   "build_log": {
    "path": "Saved/package-v092.log",
-   "bytes": 98313,
-   "sha256": "C8C203EDA30119B5EC140775B3E228095A5B344F66D460BF586D221232A1E0E9"
+   "bytes": 95769,
+   "sha256": "CBC1AFBE00EBD22E4D2B6B400AEF6DA19783346D8D98124F291013AF0497A165"
   },
-  "build_cook_run_seconds": 62.76,
+  "build_cook_run_seconds": 42.04,
   "executable": {
    "path": "Builds/v0.9.2/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
-   "bytes": 167048192,
-   "sha256": "711DE0DB25FAA80A459CD495A02D9B7DE2B80D4C045B0D287D2252CEEEAFC85B"
+   "bytes": 167078400,
+   "sha256": "6ABDB1AB3BC250F9F71B0B93A40C69A6B8B79CCFC24FBAD38FA66F6E55D4643A"
   }
  },
  "packaged_gameplay": {
   "status": "passed",
   "record": {
    "path": "Saved/packaged-v0.9.2-UiSmoke-verification.json",
-   "bytes": 312296,
-   "sha256": "519ECBD14DD78BCA46390E6102AE555011C36D3D7ECD3FCF6ADBE8FD70F7534B"
+   "bytes": 312297,
+   "sha256": "B1F6629AE16D1284A2160C7C1738C02E59B278A5922798E89C2955131DE4D8E2"
   },
   "exit_code": 0,
   "completed_stages": 117,
@@ -100,5 +82,5 @@
   "socket_samples": 749,
   "samples_with_endpoints": 0
  },
- "status": "not_verified"
+ "status": "locally_verified"
 }

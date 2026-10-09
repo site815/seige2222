@@ -292,9 +292,16 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             // Core levels are 29-86 m wide and have their own review coverage.
             TArray<FString> Ids=Sim.BuildMenu;Ids.Sort();
             const int32 Columns=6;const double Pitch=700;const FVector2D Origin=Command->Position+FVector2D(900,-Pitch*(Columns-1)*.5);
+            // -BenchmarkLevel=2|3 shows each blueprint at that upgrade level
+            // (or its highest level below it) so level art is reviewed in engine.
+            int32 ReviewLevel=1;FParse::Value(FCommandLine::Get(),TEXT("BenchmarkLevel="),ReviewLevel);ReviewLevel=FMath::Clamp(ReviewLevel,1,3);
             int32 Placed=0;
-            for(const FString& Id:Ids)
+            for(const FString& BaseId:Ids)
             {
+                FString Id=BaseId;
+                for(int32 Step=1;Step<ReviewLevel;++Step)
+                    if(const auto* Current=Sim.BuildingDefs.Find(Id))
+                        if(!Current->NextUpgrade.IsEmpty()&&Sim.BuildingDefs.Contains(Current->NextUpgrade))Id=Current->NextUpgrade;
                 const auto* D=Sim.BuildingDefs.Find(Id);if(!D||D->Role==TEXT("wall"))continue;
                 const int32 ReviewId=Sim.AddReviewBuilding(Id,Origin+FVector2D((Placed/Columns)*Pitch,(Placed%Columns)*Pitch));
                 if(!ReviewId)continue;

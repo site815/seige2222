@@ -1,6 +1,6 @@
 # Building kit v0.9.2
 
-Distinct silhouettes for the building families that previously shared one factory hall (23 of 28 blueprints) or the warehouse (solar arrays, battery bank, trading ports), plus the service bay, sensor mast and extraction rig. Thirty-five original meshes, generated procedurally in Blender 4.5 on the project's industrial palette; no marketplace models, no photographs.
+Distinct silhouettes for the building families that previously shared one factory hall (23 of 28 blueprints) or the warehouse (solar arrays, battery bank, trading ports), plus the service bay, sensor mast and extraction rig, per-process meshes for the five clean-industry works and level growth for towers and vehicle factories. Forty-five original meshes, generated procedurally in Blender 4.5 on the project's industrial palette; no marketplace models, no photographs.
 
 | Mesh | Buildings | Reads as |
 | --- | --- | --- |
@@ -10,12 +10,17 @@ Distinct silhouettes for the building families that previously shared one factor
 | SM_Refinery | alloy_refinery | Smelting hall, twin blast furnaces, tall stacks, inclined ore conveyor, slag pit |
 | SM_FuelRefinery | fuel_refinery, biofuel_refinery | Bunded tank farm, distillation column, condenser, flare stack, pipe racks |
 | SM_Greenhouse | food_producer | Four glazed gable bays, processing block, irrigation tanks |
-| SM_Works | conductor, substrate, circuit, component, battery works | White clean hall, window band, skylights, chilled-water plant, gas cabinet |
+| SM_WorksConductor | conductor_works | Clean hall with an upcast rod caster tower and fume stack, copper coil stacks and a yard of cable drums (2026-10-09) |
+| SM_WorksGlass | substrate_works (industrial glass) | Clean hall with a roof ventilation monitor, melting-furnace chimney, two silica batch silos with a bucket elevator, cullet bunkers (2026-10-09) |
+| SM_WorksCircuit | circuit_works | Clean hall under exhaust manifolds, scrubber stacks and wet scrubber towers; bunded chemical tank farm, wastewater clarifier (2026-10-09) |
+| SM_WorksParts | component_works (robotic parts) | Sawtooth north-light machine shop, gantry crane over a racked parts yard, fenced robot-arm test cell (2026-10-09) |
+| SM_WorksBattery | battery_works | Clean hall with roof dry-room dehumidifiers and ducts, formation transformer yard with busbars, bunded electrolyte tanks, solvent recovery column (2026-10-09) |
 | SM_ChipWorks | ai_chip_works | Two-storey cleanroom block, roof plenum, exhaust ducts, scrubber stack, nitrogen tank |
 | SM_FusionWorks | fusion_reactor_works | Containment dome on a drum, turbine hall, twin cooling towers, switchyard |
 | SM_AmmunitionWorks | ammunition_works | Three bermed magazines behind blast walls, lightning masts, filling hall |
 | SM_FuelGenerator | fuel_generator | Twin containerised gen-sets, silenced stacks, bunded day tank, switchgear |
-| SM_Hangar / Tracked / Mech | vehicle, tank and mech factories L1–3 | Barrel-roofed assembly hangars; ramp for tracked, erection gantry for mechs |
+| SM_Hangar / Tracked / Mech | vehicle, tank and mech factories L1 | Barrel-roofed assembly hangars; ramp for tracked, erection gantry for mechs |
+| SM_Hangar*2 / *3 | vehicle, tank and mech factories L2–3 | Paint and coating shop with filter house and exhaust stacks plus an MK II plate (L2); glazed high-bay roof monitor, fenced substation and an MK III plate (L3). Inside the level-1 bounds, so the pivot does not move on upgrade (2026-10-09) |
 | SM_TowerLaser | turret L1–3 | Octagonal mast with heat-sink fins and capacitor rings under a round deck (2026-10-09) |
 | SM_TowerKinetic | kinetic_tower L1–3 | Squat armoured bunker with sloped plates and a shell hoist under a square deck |
 | SM_TowerMissile | missile_tower L1–3 | Raised launcher platform over a reload magazine, reload crane, fire-control cabin |
@@ -46,4 +51,4 @@ The world scales each mesh uniformly so its larger horizontal extent equals the 
 
 ## Review
 
-`-GraphicsBenchmark -BenchmarkView=showcase -BenchmarkShowcase` places one completed, unpaid instance of every ordinary blueprint in a 6-column grid east of the core and frames it (`-BenchmarkZoom`, `-BenchmarkPitch`, `-BenchmarkYaw` as for the rex view; `-BenchmarkBuildMenu=production|logistics|defense|extraction` opens the palette in the capture). Captures: `Saved/Screenshots/Benchmark/kit-showcase*`, `kit-cards-*`. Triangle counts are 8.5–41 k per mesh at LOD0 (`kit_manifest.json`); the showcase view with all 28 buildings ran at 111–122 FPS at 2560×1080 in the Development editor build.
+`-GraphicsBenchmark -BenchmarkView=showcase -BenchmarkShowcase` places one completed, unpaid instance of every ordinary blueprint in a 6-column grid east of the core and frames it (`-BenchmarkLevel=2|3` shows each blueprint at that upgrade level, `-BenchmarkFocus=<building id>` frames one building) (`-BenchmarkZoom`, `-BenchmarkPitch`, `-BenchmarkYaw` as for the rex view; `-BenchmarkBuildMenu=production|logistics|defense|extraction` opens the palette in the capture). Captures: `Saved/Screenshots/Benchmark/kit-showcase*`, `kit-cards-*`. Triangle counts are 8.5–41 k per mesh at LOD0 (`kit_manifest.json`); the showcase view with all 28 buildings ran at 111–122 FPS at 2560×1080 in the Development editor build.

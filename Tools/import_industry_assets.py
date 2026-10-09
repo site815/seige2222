@@ -121,10 +121,13 @@ return clamp(lerp(R + g * 0.25, 0.62, s), 0.08, 0.98);
 float2 k = Seed.xy * 100.0 + float2(3.1, 7.7);
 float lit = step(0.3, frac(sin(dot(k, float2(27.619, 57.583))) * 15731.743));
 float3 lamp = Tint * Emission * lerp(LampDayScale, 1.0, saturate(Night));
-float3 windows = float3(1.0, 0.72, 0.42) * WindowGlow * saturate(Night) * lit;
+// Roof skylights face the strategy camera head-on and read as lit panels at
+// night (k48 capture); upward glass glows at a third of a wall window.
+float facing = lerp(1.0, 0.33, saturate(Up.z));
+float3 windows = float3(1.0, 0.72, 0.42) * WindowGlow * saturate(Night) * lit * facing;
 return lamp + windows;
-""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Tint","Emission","LampDayScale","Night","WindowGlow","Seed"])
-    for pin,source in (("Tint",tint),("Emission",emission),("LampDayScale",params["LampDayScale"]),("Night",night),("WindowGlow",params["WindowGlow"]),("Seed",seed)):wire(source,glow,pin)
+""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Tint","Emission","LampDayScale","Night","WindowGlow","Seed","Up"])
+    for pin,source in (("Tint",tint),("Emission",emission),("LampDayScale",params["LampDayScale"]),("Night",night),("WindowGlow",params["WindowGlow"]),("Seed",seed),("Up",up)):wire(source,glow,pin)
     output(glow,unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     ME.layout_material_expressions(master);ME.recompile_material(master);ED.save_loaded_asset(master,only_if_is_dirty=False)
     instances={}

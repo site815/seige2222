@@ -426,60 +426,114 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
     Terrain->CreateMeshSection_LinearColor(0,Data.Vertices,Data.Triangles,Data.Normals,Data.UVs,Data.Colors,Data.Tangents,false);
 }
 }
-void ASeigeGameMode::CreateLandscape(bool SectorTransition)
+void ASeigeGameMode::UploadTerrainTiles(AActor* Ground,const TArray<int32>& Tiles,double& PrepareSeconds,double& UploadSeconds)
 {
-    if(!FApp::CanEverRender())return;
-    const double Started=FPlatformTime::Seconds();
-    const int32 PreviousSector=RenderedSector;
-    const bool Reuse=SectorTransition&&Landscape&&TerrainTiles.Num()==9&&PreviousSector>=0&&PreviousSector!=DetailedSectorIndex()&&TerrainPadSignature==FPreparedTerrain(*this).Signature;
-    if(!Reuse&&Landscape)Landscape->Destroy();
-    auto* Ground=Reuse?Landscape.Get():GetWorld()->SpawnActor<AActor>();
-    auto* Root=Ground->GetRootComponent();if(!Root){Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();}Landscape=Ground;
-    if(Reuse)
-    {
-        TArray<UProceduralMeshComponent*> Existing;Ground->GetComponents(Existing);
-        for(auto* Mesh:Existing)if(Mesh->ComponentTags.Num()==3){const int32 Tile=FCString::Atoi(*Mesh->ComponentTags[0].ToString());if(Tile==PreviousSector||Tile==DetailedSectorIndex())Mesh->DestroyComponent();}
-    }
-    RenderedSector=DetailedSectorIndex();RebuildTerrainHeights(Reuse);
+    auto* Root=Ground->GetRootComponent();
     const auto DirtPatches=PrepareDirt(*this);
     auto* TerrainMaterial=LoadObject<UMaterialInterface>(nullptr,*TerrainMaterialPath,nullptr,LOAD_NoWarn);
     struct FChunkJob{int32 Tile,X,Y;};TArray<FChunkJob> Jobs;
-    for(int32 TileIndex=0;TileIndex<TerrainTiles.Num();++TileIndex)
+    for(const int32 TileIndex:Tiles)
     {
-        if(Reuse&&TileIndex!=PreviousSector&&TileIndex!=RenderedSector)continue;
+        if(!TerrainTiles.IsValidIndex(TileIndex))continue;
         const auto& Tile=TerrainTiles[TileIndex];
         for(int32 Y=0;Y<Tile.Resolution;Y+=TerrainChunkCells)for(int32 X=0;X<Tile.Resolution;X+=TerrainChunkCells)Jobs.Add({TileIndex,X,Y});
     }
     TArray<FTerrainChunkData> Chunks;Chunks.SetNum(Jobs.Num());
+    const double PrepareStarted=FPlatformTime::Seconds();
     ParallelFor(Jobs.Num(),[&](int32 J){PrepareTerrainChunk(*this,TerrainTiles[Jobs[J].Tile],Jobs[J].X,Jobs[J].Y,DirtPatches,Chunks[J]);});
+    const double UploadStarted=FPlatformTime::Seconds();
     for(int32 J=0;J<Jobs.Num();++J)
     {
         const int32 TileIndex=Jobs[J].Tile,X=Jobs[J].X,Y=Jobs[J].Y;
-        {
-            auto* Terrain=NewObject<UProceduralMeshComponent>(Ground);
-            Terrain->SetupAttachment(Root);Terrain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-            // Runtime-built components are Movable, which made the virtual shadow
-            // map redraw two million terrain triangles every frame. The surface
-            // never moves; a rebuilt section re-registers and invalidates itself.
-            Terrain->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
-            Terrain->ComponentTags={FName(*FString::FromInt(TileIndex)),FName(*FString::FromInt(X)),FName(*FString::FromInt(Y))};
-            Terrain->RegisterComponent();Ground->AddInstanceComponent(Terrain);
-            auto& Data=Chunks[J];Terrain->CreateMeshSection_LinearColor(0,Data.Vertices,Data.Triangles,Data.Normals,Data.UVs,Data.Colors,Data.Tangents,false);
-            // The neighboring 128 grids retain the same continuous world-space
-            // surface material. Their lower mesh density is the detail boundary,
-            // rather than an unrelated flat-color surface around the home tile.
-            Terrain->SetMaterial(0,TerrainMaterial?TerrainMaterial:Material(FLinearColor(.29f,.32f,.22f)));
-        }
+        auto* Terrain=NewObject<UProceduralMeshComponent>(Ground);
+        Terrain->SetupAttachment(Root);Terrain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        // Runtime-built components are Movable, which made the virtual shadow
+        // map redraw two million terrain triangles every frame. The surface
+        // never moves; a rebuilt section re-registers and invalidates itself.
+        Terrain->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
+        Terrain->ComponentTags={FName(*FString::FromInt(TileIndex)),FName(*FString::FromInt(X)),FName(*FString::FromInt(Y))};
+        Terrain->RegisterComponent();Ground->AddInstanceComponent(Terrain);
+        auto& Data=Chunks[J];Terrain->CreateMeshSection_LinearColor(0,Data.Vertices,Data.Triangles,Data.Normals,Data.UVs,Data.Colors,Data.Tangents,false);
+        // The neighboring 128 grids retain the same continuous world-space
+        // surface material. Their lower mesh density is the detail boundary,
+        // rather than an unrelated flat-color surface around the home tile.
+        Terrain->SetMaterial(0,TerrainMaterial?TerrainMaterial:Material(FLinearColor(.29f,.32f,.22f)));
     }
-    UE_LOG(LogTemp,Display,TEXT("Terrain surface ready: focused %d grid, eight 128 grids, %.3f seconds before foliage"),DetailedTerrainResolution,FPlatformTime::Seconds()-Started);
+    PrepareSeconds=UploadStarted-PrepareStarted;UploadSeconds=FPlatformTime::Seconds()-UploadStarted;
+}
+void ASeigeGameMode::CreateLandscape(bool SectorTransition)
+{
+    if(!FApp::CanEverRender())return;
+    const double Started=FPlatformTime::Seconds();
+    const bool Reuse=SectorTransition&&Landscape&&TerrainTiles.Num()==9&&RenderedSector>=0&&RenderedSector!=DetailedSectorIndex()&&TerrainPadSignature==FPreparedTerrain(*this).Signature;
+    // A crossing finishes the previous crossing's deferred half first; a full
+    // rebuild replaces everything, so deferred work is simply dropped.
+    if(Reuse)ContinueDeferredSectorWork(true);else DeferredTerrainTile=DeferredForestSector=INDEX_NONE;
+    const int32 PreviousSector=RenderedSector;
+    if(!Reuse&&Landscape)Landscape->Destroy();
+    auto* Ground=Reuse?Landscape.Get():GetWorld()->SpawnActor<AActor>();
+    auto* Root=Ground->GetRootComponent();if(!Root){Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();}Landscape=Ground;
+    // A crossing rebuilds only the sector being entered in this frame. The
+    // sector being left keeps its detailed chunks and forest (a valid, finer
+    // surface behind the camera) until ContinueDeferredSectorWork replaces them
+    // on the next frames; this splits the v0.9.2 single-frame stall.
+    if(Reuse)
+    {
+        TArray<UProceduralMeshComponent*> Existing;Ground->GetComponents(Existing);
+        for(auto* Mesh:Existing)if(Mesh->ComponentTags.Num()==3&&FCString::Atoi(*Mesh->ComponentTags[0].ToString())==DetailedSectorIndex())Mesh->DestroyComponent();
+    }
+    RenderedSector=DetailedSectorIndex();RebuildTerrainHeights(Reuse);
+    TArray<int32> Tiles;
+    if(Reuse)Tiles.Add(RenderedSector);else for(int32 TileIndex=0;TileIndex<TerrainTiles.Num();++TileIndex)Tiles.Add(TileIndex);
+    double PrepareSeconds=0,UploadSeconds=0;UploadTerrainTiles(Ground,Tiles,PrepareSeconds,UploadSeconds);
+    if(Reuse)DeferredTerrainTile=PreviousSector;
+    const double SurfaceReady=FPlatformTime::Seconds();
+    UE_LOG(LogTemp,Display,TEXT("Terrain surface ready: focused %d grid, eight 128 grids, %.3f seconds before foliage (%d tiles: prepare %.3f s, upload %.3f s)"),DetailedTerrainResolution,SurfaceReady-Started,Tiles.Num(),PrepareSeconds,UploadSeconds);
     if(!Reuse)CreateEnvironmentWater();
     CreateFoliage(Reuse?PreviousSector:INDEX_NONE);
+    // One line per sector crossing so travel diagnostics can split the stall.
+    if(Reuse)UE_LOG(LogTemp,Display,TEXT("SECTOR_TRANSITION %d -> %d: %.1f ms in the crossing frame, terrain %.1f ms, forest, geology and ground cover %.1f ms; sector %d deferred"),PreviousSector,RenderedSector,(FPlatformTime::Seconds()-Started)*1000,(SurfaceReady-Started)*1000,(FPlatformTime::Seconds()-SurfaceReady)*1000,PreviousSector);
+}
+bool ASeigeGameMode::ContinueDeferredSectorWork(bool Flush)
+{
+    bool Worked=false;
+    if(DeferredTerrainTile!=INDEX_NONE)
+    {
+        const double Started=FPlatformTime::Seconds();
+        const int32 TileIndex=DeferredTerrainTile;DeferredTerrainTile=INDEX_NONE;
+        if(Landscape&&TerrainTiles.IsValidIndex(TileIndex)&&TileIndex!=DetailedSectorIndex())
+        {
+            TArray<UProceduralMeshComponent*> Existing;Landscape->GetComponents(Existing);
+            for(auto* Mesh:Existing)if(Mesh->ComponentTags.Num()==3&&FCString::Atoi(*Mesh->ComponentTags[0].ToString())==TileIndex)Mesh->DestroyComponent();
+            double PrepareSeconds=0,UploadSeconds=0;UploadTerrainTiles(Landscape,{TileIndex},PrepareSeconds,UploadSeconds);
+            UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED terrain tile %d: %.1f ms"),TileIndex,(FPlatformTime::Seconds()-Started)*1000);
+        }
+        Worked=true;if(!Flush)return true;
+    }
+    if(DeferredForestSector!=INDEX_NONE)
+    {
+        const double Started=FPlatformTime::Seconds();
+        const int32 Sector=DeferredForestSector;DeferredForestSector=INDEX_NONE;
+        if(Foliage&&Sector!=DetailedSectorIndex())
+        {
+            const FName Tag(*FString::Printf(TEXT("seige_forest_sector:%d"),Sector));
+            TArray<UInstancedStaticMeshComponent*> Existing;Foliage->GetComponents(Existing);
+            for(auto* Set:Existing)if(Set->ComponentHasTag(Tag))Set->DestroyComponent();
+            BuildForestSectors(Foliage,{Sector});
+            UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED forest sector %d: %.1f ms"),Sector,(FPlatformTime::Seconds()-Started)*1000);
+        }
+        Worked=true;
+    }
+    return Worked;
 }
 void ASeigeGameMode::RefreshBuildingPads()
 {
     if(TerrainTiles.IsEmpty())return;
     const FPreparedTerrain Prepared(*this);
     if(TerrainPadSignature==Prepared.Signature)return;
+    // Pad edits address chunk components by the tile's current resolution, so a
+    // deferred sector swap (old detailed chunks on a now-coarse tile) finishes first.
+    ContinueDeferredSectorWork(true);
     const double Started=FPlatformTime::Seconds();
     TArray<FVector4> Changed;
     for(const auto& Pair:TerrainPadBounds)
@@ -710,21 +764,33 @@ void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
 void ASeigeGameMode::CreateFoliage(int32 PreviousSector)
 {
     if(!FApp::CanEverRender())return;
-    const double Started=FPlatformTime::Seconds();
     const bool Reuse=PreviousSector!=INDEX_NONE&&Foliage;
     if(!Reuse&&Foliage)Foliage->Destroy();if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}SceneryStream.Reset();SceneryMeshReferences.Reset();
     auto* Ground=Reuse?Foliage.Get():GetWorld()->SpawnActor<AActor>();auto* Root=Ground->GetRootComponent();if(!Root){Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();}Foliage=Ground;
+    TArray<int32> Sectors;
     if(Reuse)
     {
+        // Only the sector being entered is rebuilt now; the sector being left
+        // keeps its trees (on its previous, finer surface) until the deferred pass.
+        const FName Tag(*FString::Printf(TEXT("seige_forest_sector:%d"),DetailedSectorIndex()));
         TArray<UInstancedStaticMeshComponent*> Existing;Ground->GetComponents(Existing);
-        for(auto* Set:Existing)if(Set->ComponentHasTag(FName(*FString::Printf(TEXT("seige_forest_sector:%d"),PreviousSector)))||Set->ComponentHasTag(FName(*FString::Printf(TEXT("seige_forest_sector:%d"),DetailedSectorIndex()))))Set->DestroyComponent();
+        for(auto* Set:Existing)if(Set->ComponentHasTag(Tag))Set->DestroyComponent();
+        Sectors.Add(DetailedSectorIndex());DeferredForestSector=PreviousSector;
     }
+    else for(int32 Sector=0;Sector<9;++Sector)Sectors.Add(Sector);
+    BuildForestSectors(Ground,Sectors);
+    RefreshDepositGeology(true);
+    CreateGroundCover();
+}
+void ASeigeGameMode::BuildForestSectors(AActor* Ground,const TArray<int32>& Sectors)
+{
+    const double Started=FPlatformTime::Seconds();
+    auto* Root=Ground->GetRootComponent();
     const double Half=Sim.WorldHalfSize,FarDistance=Half*RenderScale*8;
     auto* BroadProxy=LoadObject<UStaticMesh>(nullptr,*BroadleafProxyAsset,nullptr,LOAD_NoWarn);
     auto* PineProxy=LoadObject<UStaticMesh>(nullptr,*ConiferProxyAsset,nullptr,LOAD_NoWarn);
     TMap<FString,UStaticMesh*> Meshes;
     TMap<FName,UInstancedStaticMeshComponent*> Sets;
-    TMap<FName,TArray<FTransform>> Batches;
     for(const FString Kind:{TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB"),TEXT("RockA"),TEXT("RockB")})
     {
         const FString Name=TEXT("SM_")+Kind,Path=NatureAssets.Contains(Kind)?NatureAssets[Kind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
@@ -752,29 +818,20 @@ void ASeigeGameMode::CreateFoliage(int32 PreviousSector)
         }
         Sets.Add(Key,Set);return Set;
     };
-    auto Add=[&](const FString& Kind,FVector2D P,double Size,double Yaw,int32 Band)
-    {
-        const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
-        auto* Source=Meshes.FindRef(Kind);if(!Source)return;
-        const FTransform Transform(FRotator(0,Yaw,0),RenderPosition(P),FVector(Size));
-        const FName DetailKey(*FString::Printf(TEXT("%d_%s_%d_detail"),ActiveSector,*Kind,Band));
-        if(EnsureSet(Kind,Band,false))Batches.FindOrAdd(DetailKey).Add(Transform);
-        if(Tree)if(auto* Proxy=Kind.StartsWith(TEXT("Pine"))?PineProxy:BroadProxy)
-        {
-            if(EnsureSet(Kind,Band,true))
-            {
-                const FTransform Far=AlignProxyBounds(Transform,Source,Proxy);
-                const FName ProxyKey(*FString::Printf(TEXT("%d_%s_%d_proxy"),ActiveSector,*Kind,Band));
-                Batches.FindOrAdd(ProxyKey).Add(Far);
-            }
-        }
-    };
+    // Tree kinds by index; a candidate's kind, LOD band and both transforms are
+    // computed in parallel, and the serial pass only appends to per-set arrays.
+    // (Formatting an FName key per tree was most of the sector-crossing forest
+    // rebuild: ~1.2 us per tree, 113k trees for the two sectors that change.)
+    static const TCHAR* const TreeKinds[4]={TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB")};
+    UStaticMesh* KindSource[4];UStaticMesh* KindProxy[4];
+    for(int32 K=0;K<4;++K){KindSource[K]=Meshes.FindRef(TreeKinds[K]);KindProxy[K]=K>=2?PineProxy:BroadProxy;}
+    constexpr int32 TreeCombos=4*SceneryLodBands;
     int32 Trees=0;
     // Every sector keeps the same full placement sequence and density at every
     // focus level. Only the representation changes with camera distance.
-    for(int32 Sector=0;Sector<9;++Sector)
+    for(const int32 Sector:Sectors)
     {
-        if(Reuse&&Sector!=PreviousSector&&Sector!=DetailedSectorIndex())continue;ActiveSector=Sector;
+        ActiveSector=Sector;
         const FVector2D Offset=FVector2D(Sector%3-1,Sector/3-1)*Half*2;
         const FSeigeSimulation* Colony=Sector==4?&Sim:nullptr;
         if(!Colony)for(const auto& N:Neighbors)if(N.Index==Sector){Colony=&N.Sim;break;}
@@ -793,21 +850,41 @@ void ASeigeGameMode::CreateFoliage(int32 PreviousSector)
         struct FCandidate{FVector2D P;double Chance,Size,Yaw;int32 I;};TArray<FCandidate> Candidates;Candidates.Reserve(ForestCandidates+NearForestCandidates);
         for(int32 I=0;I<ForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
         for(int32 I=0;I<NearForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
-        TArray<uint8> Keep;Keep.SetNumZeroed(Candidates.Num());
-        ParallelFor(Candidates.Num(),[&](int32 K){const auto& C=Candidates[K];Keep[K]=!IsSceneryClear(*this,C.P,210,Offset,Half,Areas)&&C.Chance<=WoodlandDensity(C.P)*.9;});
-        for(int32 K=0;K<Candidates.Num();++K)if(Keep[K])
+        struct FPlacedTree{FTransform Detail,Far;int32 Combo=INDEX_NONE;bool Keep=false;};
+        TArray<FPlacedTree> Placed;Placed.SetNum(Candidates.Num());
+        ParallelFor(Candidates.Num(),[&](int32 K)
         {
-            const auto& C=Candidates[K];const int32 I=C.I;
-            const FString Kind=I%9==0?(I%2?TEXT("PineA"):TEXT("PineB")):(I%2?TEXT("OakA"):TEXT("OakB"));
-            const int32 Band=int32(GroundCellSeed(I,Sector)%SceneryLodBands);
-            Add(Kind,C.P,C.Size,C.Yaw,Band);++Trees;
+            const auto& C=Candidates[K];
+            if(IsSceneryClear(*this,C.P,210,Offset,Half,Areas)||C.Chance>WoodlandDensity(C.P)*.9)return;
+            FPlacedTree& T=Placed[K];T.Keep=true;
+            const int32 I=C.I,KindIndex=I%9==0?(I%2?2:3):(I%2?0:1);
+            const UStaticMesh* Source=KindSource[KindIndex];if(!Source)return;   // missing mesh: counted, not drawn
+            T.Combo=KindIndex*SceneryLodBands+int32(GroundCellSeed(I,Sector)%SceneryLodBands);
+            T.Detail=FTransform(FRotator(0,C.Yaw,0),RenderPosition(C.P),FVector(C.Size));
+            if(const UStaticMesh* ProxyMesh=KindProxy[KindIndex])T.Far=AlignProxyBounds(T.Detail,Source,ProxyMesh);
+        });
+        // Sets are still created lazily in candidate order, so component order
+        // and per-set instance order match the earlier serial loop.
+        UInstancedStaticMeshComponent* DetailSets[TreeCombos]={};UInstancedStaticMeshComponent* ProxySets[TreeCombos]={};
+        bool DetailTried[TreeCombos]={},ProxyTried[TreeCombos]={};
+        TArray<FTransform> DetailBatch[TreeCombos],ProxyBatch[TreeCombos];
+        for(int32 K=0;K<Placed.Num();++K)
+        {
+            const FPlacedTree& T=Placed[K];if(!T.Keep)continue;++Trees;if(T.Combo==INDEX_NONE)continue;
+            const int32 KindIndex=T.Combo/SceneryLodBands,Band=T.Combo%SceneryLodBands;
+            if(!DetailTried[T.Combo]){DetailTried[T.Combo]=true;DetailSets[T.Combo]=EnsureSet(TreeKinds[KindIndex],Band,false);}
+            if(DetailSets[T.Combo])DetailBatch[T.Combo].Add(T.Detail);
+            if(!KindProxy[KindIndex])continue;
+            if(!ProxyTried[T.Combo]){ProxyTried[T.Combo]=true;ProxySets[T.Combo]=EnsureSet(TreeKinds[KindIndex],Band,true);}
+            if(ProxySets[T.Combo])ProxyBatch[T.Combo].Add(T.Far);
         }
-
+        for(int32 Combo=0;Combo<TreeCombos;++Combo)
+        {
+            if(DetailSets[Combo]&&DetailBatch[Combo].Num())DetailSets[Combo]->AddInstances(DetailBatch[Combo],false,false,false);
+            if(ProxySets[Combo]&&ProxyBatch[Combo].Num())ProxySets[Combo]->AddInstances(ProxyBatch[Combo],false,false,false);
+        }
     }
-    for(auto& Pair:Batches)if(auto** Set=Sets.Find(Pair.Key))(*Set)->AddInstances(Pair.Value,false,false,false);
-    UE_LOG(LogTemp,Display,TEXT("SCENERY_FOREST_READY: %d stable trees across nine sectors, %d ISM batches, %.3f seconds; opaque distance proxies %s"),Trees,Sets.Num(),FPlatformTime::Seconds()-Started,BroadProxy&&PineProxy?TEXT("enabled"):TEXT("fallback"));
-    RefreshDepositGeology(true);
-    CreateGroundCover();
+    UE_LOG(LogTemp,Display,TEXT("SCENERY_FOREST_READY: %d stable trees across %d sectors, %d ISM batches, %.3f seconds; opaque distance proxies %s"),Trees,Sectors.Num(),Sets.Num(),FPlatformTime::Seconds()-Started,BroadProxy&&PineProxy?TEXT("enabled"):TEXT("fallback"));
 }
 void ASeigeGameMode::RefreshDepositGeology(bool Force)
 {
@@ -1184,6 +1261,7 @@ void ASeigeGameMode::RefreshEnvironment()
         if(RenderedSector!=DetailedSectorIndex()){SelectedId=0;SelectedBuild.Empty();CreateLandscape(true);}
         else
         {
+            ContinueDeferredSectorWork(false);   // one deferred step per frame after a crossing
             const FString Before=TerrainPadSignature;
             RefreshBuildingPads();
             if(Before!=TerrainPadSignature)RefreshTransportScenery();

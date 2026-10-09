@@ -322,7 +322,7 @@ def scatter_props(z_top, half_w, half_d, seed, count=10, edge=70):
         yaw = rng.choice((0, math.pi / 2, math.pi, -math.pi / 2)) + rng.uniform(-.15, .15)
         if kind == 'pallet':
             _pallet(x, y, z_top, rng, yaw)
-            if rng.random() < .5 and _free(rects, x + 130, y, rx, ry): _pallet(x + 130, y, z_top, rng, yaw); rects.append((x + 60, y - ry, x + 200, y + ry))
+            if rng.random() < .5 and x + 130 + rx <= half_w - edge and _free(rects, x + 130, y, rx, ry): _pallet(x + 130, y, z_top, rng, yaw); rects.append((x + 60, y - ry, x + 200, y + ry))
         elif kind == 'drums': _drums(x, y, z_top, rng)
         elif kind == 'gas': _gas_rack(x, y, z_top)
         elif kind == 'barrier': _barrier(x, y, z_top, rng.choice((0, math.pi / 2)))
@@ -549,29 +549,227 @@ def greenhouse():
     export('SM_Greenhouse', 'Four glazed gable greenhouse bays with grow benches, a processing block, irrigation tanks and mains', ['food_producer'])
 
 
-# ------------------------------------------------------------------ WORKS: clean production hall (conductor, substrate, circuit, component, battery)
-def works():
+# ------------------------------------------------------------------ WORKS: five processors, one hall language, five process signatures
+# The five clean-industry processors (conductor, glass, circuit, robotic parts,
+# battery) shared SM_Works until 2026-10-09, so the first-playable goal
+# building looked exactly like four others. Each now keeps the white clean
+# hall (window band, roller door, dock, dressing) but gets its own roof and
+# a process yard on the +X side, the side the default camera sees: cable
+# drums, silos and a furnace chimney, a chemical tank farm under scrubber
+# stacks, a sawtooth machine shop with a gantry yard and robot test cell, a
+# dry-room and transformer yard. Everything stays inside the 2060 cm slab so
+# the pivot (bounding-box centre) matches the shared processor plot.
+WORKS_Z0, WORKS_CY, WORKS_D, WORKS_H = 48, 100, 1500, 580
+
+
+def works_hall(cx, w, word, word_size=60, roof='flat', skylights=(-450, -150, 150, 450), ladder='-x'):
+    """Shared clean hall: x from cx - w/2 to cx + w/2, front (-Y) at y = -650."""
+    z0, cy, d, h = WORKS_Z0, WORKS_CY, WORKS_D, WORKS_H
+    front = cy - d / 2
     foundation(2060, 2060)
-    box('Production hall', (-120, 100, 48 + 290), (1560, 1500, 580), 'Ceramic', 8)
-    box('Dark roof membrane', (-120, 100, 48 + 584), (1580, 1520, 10), 'Slate', 2)
-    box('Delivery apron', (-520, -860, 48 + 6), (640, 380, 12), 'Carbon', 1)
-    for x in range(-760, 561, 220):
-        box('Facade cassette seam', (x - 110, -652, 48 + 290), (3, 6, 560), 'Carbon', 0); window_y(x, -652, 48 + 440, 160, 100)
-    box('Window band', (-120, -654, 48 + 180), (1500, 8, 120), 'Glass', 1)
-    shutter_y(-520, -655, 48, 420, 340); door_y(300, -655, 48, 96, 206)
-    for y in (-450, -150, 150, 450):
-        for x in (-700, -300, 100, 500): box('Roof skylight', (x, y, 48 + 585), (260, 180, 24), 'Glass', 2)
-    for x in (-750, -250, 250): hvac(x, 650, 48 + 580, 220, 300, 160)
-    box('Chilled-water plant', (640, 600, 48 + 120), (420, 420, 240), 'Slate', 6)
-    for sx, sy in ((-1, -1), (1, -1), (-1, 1), (1, 1)): fan(640 + sx * 100, 600 + sy * 100, 48 + 248, 80)
-    for k in range(4): cyl('Process gas cylinder', (820, -200 + k * 110, 48 + 120), 34, 240, ['Steel', 'Blue', 'Steel', 'Yellow'][k], 16)
-    box('Gas cabinet canopy', (820, -35, 48 + 270), (140, 520, 16), 'Steel', 2)
-    pipe('Process gas main', [(820, 160, 48 + 240), (820, 300, 48 + 240), (660, 300, 48 + 240), (660, 300, 48 + 450), (660, 650, 48 + 450)], 9, 'Steel')
-    box('Shipping dock', (-520, -860, 48 + 40), (560, 300, 80), 'Concrete', 4); box('Dock leveller', (-520, -780, 48 + 82), (300, 100, 6), 'Yellow', 1)
-    text('Works identity', 'WORKS', (-120, -660, 48 + 540), 60, mat='Carbon')
-    dress_hall(-120, 100, 48, 1560, 1500, 580, ladder='-x', lamps='-y')
-    scatter_props(48, 1030, 1030, seed=43, count=9)
-    export('SM_Works', 'White clean production hall with a window band, roof skylights, rooftop air handling, chilled-water plant and process-gas cabinet', ['conductor_works', 'substrate_works', 'circuit_works', 'component_works', 'battery_works'])
+    box('Production hall', (cx, cy, z0 + h / 2), (w, d, h), 'Ceramic', 8)
+    if roof == 'flat':
+        box('Dark roof membrane', (cx, cy, z0 + h + 4), (w + 20, d + 20, 10), 'Slate', 2)
+    for x in range(int(cx - w / 2 + 140), int(cx + w / 2 - 80), 220):
+        box('Facade cassette seam', (x - 110, front - 2, z0 + h / 2), (3, 6, h - 20), 'Carbon', 0); window_y(x, front - 2, z0 + h - 140, 160, 100)
+    box('Window band', (cx, front - 4, z0 + 180), (w - 60, 8, 120), 'Glass', 1)
+    sx_door = cx - w / 2 + 380
+    shutter_y(sx_door, front - 5, z0, 420, 340); door_y(cx + w / 2 - 360, front - 5, z0, 96, 206)
+    box('Delivery apron', (sx_door, -845, z0 + 6), (640, 350, 12), 'Carbon', 1)
+    box('Shipping dock', (sx_door, -860, z0 + 40), (560, 300, 80), 'Concrete', 4); box('Dock leveller', (sx_door, -780, z0 + 82), (300, 100, 6), 'Yellow', 1)
+    if skylights and roof == 'flat':
+        for y in skylights:
+            for x in range(int(cx - w / 2 + 220), int(cx + w / 2 - 150), 400): box('Roof skylight', (x, y, z0 + h + 5), (260, 180, 24), 'Glass', 2)
+    text('Works identity', word, (cx, front - 10, z0 + h - 40), word_size, mat='Carbon')
+    dress_hall(cx, cy, z0, w, d, h, ladder=ladder, lamps='-y', parapet=(roof == 'flat'))
+    return front
+
+
+def gable_x(name, x, y0, y1, z, rise, thickness, mat):
+    """Right-triangle gable in the YZ plane (low at y0, high at y1), extruded along X."""
+    t = thickness / 2; verts = []
+    for dx in (-t, t): verts += [(x + dx, y0, z), (x + dx, y1, z), (x + dx, y1, z + rise)]
+    faces = [(0, 2, 1), (3, 4, 5), (0, 1, 4, 3), (1, 2, 5, 4), (2, 0, 3, 5)]
+    me = bpy.data.meshes.new(name); me.from_pydata(verts, [], faces); me.update()
+    ob = bpy.data.objects.new(name, me); bpy.context.collection.objects.link(ob); return finish(ob, name, mat)
+
+
+def drum(x, y, z, r, length, flange='Yellow', wound='Copper'):
+    """Cable drum lying on its side, axis along X (flanges face the +X camera)."""
+    for sx in (-1, 1): tube('Cable drum flange', (x + sx * length / 2 - 6, y, z + r), (x + sx * length / 2 + 6, y, z + r), r, flange, sides=24)
+    tube('Wound conductor', (x - length / 2 + 6, y, z + r), (x + length / 2 - 6, y, z + r), r * .78, wound, sides=24)
+    tube('Drum spindle', (x - length / 2 - 14, y, z + r), (x + length / 2 + 14, y, z + r), r * .14, 'Steel', sides=10)
+
+
+def works_conductor():
+    """Conductor works (draws conductors from ore): a clad upcast rod caster
+    tower, a drawing hall, copper coil stacks and a yard of cable drums."""
+    z0 = WORKS_Z0; cx, w = -200, 1400
+    works_hall(cx, w, 'CONDUCTORS', 52)
+    for x in (-700, -200, 300): hvac(x, 690, z0 + WORKS_H, 220, 300, 140)
+    tx, ty = 560, 640  # caster tower against the hall's +X/back corner
+    box('Upcast rod caster tower', (tx, ty, z0 + 520), (300, 320, 1040), 'Slate', 8)
+    for z in range(int(z0 + 160), int(z0 + 1000), 160): box('Caster tower window slot', (tx + 151, ty, z), (6, 200, 60), 'Glass', 1)
+    box('Caster tower cap', (tx, ty, z0 + 1048), (330, 350, 16), 'Steel', 2)
+    tube('Furnace fume stack', (tx - 60, ty + 60, z0 + 1056), (tx - 60, ty + 60, z0 + 1360), 34, 'Steel'); torus('Stack cap', (tx - 60, ty + 60, z0 + 1360), 34, 6, 'Slate')
+    pipe('Rod-out guide tube', [(tx - 150, ty - 160, z0 + 940), (tx - 260, ty - 160, z0 + 940), (tx - 260, ty - 160, z0 + WORKS_H + 20)], 14, 'Copper')
+    # Cable-drum yard on the +X side.
+    for i, y in enumerate((-560, -290, -20, 250)):
+        for j, x in enumerate((690, 900)):
+            big = (i + j) % 2 == 0
+            drum(x, y, z0, 118 if big else 92, 150 if big else 120, ('Yellow', 'Carbon', 'Blue')[(i + 2 * j) % 3], 'Copper' if (i + j) % 3 else 'Carbon')
+    for k, (x, y) in enumerate(((640, -900), (790, -900))):  # rod coil stacks at the +X front corner
+        box('Coil pallet', (x, y, z0 + 7), (120, 120, 14), 'Carbon', 0)
+        for n in range(3 - k): torus('Copper rod coil', (x, y, z0 + 30 + n * 34), 44, 15, 'Copper')
+    scatter_props(z0, 1030, 1030, seed=101, count=6)
+    export('SM_WorksConductor', 'Conductor works: clean hall with an upcast rod caster tower and fume stack, copper coil stacks and a yard of cable drums', ['conductor_works'])
+
+
+def works_glass():
+    """Industrial glass works (silica to substrates): batch silos with a bucket
+    elevator, a melting-furnace chimney, a roof ventilation monitor and cullet bunkers."""
+    z0, h = WORKS_Z0, WORKS_H; cx, w = -250, 1300
+    works_hall(cx, w, 'GLASS', 64, skylights=False)
+    box('Roof ventilation monitor', (cx, WORKS_CY, z0 + h + 70), (360, WORKS_D - 260, 130), 'Slate', 4)
+    for y in range(-520, 721, 120):
+        for sx in (-1, 1): box('Monitor louvre', (cx + sx * 182, y, z0 + h + 70), (6, 90, 100), 'Carbon', .5)
+    box('Monitor cap', (cx, WORKS_CY, z0 + h + 142), (400, WORKS_D - 230, 14), 'Steel', 2)
+    for x in (-760, 260): hvac(x, 600, z0 + h, 200, 260, 120)
+    # Melting furnace chimney behind the hall's +X end.
+    chx, chy = 560, 760
+    box('Furnace flue house', (chx - 60, chy - 120, z0 + 170), (260, 260, 340), 'Concrete', 6)
+    tube('Furnace chimney', (chx, chy, z0), (chx, chy, z0 + 1650), 78, 'Concrete', r2=58, sides=24)
+    for z in (z0 + 500, z0 + 1000, z0 + 1450): torus('Chimney band', (chx, chy, z), 76 - (z - z0) * .012, 7, 'Slate')
+    torus('Chimney crown', (chx, chy, z0 + 1650), 60, 9, 'Slate')
+    # Batch silos and bucket elevator on the +X yard.
+    for x in (650, 900):
+        cyl('Silo skirt', (x, -260, z0 + 110), 118, 220, 'Concrete', 32)
+        cyl('Silica batch silo', (x, -260, z0 + 220 + 330), 118, 660, 'Ceramic', 32)
+        cyl('Silo roof cone', (x, -260, z0 + 880 + 35), 118, 70, 'Steel', 32, 26)
+        torus('Silo ring stiffener', (x, -260, z0 + 420), 120, 5, 'Slate'); torus('Silo ring stiffener', (x, -260, z0 + 700), 120, 5, 'Slate')
+    ex, ey = 775, -520
+    box('Bucket elevator casing', (ex, ey, z0 + 520), (90, 90, 1040), 'Yellow', 3)
+    box('Elevator head', (ex, ey, z0 + 1070), (150, 130, 70), 'Yellow', 3)
+    for x in (650, 900): beam('Silo fill chute', (ex + (40 if x > ex else -40), ey + 40, z0 + 1060), (x, -300, z0 + 920), 18, mat='Steel')
+    box('Batch house', (466, -260, z0 + 200), (120, 300, 400), 'Slate', 6)
+    beam('Batch conveyor gallery', (520, -260, z0 + 380), (cx + w / 2 - 40, -260, z0 + 380), 80, 70, 'Slate')
+    for x, y in ((700, -880), (900, -880)):
+        box('Cullet bunker wall', (x, y, z0 + 50), (180, 200, 100), 'Concrete', 4)
+        box('Cullet heap', (x, y, z0 + 92), (150, 170, 30), 'Glass', 8)
+    scatter_props(z0, 1030, 1030, seed=103, count=5)
+    export('SM_WorksGlass', 'Industrial glass works: clean hall with a roof ventilation monitor, melting-furnace chimney, silica batch silos with a bucket elevator and cullet bunkers', ['substrate_works'])
+
+
+def works_circuit():
+    """Circuit works: scrubber stacks and an exhaust manifold over the roof, a
+    bunded chemical tank farm and a round wastewater clarifier."""
+    z0, h = WORKS_Z0, WORKS_H; cx, w = -120, 1560
+    works_hall(cx, w, 'CIRCUITS', 58, skylights=False)
+    roof = z0 + h + 9
+    for y in (-380, 120):
+        box('Exhaust manifold duct', (cx, y, roof + 45), (w - 260, 90, 90), 'Steel', 4)
+        for x in range(int(cx - w / 2 + 230), int(cx + w / 2 - 150), 300):
+            tube('Exhaust scrubber stack', (x, y, roof + 90), (x, y, roof + 430), 24, 'Steel', sides=16); torus('Stack collar', (x, y, roof + 430), 25, 5, 'Blue')
+    for x in (-560, 300): cyl('Wet scrubber tower', (x, 560, roof + 170), 82, 340, 'Ceramic', 24); cyl('Scrubber mist eliminator', (x, 560, roof + 360), 64, 40, 'Blue', 24)
+    for x in (-150,): hvac(x, 600, z0 + h, 240, 300, 130)
+    # Bunded chemical tank farm on the +X yard.
+    box('Chemical bund', (860, -160, z0 + 30), (300, 1000, 60), 'Concrete', 4); box('Bund floor', (860, -160, z0 + 58), (270, 970, 4), 'Carbon', 0)
+    for k, y in enumerate((-560, -400, -240, -80, 80, 240)):
+        mat = ('Blue', 'Ceramic', 'Yellow', 'Ceramic', 'Blue', 'Steel')[k]
+        cyl('Process chemical tank', (860, y, z0 + 60 + 150), 66, 300, mat, 24); cyl('Tank dome', (860, y, z0 + 60 + 312), 66, 24, mat, 24, 20)
+        box('Hazard placard', (927, y, z0 + 60 + 200), (4, 40, 40), 'Yellow', 0)
+    pipe('Chemical supply rack', [(800, -560, z0 + 420), (800, 240, z0 + 420), (cx + w / 2 + 2, 240, z0 + 420)], 9, 'Steel')
+    pipe('Chemical supply rack', [(830, -560, z0 + 440), (830, 240, z0 + 440), (cx + w / 2 + 2, 270, z0 + 440)], 7, 'Blue')
+    for y in (-620, 300):
+        for x in (790, 840): beam('Pipe rack post', (x, y, z0 + 60), (x, y, z0 + 452), 10, mat='Steel')
+        beam('Pipe rack cross beam', (780, y, z0 + 452), (850, y, z0 + 452), 10, 12, 'Steel')
+    # Wastewater clarifier on the +X/back corner.
+    cyl('Wastewater clarifier', (840, 680, z0 + 60), 170, 120, 'Concrete', 40); cyl('Clarifier water', (840, 680, z0 + 118), 158, 4, 'Glass', 40)
+    beam('Clarifier bridge', (680, 680, z0 + 140), (1000, 680, z0 + 140), 20, 30, 'Yellow'); cyl('Clarifier drive', (840, 680, z0 + 170), 26, 40, 'Slate', 16)
+    for k in range(4): cyl('Process gas cylinder', (600, -940 + k * 70, z0 + 120), 28, 240, ['Steel', 'Blue', 'Steel', 'Yellow'][k], 16)
+    box('Gas cabinet canopy', (600, -835, z0 + 255), (90, 320, 12), 'Steel', 1)
+    scatter_props(z0, 1030, 1030, seed=107, count=5)
+    export('SM_WorksCircuit', 'Circuit works: clean hall under exhaust manifolds, scrubber stacks and wet scrubber towers, a bunded chemical tank farm, wastewater clarifier and gas cylinders', ['circuit_works'])
+
+
+def works_parts():
+    """Robotic parts works (the first-playable goal): a sawtooth machine shop,
+    a gantry-served parts yard and a fenced robot-arm test cell."""
+    z0, h = WORKS_Z0, WORKS_H; cx, w = -250, 1300
+    works_hall(cx, w, 'ROBOT PARTS', 50, roof='sawtooth', skylights=False, ladder='-x')
+    # North-light sawtooth: five teeth, solid slopes rising to the back (+Y)
+    # with glazing facing +Y; the front slope reads from the camera.
+    top = z0 + h; rise, pitch = 190, WORKS_D / 5; y_front = WORKS_CY - WORKS_D / 2
+    for k in range(5):
+        y0 = y_front + k * pitch
+        slope = math.atan2(rise, pitch); length = math.hypot(rise, pitch)
+        box('Sawtooth roof slope', (cx, y0 + pitch / 2, top + rise / 2), (w + 20, length + 8, 12), 'Slate', 2, tilt=slope)
+        box('North-light glazing', (cx, y0 + pitch - 2, top + rise / 2), (w, 6, rise - 8), 'Glass', 0)
+        for x in range(int(cx - w / 2 + 130), int(cx + w / 2), 260): box('Glazing mullion', (x, y0 + pitch + 2, top + rise / 2), (8, 8, rise), 'Steel', 0)
+        for sx in (-1, 1): gable_x('Sawtooth gable', cx + sx * (w / 2 + 3), y0, y0 + pitch, top, rise, 8, 'Ceramic')
+    # Gantry crane over the +X parts yard.
+    gx0, gx1 = cx + w / 2 + 60, 980
+    for x in (gx0, gx1):
+        for y in (-820, -120, 580): beam('Gantry column', (x, y, z0), (x, y, z0 + 620), 34, mat='Yellow')
+        beam('Gantry runway beam', (x, -840, z0 + 620), (x, 600, z0 + 620), 34, 46, 'Yellow')
+    beam('Gantry bridge girder', (gx0 - 20, -300, z0 + 660), (gx1 + 20, -300, z0 + 660), 44, 56, 'Yellow')
+    box('Gantry hoist trolley', ((gx0 + gx1) / 2, -300, z0 + 705), (150, 130, 60), 'Slate', 3)
+    tube('Hoist rope', ((gx0 + gx1) / 2, -300, z0 + 675), ((gx0 + gx1) / 2, -300, z0 + 330), 3, 'Steel', sides=6)
+    box('Lifted chassis frame', ((gx0 + gx1) / 2, -300, z0 + 300), (260, 160, 50), 'Steel', 3)
+    for k, y in enumerate((-760, -560)):  # pallet racking of actuators and arm links
+        for x in (gx0 + 80, gx1 - 80): beam('Racking upright', (x, y, z0), (x, y, z0 + 420), 10, mat='Blue')
+        for z in (z0 + 20, z0 + 210, z0 + 400):
+            beam('Racking beam', (gx0 + 80, y, z), (gx1 - 80, y, z), 10, 12, 'Yellow')
+            for i in range(3): box('Parts tote', (gx0 + 160 + i * ((gx1 - gx0 - 320) / 2), y, z + 52), (110, 80, 80), ('Blue', 'Yellow', 'Slate')[(i + k) % 3], 2)
+    # Fenced robot-arm test cell at the back of the yard.
+    rx, ry = (gx0 + gx1) / 2, 300
+    for x0, y0, x1, y1 in ((rx - 220, ry - 220, rx + 220, ry - 220), (rx + 220, ry - 220, rx + 220, ry + 220), (rx - 220, ry + 220, rx + 220, ry + 220)):
+        for t in (0, .5, 1): beam('Test cell fence post', (x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z0), (x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z0 + 220), 6, mat='Yellow')
+        for z in (z0 + 100, z0 + 216): beam('Test cell fence rail', (x0, y0, z), (x1, y1, z), 4, mat='Yellow')
+    box('Test cell floor plate', (rx, ry, z0 + 4), (420, 420, 8), 'Steel', 0)
+    cyl('Robot arm base', (rx, ry, z0 + 38), 58, 60, 'Slate', 24); cyl('Robot arm waist', (rx, ry, z0 + 98), 48, 60, 'Yellow', 24)
+    tube('Robot shoulder joint', (rx - 40, ry, z0 + 150), (rx + 40, ry, z0 + 150), 36, 'Slate', sides=20)
+    beam('Robot upper arm', (rx, ry, z0 + 150), (rx, ry - 80, z0 + 370), 46, mat='Yellow')
+    tube('Robot elbow joint', (rx - 34, ry - 80, z0 + 370), (rx + 34, ry - 80, z0 + 370), 30, 'Slate', sides=20)
+    beam('Robot forearm', (rx, ry - 80, z0 + 370), (rx + 50, ry - 170, z0 + 250), 34, mat='Yellow')
+    box('Robot wrist and gripper', (rx + 58, ry - 182, z0 + 228), (60, 56, 64), 'Steel', 4)
+    box('Test cell control desk', (rx + 160, ry + 160, z0 + 55), (90, 60, 110), 'Slate', 3); box('Desk display', (rx + 160, ry + 128, z0 + 100), (60, 3, 34), 'Light', 0)
+    scatter_props(z0, 1030, 1030, seed=109, count=5)
+    export('SM_WorksParts', 'Robotic parts works: sawtooth north-light machine shop, gantry crane over a racked parts yard and a fenced robot-arm test cell', ['component_works'])
+
+
+def works_battery():
+    """Battery works (grid-powered cell production): dry-room dehumidifiers and
+    ducts on the roof, a formation transformer yard, electrolyte tanks and a
+    solvent recovery column."""
+    z0, h = WORKS_Z0, WORKS_H; cx, w = -200, 1400
+    works_hall(cx, w, 'CELLS', 70, skylights=(-450, -150))
+    roof = z0 + h + 9
+    for x in (-650, -50):
+        box('Dry-room dehumidifier', (x, 500, roof + 110), (420, 300, 220), 'Ceramic', 6); vent_y(x, 348, roof + 110, 320, 150)
+        cyl('Desiccant rotor housing', (x + 150, 500, roof + 250), 70, 60, 'Steel', 24)
+        pipe('Dry-air supply duct', [(x - 150, 340, roof + 150), (x - 150, 0, roof + 150), (x - 150, 0, roof + 10)], 34, 'Steel')
+        pipe('Dry-air return duct', [(x + 150, 340, roof + 90), (x + 150, -30, roof + 90), (x + 150, -30, roof + 10)], 28, 'Steel')
+    box('Accent band', (cx, WORKS_CY - WORKS_D / 2 - 6, z0 + h - 12), (w, 4, 24), 'Blue', 0)
+    # Formation transformer yard (+X, front half).
+    for k, y in enumerate((-640, -300)):
+        tx = 760
+        box('Formation transformer', (tx, y, z0 + 120), (260, 220, 240), 'Slate', 6)
+        for f in range(5): box('Transformer cooling fin', (tx - 100 + f * 50, y - 112, z0 + 120), (8, 4, 200), 'Steel', 0)
+        for b in range(3): cyl('Transformer bushing', (tx - 60 + b * 60, y, z0 + 270), 12, 70, 'Ceramic', 12)
+        pipe('Busbar duct', [(tx - 130, y, z0 + 200), (cx + w / 2 + 4, y, z0 + 200)], 14, 'Copper')
+    for x, y in ((960, -640), (960, -300)): box('Yard isolator', (x, y, z0 + 110), (70, 70, 220), 'Steel', 2)
+    # Electrolyte tanks in a bund, solvent recovery column behind.
+    box('Electrolyte bund', (830, 160, z0 + 25), (360, 420, 50), 'Concrete', 4)
+    for y in (70, 250):
+        tube('Electrolyte tank', (690, y, z0 + 150), (970, y, z0 + 150), 80, 'Ceramic', sides=24)
+        for x in (740, 920): box('Tank saddle', (x, y, z0 + 90), (40, 150, 80), 'Concrete', 2)
+        box('Tank hazard band', (830, y - 80, z0 + 150), (240, 4, 16), 'Yellow', 0)
+    cyl('Solvent recovery column', (880, 620, z0 + 500), 70, 1000, 'Steel', 24); cyl('Column head', (880, 620, z0 + 1015), 70, 30, 'Steel', 24, 20)
+    for z in (z0 + 350, z0 + 700): cyl('Column platform', (880, 620, z), 120, 10, 'Slate', 20); torus('Platform handrail', (880, 620, z + 90), 118, 3, 'Yellow')
+    box('Solvent condenser', (700, 780, z0 + 120), (200, 160, 240), 'Ceramic', 5); fan(700, 780, z0 + 248, 60)
+    scatter_props(z0, 1030, 1030, seed=113, count=5)
+    export('SM_WorksBattery', 'Battery works: clean hall with roof dry-room dehumidifiers and ducts, a formation transformer yard with busbars, bunded electrolyte tanks and a solvent recovery column', ['battery_works'])
 
 
 # ------------------------------------------------------------------ AI CHIP WORKS: two-storey cleanroom block
@@ -680,7 +878,49 @@ def fuel_generator():
 
 
 # ------------------------------------------------------------------ HANGARS: vehicle, tank and mech factories (plot 3120)
-def hangar(kind):
+def hangar_extras(kind, level, hx, hy, w, d, h, rise, dw):
+    """Visible level growth for the vehicle factories, kept inside the level-1
+    bounding box so the pivot (and the placed building) does not move on
+    upgrade. Level 2: a paint and coating shop annex with a filter house and
+    stacks in a free front corner, and a 'MK II' plate. Level 3 adds a glazed
+    high-bay monitor along the roof ridge, a fenced transformer substation in
+    the other front corner and a 'MK III' plate."""
+    if level < 2:
+        return
+    z0 = 48
+    ax, ay, aw, ad = {'wheeled': (1270, -500, 450, 700), 'tracked': (1330, -520, 400, 700), 'mech': (1250, -900, 500, 500)}[kind]
+    ah = 420
+    box('Paint and coating shop', (ax, ay, z0 + ah / 2), (aw, ad, ah), 'Ceramic', 8)
+    box('Coating shop roof', (ax, ay, z0 + ah + 6), (aw + 20, ad + 20, 12), 'Slate', 2)
+    shutter_y(ax, ay - ad / 2, z0, min(aw - 120, 300), 280)
+    for k in range(3): box('Spray booth louvre bank', (ax + aw / 2 + 3, ay - ad / 2 + 120 + k * (ad - 240) / 2, z0 + 260), (6, 140, 160), 'Carbon', 1)
+    box('Booth filter house', (ax, ay + ad * .15, z0 + ah + 82), (aw * .6, ad * .4, 140), 'Steel', 4)
+    for sx in (-1, 1):
+        x = ax + sx * aw * .18
+        tube('Booth exhaust stack', (x, ay + ad * .15, z0 + ah + 150), (x, ay + ad * .15, z0 + 980), 26, 'Steel', sides=16); torus('Stack cap', (x, ay + ad * .15, z0 + 980), 26, 5, 'Slate')
+    box('Coating shop lamp', (ax, ay - ad / 2 - 14, z0 + ah - 60), (60, 14, 12), 'Light', 0)
+    px = hx - dw / 2 - 300
+    box('Mark plate', (px, hy - d / 2 - 6, z0 + h * .55 + 150), (260, 6, 76), 'Slate', 1)
+    text('Mark identity', 'MK II' if level == 2 else 'MK III', (px, hy - d / 2 - 10, z0 + h * .55 + 150), 48, mat='Yellow')
+    if level < 3:
+        return
+    # Glazed high-bay monitor on the barrel ridge, stopping short of the rear plant.
+    mz = z0 + h + rise - 30; y0, y1 = hy - d / 2 + 200, hy + d / 2 - 450
+    box('High-bay monitor', (hx, (y0 + y1) / 2, mz + 90), (520, y1 - y0, 180), 'Slate', 4)
+    for sx in (-1, 1): box('Monitor glazing', (hx + sx * 262, (y0 + y1) / 2, mz + 95), (6, y1 - y0 - 40, 120), 'Glass', 0)
+    box('Monitor roof', (hx, (y0 + y1) / 2, mz + 186), (560, y1 - y0 + 20, 14), 'Steel', 2)
+    # Fenced substation in the other free front corner.
+    sx0, sy0 = {'wheeled': (-1320, -1100), 'tracked': (-1375, -1000), 'mech': (-1200, -1000)}[kind]
+    box('Substation pad', (sx0, sy0, z0 + 6), (340, 360, 12), 'Concrete', 2)
+    box('Substation transformer', (sx0, sy0, z0 + 120), (220, 180, 220), 'Slate', 6)
+    for f in range(5): box('Transformer cooling fin', (sx0 - 100 + f * 50, sy0 - 94, z0 + 120), (8, 6, 180), 'Steel', 0)
+    for b in range(3): cyl('Transformer bushing', (sx0 - 60 + b * 60, sy0, z0 + 260), 12, 70, 'Ceramic', 12)
+    for cx0, cy0, cx1, cy1 in ((sx0 - 160, sy0 - 170, sx0 + 160, sy0 - 170), (sx0 + 160, sy0 - 170, sx0 + 160, sy0 + 170), (sx0 - 160, sy0 + 170, sx0 + 160, sy0 + 170), (sx0 - 160, sy0 - 170, sx0 - 160, sy0 + 170)):
+        for t in (0, .5, 1): beam('Substation fence post', (cx0 + (cx1 - cx0) * t, cy0 + (cy1 - cy0) * t, z0), (cx0 + (cx1 - cx0) * t, cy0 + (cy1 - cy0) * t, z0 + 200), 6, mat='Slate')
+        beam('Substation fence rail', (cx0, cy0, z0 + 196), (cx1, cy1, z0 + 196), 4, mat='Steel')
+
+
+def hangar(kind, level=1):
     foundation(3100, 3100)
     w, d, h = {'wheeled': (2300, 2200, 760), 'tracked': (2500, 2300, 820), 'mech': (2100, 2100, 1150)}[kind]
     hx, hy = -150, 250
@@ -706,12 +946,16 @@ def hangar(kind):
     for k in range(4): box('Parts container', (hx - w / 2 - 240 + (k % 2) * 260, hy - 500 + (k // 2) * 300, 48 + 122), (240, 245, 245), ['Blue', 'Yellow'][k % 2], 5)
     text('Hangar identity', {'wheeled': 'WHEELED', 'tracked': 'TRACKED', 'mech': 'MECH'}[kind], (hx, hy - d / 2 - 4, 48 + h - 60), 70, mat='Yellow')
     dress_hall(hx, hy, 48, w, d, h, ladder='+x' if kind != 'mech' else '-x', lamps='-y', parapet=False)
-    scatter_props(48, 1550, 1550, seed={'wheeled': 67, 'tracked': 71, 'mech': 73}[kind], count=10)
-    export({'wheeled': 'SM_Hangar', 'tracked': 'SM_HangarTracked', 'mech': 'SM_HangarMech'}[kind],
+    hangar_extras(kind, level, hx, hy, w, d, h, {'wheeled': 160, 'tracked': 150, 'mech': 110}[kind], dw)
+    scatter_props(48, 1550, 1550, seed={'wheeled': 67, 'tracked': 71, 'mech': 73}[kind] + 100 * (level - 1), count=10)
+    suffix = '' if level == 1 else str(level)
+    family = {'wheeled': 'vehicle_factory', 'tracked': 'tank_factory', 'mech': 'mech_factory'}[kind]
+    export({'wheeled': 'SM_Hangar', 'tracked': 'SM_HangarTracked', 'mech': 'SM_HangarMech'}[kind] + suffix,
            {'wheeled': 'Barrel-roofed assembly hangar with a wide roller door, marked apron, parts store and container yard',
             'tracked': 'Heavier barrel-roofed hangar with a reinforced ramp, wide roller door, parts store and container yard',
-            'mech': 'Tall assembly hangar with a high door and an external erection gantry for walking chassis'}[kind],
-           {'wheeled': ['vehicle_factory', 'vehicle_factory_2', 'vehicle_factory_3'], 'tracked': ['tank_factory', 'tank_factory_2', 'tank_factory_3'], 'mech': ['mech_factory', 'mech_factory_2', 'mech_factory_3']}[kind])
+            'mech': 'Tall assembly hangar with a high door and an external erection gantry for walking chassis'}[kind]
+           + ['', '; level 2 adds a paint and coating shop with exhaust stacks', '; level 3 adds the coating shop, a glazed high-bay roof monitor and a fenced substation'][level - 1],
+           [family if level == 1 else family + '_%d' % level])
 
 
 
@@ -1055,9 +1299,12 @@ def service_bay():
 BUILDERS = {
     'solarArray': lambda: solar_array(1), 'solarArray2': lambda: solar_array(2), 'solarArray3': lambda: solar_array(3),
     'batteryBank': battery_bank, 'tradingPort': lambda: trading_port(1), 'tradingPort2': lambda: trading_port(2), 'tradingPort3': lambda: trading_port(3),
-    'refinery': refinery, 'fuelRefinery': fuel_refinery, 'greenhouse': greenhouse, 'works': works, 'chipWorks': chip_works,
+    'refinery': refinery, 'fuelRefinery': fuel_refinery, 'greenhouse': greenhouse, 'chipWorks': chip_works,
+    'worksConductor': works_conductor, 'worksGlass': works_glass, 'worksCircuit': works_circuit, 'worksParts': works_parts, 'worksBattery': works_battery,
     'fusionWorks': fusion_works, 'ammunitionWorks': ammunition_works, 'fuelGenerator': fuel_generator,
     'hangar': lambda: hangar('wheeled'), 'hangarTracked': lambda: hangar('tracked'), 'hangarMech': lambda: hangar('mech'),
+    'hangar2': lambda: hangar('wheeled', 2), 'hangarTracked2': lambda: hangar('tracked', 2), 'hangarMech2': lambda: hangar('mech', 2),
+    'hangar3': lambda: hangar('wheeled', 3), 'hangarTracked3': lambda: hangar('tracked', 3), 'hangarMech3': lambda: hangar('mech', 3),
     'towerLaser': lambda: tower_base('laser'), 'towerKinetic': lambda: tower_base('kinetic'), 'towerMissile': lambda: tower_base('missile'), 'towerPlasma': lambda: tower_base('plasma'),
     'towerLaser2': lambda: tower_base('laser', 2), 'towerKinetic2': lambda: tower_base('kinetic', 2), 'towerMissile2': lambda: tower_base('missile', 2), 'towerPlasma2': lambda: tower_base('plasma', 2),
     'towerLaser3': lambda: tower_base('laser', 3), 'towerKinetic3': lambda: tower_base('kinetic', 3), 'towerMissile3': lambda: tower_base('missile', 3), 'towerPlasma3': lambda: tower_base('plasma', 3),

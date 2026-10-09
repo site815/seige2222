@@ -263,6 +263,12 @@ private:
     FString BuildingPlotGhostSignature;
     TMap<FString,FVector4> TerrainPadBounds;
     void CreateFoliage(int32 PreviousSector=INDEX_NONE);
+    void BuildForestSectors(AActor* Ground,const TArray<int32>& Sectors);
+    void UploadTerrainTiles(AActor* Ground,const TArray<int32>& Tiles,double& PrepareSeconds,double& UploadSeconds);
+    // A sector crossing rebuilds the sector being entered in the crossing frame
+    // and the sector being left on the following frames (terrain, then forest).
+    int32 DeferredTerrainTile=INDEX_NONE,DeferredForestSector=INDEX_NONE;
+    bool ContinueDeferredSectorWork(bool Flush);
     void RefreshDepositGeology(bool Force=false);
     FString DepositVisibilitySignature;
     void CreateGroundCover();

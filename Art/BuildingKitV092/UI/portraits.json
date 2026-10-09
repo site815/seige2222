@@ -101,12 +101,6 @@
     "texture": "/Game/Art/Interface/T_Building_TradingPort3",
     "size": 384
   },
-  "Works": {
-    "source_mesh": "SM_Works",
-    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
-    "texture": "/Game/Art/Interface/T_Building_Works",
-    "size": 384
-  },
   "DepotYard": {
     "source_mesh": "SM_DepotYard",
     "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
