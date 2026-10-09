@@ -70,7 +70,10 @@ void ASeigeGameMode::SyncWallVisuals(const FSeigeSimulation& Colony,FVector2D Of
                 for(double X:{-.47,.47})Part(A,TEXT("Cube"),FVector(Length*X,0,Height*.5),FVector(.3,Colony.Walls.WidthMeters+.3,Height/100.+.2),FLinearColor(.32,.37,.38));
                 Part(A,TEXT("Cube"),FVector(0,(S.InsideLeft?1:-1)*(Colony.Walls.WidthMeters*50+2),Height*.7),FVector(Length/100.*.86,.04,.07),FLinearColor(.25,.6,.55));
             }
-            ClearSceneryAt(B->Position+Offset,D->ReservedFootprint);
+            // Clear the whole section, not only around its midpoint (forest and
+            // ground-cover generation use the same segment clearance).
+            const int32 Steps=FMath::Max(1,FMath::CeilToInt(FVector2D::Distance(S.A,S.B)/FMath::Max(1.,D->ReservedFootprint*2)));
+            for(int32 Step=0;Step<=Steps;++Step)ClearSceneryAt(FMath::Lerp(S.A,S.B,double(Step)/Steps)+Offset,D->ReservedFootprint);
         }
         A->SetActorLocation((Start+End)*.5);A->SetActorRotation((End-Start).Rotation());A->SetActorScale3D(FVector(1,1,Progress));
         // Existing construction presentation supplies physical stock and crews.

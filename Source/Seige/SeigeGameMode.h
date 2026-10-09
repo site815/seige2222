@@ -267,11 +267,15 @@ private:
     void BuildForestSectors(AActor* Ground,const TArray<int32>& Sectors);
     void UploadTerrainTiles(AActor* Ground,const TArray<int32>& Tiles,double& PrepareSeconds,double& UploadSeconds);
     TSharedPtr<FSeigeTerrainUpload> PrepareTerrainUpload(const TArray<int32>& Tiles) const;
-    void CommitTerrainUpload(AActor* Ground,FSeigeTerrainUpload& Upload);
+    void PrepareTerrainUploadInto(FSeigeTerrainUpload& Target,const TArray<int32>& Tiles) const;
+    void CommitTerrainUpload(AActor* Ground,FSeigeTerrainUpload& Upload,int32 First=0,int32 Last=-1);
+    int32 TerrainChunksPerFrame=16;   // detailed chunks committed per frame after a sector crossing
     TSharedPtr<FSeigeTerrainUpload> PendingTerrainUpload;
-    // A sector crossing rebuilds the entered sector's terrain in the crossing
-    // frame, then on following frames its forest and ground cover, the left
-    // sector's terrain and the left sector's forest, one step per frame.
+    // A sector crossing computes the entered sector's heights in the crossing
+    // frame; on following frames it prepares that sector's chunks, commits them
+    // TerrainChunksPerFrame at a time behind a sectioned coarse stand-in, then
+    // builds its forest and ground cover, the left sector's coarse terrain and
+    // the left sector's forest, one step per frame.
     int32 DeferredFoliageFrom=INDEX_NONE,DeferredTerrainTile=INDEX_NONE,DeferredForestSector=INDEX_NONE;
     bool ContinueDeferredSectorWork(bool Flush);
     void RefreshDepositGeology(bool Force=false);

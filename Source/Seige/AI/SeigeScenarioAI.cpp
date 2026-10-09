@@ -282,12 +282,11 @@ bool FSeigeScenarioAI::Meets(const FSeigeSimulation& Colony,const FSeigeBuilding
     return Have&&Want&&!Want->Family.IsEmpty()&&Have->Family==Want->Family&&Have->Level>Want->Level;
 }
 
-int32 FSeigeScenarioAI::PlotDefenseCoverage(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Position) const
+namespace
 {
-    // Structural firing geometry, not promised staffing, power or accuracy.
-    // Only the owner's known buildings and actual equipped fixed weapons enter
-    // this score. No enemies, mobile defenders or neighboring state are read.
-    auto HitsBox=[](FVector2D From,FVector2D To,FVector2D Center,double HalfWidth)
+    // Slab test: does the segment From-To pass through the axis-aligned square
+    // of half-width HalfWidth centred on Center?
+    bool SeigeAISegmentHitsSquare(FVector2D From,FVector2D To,FVector2D Center,double HalfWidth)
     {
         double Lo=0,Hi=1;
         for(int32 Axis=0;Axis<2;++Axis)
@@ -298,14 +297,50 @@ int32 FSeigeScenarioAI::PlotDefenseCoverage(const FSeigeSimulation& Colony,const
             Lo=FMath::Max(Lo,A);Hi=FMath::Min(Hi,B);if(Lo>Hi)return false;
         }
         return true;
-    };
-    struct FFixedGun{int32 Id;FVector2D Position;double Range;};TArray<FFixedGun> Guns;
-    for(const auto& Building:Colony.Buildings)if(Building.Health>0&&Building.Enabled&&!Building.IsConstructing)
-        if(const auto* State=Colony.Combat.BuildingState.Find(Building.Id))
+    }
+    struct FSeigeAIFixedGun{int32 Id;FVector2D Position;double Range;};
+    double SeigeAIWeaponRange(const FSeigeSimulation& Colony,const TArray<FString>& Weapons)
+    {
+        double Range=0;
+        for(const auto& Id:Weapons)if(const auto* Weapon=Colony.Combat.Weapons.Find(Id))if(Weapon->Damage>0)Range=FMath::Max(Range,Weapon->RangeMeters/Colony.MetersPerWorldUnit());
+        return Range;
+    }
+    // Enabled, completed buildings with an actual equipped damaging weapon.
+    // With Planned, standing fixed platforms that are still under construction
+    // or disabled also count, with their definition's loadout.
+    TArray<FSeigeAIFixedGun> SeigeAIFixedGuns(const FSeigeSimulation& Colony,bool Planned=false)
+    {
+        TArray<FSeigeAIFixedGun> Guns;
+        for(const auto& Building:Colony.Buildings)
         {
-            double Range=0;for(const auto& Id:State->Weapons)if(const auto* Weapon=Colony.Combat.Weapons.Find(Id))if(Weapon->Damage>0)Range=FMath::Max(Range,Weapon->RangeMeters/Colony.MetersPerWorldUnit());
+            if(Building.Health<=0)continue;
+            double Range=0;
+            if(Building.Enabled&&!Building.IsConstructing)if(const auto* State=Colony.Combat.BuildingState.Find(Building.Id))Range=SeigeAIWeaponRange(Colony,State->Weapons);
+            if(Planned&&Range<=0)if(const auto* Platform=Colony.Combat.BuildingPlatforms.Find(Building.DefId))Range=SeigeAIWeaponRange(Colony,Platform->Weapons);
             if(Range>0)Guns.Add({Building.Id,Building.Position,Range});
         }
+        return Guns;
+    }
+    // A clear shot from From to Point: no standing building's square body is in
+    // the way except the shooter's own (IgnoreId).
+    bool SeigeAIClearShot(const FSeigeSimulation& Colony,FVector2D From,FVector2D Point,int32 IgnoreId)
+    {
+        for(const auto& Building:Colony.Buildings)
+        {
+            if(Building.Health<=0||Building.Id==IgnoreId)continue;
+            const auto* Definition=Colony.Definition(Building);
+            if(Definition&&SeigeAISegmentHitsSquare(From,Point,Building.Position,Definition->Footprint))return false;
+        }
+        return true;
+    }
+}
+
+int32 FSeigeScenarioAI::PlotDefenseCoverage(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Position) const
+{
+    // Structural firing geometry, not promised staffing, power or accuracy.
+    // Only the owner's known buildings and actual equipped fixed weapons enter
+    // this score. No enemies, mobile defenders or neighboring state are read.
+    const TArray<FSeigeAIFixedGun> Guns=SeigeAIFixedGuns(Colony);
     if(Guns.IsEmpty()||CoverageSamples<=0)return 0;
     int32 Covered=0;
     for(int32 Sample=0;Sample<CoverageSamples;++Sample)
@@ -317,13 +352,65 @@ int32 FSeigeScenarioAI::PlotDefenseCoverage(const FSeigeSimulation& Colony,const
         const FVector2D Approach=Position+Direction*Radius;
         for(const auto& Gun:Guns)
         {
-            if(FVector2D::Distance(Gun.Position,Approach)>=Gun.Range||HitsBox(Gun.Position,Approach,Position,Definition.Footprint))continue;
-            bool Blocked=false;
-            for(const auto& Building:Colony.Buildings)if(Building.Health>0&&Building.Id!=Gun.Id&&HitsBox(Gun.Position,Approach,Building.Position,Colony.Definition(Building)->Footprint)){Blocked=true;break;}
-            if(!Blocked){++Covered;break;}
+            if(FVector2D::Distance(Gun.Position,Approach)>=Gun.Range||SeigeAISegmentHitsSquare(Gun.Position,Approach,Position,Definition.Footprint))continue;
+            if(SeigeAIClearShot(Colony,Gun.Position,Approach,Gun.Id)){++Covered;break;}
         }
     }
     return Covered;
+}
+
+double FSeigeScenarioAI::DefenseBearing(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Origin,double Authored,double Radius) const
+{
+    // Armed perimeter plots follow where the colony is exposed rather than a
+    // fixed compass spread. Exposed approaches are the probe points that
+    // PlotDefenseCoverage scores (CoverageSamples points CoverageProbeMeters
+    // outside each standing non-defensive building) that no fixed gun reaches
+    // with a clear line - typically the far side of buildings that block the
+    // core's own lasers. Towers still under construction count as guns, so
+    // consecutive orders spread instead of stacking on one gap. The bearing on
+    // the defense ring whose legal plot would reach the most exposed approaches
+    // wins; ties keep the authored order, so with nothing exposed (or the
+    // first_legal policy) placement is unchanged.
+    if(DefenseCoveragePolicy!=TEXT("prefer_covered_approaches")||CoverageSamples<=0||Angles<=0)return Authored;
+    const auto* Platform=Colony.Combat.BuildingPlatforms.Find(Definition.Id);
+    const double Range=Platform?SeigeAIWeaponRange(Colony,Platform->Weapons):0;
+    if(Range<=0)return Authored;
+    const TArray<FSeigeAIFixedGun> Guns=SeigeAIFixedGuns(Colony,true);
+    TArray<FVector2D> Exposed;
+    auto AddExposed=[&](FVector2D Centre,double Footprint)
+    {
+        for(int32 Sample=0;Sample<CoverageSamples;++Sample)
+        {
+            const double Angle=Sample*UE_TWO_PI/CoverageSamples;const FVector2D Direction(FMath::Cos(Angle),FMath::Sin(Angle));
+            const FVector2D Approach=Centre+Direction*(Footprint/FMath::Max(FMath::Abs(Direction.X),FMath::Abs(Direction.Y))+CoverageProbeMeters/Colony.MetersPerWorldUnit());
+            bool Covered=false;
+            for(const auto& Gun:Guns)if(FVector2D::Distance(Gun.Position,Approach)<Gun.Range&&SeigeAIClearShot(Colony,Gun.Position,Approach,Gun.Id)){Covered=true;break;}
+            if(!Covered)Exposed.Add(Approach);
+        }
+    };
+    for(const auto& Building:Colony.Buildings)
+    {
+        const auto* Owner=Colony.Definition(Building);
+        if(Building.Health>0&&Owner&&Owner->Role!=TEXT("defense")&&Owner->Role!=TEXT("wall"))AddExposed(Building.Position,Owner->Footprint);
+    }
+    // The exploited deposit is where the mine will stand (the authored spread
+    // starts there): until a building occupies it, it counts as one more body.
+    if(const auto* Node=ExportNode(Colony))if(!NodeOccupied(Colony,*Node))
+    {
+        double Body=0;for(const auto& Pair:Colony.BuildingDefs)if(Pair.Value.ExtractionRates.Contains(Node->Resource))Body=FMath::Max(Body,Pair.Value.Footprint);
+        if(Body>0)AddExposed(Node->Position,Body);
+    }
+    if(Exposed.IsEmpty())return Authored;
+    double Best=Authored;int32 BestReach=0;
+    for(int32 I=0;I<Angles;++I)
+    {
+        const double Angle=Authored+I*UE_TWO_PI/Angles;const FVector2D Plot=Origin+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Radius;
+        FString Error;if(!Colony.CanPlaceBuilding(Definition.Id,Plot,Error))continue;
+        int32 Reach=0;
+        for(const FVector2D& Approach:Exposed)if(FVector2D::Distance(Plot,Approach)<Range&&SeigeAIClearShot(Colony,Plot,Approach,INDEX_NONE))++Reach;
+        if(Reach>BestReach){BestReach=Reach;Best=Angle;}
+    }
+    return Best;
 }
 
 bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Definition, FVector2D Anchor, double StartingAngle, double FirstRadius, bool PreferShortRoad)
@@ -969,6 +1056,9 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
                 const auto* Node=ExportNode(Colony);const FVector2D Direction=Node?(Node->Position-Origin).GetSafeNormal():FVector2D(1,0);
                 Angle=FMath::Atan2(Direction.Y,Direction.X)+Existing*UE_TWO_PI/FinalCount;
                 FirstRadius=DefenseDistance;
+                // Armed plots then turn toward the approaches nothing covers yet
+                // (the authored spread stands when nothing is exposed).
+                if(Def.Role==TEXT("defense"))Angle=DefenseBearing(Colony,Def,Origin,Angle,FirstRadius);
             }
             if (BuildNear(Colony, Target.Definition, Origin, Angle,FirstRadius)) return true;
         }

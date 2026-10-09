@@ -104,8 +104,9 @@ def pipe(name, points, r=9, mat='Steel'):
     bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.ops.object.convert(target='MESH'); return finish(bpy.context.object, name, mat)
 
 
-def text(name, word, p, size=70, rotation=(math.pi / 2, 0, 0), mat='Ceramic'):
+def text(name, word, p, size=70, rotation=(math.pi / 2, 0, 0), mat='Ceramic', resolution=None):
     cu = bpy.data.curves.new(name, 'FONT'); cu.body = word; cu.size = size; cu.extrude = .7; cu.align_x = 'CENTER'; cu.align_y = 'CENTER'
+    if resolution: cu.resolution_u = resolution
     o = bpy.data.objects.new(name, cu); bpy.context.collection.objects.link(o); o.location = p; o.rotation_euler = rotation
     bpy.ops.object.select_all(action='DESELECT'); o.select_set(True); bpy.context.view_layer.objects.active = o
     bpy.ops.object.convert(target='MESH'); return finish(bpy.context.object, name, mat)
@@ -304,11 +305,12 @@ def _barrier(x, y, z, yaw):
     box('Concrete jersey barrier', (x, y, z + 40), (300, 60, 80), 'Concrete', 14, rotation=yaw)
 
 
-def scatter_props(z_top, half_w, half_d, seed, count=10, edge=70):
+def scatter_props(z_top, half_w, half_d, seed, count=10, edge=70, blocked=()):
     """Deterministic yard clutter in the free slab area (pallets, drums, gas
-    racks, barriers, the odd forklift): visual density without new gameplay."""
+    racks, barriers, the odd forklift): visual density without new gameplay.
+    blocked: extra (x0, y0, x1, y1) keep-out rectangles (open wells, paths)."""
     rng = _random.Random(seed)
-    rects = _ground_footprints(z_top)
+    rects = _ground_footprints(z_top) + list(blocked)
     placed = 0; tries = 0; forklift = False
     while placed < count and tries < count * 60:
         tries += 1
@@ -1434,6 +1436,282 @@ def gable_y(name, x, y0, y1, z, rise, thickness, mat):
     return prism(name, [(x - t, y0, z), (x - t, y1, z), (x - t, y0, z + rise), (x + t, y0, z), (x + t, y1, z), (x + t, y0, z + rise)], mat)
 
 
+# ------------------------------------------------------------------ COMMAND CAMPUS (core levels 2-3; plots 5760 and 8640)
+# The level-one shuttle stays a separate actor at its landing scale (2880 cm
+# across the outriggers) on the plot centre; these meshes are the ring around
+# it. Each is authored at its plot's real size, so the runtime scale is 1, and
+# its ring slab defines the square bounding box exactly, so the open well stays
+# centred under the shuttle. Front (gate, hatch path, road) is authored -Y.
+CAMPUS_WELL = 1650   # clear half-width of the shuttle well
+
+
+def _face(n):
+    """Outward normal '-y'/'+y'/'-x'/'+x' -> (sign, along_y)."""
+    return (-1 if n[0] == '-' else 1), n[1] == 'y'
+
+
+def face_window(x, y, z, w, h, n):
+    """window_y on any vertical axis-aligned face; (x, y) lies on the face plane."""
+    s, along_y = _face(n)
+    def at(off, slide=0): return (x + slide, y + s * off, z) if along_y else (x + s * off, y + slide, z)
+    def size(a, t, hh): return (a, t, hh) if along_y else (t, a, hh)
+    box('Window thermally broken frame', at(7), size(w + 15, 14, h + 15), 'Carbon', 0)
+    box('Blue low-reflection glazing', at(16), size(w, 5, h), 'Glass', 0)
+    k = max(1, round(w / 110))
+    for a in range(1, k): box('Glazing mullion', at(20, -w / 2 + a * w / k), size(5, 10, h), 'Steel', 0)
+
+
+def face_ribbon(x0, x1, y, z, h, n):
+    """Continuous glazing band from x0 to x1 along a face (for '-x'/'+x' faces x0/x1 run
+    along Y and y is the face's X): glass, head and sill, a mullion every 150 cm."""
+    s, along_y = _face(n); length = x1 - x0; mid = (x0 + x1) / 2
+    def at(off, slide, zz): return (mid + slide, y + s * off, zz) if along_y else (y + s * off, mid + slide, zz)
+    def size(a, t, hh): return (a, t, hh) if along_y else (t, a, hh)
+    box('Ribbon glazing', at(4, 0, z), size(length, 8, h), 'Glass', 0)
+    box('Ribbon head', at(8, 0, z + h / 2 + 9), size(length + 20, 16, 18), 'Carbon', 0)
+    box('Ribbon sill', at(10, 0, z - h / 2 - 8), size(length + 20, 20, 16), 'Steel', 0)
+    k = max(1, round(length / 150))
+    for a in range(1, k): box('Ribbon mullion', at(10, -length / 2 + a * length / k, z), size(6, 12, h), 'Carbon', 0)
+
+
+def face_door(x, y, floor, n, w=115, h=215):
+    """door_y on any vertical axis-aligned face; (x, y) lies on the face plane."""
+    s, along_y = _face(n)
+    def at(off, z): return (x, y + s * off, z) if along_y else (x + s * off, y, z)
+    def size(a, t, hh): return (a, t, hh) if along_y else (t, a, hh)
+    box('Personnel airlock frame', at(13, floor + h / 2), size(w + 26, 26, h + 24), 'Slate', 0)
+    box('Personnel airlock leaf', at(35, floor + h / 2), size(w, 8, h), 'Ceramic', 0)
+    box('Airlock downlight', at(41, floor + h + 20), size(w - 12, 8, 6), 'Light', 0)
+
+
+def campus_block(name, cx, cy, w, d, z0, floors, floor_h, faces, mat='Ceramic', gaps=()):
+    """Flat-roofed block: floor bands, a ribbon of glazing per floor on the
+    listed faces, roof membrane, parapet and downpipes. gaps: (face, floor,
+    centre, half-width) spans kept free for doors. Returns the roof level."""
+    h = floors * floor_h
+    box(name, (cx, cy, z0 + h / 2), (w, d, h), mat, 8)
+    box('Roof membrane', (cx, cy, z0 + h + 6), (w + 20, d + 20, 12), 'Slate', 2)
+    for f in range(1, floors): box('Floor slab band', (cx, cy, z0 + f * floor_h), (w + 10, d + 10, 22), 'Slate', 2)
+    for n in faces:
+        s, along_y = _face(n)
+        centre, length = (cx, w) if along_y else (cy, d)
+        plane = cy + s * d / 2 if along_y else cx + s * w / 2
+        for f in range(floors):
+            zc = z0 + f * floor_h + floor_h * .56
+            spans = [(centre - length / 2 + 130, centre + length / 2 - 130)]
+            for g in gaps:
+                if g[0] != n or g[1] != f: continue
+                cut = []
+                for a, b in spans:
+                    if g[2] - g[3] > a: cut.append((a, min(b, g[2] - g[3])))
+                    if g[2] + g[3] < b: cut.append((max(a, g[2] + g[3]), b))
+                spans = cut
+            for a, b in spans:
+                if b - a > 150: face_ribbon(a, b, plane, zc, floor_h * .40, n)
+    dress_hall(cx, cy, z0, w, d, h, ladder=None, lamps=None)
+    return z0 + h
+
+
+def dish(name, x, y, z, r, depth, tilt, yaw, mat='Ceramic', rings=7, segments=32):
+    """Paraboloid reflector (concave toward its axis) with a feed boom and horn.
+    tilt turns the axis from +Z toward -Y, yaw then turns it about Z."""
+    verts = [(0, 0, 0)]; faces = []
+    for i in range(1, rings + 1):
+        rr = r * i / rings
+        for j in range(segments):
+            t = 2 * math.pi * j / segments; verts.append((rr * math.cos(t), rr * math.sin(t), depth * (rr / r) ** 2))
+    for j in range(segments): faces.append((0, 1 + j, 1 + (j + 1) % segments))
+    for i in range(1, rings):
+        a0, a1 = 1 + (i - 1) * segments, 1 + i * segments
+        for j in range(segments): faces.append((a0 + j, a1 + j, a1 + (j + 1) % segments, a0 + (j + 1) % segments))
+    me = bpy.data.meshes.new(name); me.from_pydata(verts, [], faces); me.update()
+    ob = bpy.data.objects.new(name, me); bpy.context.collection.objects.link(ob)
+    bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.context.view_layer.objects.active = ob
+    m = ob.modifiers.new('Reflector shell', 'SOLIDIFY'); m.thickness = 6; m.offset = -1; bpy.ops.object.modifier_apply(modifier=m.name)
+    for face in ob.data.polygons: face.use_smooth = True
+    ob.location = (x, y, z); ob.rotation_euler = (tilt, 0, yaw); finish(ob, name, mat)
+    axis = Vector((math.sin(yaw) * math.sin(tilt), -math.cos(yaw) * math.sin(tilt), math.cos(tilt)))
+    focus = Vector((x, y, z)) + axis * (r * r / (4 * depth))
+    tube('Dish feed boom', (x, y, z), focus, max(4, r * .02), 'Steel', sides=8)
+    cyl('Dish feed horn', tuple(focus), max(10, r * .06), max(16, r * .1), 'Slate', 12).rotation_euler = (tilt, 0, yaw)
+
+
+def campus(level):
+    """Command campus around the retained landing shuttle. Level 2: a ring of
+    operations centre (rear, rooftop control room), habitat block (west),
+    research block with roof greenhouses (east), two logistics blocks either
+    side of the gate plaza (front), radome, uplink mast, coolant tanks and a
+    chiller yard, with a marked pad in the open well. Level 3 keeps that ring
+    (habitat a floor higher, a second roof mast) inside an outer ring: deep-space
+    uplink dish, drone hangar, energy yard, two VTOL pads, a control tower, an
+    outer gate and a perimeter wall."""
+    half = 2880 if level == 2 else 4320; z0 = 40; W = CAMPUS_WELL
+    for sy in (-1, 1): box('Reinforced concrete grade slab', (0, sy * (W + half) / 2, z0 / 2), (2 * half, half - W, z0), 'Concrete', 10)
+    for sx in (-1, 1): box('Reinforced concrete grade slab', (sx * (W + half) / 2, 0, z0 / 2), (half - W, 2 * W, z0), 'Concrete', 10)
+    for k in range(-half + 900, half, 900):
+        for sy in (-1, 1): box('Concrete expansion joint', (k, sy * (W + half) / 2, z0), (2, half - W - 20, 1), 'Carbon', 0)
+    # Open well: the shuttle's landing pad, a little below the ring slab.
+    cyl('Landing pad', (0, 0, 8), W - 60, 16, 'Concrete', 64)
+    for a in range(28):
+        t = 2 * math.pi * a / 28; box('Landing pad marking dash', (math.cos(t) * 1530, math.sin(t) * 1530, 17), (34, 200, 2), 'Yellow', 0, rotation=t)
+    for a in range(4):
+        t = a * math.pi / 2 + math.pi / 4
+        box('Landing pad marking', (math.cos(t) * 1500, math.sin(t) * 1500, 17), (260, 34, 2), 'Yellow', 0, rotation=t + math.pi / 2)
+
+    # ---- rear: operations centre with a glazed rooftop control room
+    roof = campus_block('Operations centre', 0, 2250, 3000, 800, z0, 2, 380, ('-y', '+y'), gaps=(('-y', 0, 0, 160),))
+    face_door(0, 1850, z0, '-y', 180, 250)
+    box('Entrance canopy', (0, 1850 - 170, z0 + 330), (760, 340, 22), 'Steel', 3)
+    for sx in (-1, 1): beam('Canopy post', (sx * 340, 1850 - 320, z0), (sx * 340, 1850 - 320, z0 + 320), 14, mat='Slate')
+    text('Command identity', 'COMMAND', (0, 1850 - 16, z0 + 440), 80, mat='Carbon', resolution=2)
+    box('Control room deck', (0, 2230, roof + 20), (1500, 600, 40), 'Slate', 4)
+    box('Control room glazing', (0, 2230, roof + 190), (1400, 520, 300), 'Glass', 2)
+    for x in range(-700, 701, 175):
+        for y in (2230 - 262, 2230 + 262): box('Control room mullion', (x, y, roof + 190), (10, 10, 300), 'Steel', 0)
+    box('Control room roof', (0, 2230, roof + 355), (1560, 640, 30), 'Ceramic', 6)
+    box('Control room sunshade', (0, 2230 - 330, roof + 330), (1500, 80, 14), 'Slate', 2)
+    for sx in (-1, 1): hvac(sx * 1150, 2300, roof + 12, 220, 300, 120)
+    for x, hh in ((-420, 520), (420, 380)) + (((0, 760),) if level == 3 else ()):
+        tube('Roof antenna mast', (x, 2400, roof + 370), (x, 2400, roof + 370 + hh), 6, 'Steel', sides=8)
+        box('Antenna crossbar', (x, 2400, roof + 370 + hh * .8), (120, 6, 6), 'Steel', 0)
+        box('Mast beacon', (x, 2400, roof + 376 + hh), (14, 14, 14), 'Amber', 0)
+    dish('Roof link dish', 1150, 1990, roof + 60, 110, 30, math.radians(55), math.radians(-20), 'Ceramic', 5, 20)
+    cyl('Link dish pedestal', (1150, 1990, roof + 30), 26, 60, 'Slate', 12)
+
+    # ---- west: habitat block
+    floors = 2 if level == 2 else 3
+    roof = campus_block('Habitat block', -2250, 0, 800, 2600, z0, floors, 340, ('+x', '-x'), 'Ceramic', gaps=(('+x', 0, -700, 110), ('+x', 0, 700, 110)))
+    for y in (-700, 700): face_door(-1850, y, z0, '+x', 120, 220)
+    for y in range(-1000, 1001, 500): solar_panel(-2250, y, roof + 70, 600, 260, rotation=0, post=False); beam('Roof panel stand', (-2250, y, roof + 12), (-2250, y, roof + 60), 10, mat='Steel')
+    cyl('Roof water tank', (-2450, 1150, roof + 110), 90, 200, 'Steel', 24)
+
+    # ---- east: research block with roof greenhouses (the side the default camera sees)
+    roof = campus_block('Research block', 2250, 0, 800, 2600, z0, 1, 460, ('+x', '-x'), 'Ceramic',
+                        gaps=(('+x', 0, -450, 110), ('+x', 0, 450, 110), ('-x', 0, -1200, 110), ('-x', 0, 1200, 110)))
+    for y in (-560, 560): gable_glass(2250, y, roof + 12, 640, 880, 150)
+    for y in (-450, 450): face_door(2650, y, z0, '+x', 120, 220)
+    for y in (-1200, 1200): face_door(1850, y, z0, '-x', 110, 210)
+    text('Research identity', 'RESEARCH', (2650 + 16, 0, z0 + 400), 60, rotation=(math.pi / 2, 0, math.pi / 2), mat='Carbon', resolution=2)
+
+    # ---- front: logistics blocks either side of the gate plaza
+    for sx, word in ((-1, 'LOGISTICS'), (1, 'SECURITY')):
+        cx = sx * 1800
+        campus_block('Logistics block' if sx < 0 else 'Security block', cx, -2300, 1600, 700, z0, 1, 480, ('+y',), 'Slate')
+        shutter_y(cx - sx * 250, -2650, z0, 420, 330)
+        face_door(cx + sx * 450, -2650, z0, '-y', 110, 215)
+        text('Block identity', word, (cx + sx * 450, -2650 - 16, z0 + 400), 46, mat='Ceramic', resolution=2)
+    for sx in (-1, 1):
+        beam('Gate portal column', (sx * 950, -2760, z0), (sx * 950, -2760, z0 + 660), 40, mat='Slate')
+        box('Column hazard sleeve', (sx * 950, -2760, z0 + 70), (56, 56, 140), 'Yellow', 3)
+    box('Gate portal beam', (0, -2760, z0 + 680), (1980, 60, 70), 'Slate', 4)
+    box('Gate identity panel', (0, -2770, z0 + 590), (1300, 26, 110), 'Carbon', 3)
+    text('Gate identity', 'SEIGE COMMAND', (0, -2786, z0 + 590), 58, mat='Ceramic', resolution=2)
+    box('Gate light bar', (0, -2730, z0 + 640), (1700, 14, 8), 'Light', 0)
+    for sx in (-1, 1): box('Pedestrian guide line', (sx * 260, -(W + half) / 2, z0 + 1), (12, half - W - 40, 2), 'Yellow', 0)
+    for y in range(-W - 200, -half + 100, -260): box('Crosswalk marking', (0, y, z0 + 1), (420, 70, 2), 'Ceramic', 0)
+
+    # ---- corners: radome (rear west), uplink mast (rear east), coolant tanks and chiller yard (front)
+    cyl('Radome plinth', (-2250, 2250, z0 + 150), 330, 300, 'Slate', 24)
+    dome('Radome', (-2250, 2250, z0 + 300), 360, 'Ceramic', 32, 8)
+    box('Radome service door', (-2250, 2250 - 334, z0 + 110), (90, 12, 200), 'Carbon', 2)
+    top, _ = lattice_tower(2250, 2250, z0, 320, 120, 1400, 4)
+    box('Mast platform grating', (2250, 2250, top + 4), (200, 200, 8), 'Steel', 1)
+    dish('Mast uplink dish', 2250, 2250 - 40, top + 120, 170, 46, math.radians(60), math.radians(15), 'Ceramic', 6, 24)
+    tube('Mast beacon whip', (2310, 2310, top + 8), (2310, 2310, top + 300), 3, 'Steel', sides=6); box('Obstruction beacon', (2310, 2310, top + 306), (14, 14, 14), 'Amber', 0)
+    for x in (-2470, -2030):
+        cyl('Coolant storage tank', (x, -1810, z0 + 220), 130, 440, 'Steel', 32); cyl('Tank dished head', (x, -1810, z0 + 455), 130, 30, 'Steel', 32, 40)
+        torus('Tank reinforcement ring', (x, -1810, z0 + 250), 132, 5, 'Slate')
+    pipe('Coolant main', [(-2030, -1680, z0 + 150), (-2030, -1310, z0 + 150)], 9, 'Copper')
+    box('Chiller skid', (2250, -1800, z0 + 80), (600, 240, 160), 'Ceramic', 5)
+    for x in (2110, 2390): fan(x, -1800, z0 + 168, 60)
+    box('Standby generator', (2250, -1480, z0 + 90), (420, 160, 180), 'Slate', 5); vent_y(2250, -1562, z0 + 100, 300, 120)
+
+    if level == 3:
+        R0 = 2880 + 80
+        # rear: deep-space uplink dish between two equipment shelters
+        cyl('Uplink pedestal', (0, 3650, z0 + 250), 240, 500, 'Slate', 32)
+        box('Uplink yoke', (0, 3650, z0 + 560), (520, 160, 120), 'Steel', 4)
+        dish('Deep-space uplink dish', 0, 3650, z0 + 620, 640, 150, math.radians(48), 0, 'Ceramic', 8, 40)
+        for sx in (-1, 1):
+            box('Uplink equipment shelter', (sx * 1600, 3650, z0 + 175), (1000, 620, 350), 'Ceramic', 6); box('Shelter roof', (sx * 1600, 3650, z0 + 356), (1020, 640, 12), 'Slate', 2)
+            box('Shelter AC unit', (sx * 1600 + 300, 3700, z0 + 410), (220, 260, 96), 'Steel', 3); fan(sx * 1600 + 300, 3700, z0 + 462, 70)
+            face_door(sx * 1600 - 250, 3650 - 310, z0, '-y', 110, 210)
+            face_window(sx * 1600 + 200, 3650 - 310, z0 + 210, 360, 110, '-y')
+        # west: drone hangar opening to the front
+        box('Drone hangar', (-3640, 300, z0 + 330), (1200, 3000, 660), 'Slate', 8)
+        roof_barrel(-3640, 300, z0 + 660, 1220, 3020, 160, 'Ceramic')
+        for y in range(-1000, 1601, 400): box('Hangar wall pilaster', (-3640, y, z0 + 330), (1230, 20, 650), 'Ceramic', 2)
+        shutter_y(-3640, -1200, z0, 860, 520)
+        box('Hangar apron', (-3640, -1800, z0 + 1), (1180, 900, 2), 'Carbon', 0)
+        for sx in (-1, 1): box('Apron lane line', (-3640 + sx * 470, -1800, z0 + 3), (10, 880, 1), 'Yellow', 0)
+        # east: energy yard - solar canopies and battery containers
+        for x in (3300, 3920):
+            for y in range(-2450, 2451, 700): solar_panel(x, y, z0 + 180, 560, 300)
+        for y in (-2700, 2700): box('Battery container', (3640, y, z0 + 130), (1100, 260, 260), 'Blue', 5); box('Container status lamp', (3640, y - 132, z0 + 210), (40, 4, 10), 'Light', 0)
+        # front: two VTOL pads, a control tower, an outer gate
+        for sx in (-1, 1):
+            px = sx * 2300
+            cyl('VTOL pad', (px, -3600, z0 + 10), 520, 20, 'Carbon', 48); torus('VTOL pad edge marking', (px, -3600, z0 + 21), 460, 5, 'Yellow')
+            for dx in (-90, 90): box('VTOL pad H marking', (px + dx, -3600, z0 + 21), (40, 300, 2), 'Ceramic', 0)
+            box('VTOL pad H marking', (px, -3600, z0 + 21), (180, 40, 2), 'Ceramic', 0)
+            for a in range(0, 360, 45):
+                t = math.radians(a); box('Pad edge light', (px + math.cos(t) * 540, -3600 + math.sin(t) * 540, z0 + 26), (16, 16, 10), 'Light', 0)
+        tx, ty = 3700, -3700
+        cyl('Control tower shaft', (tx, ty, z0 + 900), 170, 1800, 'Ceramic', 24)
+        for zz in range(int(z0 + 300), int(z0 + 1800), 300): cyl('Tower shaft band', (tx, ty, zz), 176, 20, 'Slate', 24)
+        cyl('Tower cab floor', (tx, ty, z0 + 1815), 330, 30, 'Slate', 8)
+        cyl('Tower cab glazing', (tx, ty, z0 + 1980), 310, 300, 'Glass', 8)
+        cyl('Tower cab roof', (tx, ty, z0 + 2145), 350, 30, 'Ceramic', 8)
+        tube('Tower antenna', (tx, ty, z0 + 2160), (tx, ty, z0 + 2560), 6, 'Steel', sides=8); box('Tower beacon', (tx, ty, z0 + 2566), (16, 16, 16), 'Amber', 0)
+        face_door(tx, ty - 170, z0, '-y', 110, 220)
+        for sx in (-1, 1):
+            beam('Outer gate column', (sx * 800, -4150, z0), (sx * 800, -4150, z0 + 420), 36, mat='Slate')
+            beam('Outer gate barrier arm', (sx * 760, -4190, z0 + 110), (sx * 120, -4190, z0 + 110), 14, mat='Yellow')
+        box('Gatehouse', (1250, -4000, z0 + 150), (360, 300, 300), 'Ceramic', 6); box('Gatehouse roof', (1250, -4000, z0 + 306), (400, 340, 12), 'Slate', 2)
+        face_window(1250, -4150, z0 + 180, 260, 110, '-y')
+        # access road from the outer gate to the portal, with a dashed centre line
+        box('Access road asphalt', (0, -(2880 + half) / 2 - 60, z0 + 1), (1000, half - 2880 - 120, 2), 'Carbon', 0)
+        for y in range(-4200, -2900, 260): box('Road lane line', (0, y, z0 + 3), (14, 140, 1), 'Ceramic', 0)
+        # rear corners: water treatment (west), weather mast and tracking radar (east)
+        for x in (-3900, -3400):
+            cyl('Water treatment tank', (x, 3650, z0 + 230), 210, 460, 'Steel', 32); cyl('Tank dished head', (x, 3650, z0 + 475), 210, 30, 'Steel', 32, 60)
+            torus('Tank reinforcement ring', (x, 3650, z0 + 300), 212, 5, 'Slate')
+        box('Pump house', (-3650, 3150, z0 + 130), (600, 300, 260), 'Ceramic', 6); face_door(-3650, 3000, z0, '-y', 110, 210)
+        pipe('Treated water main', [(-3400, 3440, z0 + 120), (-3400, 3300, z0 + 120)], 9, 'Copper')
+        tube('Weather mast', (3900, 3900, z0), (3900, 3900, z0 + 1200), 9, 'Steel', sides=10)
+        for zz in (z0 + 600, z0 + 1150): box('Weather mast arm', (3900, 3900, zz), (260, 8, 8), 'Steel', 0)
+        box('Obstruction beacon', (3900, 3900, z0 + 1210), (16, 16, 16), 'Amber', 0)
+        cyl('Tracking radar pedestal', (3450, 3450, z0 + 120), 120, 240, 'Slate', 20)
+        dish('Tracking radar dish', 3450, 3450, z0 + 300, 220, 60, math.radians(40), math.radians(30), 'Ceramic', 6, 24)
+        # front-west corner: rover park
+        for i, x in enumerate((-4050, -3650, -3250)):
+            box('Rover chassis', (x, -3650, z0 + 110), (300, 560, 90), ('Yellow', 'Ceramic', 'Yellow')[i], 6)
+            box('Rover cab', (x, -3820, z0 + 210), (260, 180, 120), 'Slate', 6); box('Rover cab glazing', (x, -3912, z0 + 225), (220, 6, 70), 'Glass', 0)
+            for wy in (-3850, -3650, -3450):
+                for sx in (-1, 1): cyl('Rover wheel', (x + sx * 165, wy, z0 + 60), 60, 40, 'Carbon', 12).rotation_euler = (0, math.pi / 2, 0)
+        # perimeter floodlights
+        for (x, y) in ((-4150, -2650), (4150, -700), (0, 4150), (-2600, -4150), (2600, 4150), (-4150, 2400)):
+            tube('Floodlight pole', (x, y, z0), (x, y, z0 + 900), 9, 'Steel', sides=8); box('Floodlight head', (x, y, z0 + 910), (70, 40, 24), 'Light', 0)
+        # perimeter wall with the gate gap at the front
+        H = 160; t = 40; e = half - t / 2
+        for sy in (-1, 1):
+            if sy > 0: box('Perimeter wall', (0, e, z0 + H / 2), (2 * half, t, H), 'Concrete', 3)
+            else:
+                for sx in (-1, 1): box('Perimeter wall', (sx * (half + 900) / 2, -e, z0 + H / 2), (half - 900, t, H), 'Concrete', 3)
+        for sx in (-1, 1): box('Perimeter wall', (sx * e, 0, z0 + H / 2), (t, 2 * half - 2 * t, H), 'Concrete', 3)
+        ep = half - 30
+        for k in range(-half + 600, half, 1200):
+            for (x, y) in ((k, ep), (-ep, k), (ep, k)) + (((k, -ep),) if abs(k) > 1000 else ()):
+                box('Perimeter wall pilaster', (x, y, z0 + H / 2 + 10), (60, 60, H + 20), 'Slate', 0)
+        scatter_props(z0, half, half, seed=113, count=16, blocked=((-W - 40, -W - 40, W + 40, W + 40), (-560, -half, 560, -W), (-1000, -half, 1000, -4000)))
+    else:
+        scatter_props(z0, half, half, seed=109, count=9, blocked=((-W - 40, -W - 40, W + 40, W + 40), (-560, -half, 560, -W)))
+    export('SM_CommandCampus%d' % level, ['', '',
+           'Command campus around the landing shuttle: operations centre with a glazed rooftop control room, habitat block, research block with roof greenhouses, logistics and security blocks either side of a portal gate, radome, uplink mast, coolant tanks and chiller yard round a marked landing pad',
+           'Command citadel: the level-2 campus ring (habitat a floor higher) inside an outer ring with a deep-space uplink dish, drone hangar, solar energy yard, two VTOL pads, a control tower, an outer gate and a perimeter wall'][level],
+           ['command_core_%d' % level])
+
+
 BUILDERS = {
     'solarArray': lambda: solar_array(1), 'solarArray2': lambda: solar_array(2), 'solarArray3': lambda: solar_array(3),
     'batteryBank': battery_bank, 'tradingPort': lambda: trading_port(1), 'tradingPort2': lambda: trading_port(2), 'tradingPort3': lambda: trading_port(3),
@@ -1449,6 +1727,7 @@ BUILDERS = {
     'depotYard': depot, 'workerFactory': worker_factory, 'serviceBay': service_bay,
     'sensorMast': sensor_mast, 'extractionRig': extraction_rig,
     'wall': lambda: wall_section(1), 'wall2': lambda: wall_section(2), 'wall3': lambda: wall_section(3),
+    'commandCampus2': lambda: campus(2), 'commandCampus3': lambda: campus(3),
 }
 for kind, build in BUILDERS.items():
     if wanted(kind):

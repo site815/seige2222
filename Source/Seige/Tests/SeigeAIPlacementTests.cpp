@@ -67,6 +67,20 @@ bool FSeigeAICoveredPlacementTest::RunTest(const FString& Parameters)
     FSeigeEnemy Unseen;Unseen.Id=100011;Unseen.Health=45;Unseen.Position=Home+FVector2D(25000,25000);CoreOnly.Enemies.Add(Unseen);
     TestEqual(TEXT("Hidden enemy positions never influence the preference"),Brain.PlotDefenseCoverage(CoreOnly,Solar,Probe),OneGun);
 
+    // Armed perimeter plots turn toward approaches no existing gun reaches: a
+    // body west of the core screens its own far side from the core's lasers, so
+    // the next tower leaves the authored east bearing for a western one.
+    {
+        const auto& Tower=Colony.BuildingDefs[TEXT("turret")];const double East=0;
+        FSeigeSimulation Screened=Colony;Screened.Buildings.SetNum(1);Screened.Combat.BuildingState.Empty();Screened.Combat.BuildingState.Add(CoreGun.Id,CoreGun);
+        TestTrue(TEXT("With nothing exposed the authored tower bearing stands"),FMath::IsNearlyEqual(Brain.DefenseBearing(Screened,Tower,Home,East,Brain.DefenseDistance),East));
+        FSeigeBuilding Screen;Screen.Id=100020;Screen.DefId=Solar.Id;Screen.Position=Home+FVector2D(-650,0);Screen.Health=Solar.Health;Screened.Buildings.Add(Screen);
+        const double Bearing=Brain.DefenseBearing(Screened,Tower,Home,East,Brain.DefenseDistance);
+        TestTrue(TEXT("A tower turns toward the far side a building screens from the core"),FMath::Cos(Bearing)<-.3);
+        FSeigeScenarioAI LegacyBearing=Brain;LegacyBearing.DefenseCoveragePolicy=TEXT("first_legal");
+        TestTrue(TEXT("first_legal keeps the authored tower bearing"),FMath::IsNearlyEqual(LegacyBearing.DefenseBearing(Screened,Tower,Home,East,Brain.DefenseDistance),East));
+    }
+
     FSeigeSimulation Unarmed=Colony;Unarmed.Combat.BuildingState.Empty();FSeigeSimulation UnarmedLegacy=Unarmed;
     TestTrue(TEXT("Bootstrap is still allowed with no fixed armed platform"),Brain.BuildNear(Unarmed,Solar.Id,Home,UE_PI*1.25));
     TestTrue(TEXT("The fallback has an ordinary first legal comparison"),LegacyBrain.BuildNear(UnarmedLegacy,Solar.Id,Home,UE_PI*1.25));

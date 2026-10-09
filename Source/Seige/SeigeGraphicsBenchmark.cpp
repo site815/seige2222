@@ -289,12 +289,25 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             // Completed instances of every ordinary blueprint, plus the core upgrade
             // levels, on a grid east of the core. Review geometry only: nothing is
             // paid for, staffed or powered, and no save is written in benchmark runs.
-            // Core levels are 29-86 m wide and have their own review coverage.
+            // The core itself is reviewed in place (see -BenchmarkLevel below).
             TArray<FString> Ids=Sim.BuildMenu;Ids.Sort();
-            const int32 Columns=6;const double Pitch=700;const FVector2D Origin=Command->Position+FVector2D(900,-Pitch*(Columns-1)*.5);
             // -BenchmarkLevel=2|3 shows each blueprint at that upgrade level
             // (or its highest level below it) so level art is reviewed in engine.
             int32 ReviewLevel=1;FParse::Value(FCommandLine::Get(),TEXT("BenchmarkLevel="),ReviewLevel);ReviewLevel=FMath::Clamp(ReviewLevel,1,3);
+            // The player's core takes that level too (the command campus around
+            // the retained shuttle); the grid starts clear of the larger plot.
+            if(ReviewLevel>1)
+            {
+                FString CoreLevel=Sim.CoreDefinition;
+                for(int32 Step=1;Step<ReviewLevel;++Step)
+                    if(const auto* Current=Sim.BuildingDefs.Find(CoreLevel))
+                        if(!Current->NextUpgrade.IsEmpty()&&Sim.BuildingDefs.Contains(Current->NextUpgrade))CoreLevel=Current->NextUpgrade;
+                if(auto* Hull=Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==Sim.CoreDefinition;}))
+                {Hull->DefId=CoreLevel;Hull->Health=Sim.BuildingDefs[CoreLevel].Health;Sim.CoreDefinition=CoreLevel;}
+            }
+            const int32 Columns=6;const double Pitch=700;
+            const double CoreClearance=FMath::Max(900.,Sim.BuildingDefs[Sim.CoreDefinition].Footprint+450);
+            const FVector2D Origin=Command->Position+FVector2D(CoreClearance,-Pitch*(Columns-1)*.5);
             int32 Placed=0;
             for(const FString& BaseId:Ids)
             {
@@ -326,7 +339,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             // -BenchmarkFocus=<building id> frames that one review building instead.
             FString Focus;
             if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkFocus="),Focus))
-                if(const auto* Focused=Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==Focus&&B.Status==TEXT("Review placement");}))ShowcaseCenter=Focused->Position;
+                if(const auto* Focused=Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==Focus&&(B.Status==TEXT("Review placement")||B.DefId==Sim.CoreDefinition);}))ShowcaseCenter=Focused->Position;
             SyncVisuals();
             UE_LOG(LogTemp,Display,TEXT("GRAPHICS_BENCHMARK showcase placed %d buildings around (%.0f, %.0f)"),Placed,ShowcaseCenter.X,ShowcaseCenter.Y);
             // -BenchmarkBuildMenu=<group> opens the construction palette on that

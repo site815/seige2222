@@ -93,6 +93,9 @@ private:
     void ReportPreparationMilestone(const FSeigeSimulation& Colony);
     bool BuildNear(FSeigeSimulation& Colony, const FString& Definition, FVector2D Anchor, double StartingAngle, double FirstRadius=-1, bool PreferShortRoad=false);
     int32 PlotDefenseCoverage(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Position) const;
+    // Bearing on the defense ring for an armed perimeter plot: the one reaching
+    // the most building approaches no existing fixed gun covers (ties: Authored).
+    double DefenseBearing(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Origin,double Authored,double Radius) const;
     bool PlaceConnectedBuilding(FSeigeSimulation& Colony,const FString& Definition,FVector2D Position,FString& Error);
     bool FindPowerConnection(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuilding* ProspectivePlot,FVector2D& OutA,FVector2D& OutB,bool& NeedsSegment,FString& Error) const;
     bool ExtendSensors(FSeigeSimulation& Colony, FVector2D Destination);

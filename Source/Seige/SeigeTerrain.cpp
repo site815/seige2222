@@ -26,6 +26,12 @@ struct FSeigeTerrainUpload
     TArray<FJob> Jobs;TArray<FSeigeTerrainChunkData> Chunks;
     TArray<FSeigeTerrainTile> Tiles;FString PadSignature;TMap<FString,FVector4> PadBounds;
     int32 ReplaceTile=INDEX_NONE,PreviousSector=INDEX_NONE;double PrepareSeconds=0;
+    // Staggered crossing: the entered tile's coarse chunk is replaced by a copy
+    // split into one section per detailed chunk; each frame commits a few
+    // detailed chunks (nearest the view first) and hides their sections.
+    TArray<int32> Order;int32 Next=0;bool Prepared=false;
+    TArray<FSeigeTerrainChunkData> CoarseSections;
+    TWeakObjectPtr<UProceduralMeshComponent> Standin;
 };
 struct FSeigeStreamedCell
 {
@@ -376,9 +382,9 @@ TArray<FDirtPatch> PrepareDirt(const ASeigeGameMode& G)
 }
 // Pure vertex/attribute preparation (thread-safe reads of the height cache and
 // procedural fields); component creation and section upload stay on the game thread.
-void PrepareTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int32 StartX,int32 StartY,const TArray<FDirtPatch>& DirtPatches,FSeigeTerrainChunkData& Data)
+void PrepareTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int32 StartX,int32 StartY,const TArray<FDirtPatch>& DirtPatches,FSeigeTerrainChunkData& Data,int32 ChunkCells=TerrainChunkCells)
 {
-        const int32 Resolution=Tile.Resolution,Cells=FMath::Min(TerrainChunkCells,Resolution);
+        const int32 Resolution=Tile.Resolution,Cells=FMath::Min(ChunkCells,Resolution);
         const FVector2D Offset=Tile.Offset;const bool Detailed=Offset.Equals(G.DetailedSectorOffset(),1.);
         const double Half=G.Sim.WorldHalfSize,Step=Half*2/Resolution;
         auto& Vertices=Data.Vertices;auto& Normals=Data.Normals;auto& Triangles=Data.Triangles;auto& UVs=Data.UVs;
@@ -438,7 +444,11 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
 }
 TSharedPtr<FSeigeTerrainUpload> ASeigeGameMode::PrepareTerrainUpload(const TArray<int32>& Tiles) const
 {
-    auto Upload=MakeShared<FSeigeTerrainUpload>();
+    TSharedPtr<FSeigeTerrainUpload> Upload=MakeShared<FSeigeTerrainUpload>();PrepareTerrainUploadInto(*Upload,Tiles);return Upload;
+}
+void ASeigeGameMode::PrepareTerrainUploadInto(FSeigeTerrainUpload& Target,const TArray<int32>& Tiles) const
+{
+    FSeigeTerrainUpload* Upload=&Target;Upload->Jobs.Reset();
     const auto DirtPatches=PrepareDirt(*this);
     for(const int32 TileIndex:Tiles)
     {
@@ -450,15 +460,16 @@ TSharedPtr<FSeigeTerrainUpload> ASeigeGameMode::PrepareTerrainUpload(const TArra
     const double Started=FPlatformTime::Seconds();
     const auto& Jobs=Upload->Jobs;auto& Chunks=Upload->Chunks;
     ParallelFor(Jobs.Num(),[&](int32 J){PrepareTerrainChunk(*this,TerrainTiles[Jobs[J].Tile],Jobs[J].X,Jobs[J].Y,DirtPatches,Chunks[J]);});
-    Upload->PrepareSeconds=FPlatformTime::Seconds()-Started;
-    return Upload;
+    Upload->PrepareSeconds=FPlatformTime::Seconds()-Started;Upload->Prepared=true;
 }
-void ASeigeGameMode::CommitTerrainUpload(AActor* Ground,FSeigeTerrainUpload& Upload)
+void ASeigeGameMode::CommitTerrainUpload(AActor* Ground,FSeigeTerrainUpload& Upload,int32 First,int32 Last)
 {
     auto* Root=Ground->GetRootComponent();
     auto* TerrainMaterial=LoadObject<UMaterialInterface>(nullptr,*TerrainMaterialPath,nullptr,LOAD_NoWarn);
-    for(int32 J=0;J<Upload.Jobs.Num();++J)
+    if(Last<0)Last=Upload.Jobs.Num();
+    for(int32 K=First;K<Last;++K)
     {
+        const int32 J=Upload.Order.IsValidIndex(K)?Upload.Order[K]:K;
         const int32 TileIndex=Upload.Jobs[J].Tile,X=Upload.Jobs[J].X,Y=Upload.Jobs[J].Y;
         auto* Terrain=NewObject<UProceduralMeshComponent>(Ground);
         Terrain->SetupAttachment(Root);Terrain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -502,21 +513,35 @@ void ASeigeGameMode::CreateLandscape(bool SectorTransition)
     {
         // A crossing is spread over frames. This frame computes the entered
         // sector's heights and chunk data while its coarse surface stays on
-        // screen; the next installs them (ContinueDeferredSectorWork), then
-        // its forest and ground cover follow, then the sector being left gets
-        // its coarse surface and its forest - one step per frame. The left
+        // screen. The next frames install the height cache and commit the
+        // detailed chunks, TerrainChunksPerFrame at a time and nearest the view
+        // first, behind a sectioned stand-in of the old coarse surface whose
+        // sections are hidden as chunks arrive (ContinueDeferredSectorWork).
+        // Then the entered sector's forest and ground cover, the left sector's
+        // coarse surface and its forest follow, one step per frame. The left
         // sector keeps its detailed chunks and trees, a valid finer surface
         // behind the camera, until then. This splits the v0.9.2 stall.
         RenderedSector=DetailedSectorIndex();
+        // The stand-in: the entered tile's current coarse surface split into one
+        // section per detailed chunk, prepared from the current height cache.
+        TArray<FSeigeTerrainChunkData> CoarseSections;
+        if(TerrainTiles.IsValidIndex(RenderedSector)&&TerrainTiles[RenderedSector].Resolution>0)
+        {
+            const auto& Coarse=TerrainTiles[RenderedSector];const int32 Split=FMath::Max(1,DetailedTerrainResolution/TerrainChunkCells);
+            const int32 SectionCells=FMath::Max(1,Coarse.Resolution/Split);const auto CoarseDirt=PrepareDirt(*this);
+            CoarseSections.SetNum(Split*Split);
+            ParallelFor(CoarseSections.Num(),[&](int32 K){PrepareTerrainChunk(*this,Coarse,(K%Split)*SectionCells,(K/Split)*SectionCells,CoarseDirt,CoarseSections[K],SectionCells);});
+        }
         TArray<FSeigeTerrainTile> Current=TerrainTiles;
         const FString CurrentSignature=TerrainPadSignature;const TMap<FString,FVector4> CurrentBounds=TerrainPadBounds;
         RebuildTerrainHeights(true);
-        TSharedPtr<FSeigeTerrainUpload> Pending=PrepareTerrainUpload({RenderedSector});
+        TSharedPtr<FSeigeTerrainUpload> Pending=MakeShared<FSeigeTerrainUpload>();
         Pending->ReplaceTile=RenderedSector;Pending->PreviousSector=PreviousSector;Pending->Tiles=MoveTemp(TerrainTiles);Pending->PadSignature=TerrainPadSignature;Pending->PadBounds=TerrainPadBounds;
+        Pending->CoarseSections=MoveTemp(CoarseSections);
         TerrainTiles=MoveTemp(Current);TerrainPadSignature=CurrentSignature;TerrainPadBounds=CurrentBounds;
         PendingTerrainUpload=Pending;DeferredFoliageFrom=PreviousSector;DeferredTerrainTile=PreviousSector;
-        UE_LOG(LogTemp,Display,TEXT("SECTOR_TRANSITION %d -> %d: %.1f ms in the crossing frame (heights and %d chunks prepared in %.1f ms); upload, forest and ground cover, then sector %d, deferred"),
-            PreviousSector,RenderedSector,(FPlatformTime::Seconds()-Started)*1000,Pending->Jobs.Num(),Pending->PrepareSeconds*1000,PreviousSector);
+        UE_LOG(LogTemp,Display,TEXT("SECTOR_TRANSITION %d -> %d: %.1f ms in the crossing frame (heights); chunk preparation, upload, forest and ground cover, then sector %d, deferred"),
+            PreviousSector,RenderedSector,(FPlatformTime::Seconds()-Started)*1000,PreviousSector);
         return;
     }
     if(Landscape)Landscape->Destroy();
@@ -534,29 +559,75 @@ bool ASeigeGameMode::ContinueDeferredSectorWork(bool Flush)
     bool Worked=false;
     if(PendingTerrainUpload)
     {
-        // Entered sector: install the prepared height cache and replace its
-        // coarse chunk with the detailed chunks. If pads changed meanwhile, the
-        // RefreshBuildingPads call that follows sees the old signature and
-        // regrades the changed areas incrementally.
-        const double Started=FPlatformTime::Seconds();
-        const TSharedPtr<FSeigeTerrainUpload> Pending=PendingTerrainUpload;PendingTerrainUpload.Reset();
-        if(Landscape&&Pending->ReplaceTile==DetailedSectorIndex()&&Pending->Tiles.Num()==9)
-        {
-            TerrainTiles=MoveTemp(Pending->Tiles);TerrainPadSignature=Pending->PadSignature;TerrainPadBounds=Pending->PadBounds;
-            TArray<UProceduralMeshComponent*> Existing;Landscape->GetComponents(Existing);
-            for(auto* Mesh:Existing)if(Mesh->ComponentTags.Num()==3&&FCString::Atoi(*Mesh->ComponentTags[0].ToString())==Pending->ReplaceTile)Mesh->DestroyComponent();
-            CommitTerrainUpload(Landscape,*Pending);
-            if(SceneryStream){SceneryStream->CellBounds.Reset();SceneryStream->PriorityDirty=true;}
-            UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED terrain upload of sector %d: %d chunks, %.1f ms"),Pending->ReplaceTile,Pending->Jobs.Num(),(FPlatformTime::Seconds()-Started)*1000);
-        }
-        else
+        // Entered sector, over several frames: install the prepared height
+        // cache and swap the single coarse chunk for a sectioned stand-in, then
+        // commit TerrainChunksPerFrame detailed chunks per frame (all of them on
+        // a flush) while hiding the stand-in sections they cover. If pads
+        // changed meanwhile, the RefreshBuildingPads call that follows sees the
+        // old signature and regrades the changed areas incrementally.
+        FSeigeTerrainUpload& Pending=*PendingTerrainUpload;
+        if(!Landscape||(Pending.Next==0&&!(Pending.ReplaceTile==DetailedSectorIndex()&&Pending.Tiles.Num()==9)))
         {
             // The focus moved on before installation: the left sector's detailed
             // chunks, its height cache and both forests are still what is shown,
             // so that sector is the rendered one again and the next crossing
-            // starts from it.
-            RenderedSector=Pending->PreviousSector;DeferredFoliageFrom=DeferredTerrainTile=DeferredForestSector=INDEX_NONE;
+            // starts from it. (Without a landscape a full rebuild follows anyway.)
+            if(Pending.Next==0)RenderedSector=Pending.PreviousSector;
+            PendingTerrainUpload.Reset();DeferredFoliageFrom=DeferredTerrainTile=DeferredForestSector=INDEX_NONE;
+            return true;
         }
+        const double Started=FPlatformTime::Seconds();
+        if(!Pending.Prepared)
+        {
+            // Chunk preparation reads the new height cache (including GroundHeight
+            // across tile seams), so it is installed for the duration of the call.
+            Swap(TerrainTiles,Pending.Tiles);PrepareTerrainUploadInto(Pending,{Pending.ReplaceTile});Swap(TerrainTiles,Pending.Tiles);
+            if(Pending.CoarseSections.Num()==Pending.Jobs.Num())
+            {
+                // Commit nearest the view first so the visible ground turns detailed first.
+                const double Half=Sim.WorldHalfSize,Step=Half*2/FMath::Max(1,DetailedTerrainResolution);const FVector2D Focus(CameraCenter);
+                Pending.Order.Reset();for(int32 J=0;J<Pending.Jobs.Num();++J)Pending.Order.Add(J);
+                auto Distance=[&](int32 J){const auto& Job=Pending.Jobs[J];const auto& Tile=Pending.Tiles[Job.Tile];
+                    return FVector2D::DistSquared(Focus,Tile.Offset+FVector2D(-Half+(Job.X+TerrainChunkCells*.5)*Step,-Half+(Job.Y+TerrainChunkCells*.5)*Step));};
+                Pending.Order.Sort([&](int32 A,int32 B){return Distance(A)<Distance(B);});
+            }
+            UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED chunk preparation of sector %d: %d chunks, %.1f ms"),Pending.ReplaceTile,Pending.Jobs.Num(),(FPlatformTime::Seconds()-Started)*1000);
+            if(!Flush)return true;
+        }
+        const int32 Total=Pending.Jobs.Num();
+        if(Pending.Next==0)
+        {
+            TerrainTiles=MoveTemp(Pending.Tiles);TerrainPadSignature=Pending.PadSignature;TerrainPadBounds=Pending.PadBounds;
+            if(SceneryStream){SceneryStream->CellBounds.Reset();SceneryStream->PriorityDirty=true;}
+            TArray<UProceduralMeshComponent*> Existing;Landscape->GetComponents(Existing);
+            for(auto* Mesh:Existing)if(Mesh->ComponentTags.Num()==3&&FCString::Atoi(*Mesh->ComponentTags[0].ToString())==Pending.ReplaceTile)Mesh->DestroyComponent();
+            if(!Flush&&Pending.CoarseSections.Num()==Total)
+            {
+                auto* Standin=NewObject<UProceduralMeshComponent>(Landscape);
+                Standin->SetupAttachment(Landscape->GetRootComponent());Standin->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                Standin->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
+                Standin->RegisterComponent();Landscape->AddInstanceComponent(Standin);
+                auto* TerrainMaterial=LoadObject<UMaterialInterface>(nullptr,*TerrainMaterialPath,nullptr,LOAD_NoWarn);
+                for(int32 Section=0;Section<Total;++Section)
+                {
+                    auto& Data=Pending.CoarseSections[Section];
+                    Standin->CreateMeshSection_LinearColor(Section,Data.Vertices,Data.Triangles,Data.Normals,Data.UVs,Data.Colors,Data.Tangents,false);
+                    Standin->SetMaterial(Section,TerrainMaterial?TerrainMaterial:Material(FLinearColor(.29f,.32f,.22f)));
+                }
+                Pending.Standin=Standin;
+            }
+        }
+        const int32 First=Pending.Next,Last=Flush||!Pending.Standin.IsValid()?Total:FMath::Min(Total,First+FMath::Max(1,TerrainChunksPerFrame));
+        CommitTerrainUpload(Landscape,Pending,First,Last);Pending.Next=Last;
+        if(auto* Standin=Pending.Standin.Get())
+        {
+            // Job index J covers stand-in section (Y / cells) * split + X / cells, the same grid.
+            const int32 Split=FMath::Max(1,DetailedTerrainResolution/TerrainChunkCells);
+            for(int32 K=First;K<Last;++K){const auto& Job=Pending.Jobs[Pending.Order.IsValidIndex(K)?Pending.Order[K]:K];Standin->SetMeshSectionVisible((Job.Y/TerrainChunkCells)*Split+Job.X/TerrainChunkCells,false);}
+            if(Pending.Next>=Total)Standin->DestroyComponent();
+        }
+        UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED terrain upload of sector %d: chunks %d-%d of %d, %.1f ms"),Pending.ReplaceTile,First+1,Last,Total,(FPlatformTime::Seconds()-Started)*1000);
+        if(Pending.Next>=Total)PendingTerrainUpload.Reset();
         Worked=true;if(!Flush)return true;
     }
     if(DeferredFoliageFrom!=INDEX_NONE)
@@ -730,14 +801,26 @@ void AddRoadClearances(const ASeigeGameMode& G,const FSeigeSimulation& Colony,FV
         Areas.Add({A,Half,false,B,true,RequiresSight});
     }
 }
+// A wall section is a long thin building: clear its whole length (as a
+// segment, like a road) rather than a square around its midpoint, which left
+// trees standing over most of every section.
+bool IsWallBuilding(const FSeigeSimulation& Colony,const FSeigeBuilding& B)
+{const auto* D=Colony.Definition(B);return D&&D->Role==TEXT("wall");}
+void AddWallClearances(const FSeigeSimulation& Colony,FVector2D Offset,TArray<FSceneryClearance>& Areas)
+{
+    for(const auto& S:Colony.Walls.Segments)
+        if(const auto* B=Colony.FindBuilding(S.BuildingId))if(B->Health>0)if(const auto* D=Colony.Definition(*B))
+            Areas.Add({S.A+Offset,D->ReservedFootprint,false,S.B+Offset,true,false});
+}
 TArray<FSceneryClearance> VisibleClearances(const ASeigeGameMode& G)
 {
     TArray<FSceneryClearance> Areas;const auto* Colony=G.ViewedSimulation();if(!Colony)return Areas;
     const FVector2D Offset=G.DetailedSectorOffset();
     if(G.DetailedSectorIndex()!=4||!HidePendingHomeFoundation(G))for(const auto& B:Colony->Buildings)
-        if(B.Health>0&&(G.Observer||G.DetailedSectorIndex()==4||G.IsWorldVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->ReservedFootprint,true});
+        if(B.Health>0&&!IsWallBuilding(*Colony,B)&&(G.Observer||G.DetailedSectorIndex()==4||G.IsWorldVisible(B.Position+Offset)))if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->ReservedFootprint,true});
     if(G.Observer||G.DetailedSectorIndex()==4)
         for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
+    if(G.Observer||G.DetailedSectorIndex()==4)AddWallClearances(*Colony,Offset,Areas);
     AddRoadClearances(G,*Colony,Offset,G.DetailedSectorIndex(),Areas);
     return Areas;
 }
@@ -909,9 +992,10 @@ void ASeigeGameMode::BuildForestSectors(AActor* Ground,const TArray<int32>& Sect
         TArray<FSceneryClearance> Areas;
         if(Colony&&(Sector!=4||!HidePendingHomeFoundation(*this)))
         {
-            for(const auto& B:Colony->Buildings)if(B.Health>0&&(Observer||Sector==4||IsWorldVisible(B.Position+Offset)))
+            for(const auto& B:Colony->Buildings)if(B.Health>0&&!IsWallBuilding(*Colony,B)&&(Observer||Sector==4||IsWorldVisible(B.Position+Offset)))
                 if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->ReservedFootprint,true});
             if(Observer||Sector==4)for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
+            if(Observer||Sector==4)AddWallClearances(*Colony,Offset,Areas);
             AddRoadClearances(*this,*Colony,Offset,Sector,Areas);
         }
         FRandomStream R(2222+Sector*100003);

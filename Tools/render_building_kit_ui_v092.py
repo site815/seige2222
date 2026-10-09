@@ -36,12 +36,41 @@ if PREVIEW:
     bpy.ops.mesh.primitive_plane_add(size=12000); ground = bpy.context.object; ground.name = 'PreviewGround'
     gm = bpy.data.materials.new('PreviewGround'); gm.use_nodes = True; gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.16, .2, .09, 1); ground.data.materials.append(gm); ground.hide_render = True
 report = {}
+_shuttle = []
+
+
+def shuttle_parts():
+    """The retained level-1 shuttle, which stands in the open well of every
+    command-campus level: imported once from the orbital set, scaled to its
+    2880 cm landing size and centred on the origin, so the campus portraits
+    show the building as the game draws it."""
+    if not _shuttle:
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.fbx(filepath=str(ART / 'OrbitalV09/Exports/SM_Shuttle.fbx'))
+        parts = [o for o in bpy.data.objects if o not in before]
+        roots = [o for o in parts if o.parent is None]
+        def bounds():
+            bpy.context.view_layer.update()
+            pts = [o.matrix_world @ Vector(c) for o in parts if o.type == 'MESH' for c in o.bound_box]
+            return Vector([min(p[i] for p in pts) for i in range(3)]), Vector([max(p[i] for p in pts) for i in range(3)])
+        lo, hi = bounds(); k = 2880 / max(hi.x - lo.x, hi.y - lo.y)
+        for o in roots: o.scale = [v * k for v in o.scale]; o.location = [v * k for v in o.location]
+        lo, hi = bounds()
+        for o in roots: o.location -= Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
+        for o in parts: o.hide_render = True
+        _shuttle.extend(o for o in parts if o.type == 'MESH')
+    return _shuttle
+
+
 for name, obj in assets.items():
     key_name = name.removeprefix('SM_')
     if ONLY and key_name[0].lower() + key_name[1:] not in ONLY:
         continue
-    obj.hide_render = False; saved = obj.location.copy(); obj.location = (0, 0, 0); bpy.context.view_layer.update()
-    corners = [obj.matrix_world @ Vector(v) for v in obj.bound_box]
+    obj.hide_render = False; saved = obj.location.copy(); obj.location = (0, 0, 0)
+    extras = shuttle_parts() if key_name.startswith('CommandCampus') else []
+    for o in extras: o.hide_render = False
+    bpy.context.view_layer.update()
+    corners = [o.matrix_world @ Vector(v) for o in [obj] + extras for v in o.bound_box]
     low = Vector(tuple(min(v[i] for v in corners) for i in range(3))); high = Vector(tuple(max(v[i] for v in corners) for i in range(3)))
     center = (low + high) / 2; extent = (high - low).length
     # The saved meshes are already turned to their export orientation (front
@@ -58,6 +87,7 @@ for name, obj in assets.items():
         scene.render.filepath = str(PREV / (key_name + '.png')); bpy.ops.render.render(write_still=True)
         ground.hide_render = True; scene.render.film_transparent = True; scene.render.resolution_x = 384; scene.render.resolution_y = 384
     obj.hide_render = True; obj.location = saved
+    for o in extras: o.hide_render = True
 existing = json.loads((OUT / 'portraits.json').read_text(encoding='utf-8')) if (OUT / 'portraits.json').exists() else {}
 existing.update(report)
 (OUT / 'portraits.json').write_text(json.dumps(existing, indent=2) + '\n', encoding='utf-8')
