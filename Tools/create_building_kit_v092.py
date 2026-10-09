@@ -1596,7 +1596,7 @@ def campus(level):
     # ---- front: logistics blocks either side of the gate plaza
     for sx, word in ((-1, 'LOGISTICS'), (1, 'SECURITY')):
         cx = sx * 1800
-        campus_block('Logistics block' if sx < 0 else 'Security block', cx, -2300, 1600, 700, z0, 1, 480, ('+y',), 'Slate')
+        campus_block('Logistics block' if sx < 0 else 'Security block', cx, -2300, 1600, 700, z0, 1, 480, ('+y',), 'Ceramic')   # k51: slate read as two black boxes
         shutter_y(cx - sx * 250, -2650, z0, 420, 330)
         face_door(cx + sx * 450, -2650, z0, '-y', 110, 215)
         text('Block identity', word, (cx + sx * 450, -2650 - 16, z0 + 400), 46, mat='Ceramic', resolution=2)

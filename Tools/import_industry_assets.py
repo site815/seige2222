@@ -84,6 +84,12 @@ else:
     night=node(master,unreal.MaterialExpressionCollectionParameter,collection=weather,parameter_name="Night")
     params={name:node(master,unreal.MaterialExpressionScalarParameter,parameter_name=name,default_value=value) for name,value in
             (("TintVariation",.06),("GrimeStrength",.45),("GrimeHeight",160.),("SnowAmount",1.),("WindowGlow",0.),("LampDayScale",1.))}
+    # Battle damage 0..1 per building, written by the game into custom primitive
+    # data 0 (SyncDamageVisuals). Without that property it stays a plain
+    # parameter at 0, so a failed setting can never scorch every building.
+    damage=node(master,unreal.MaterialExpressionScalarParameter,parameter_name="Damage",default_value=0.)
+    try:damage.set_editor_property("use_custom_primitive_data",True);damage.set_editor_property("primitive_data_index",0)
+    except Exception as error:unreal.log_warning("Damage parameter without custom primitive data: "+str(error))
     # Large-world positions stay in material nodes (LWC-aware); the HLSL blocks
     # only receive a float seed in [0,1) and the height above the pivot.
     world=node(master,unreal.MaterialExpressionWorldPosition);pivot=node(master,unreal.MaterialExpressionObjectPositionWS);up=node(master,unreal.MaterialExpressionVertexNormalWS)
@@ -106,9 +112,22 @@ c *= lerp(float3(1.0 + Variation * 0.6, 1.0, 1.0 - Variation * 0.6), float3(1.0 
 float g = saturate(1.0 - Height / max(GrimeHeight, 1.0)); g = g * g * GrimeStrength * (0.65 + 0.35 * Base.g / max(max(Base.r, Base.b), 0.05));
 c = lerp(c, c * float3(0.52, 0.47, 0.40), saturate(g));
 float s = saturate((Up.z - 0.55) * 3.0) * saturate(Snow) * SnowAmount;
-return lerp(c, float3(0.84, 0.87, 0.90), s);
-""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Base","Seed","Height","Up","Variation","GrimeStrength","GrimeHeight","Snow","SnowAmount"])
-    for pin,source in (("Base",color),("Seed",seed),("Height",height),("Up",up),("Variation",params["TintVariation"]),("GrimeStrength",params["GrimeStrength"]),("GrimeHeight",params["GrimeHeight"]),("Snow",snow),("SnowAmount",params["SnowAmount"])):wire(source,surface,pin)
+c = lerp(c, float3(0.84, 0.87, 0.90), s);
+// Battle damage: soot patches (3D value noise over ~2.5 m in the building's
+// own frame) that spread as Damage rises and cover everything at 1. Damage is
+// per primitive, so the branch is coherent and intact buildings skip it.
+if (Damage <= 0.001) return c;
+float3 p = Local * 0.004; float3 i = floor(p); float3 f = frac(p); f = f * f * (3.0 - 2.0 * f);
+float3 K = float3(12.9898, 78.233, 37.719);
+float n000 = frac(sin(dot(i, K)) * 43758.5453), n100 = frac(sin(dot(i + float3(1, 0, 0), K)) * 43758.5453);
+float n010 = frac(sin(dot(i + float3(0, 1, 0), K)) * 43758.5453), n110 = frac(sin(dot(i + float3(1, 1, 0), K)) * 43758.5453);
+float n001 = frac(sin(dot(i + float3(0, 0, 1), K)) * 43758.5453), n101 = frac(sin(dot(i + float3(1, 0, 1), K)) * 43758.5453);
+float n011 = frac(sin(dot(i + float3(0, 1, 1), K)) * 43758.5453), n111 = frac(sin(dot(i + float3(1, 1, 1), K)) * 43758.5453);
+float n = lerp(lerp(lerp(n000, n100, f.x), lerp(n010, n110, f.x), f.y), lerp(lerp(n001, n101, f.x), lerp(n011, n111, f.x), f.y), f.z);
+float scorch = saturate((Damage * 1.45 - n) * 4.0) * saturate(Damage * 4.0);
+return lerp(c, c * 0.16 + float3(0.022, 0.019, 0.016), scorch * 0.92);
+""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Base","Seed","Height","Up","Variation","GrimeStrength","GrimeHeight","Snow","SnowAmount","Damage","Local"])
+    for pin,source in (("Base",color),("Seed",seed),("Height",height),("Up",up),("Variation",params["TintVariation"]),("GrimeStrength",params["GrimeStrength"]),("GrimeHeight",params["GrimeHeight"]),("Snow",snow),("SnowAmount",params["SnowAmount"]),("Damage",damage),("Local",above)):wire(source,surface,pin)
     output(surface,unreal.MaterialProperty.MP_BASE_COLOR)
     roughness=custom("""
 float g = saturate(1.0 - Height / max(GrimeHeight, 1.0)); g = g * g * GrimeStrength;
@@ -124,10 +143,14 @@ float3 lamp = Tint * Emission * lerp(LampDayScale, 1.0, saturate(Night));
 // Roof skylights face the strategy camera head-on and read as lit panels at
 // night (k48 capture); upward glass glows at a third of a wall window.
 float facing = lerp(1.0, 0.33, saturate(Up.z));
-float3 windows = float3(1.0, 0.72, 0.42) * WindowGlow * saturate(Night) * lit * facing;
+// Rooms, not whole facades: about half of the 2.6 x 2.6 x 3 m cells of a lit
+// building glow (k51 night capture: whole glazed roofs read as lanterns).
+float3 cell = floor(Local / float3(260.0, 260.0, 300.0));
+float room = step(0.45, frac(sin(dot(cell + Seed.x * 31.0, float3(12.9898, 78.233, 37.719))) * 43758.5453));
+float3 windows = float3(1.0, 0.72, 0.42) * WindowGlow * saturate(Night) * lit * facing * room;
 return lamp + windows;
-""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Tint","Emission","LampDayScale","Night","WindowGlow","Seed","Up"])
-    for pin,source in (("Tint",tint),("Emission",emission),("LampDayScale",params["LampDayScale"]),("Night",night),("WindowGlow",params["WindowGlow"]),("Seed",seed),("Up",up)):wire(source,glow,pin)
+""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Tint","Emission","LampDayScale","Night","WindowGlow","Seed","Up","Local"])
+    for pin,source in (("Tint",tint),("Emission",emission),("LampDayScale",params["LampDayScale"]),("Night",night),("WindowGlow",params["WindowGlow"]),("Seed",seed),("Up",up),("Local",above)):wire(source,glow,pin)
     output(glow,unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     ME.layout_material_expressions(master);ME.recompile_material(master);ED.save_loaded_asset(master,only_if_is_dirty=False)
     instances={}

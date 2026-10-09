@@ -296,7 +296,7 @@ void ASeigeGameMode::SyncVisuals()
         const double Alpha=PresentationAlpha(),AnimationTime=RenderSimulationTime(Colony);
         for(const auto& B:Colony.Buildings)
         {
-            if(B.Health<=0) continue;
+            if(B.Health<=0){SyncRuinVisual(Colony,B,Offset,Prefix,Live);continue;}
             const auto* D=Colony.Definition(B); if(!D||D->Role==TEXT("wall")) continue;
             const auto* Appearance=B.UpgradeTarget.IsEmpty()?D:Colony.BuildingDefs.Find(B.UpgradeTarget);if(!Appearance)Appearance=D;
             const FString Key=Prefix+FString::Printf(TEXT("building_%d"),B.Id);
@@ -309,6 +309,7 @@ void ASeigeGameMode::SyncVisuals()
             if(!Visuals.Contains(Key)) ClearSceneryAt(P,D->ReservedFootprint);
             Visual(Key,Kind,RenderPosition(P),Appearance->Color,Appearance->Footprint*2.f*RenderScale)->Tags.AddUnique(DefinitionTag);
             SyncConstructionVisuals(Colony,B,*Appearance,P,Key,Live);
+            SyncDamageVisuals(Colony,B,*D,Key,Live);
 
             SyncInventoryVisuals(Colony,B,*D,P,Key,Live);
             SyncServiceVisuals(Colony,B,*Appearance,Key,Live);

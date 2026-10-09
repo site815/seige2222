@@ -47,9 +47,12 @@ bool FSeigeFirstPlayableTimelineDiagnostic::RunTest(const FString&)
         Line+=TEXT("]")+Extra+TEXT("}");Lines.Add(Line);
     };
     TMap<int32,double> Warned;TSet<int32> Lost;double NextSample=0;
-    while(S.Time<Horizon&&!S.Won&&!S.Escaped&&!S.Failed)
+    // -SeigeTimelinePastWin keeps the colony running after the objective until
+    // the horizon, to watch later waves, the full defence and the upgrade gates.
+    const bool PastWin=FParse::Param(FCommandLine::Get(),TEXT("SeigeTimelinePastWin"));double WonAt=-1;
+    while(S.Time<Horizon&&(PastWin||!S.Won)&&!S.Escaped&&!S.Failed)
     {
-        Controller.Tick(S,10);
+        Controller.Tick(S,10);if(S.Won&&WonAt<0)WonAt=S.Time;
         if(S.Time>=NextSample){Snapshot(TEXT("sample"),FString());NextSample=S.Time+600;}
         for(const auto& B:S.Buildings)
         {
@@ -68,7 +71,7 @@ bool FSeigeFirstPlayableTimelineDiagnostic::RunTest(const FString&)
     Snapshot(TEXT("final"),FString());
     const FString Path=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Diagnostics/first-playable-timeline.jsonl"));
     FFileHelper::SaveStringToFile(FString::Join(Lines,TEXT("\n"))+TEXT("\n"),*Path);
-    AddInfo(FString::Printf(TEXT("Timeline %d lines -> %s; won=%d t=%.0f; %s"),Lines.Num(),*Path,S.Won?1:0,S.Time,*S.ObjectiveText()));
+    AddInfo(FString::Printf(TEXT("Timeline %d lines -> %s; won=%d (at %.0f) t=%.0f failed=%d; %s"),Lines.Num(),*Path,S.Won?1:0,WonAt,S.Time,S.Failed?1:0,*S.ObjectiveText()));
     return true;
 }
 #endif

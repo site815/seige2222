@@ -416,6 +416,29 @@ bool FSeigeCompactBuildingPadTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("An unbuilt deposit cannot flatten the natural terrain"),FMath::Abs(G.GroundHeight(DepositSamples[I])-NaturalDeposits[I])<.001);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeAdjacentFoundationTest,"Seige.Camera.AdjacentFoundationsLevel",CameraFlags)
+bool FSeigeAdjacentFoundationTest::RunTest(const FString& Parameters)
+{
+    // Two plots 30 units apart on a slope: their level zones overlap. Each
+    // building's interior (60% of its half-width, so every grid vertex of the
+    // sampled cells lies inside its own plot) must stay at its own level; the
+    // overlap used to average the two pads and tilt both plot edges.
+    FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    if(!G.Sim.SetInitialCorePosition(FVector2D(613,487),G.Error)){AddError(G.Error);return false;}
+    if(!DeployCameraFixture(G.Sim,G.Error)){AddError(G.Error);return false;}
+    const auto* Refinery=G.Sim.BuildingDefs.Find(TEXT("alloy_refinery"));if(!TestNotNull(TEXT("Refinery definition"),Refinery))return false;
+    const FVector2D A(-713,319),B=A+FVector2D(Refinery->Footprint*2+30,0);
+    if(!TestTrue(TEXT("Adjacent review plots are installed"),G.Sim.AddReviewBuilding(TEXT("alloy_refinery"),A)>0&&G.Sim.AddReviewBuilding(TEXT("alloy_refinery"),B)>0))return false;
+    G.RebuildTerrainHeights();
+    TestTrue(TEXT("The fixture's two plots sit at different natural levels"),FMath::Abs(G.GroundHeight(A)-G.GroundHeight(B))>.1);
+    for(const FVector2D& Centre:{A,B})
+    {
+        const double Level=G.GroundHeight(Centre);
+        for(double X:{-.6,0.,.6})for(double Y:{-.6,0.,.6})
+            TestTrue(*FString::Printf(TEXT("Adjacent plot interior stays level (%g,%g)"),X,Y),FMath::Abs(G.GroundHeight(Centre+FVector2D(X,Y)*Refinery->Footprint)-Level)<.001);
+    }
+    return true;
+}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeIncrementalSectorSeamTest,"Seige.Camera.IncrementalSectorSeams",CameraFlags)
 bool FSeigeIncrementalSectorSeamTest::RunTest(const FString& Parameters)
 {

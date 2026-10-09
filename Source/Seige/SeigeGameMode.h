@@ -12,6 +12,7 @@ class FSeigeScenarioAI;
 class UTexture2D;
 struct FSeigeSceneryStreamState;
 struct FSeigeTerrainUpload;
+struct FSeigeForestBuild;
 struct FSeigeScenarioPreparation;
 struct FSeigeNeighbor
 {
@@ -265,6 +266,16 @@ private:
     TMap<FString,FVector4> TerrainPadBounds;
     void CreateFoliage(int32 PreviousSector=INDEX_NONE);
     void BuildForestSectors(AActor* Ground,const TArray<int32>& Sectors);
+    // A sector's forest is prepared as instance batches, then committed a few
+    // sets per frame after a crossing (ForestSetsPerFrame of 64).
+    void ForestMeshes(class UStaticMesh** Source,class UStaticMesh** Proxy) const;   // four tree kinds each
+    void PrepareForestSector(FSeigeForestBuild& Build);
+    void CommitForestSets(AActor* Ground,FSeigeForestBuild& Build,int32 First,int32 Last);
+    void StartForestRebuild(int32 Sector,bool FinishCover);
+    bool StepForestRebuild(bool Flush);
+    bool ForestCoverPending() const;
+    TSharedPtr<FSeigeForestBuild> PendingForest;
+    int32 ForestSetsPerFrame=16;
     void UploadTerrainTiles(AActor* Ground,const TArray<int32>& Tiles,double& PrepareSeconds,double& UploadSeconds);
     TSharedPtr<FSeigeTerrainUpload> PrepareTerrainUpload(const TArray<int32>& Tiles) const;
     void PrepareTerrainUploadInto(FSeigeTerrainUpload& Target,const TArray<int32>& Tiles) const;
@@ -278,6 +289,9 @@ private:
     // the left sector's forest, one step per frame.
     int32 DeferredFoliageFrom=INDEX_NONE,DeferredTerrainTile=INDEX_NONE,DeferredForestSector=INDEX_NONE;
     bool ContinueDeferredSectorWork(bool Flush);
+    // Recent heavy presentation steps (frame, label): benchmark spike attribution.
+    TArray<TPair<uint64,FString>> RecentFrameSteps;
+    void NoteFrameStep(const FString& Step){RecentFrameSteps.Add(TPair<uint64,FString>(GFrameCounter,Step));if(RecentFrameSteps.Num()>16)RecentFrameSteps.RemoveAt(0);}
     void RefreshDepositGeology(bool Force=false);
     FString DepositVisibilitySignature;
     void CreateGroundCover();
@@ -303,6 +317,15 @@ private:
     void SetConstructionReveal(AActor* Actor,double Progress);
     // Stored worker bodies on the authored berths of the building that holds them.
     void SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Appearance,const FString& Key,TSet<FString>& Live);
+    // Battle damage: material scorch (custom primitive data 0), smoke below 65%
+    // health, fire below 30%; destroyed buildings leave a burnt-out ruin.
+    void SyncDamageVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,const FString& Key,TSet<FString>& Live);
+    void SyncRuinVisual(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,FVector2D Offset,const FString& Prefix,TSet<FString>& Live);
+    void ApplyDamageTint(AActor* Actor,float Damage,bool BodiesOnly) const;
+    bool DamageAssetsLoaded=false;
+    UPROPERTY() TObjectPtr<class UStaticMesh> DamagePuffMesh;
+    UPROPERTY() TObjectPtr<class UMaterialInterface> DamageSmokeMaterial;
+    UPROPERTY() TObjectPtr<class UMaterialInterface> DamageFireMaterial;
     TMap<int32,FSeigeRenderSnapshot> PresentationSnapshots;
     void CaptureSimulationPresentation();
     void ResetSimulationPresentation();

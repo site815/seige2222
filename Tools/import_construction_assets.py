@@ -47,8 +47,44 @@ height=node(reveal,u.MaterialExpressionScalarParameter,parameter_name='RevealHei
 mask=node(reveal,u.MaterialExpressionSubtract,desc='ConstructionReveal: visible below plane');wire(height,mask,'A');wire(z,mask,'B')
 output(mask,u.MaterialProperty.MP_OPACITY_MASK);ME.layout_material_expressions(reveal);ME.recompile_material(reveal);ED.save_loaded_asset(reveal,False)
 
+# Battle-damage presentation (SyncDamageVisuals): soft, lit smoke puffs and
+# additive fire puffs drawn on engine spheres. Each puff's fade comes from its
+# custom primitive data 0, so hundreds of puffs need no dynamic instances. A
+# failure here only removes the effect (the game skips missing materials).
+damage_materials=[]
+def puff_material(name,blend,colour,fresnel_exponent,emissive):
+    m=asset(name);ME.delete_all_material_expressions(m)
+    m.set_editor_property('blend_mode',blend);m.set_editor_property('two_sided',False)
+    m.set_editor_property('shading_model',u.MaterialShadingModel.MSM_UNLIT if emissive else u.MaterialShadingModel.MSM_DEFAULT_LIT)
+    if not emissive:m.set_editor_property('translucency_lighting_mode',u.TranslucencyLightingMode.TLM_VOLUMETRIC_NON_DIRECTIONAL)
+    tint=node(m,u.MaterialExpressionVectorParameter,parameter_name='Tint',default_value=u.LinearColor(*colour,1))
+    fade=node(m,u.MaterialExpressionScalarParameter,parameter_name='Fade',default_value=1.0)
+    fade.set_editor_property('use_custom_primitive_data',True);fade.set_editor_property('primitive_data_index',0)
+    fresnel=node(m,u.MaterialExpressionFresnel,exponent=fresnel_exponent,base_reflect_fraction=0.0)
+    core=node(m,u.MaterialExpressionOneMinus);wire(fresnel,core,'')
+    soft=node(m,u.MaterialExpressionMultiply);wire(core,soft,'A');wire(fade,soft,'B')
+    if not emissive:
+        # A static world-space noise field the rising puffs move through breaks
+        # the sphere outlines into billows; skipped (plain soft puffs) on failure.
+        try:
+            noise=node(m,u.MaterialExpressionNoise,scale=.012,levels=3,output_min=.3,output_max=1.0)
+            broken=node(m,u.MaterialExpressionMultiply);wire(soft,broken,'A');wire(noise,broken,'B');soft=broken
+        except Exception as error:u.log_warning('SEIGE_DAMAGE_SMOKE_NOISE_SKIPPED '+str(error))
+    if emissive:
+        glow=node(m,u.MaterialExpressionMultiply);wire(tint,glow,'A');wire(soft,glow,'B');output(glow,u.MaterialProperty.MP_EMISSIVE_COLOR)
+    else:
+        output(tint,u.MaterialProperty.MP_BASE_COLOR)
+        rough=node(m,u.MaterialExpressionConstant,r=1.0);output(rough,u.MaterialProperty.MP_ROUGHNESS)
+        dense=node(m,u.MaterialExpressionMultiply,const_b=.62);wire(soft,dense,'A');output(dense,u.MaterialProperty.MP_OPACITY)
+    ME.layout_material_expressions(m);ME.recompile_material(m);ED.save_loaded_asset(m,False);damage_materials.append(m.get_path_name())
+try:
+    puff_material('M_DamageSmoke',u.BlendMode.BLEND_TRANSLUCENT,(.075,.07,.066),1.4,False)
+    puff_material('M_DamageFire',u.BlendMode.BLEND_ADDITIVE,(6.0,1.9,.35),2.2,True)
+except Exception as error:
+    u.log_warning('SEIGE_DAMAGE_MATERIALS_FAILED '+str(error))
+
 if MATERIALS_ONLY:
-    u.log('SEIGE_CONSTRUCTION_MATERIALS_SUCCESS '+json.dumps({'materials':[holo.get_path_name(),reveal.get_path_name()]}))
+    u.log('SEIGE_CONSTRUCTION_MATERIALS_SUCCESS '+json.dumps({'materials':[holo.get_path_name(),reveal.get_path_name()]+damage_materials}))
     DATA['meshes']={}
 tasks=[]
 for name,r in DATA['meshes'].items():

@@ -76,6 +76,7 @@ void ASeigeGameMode::SyncWallVisuals(const FSeigeSimulation& Colony,FVector2D Of
             for(int32 Step=0;Step<=Steps;++Step)ClearSceneryAt(FMath::Lerp(S.A,S.B,double(Step)/Steps)+Offset,D->ReservedFootprint);
         }
         A->SetActorLocation((Start+End)*.5);A->SetActorRotation((End-Start).Rotation());A->SetActorScale3D(FVector(1,1,Progress));
+        ApplyDamageTint(A,B->IsConstructing?0.f:float(FMath::Clamp(1.-B->Health/FMath::Max(1.,D->Health),0.,1.)),false);
         // Existing construction presentation supplies physical stock and crews.
         if(B->IsConstructing){SyncConstructionVisuals(Colony,*B,*D,B->Position+Offset,Key,Live);A->SetActorScale3D(FVector(1,1,Progress));}
     }

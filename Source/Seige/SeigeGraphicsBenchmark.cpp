@@ -18,6 +18,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/EngineVersion.h"
 #include "HAL/IConsoleManager.h"
+#include "UObject/UObjectGlobals.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 #include "Scalability.h"
 #include "Engine/Engine.h"
@@ -72,6 +73,12 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     static FString Name;
     static TArray<double> Frames;
     static TArray<double> GameTimes,RenderTimes,RhiTimes,GpuTimes;
+    // Frames over 30 ms with the heavy presentation steps of the last frames
+    // (NoteFrameStep) and whether a garbage collection just ran: attribution
+    // for the travel benchmark's tail, which counters alone cannot give.
+    static TArray<TSharedPtr<FJsonValue>> Spikes;
+    static uint64 LastGarbageCollectFrame=0;
+    static FDelegateHandle GarbageCollectHandle;
     static bool Orbit=false,Travel=false,SimpleTerrain=false;
     static double MotionStarted=0;
     static double ViewSetupStarted=0,SynchronousSetupSeconds=0,SceneryReadySeconds=0;
@@ -203,7 +210,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         ApplyViewDiagnostics();
         // Synchronous setup and budgeted scenery generation are both excluded.
         // Settling starts only after the final required cell is installed.
-        Frames.Reset();GameTimes.Reset();RenderTimes.Reset();RhiTimes.Reset();GpuTimes.Reset();
+        Frames.Reset();GameTimes.Reset();RenderTimes.Reset();RhiTimes.Reset();GpuTimes.Reset();Spikes.Reset();
+        if(!GarbageCollectHandle.IsValid())GarbageCollectHandle=FCoreUObjectDelegates::GetPostGarbageCollect().AddLambda([](){LastGarbageCollectFrame=GFrameCounter;});
         Phase=EPhase::AwaitScenery;Started=Previous=MotionStarted=FPlatformTime::Seconds();
         SynchronousSetupSeconds=Started-ViewSetupStarted;SceneryReadySeconds=0;
         InitialPendingSceneryCells=PendingSceneryCells();
@@ -336,6 +344,19 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
                     Corner+FVector2D(WallSection,WallSection*3),Corner+FVector2D(WallSection*2,WallSection*3)};
                 for(int32 J=1;J<int32(UE_ARRAY_COUNT(Joints));++J)Sim.AddReviewWall(Sim.Walls.LevelDefinitions[WallLevel],Joints[J-1],Joints[J],false);
             }
+            // -BenchmarkDamage sets the review buildings to a cycle of health
+            // levels (intact, scorched, smoking, burning, destroyed) so the damage
+            // presentation is reviewed in engine; walls stop short of destroyed.
+            if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkDamage")))
+            {
+                static const double HealthLevels[]={1.,.75,.5,.25,.1,0.};int32 Next=0;
+                for(auto& Reviewed:Sim.Buildings)
+                    if(Reviewed.Status==TEXT("Review placement"))if(const auto* ReviewedDefinition=Sim.Definition(Reviewed))
+                    {
+                        const double Level=HealthLevels[Next++%UE_ARRAY_COUNT(HealthLevels)];
+                        Reviewed.Health=ReviewedDefinition->Health*(ReviewedDefinition->Role==TEXT("wall")?FMath::Max(Level,.1):Level);
+                    }
+            }
             // -BenchmarkFocus=<building id> frames that one review building instead.
             FString Focus;
             if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkFocus="),Focus))
@@ -452,6 +473,15 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             auto AddCycles=[](TArray<double>& Out,uint32 Cycles){if(Cycles>0)Out.Add(FPlatformTime::ToMilliseconds(Cycles));};
             AddCycles(GameTimes,GGameThreadTime);AddCycles(RenderTimes,GRenderThreadTime);
             AddCycles(RhiTimes,GRHIThreadTime);AddCycles(GpuTimes,RHIGetGPUFrameCycles());
+            if(FrameMS>30&&Spikes.Num()<24)
+            {
+                auto Spike=MakeShared<FJsonObject>();auto Latest=[](const TArray<double>& Values){return Values.Num()?Values.Last():-1.;};
+                Spike->SetNumberField(TEXT("frame_ms"),FrameMS);Spike->SetNumberField(TEXT("seconds_into_sample"),Now-Started);
+                Spike->SetNumberField(TEXT("game_ms"),Latest(GameTimes));Spike->SetNumberField(TEXT("render_ms"),Latest(RenderTimes));Spike->SetNumberField(TEXT("gpu_ms"),Latest(GpuTimes));
+                FString Steps;for(const auto& Step:RecentFrameSteps)if(Step.Key+3>=GFrameCounter)Steps+=(Steps.IsEmpty()?FString():FString(TEXT("; ")))+Step.Value;
+                Spike->SetStringField(TEXT("recent_steps"),Steps);Spike->SetBoolField(TEXT("garbage_collected"),LastGarbageCollectFrame>0&&LastGarbageCollectFrame+3>=GFrameCounter);
+                Spikes.Add(MakeShared<FJsonValueObject>(Spike));
+            }
         }
         if(Now-Started<5)return;
         CSV_EVENT_GLOBAL(TEXT("SEIGE_BENCH_SAMPLE_END:%s"),Views[View].Name);
@@ -505,6 +535,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         Timings->SetObjectField(TEXT("render"),TimingSummary(RenderTimes));
         Timings->SetObjectField(TEXT("rhi"),TimingSummary(RhiTimes));
         Timings->SetObjectField(TEXT("gpu"),TimingSummary(GpuTimes));Row->SetObjectField(TEXT("timings"),Timings);
+        Row->SetArrayField(TEXT("spikes"),Spikes);
         Results.Add(MakeShared<FJsonValueObject>(Row));
         UE_LOG(LogTemp,Display,TEXT("GRAPHICS_BENCHMARK %s %s: %.2f FPS, %d samples over %.3f seconds"),*Name,Views[View].Name,Sum>0?Frames.Num()*1000/Sum:0,Frames.Num(),Sum/1000);
         Phase=EPhase::Capture;return;

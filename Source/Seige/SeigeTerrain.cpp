@@ -117,6 +117,7 @@ struct FHeightPad
 {
     FVector2D Position;
     double Height=0,Inner=0,Outer=0;
+    double Core=0;   // half-width of the building's own (planned) plot
 };
 struct FHeightRoad
 {
@@ -154,7 +155,7 @@ struct FPreparedTerrain
                     const double Reserved=Planned?Planned->Footprint:D->Footprint;
                     const double Inner=FMath::Max(double(Reserved*G.CorePadInnerRatio),Reserved+GridStep);
                     const double Outer=FMath::Max(double(Reserved*G.CorePadOuterRatio),Inner+GridStep);
-                    const FHeightPad Pad{P,Natural(P),Inner,Outer};
+                    const FHeightPad Pad{P,Natural(P),Inner,Outer,Reserved};
                     const FString Key=FString::Printf(TEXT("%d:%d"),Index,B.Id);
                     Bounds.Add(Key,FVector4(P.X,P.Y,Inner,Outer));
                     Signature+=FString::Printf(TEXT("%s:%.4f:%.4f:%.4f:%.4f;"),*Key,P.X,P.Y,Inner,Outer);
@@ -211,6 +212,18 @@ struct FPreparedTerrain
         const double Span=Game.Sim.WorldHalfSize*2;
         const int32 X=FMath::FloorToInt((P.X+Span*.5)/Span),Y=FMath::FloorToInt((P.Y+Span*.5)/Span);
         if(X<-1||X>1||Y<-1||Y>1)return Base;
+        // Inside any pad's level zone the nearest plot owns the height: the
+        // point belongs to the building whose plot edge it is deepest behind.
+        // Overlapping level zones of adjacent plots on a slope used to average,
+        // which buried one building's edge and dropped the ground away under the
+        // other's; now each plot stays level and the step falls between them.
+        const FHeightPad* Owner=nullptr;double OwnerDepth=0;
+        for(const auto& Pad:Pads[(Y+1)*3+X+1])
+        {
+            const FVector2D D=P-Pad.Position;const double Distance=FMath::Max(FMath::Abs(D.X),FMath::Abs(D.Y));
+            if(Distance<=Pad.Inner&&(!Owner||Distance-Pad.Core<OwnerDepth)){Owner=&Pad;OwnerDepth=Distance-Pad.Core;}
+        }
+        if(Owner)return Owner->Height;
         double WeightedHeight=0,TotalWeight=0,Influence=0;
         for(const auto& Pad:Pads[(Y+1)*3+X+1])
         {
@@ -507,7 +520,7 @@ void ASeigeGameMode::CreateLandscape(bool SectorTransition)
         if(RenderedSector==DetailedSectorIndex())return;   // back where the detailed surface already is
     }
     const bool Reuse=CanReuse();
-    if(!Reuse){PendingTerrainUpload.Reset();DeferredFoliageFrom=DeferredTerrainTile=DeferredForestSector=INDEX_NONE;}
+    if(!Reuse){PendingTerrainUpload.Reset();PendingForest.Reset();DeferredFoliageFrom=DeferredTerrainTile=DeferredForestSector=INDEX_NONE;}
     const int32 PreviousSector=RenderedSector;
     if(Reuse)
     {
@@ -542,6 +555,7 @@ void ASeigeGameMode::CreateLandscape(bool SectorTransition)
         PendingTerrainUpload=Pending;DeferredFoliageFrom=PreviousSector;DeferredTerrainTile=PreviousSector;
         UE_LOG(LogTemp,Display,TEXT("SECTOR_TRANSITION %d -> %d: %.1f ms in the crossing frame (heights); chunk preparation, upload, forest and ground cover, then sector %d, deferred"),
             PreviousSector,RenderedSector,(FPlatformTime::Seconds()-Started)*1000,PreviousSector);
+        NoteFrameStep(FString::Printf(TEXT("crossing %d->%d heights %.1f ms"),PreviousSector,RenderedSector,(FPlatformTime::Seconds()-Started)*1000));
         return;
     }
     if(Landscape)Landscape->Destroy();
@@ -551,6 +565,7 @@ void ASeigeGameMode::CreateLandscape(bool SectorTransition)
     TArray<int32> Tiles;for(int32 TileIndex=0;TileIndex<TerrainTiles.Num();++TileIndex)Tiles.Add(TileIndex);
     double PrepareSeconds=0,UploadSeconds=0;UploadTerrainTiles(Ground,Tiles,PrepareSeconds,UploadSeconds);
     UE_LOG(LogTemp,Display,TEXT("Terrain surface ready: focused %d grid, eight 128 grids, %.3f seconds before foliage (%d tiles: prepare %.3f s, upload %.3f s)"),DetailedTerrainResolution,FPlatformTime::Seconds()-Started,Tiles.Num(),PrepareSeconds,UploadSeconds);
+    NoteFrameStep(TEXT("full terrain rebuild"));
     CreateEnvironmentWater();
     CreateFoliage(INDEX_NONE);
 }
@@ -592,6 +607,7 @@ bool ASeigeGameMode::ContinueDeferredSectorWork(bool Flush)
                 Pending.Order.Sort([&](int32 A,int32 B){return Distance(A)<Distance(B);});
             }
             UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED chunk preparation of sector %d: %d chunks, %.1f ms"),Pending.ReplaceTile,Pending.Jobs.Num(),(FPlatformTime::Seconds()-Started)*1000);
+            NoteFrameStep(FString::Printf(TEXT("chunk preparation %.1f ms"),(FPlatformTime::Seconds()-Started)*1000));
             if(!Flush)return true;
         }
         const int32 Total=Pending.Jobs.Num();
@@ -627,16 +643,29 @@ bool ASeigeGameMode::ContinueDeferredSectorWork(bool Flush)
             if(Pending.Next>=Total)Standin->DestroyComponent();
         }
         UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED terrain upload of sector %d: chunks %d-%d of %d, %.1f ms"),Pending.ReplaceTile,First+1,Last,Total,(FPlatformTime::Seconds()-Started)*1000);
+        NoteFrameStep(FString::Printf(TEXT("chunks %d-%d %.1f ms"),First+1,Last,(FPlatformTime::Seconds()-Started)*1000));
         if(Pending.Next>=Total)PendingTerrainUpload.Reset();
+        Worked=true;if(!Flush)return true;
+    }
+    if(PendingForest)
+    {
+        // A forest rebuild in progress: ForestSetsPerFrame instance sets per
+        // frame (all on a flush); the entered sector's finishes with its deposit
+        // geology and a fresh ground-cover stream.
+        const double Started=FPlatformTime::Seconds();const int32 Sector=PendingForest->Sector;
+        StepForestRebuild(Flush);
+        UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED forest sets of sector %d: %.1f ms"),Sector,(FPlatformTime::Seconds()-Started)*1000);
         Worked=true;if(!Flush)return true;
     }
     if(DeferredFoliageFrom!=INDEX_NONE)
     {
-        // Entered sector: forest, deposit geology and a fresh ground-cover stream.
+        // Entered sector: prepare its forest placements (sets follow per frame).
         const double Started=FPlatformTime::Seconds();
         const int32 From=DeferredFoliageFrom;DeferredFoliageFrom=INDEX_NONE;
         CreateFoliage(From);
-        UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED forest and ground cover of sector %d: %.1f ms"),DetailedSectorIndex(),(FPlatformTime::Seconds()-Started)*1000);
+        UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED forest placement of sector %d: %.1f ms"),DetailedSectorIndex(),(FPlatformTime::Seconds()-Started)*1000);
+        NoteFrameStep(FString::Printf(TEXT("forest placement %.1f ms"),(FPlatformTime::Seconds()-Started)*1000));
+        if(Flush)StepForestRebuild(true);
         Worked=true;if(!Flush)return true;
     }
     if(DeferredTerrainTile!=INDEX_NONE)
@@ -649,6 +678,7 @@ bool ASeigeGameMode::ContinueDeferredSectorWork(bool Flush)
             for(auto* Mesh:Existing)if(Mesh->ComponentTags.Num()==3&&FCString::Atoi(*Mesh->ComponentTags[0].ToString())==TileIndex)Mesh->DestroyComponent();
             double PrepareSeconds=0,UploadSeconds=0;UploadTerrainTiles(Landscape,{TileIndex},PrepareSeconds,UploadSeconds);
             UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED terrain tile %d: %.1f ms"),TileIndex,(FPlatformTime::Seconds()-Started)*1000);
+            NoteFrameStep(FString::Printf(TEXT("coarse tile %.1f ms"),(FPlatformTime::Seconds()-Started)*1000));
         }
         Worked=true;if(!Flush)return true;
     }
@@ -658,11 +688,11 @@ bool ASeigeGameMode::ContinueDeferredSectorWork(bool Flush)
         const int32 Sector=DeferredForestSector;DeferredForestSector=INDEX_NONE;
         if(Foliage&&Sector!=DetailedSectorIndex())
         {
-            const FName Tag(*FString::Printf(TEXT("seige_forest_sector:%d"),Sector));
-            TArray<UInstancedStaticMeshComponent*> Existing;Foliage->GetComponents(Existing);
-            for(auto* Set:Existing)if(Set->ComponentHasTag(Tag))Set->DestroyComponent();
-            BuildForestSectors(Foliage,{Sector});
-            UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED forest sector %d: %.1f ms"),Sector,(FPlatformTime::Seconds()-Started)*1000);
+            // The sector being left: same staggered rebuild, without ground cover.
+            StartForestRebuild(Sector,false);
+            UE_LOG(LogTemp,Display,TEXT("SECTOR_DEFERRED forest placement of sector %d: %.1f ms"),Sector,(FPlatformTime::Seconds()-Started)*1000);
+            NoteFrameStep(FString::Printf(TEXT("left forest placement %.1f ms"),(FPlatformTime::Seconds()-Started)*1000));
+            if(Flush)StepForestRebuild(true);
         }
         Worked=true;
     }
@@ -915,131 +945,173 @@ void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
     }
 }
 }
+// A sector's forest as prepared instance batches: detail and opaque-proxy sets
+// for each tree kind and LOD band, filled in candidate order. A crossing commits
+// them a few sets per frame, each replacing the set it supersedes, so trees never
+// vanish and no single frame rebuilds the whole sector.
+struct FSeigeForestBuild
+{
+    static constexpr int32 Sets=2*4*SceneryLodBands;   // index = (kind * bands + band) * 2 + proxy
+    int32 Sector=INDEX_NONE;bool Replace=false,FinishCover=false;
+    TArray<FTransform> Batches[Sets];
+    int32 NextSet=0,Trees=0;double Seconds=0;
+    TSet<const UInstancedStaticMeshComponent*> Created;
+};
+namespace
+{
+    const TCHAR* const SeigeTreeKinds[4]={TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB")};
+}
+void ASeigeGameMode::ForestMeshes(UStaticMesh** Source,UStaticMesh** Proxy) const
+{
+    auto* BroadProxy=LoadObject<UStaticMesh>(nullptr,*BroadleafProxyAsset,nullptr,LOAD_NoWarn);
+    auto* PineProxy=LoadObject<UStaticMesh>(nullptr,*ConiferProxyAsset,nullptr,LOAD_NoWarn);
+    for(int32 K=0;K<4;++K)
+    {
+        const FString Kind=SeigeTreeKinds[K],Name=TEXT("SM_")+Kind,Path=NatureAssets.Contains(Kind)?NatureAssets[Kind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
+        Source[K]=LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn);Proxy[K]=K>=2?PineProxy:BroadProxy;
+    }
+}
 void ASeigeGameMode::CreateFoliage(int32 PreviousSector)
 {
     if(!FApp::CanEverRender())return;
-    const bool Reuse=PreviousSector!=INDEX_NONE&&Foliage;
-    if(!Reuse&&Foliage)Foliage->Destroy();if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}SceneryStream.Reset();SceneryMeshReferences.Reset();
-    auto* Ground=Reuse?Foliage.Get():GetWorld()->SpawnActor<AActor>();auto* Root=Ground->GetRootComponent();if(!Root){Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();}Foliage=Ground;
-    TArray<int32> Sectors;
-    if(Reuse)
+    if(PreviousSector!=INDEX_NONE&&Foliage)
     {
-        // Only the sector being entered is rebuilt now; the sector being left
-        // keeps its trees (on its previous, finer surface) until the deferred pass.
-        const FName Tag(*FString::Printf(TEXT("seige_forest_sector:%d"),DetailedSectorIndex()));
-        TArray<UInstancedStaticMeshComponent*> Existing;Ground->GetComponents(Existing);
-        for(auto* Set:Existing)if(Set->ComponentHasTag(Tag))Set->DestroyComponent();
-        Sectors.Add(DetailedSectorIndex());DeferredForestSector=PreviousSector;
+        // Crossing: only the entered sector is rebuilt, a few instance sets per
+        // frame (ContinueDeferredSectorWork), then its deposit geology and a fresh
+        // ground-cover stream. The sector being left keeps its trees (on its
+        // previous, finer surface) until its own deferred rebuild.
+        StartForestRebuild(DetailedSectorIndex(),true);DeferredForestSector=PreviousSector;return;
     }
-    else for(int32 Sector=0;Sector<9;++Sector)Sectors.Add(Sector);
+    PendingForest.Reset();
+    if(Foliage)Foliage->Destroy();if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}SceneryStream.Reset();SceneryMeshReferences.Reset();
+    auto* Ground=GetWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(Ground);Ground->SetRootComponent(Root);Root->RegisterComponent();Foliage=Ground;
+    TArray<int32> Sectors;for(int32 Sector=0;Sector<9;++Sector)Sectors.Add(Sector);
     BuildForestSectors(Ground,Sectors);
     RefreshDepositGeology(true);
     CreateGroundCover();
 }
 void ASeigeGameMode::BuildForestSectors(AActor* Ground,const TArray<int32>& Sectors)
 {
-    const double Started=FPlatformTime::Seconds();
-    auto* Root=Ground->GetRootComponent();
-    const double Half=Sim.WorldHalfSize,FarDistance=Half*RenderScale*8;
-    auto* BroadProxy=LoadObject<UStaticMesh>(nullptr,*BroadleafProxyAsset,nullptr,LOAD_NoWarn);
-    auto* PineProxy=LoadObject<UStaticMesh>(nullptr,*ConiferProxyAsset,nullptr,LOAD_NoWarn);
-    TMap<FString,UStaticMesh*> Meshes;
-    TMap<FName,UInstancedStaticMeshComponent*> Sets;
-    for(const FString Kind:{TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB"),TEXT("RockA"),TEXT("RockB")})
+    const double Started=FPlatformTime::Seconds();int32 Trees=0,Sets=0;
+    for(const int32 Sector:Sectors)
     {
-        const FString Name=TEXT("SM_")+Kind,Path=NatureAssets.Contains(Kind)?NatureAssets[Kind]:FString::Printf(TEXT("/Game/Art/%s.%s"),*Name,*Name);
-        if(auto* Mesh=LoadObject<UStaticMesh>(nullptr,*Path,nullptr,LOAD_NoWarn))Meshes.Add(Kind,Mesh);
+        FSeigeForestBuild Build;Build.Sector=Sector;
+        PrepareForestSector(Build);CommitForestSets(Ground,Build,0,FSeigeForestBuild::Sets);
+        Trees+=Build.Trees;Sets+=Build.Created.Num();
     }
-    int32 ActiveSector=0;
-    auto EnsureSet=[&](const FString& Kind,int32 Band,bool Proxy)->UInstancedStaticMeshComponent*
+    UE_LOG(LogTemp,Display,TEXT("SCENERY_FOREST_READY: %d stable trees across %d sectors, %d ISM batches, %.3f seconds"),Trees,Sectors.Num(),Sets,FPlatformTime::Seconds()-Started);
+}
+void ASeigeGameMode::PrepareForestSector(FSeigeForestBuild& Build)
+{
+    const int32 Sector=Build.Sector;const double Half=Sim.WorldHalfSize;
+    UStaticMesh* KindSource[4];UStaticMesh* KindProxy[4];ForestMeshes(KindSource,KindProxy);
+    // Every sector keeps the same full placement sequence and density at every
+    // focus level. Only the representation changes with camera distance.
+    const FVector2D Offset=FVector2D(Sector%3-1,Sector/3-1)*Half*2;
+    const FSeigeSimulation* Colony=Sector==4?&Sim:nullptr;
+    if(!Colony)for(const auto& N:Neighbors)if(N.Index==Sector){Colony=&N.Sim;break;}
+    TArray<FSceneryClearance> Areas;
+    if(Colony&&(Sector!=4||!HidePendingHomeFoundation(*this)))
     {
-        const FName Key(*FString::Printf(TEXT("%d_%s_%d_%s"),ActiveSector,*Kind,Band,Proxy?TEXT("proxy"):TEXT("detail")));
-        if(auto** Existing=Sets.Find(Key))return *Existing;
-        const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
-        auto* Source=Meshes.FindRef(Kind);auto* ProxyMesh=Kind.StartsWith(TEXT("Pine"))?PineProxy:BroadProxy;
-        // Missing optional cooked proxy falls back to continuous source foliage,
+        for(const auto& B:Colony->Buildings)if(B.Health>0&&!IsWallBuilding(*Colony,B)&&(Observer||Sector==4||IsWorldVisible(B.Position+Offset)))
+            if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->ReservedFootprint,true});
+        if(Observer||Sector==4)for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
+        if(Observer||Sector==4)AddWallClearances(*Colony,Offset,Areas);
+        AddRoadClearances(*this,*Colony,Offset,Sector,Areas);
+    }
+    FRandomStream R(2222+Sector*100003);
+    // The random stream is consumed in the original order (position, then
+    // chance/size/yaw), so placements are identical to the serial loop; the
+    // clearance and woodland tests and both transforms run in parallel, and the
+    // serial pass only appends to per-set arrays in candidate order. (Formatting
+    // a key per tree was most of the old sector-crossing forest rebuild.)
+    struct FCandidate{FVector2D P;double Chance,Size,Yaw;int32 I;};TArray<FCandidate> Candidates;Candidates.Reserve(ForestCandidates+NearForestCandidates);
+    for(int32 I=0;I<ForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
+    for(int32 I=0;I<NearForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
+    struct FPlacedTree{FTransform Detail,Far;int32 Combo=INDEX_NONE;bool Keep=false;};
+    TArray<FPlacedTree> Placed;Placed.SetNum(Candidates.Num());
+    ParallelFor(Candidates.Num(),[&](int32 K)
+    {
+        const auto& C=Candidates[K];
+        if(IsSceneryClear(*this,C.P,210,Offset,Half,Areas)||C.Chance>WoodlandDensity(C.P)*.9)return;
+        FPlacedTree& T=Placed[K];T.Keep=true;
+        const int32 I=C.I,KindIndex=I%9==0?(I%2?2:3):(I%2?0:1);
+        const UStaticMesh* Source=KindSource[KindIndex];if(!Source)return;   // missing mesh: counted, not drawn
+        T.Combo=KindIndex*SceneryLodBands+int32(GroundCellSeed(I,Sector)%SceneryLodBands);
+        T.Detail=FTransform(FRotator(0,C.Yaw,0),RenderPosition(C.P),FVector(C.Size));
+        if(const UStaticMesh* ProxyMesh=KindProxy[KindIndex])T.Far=AlignProxyBounds(T.Detail,Source,ProxyMesh);
+    });
+    for(const FPlacedTree& T:Placed)
+    {
+        if(!T.Keep)continue;++Build.Trees;if(T.Combo==INDEX_NONE)continue;
+        Build.Batches[T.Combo*2].Add(T.Detail);
+        if(KindProxy[T.Combo/SceneryLodBands])Build.Batches[T.Combo*2+1].Add(T.Far);
+    }
+}
+void ASeigeGameMode::CommitForestSets(AActor* Ground,FSeigeForestBuild& Build,int32 First,int32 Last)
+{
+    auto* Root=Ground->GetRootComponent();
+    const double FarDistance=Sim.WorldHalfSize*RenderScale*8;
+    UStaticMesh* KindSource[4];UStaticMesh* KindProxy[4];ForestMeshes(KindSource,KindProxy);
+    TArray<UInstancedStaticMeshComponent*> Existing;if(Build.Replace)Ground->GetComponents(Existing);
+    const FName SectorTag(*FString::Printf(TEXT("seige_forest_sector:%d"),Build.Sector));
+    for(int32 Index=First;Index<Last;++Index)
+    {
+        const int32 Combo=Index/2,KindIndex=Combo/SceneryLodBands,Band=Combo%SceneryLodBands;const bool Proxy=Index%2==1;
+        const FName SetTag(*FString::Printf(TEXT("seige_forest_set:%d:%d"),Build.Sector,Index));
+        // The superseded set goes in the same frame its replacement arrives.
+        for(auto* Old:Existing)if(IsValid(Old)&&Old->ComponentHasTag(SetTag))Old->DestroyComponent();
+        const TArray<FTransform>& Batch=Build.Batches[Index];if(Batch.IsEmpty())continue;
+        UStaticMesh* Mesh=Proxy?KindProxy[KindIndex]:KindSource[KindIndex];if(!Mesh)continue;
+        // A missing optional cooked proxy falls back to continuous source foliage,
         // never an invisible band. Configuration validation normally catches it.
-        const bool HasProxy=Tree&&ProxyMesh;
+        const bool HasProxy=KindProxy[KindIndex]!=nullptr;
         const double Cut=(ForestDetailDistanceMeters+ForestLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
-        auto* Set=VegetationSet(Ground,Root,Proxy?ProxyMesh:Source,Kind,false,Tree&&!Proxy?ForestProgrammableDistanceMeters:0.f,Proxy?Cut:0,Tree?(Proxy?FarDistance:HasProxy?Cut:FarDistance):FarDistance);
-        if(!Set)return nullptr;
-        Set->ComponentTags.Add(FName(*FString::Printf(TEXT("seige_forest_sector:%d"),ActiveSector)));
+        auto* Set=VegetationSet(Ground,Root,Mesh,SeigeTreeKinds[KindIndex],false,Proxy?0.f:ForestProgrammableDistanceMeters,Proxy?Cut:0,Proxy?FarDistance:HasProxy?Cut:FarDistance);
+        if(!Set)continue;
+        Set->ComponentTags.Add(SectorTag);Set->ComponentTags.Add(SetTag);
         if(Proxy)
         {
             Set->ComponentTags.Add(ProxyTag);Set->SetCastShadow(NeighborForestShadows);
-            Set->ComponentTags.Add(FName(*(TEXT("seige_source:")+Kind)));
+            Set->ComponentTags.Add(FName(*(FString(TEXT("seige_source:"))+SeigeTreeKinds[KindIndex])));
             Set->SetAffectDistanceFieldLighting(false);Set->SetAffectDynamicIndirectLighting(false);
         }
-        Sets.Add(Key,Set);return Set;
-    };
-    // Tree kinds by index; a candidate's kind, LOD band and both transforms are
-    // computed in parallel, and the serial pass only appends to per-set arrays.
-    // (Formatting an FName key per tree was most of the sector-crossing forest
-    // rebuild: ~1.2 us per tree, 113k trees for the two sectors that change.)
-    static const TCHAR* const TreeKinds[4]={TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB")};
-    UStaticMesh* KindSource[4];UStaticMesh* KindProxy[4];
-    for(int32 K=0;K<4;++K){KindSource[K]=Meshes.FindRef(TreeKinds[K]);KindProxy[K]=K>=2?PineProxy:BroadProxy;}
-    constexpr int32 TreeCombos=4*SceneryLodBands;
-    int32 Trees=0;
-    // Every sector keeps the same full placement sequence and density at every
-    // focus level. Only the representation changes with camera distance.
-    for(const int32 Sector:Sectors)
-    {
-        ActiveSector=Sector;
-        const FVector2D Offset=FVector2D(Sector%3-1,Sector/3-1)*Half*2;
-        const FSeigeSimulation* Colony=Sector==4?&Sim:nullptr;
-        if(!Colony)for(const auto& N:Neighbors)if(N.Index==Sector){Colony=&N.Sim;break;}
-        TArray<FSceneryClearance> Areas;
-        if(Colony&&(Sector!=4||!HidePendingHomeFoundation(*this)))
-        {
-            for(const auto& B:Colony->Buildings)if(B.Health>0&&!IsWallBuilding(*Colony,B)&&(Observer||Sector==4||IsWorldVisible(B.Position+Offset)))
-                if(const auto* D=Colony->Definition(B))Areas.Add({B.Position+Offset,D->ReservedFootprint,true});
-            if(Observer||Sector==4)for(const auto& N:Colony->Nodes)Areas.Add({N.Position+Offset,90});
-            if(Observer||Sector==4)AddWallClearances(*Colony,Offset,Areas);
-            AddRoadClearances(*this,*Colony,Offset,Sector,Areas);
-        }
-        FRandomStream R(2222+Sector*100003);
-        // The random stream is consumed in the original order (position, then
-        // chance/size/yaw), so placements are identical to the serial loop; the
-        // clearance and woodland tests run in parallel, insertion stays ordered.
-        struct FCandidate{FVector2D P;double Chance,Size,Yaw;int32 I;};TArray<FCandidate> Candidates;Candidates.Reserve(ForestCandidates+NearForestCandidates);
-        for(int32 I=0;I<ForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
-        for(int32 I=0;I<NearForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
-        struct FPlacedTree{FTransform Detail,Far;int32 Combo=INDEX_NONE;bool Keep=false;};
-        TArray<FPlacedTree> Placed;Placed.SetNum(Candidates.Num());
-        ParallelFor(Candidates.Num(),[&](int32 K)
-        {
-            const auto& C=Candidates[K];
-            if(IsSceneryClear(*this,C.P,210,Offset,Half,Areas)||C.Chance>WoodlandDensity(C.P)*.9)return;
-            FPlacedTree& T=Placed[K];T.Keep=true;
-            const int32 I=C.I,KindIndex=I%9==0?(I%2?2:3):(I%2?0:1);
-            const UStaticMesh* Source=KindSource[KindIndex];if(!Source)return;   // missing mesh: counted, not drawn
-            T.Combo=KindIndex*SceneryLodBands+int32(GroundCellSeed(I,Sector)%SceneryLodBands);
-            T.Detail=FTransform(FRotator(0,C.Yaw,0),RenderPosition(C.P),FVector(C.Size));
-            if(const UStaticMesh* ProxyMesh=KindProxy[KindIndex])T.Far=AlignProxyBounds(T.Detail,Source,ProxyMesh);
-        });
-        // Sets are still created lazily in candidate order, so component order
-        // and per-set instance order match the earlier serial loop.
-        UInstancedStaticMeshComponent* DetailSets[TreeCombos]={};UInstancedStaticMeshComponent* ProxySets[TreeCombos]={};
-        bool DetailTried[TreeCombos]={},ProxyTried[TreeCombos]={};
-        TArray<FTransform> DetailBatch[TreeCombos],ProxyBatch[TreeCombos];
-        for(int32 K=0;K<Placed.Num();++K)
-        {
-            const FPlacedTree& T=Placed[K];if(!T.Keep)continue;++Trees;if(T.Combo==INDEX_NONE)continue;
-            const int32 KindIndex=T.Combo/SceneryLodBands,Band=T.Combo%SceneryLodBands;
-            if(!DetailTried[T.Combo]){DetailTried[T.Combo]=true;DetailSets[T.Combo]=EnsureSet(TreeKinds[KindIndex],Band,false);}
-            if(DetailSets[T.Combo])DetailBatch[T.Combo].Add(T.Detail);
-            if(!KindProxy[KindIndex])continue;
-            if(!ProxyTried[T.Combo]){ProxyTried[T.Combo]=true;ProxySets[T.Combo]=EnsureSet(TreeKinds[KindIndex],Band,true);}
-            if(ProxySets[T.Combo])ProxyBatch[T.Combo].Add(T.Far);
-        }
-        for(int32 Combo=0;Combo<TreeCombos;++Combo)
-        {
-            if(DetailSets[Combo]&&DetailBatch[Combo].Num())DetailSets[Combo]->AddInstances(DetailBatch[Combo],false,false,false);
-            if(ProxySets[Combo]&&ProxyBatch[Combo].Num())ProxySets[Combo]->AddInstances(ProxyBatch[Combo],false,false,false);
-        }
+        Set->AddInstances(Batch,false,false,false);Build.Created.Add(Set);
     }
-    UE_LOG(LogTemp,Display,TEXT("SCENERY_FOREST_READY: %d stable trees across %d sectors, %d ISM batches, %.3f seconds; opaque distance proxies %s"),Trees,Sectors.Num(),Sets.Num(),FPlatformTime::Seconds()-Started,BroadProxy&&PineProxy?TEXT("enabled"):TEXT("fallback"));
+}
+void ASeigeGameMode::StartForestRebuild(int32 Sector,bool FinishCover)
+{
+    const double Started=FPlatformTime::Seconds();
+    TSharedPtr<FSeigeForestBuild> Build=MakeShared<FSeigeForestBuild>();
+    Build->Sector=Sector;Build->Replace=true;Build->FinishCover=FinishCover;
+    PrepareForestSector(*Build);Build->Seconds=FPlatformTime::Seconds()-Started;PendingForest=Build;
+}
+bool ASeigeGameMode::ForestCoverPending() const
+{return PendingForest.IsValid()&&PendingForest->FinishCover;}
+bool ASeigeGameMode::StepForestRebuild(bool Flush)
+{
+    if(!PendingForest)return false;
+    FSeigeForestBuild& Build=*PendingForest;
+    if(!Foliage){PendingForest.Reset();return true;}
+    const double Started=FPlatformTime::Seconds();
+    const int32 First=Build.NextSet,Last=Flush?FSeigeForestBuild::Sets:FMath::Min(FSeigeForestBuild::Sets,First+FMath::Max(1,ForestSetsPerFrame));
+    CommitForestSets(Foliage,Build,First,Last);Build.NextSet=Last;Build.Seconds+=FPlatformTime::Seconds()-Started;
+    NoteFrameStep(FString::Printf(TEXT("forest %d sets %d-%d %.1f ms"),Build.Sector,First+1,Last,(FPlatformTime::Seconds()-Started)*1000));
+    if(Build.NextSet<FSeigeForestBuild::Sets)return true;
+    // Finished: drop this sector's sets that the rebuild did not recreate.
+    const FName SectorTag(*FString::Printf(TEXT("seige_forest_sector:%d"),Build.Sector));
+    TArray<UInstancedStaticMeshComponent*> Existing;Foliage->GetComponents(Existing);
+    for(auto* Set:Existing)if(Set->ComponentHasTag(SectorTag)&&!Build.Created.Contains(Set))Set->DestroyComponent();
+    UE_LOG(LogTemp,Display,TEXT("SCENERY_FOREST_READY: %d stable trees across 1 sectors, %d ISM batches, %.3f seconds over %d frames"),Build.Trees,Build.Created.Num(),Build.Seconds,1+FMath::DivideAndRoundUp(int32(FSeigeForestBuild::Sets),FMath::Max(1,ForestSetsPerFrame)));
+    const bool Cover=Build.FinishCover;PendingForest.Reset();
+    if(Cover)
+    {
+        const double CoverStarted=FPlatformTime::Seconds();
+        if(GroundCover){GroundCover->Destroy();GroundCover=nullptr;}SceneryStream.Reset();SceneryMeshReferences.Reset();
+        RefreshDepositGeology(true);CreateGroundCover();
+        NoteFrameStep(FString::Printf(TEXT("geology and ground cover %.1f ms"),(FPlatformTime::Seconds()-CoverStarted)*1000));
+    }
+    return true;
 }
 void ASeigeGameMode::RefreshDepositGeology(bool Force)
 {
@@ -1422,7 +1494,7 @@ void ASeigeGameMode::RefreshEnvironment()
             if(Before!=TerrainPadSignature)RefreshTransportScenery();
             // The ground-cover stream restarts with the entered sector's forest
             // step; streaming into the outgoing stream before that is wasted.
-            if(DeferredFoliageFrom==INDEX_NONE)CreateGroundCover();
+            if(DeferredFoliageFrom==INDEX_NONE&&!ForestCoverPending())CreateGroundCover();
         }
     }
     if(!Map)RefreshDepositGeology();
