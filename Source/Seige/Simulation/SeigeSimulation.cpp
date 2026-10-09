@@ -543,7 +543,9 @@ bool FSeigeSimulation::CanPlaceBuilding(const FString& Id, FVector2D P, FString&
 }
 bool FSeigeSimulation::CanPlaceBuildingGeometry(const FString& Id,FVector2D P,FString& Error) const
 {
-    const auto* D=BuildingDefs.Find(Id);if(!D||!BuildMenu.Contains(Id)||D->Role==TEXT("core")){Error=TEXT("Invalid building definition");return false;}
+    // Upgraded levels share their blueprint's plot (an established colony may
+    // install them directly); player placement still requires a menu blueprint.
+    const auto* D=BuildingDefs.Find(Id);if(!D||!BuildMenu.Contains(BaseBlueprint(Id))||D->Role==TEXT("core")){Error=TEXT("Invalid building definition");return false;}
     const double PlotMargin=D->ReservedFootprint+Transport->GetNumberField(TEXT("access_clearance"));
     if (!FMath::IsFinite(P.X) || !FMath::IsFinite(P.Y) || FMath::Abs(P.X) + PlotMargin > WorldHalfSize || FMath::Abs(P.Y) + PlotMargin > WorldHalfSize) { Error = TEXT("Reserved plot and access port must fit inside the sector boundary"); return false; }
     if(!Environment.CanStand(P,PlotMargin*UE_SQRT_2)){Error=TEXT("Reserved building plot and access port require dry land");return false;}
