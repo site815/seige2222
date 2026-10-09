@@ -7,7 +7,7 @@ new cards match the existing ones: 384x384 RGBA, Cycles 20 samples, AgX, +0.2 EV
 --preview additionally renders 900x600 review images on a ground plane to Art/BuildingKitV092/Previews.
 """
 from pathlib import Path
-import bpy, json, sys
+import bpy, json, math, sys
 from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[1]; ART = ROOT / 'Art'; KIT = ART / 'BuildingKitV092'
@@ -25,8 +25,11 @@ scene.render.resolution_x = 384; scene.render.resolution_y = 384; scene.render.r
 scene.world = bpy.data.worlds.new('Kit portrait neutral studio'); scene.world.use_nodes = True
 scene.world.node_tree.nodes['Background'].inputs[0].default_value = (.48, .58, .7, 1); scene.world.node_tree.nodes['Background'].inputs[1].default_value = .45
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.exposure = .2
-bpy.ops.object.light_add(type='SUN', location=(0, 0, 4000)); key = bpy.context.object; key.rotation_euler = (.35, -.4, -.65); key.data.energy = 3; key.data.angle = .12
-bpy.ops.object.light_add(type='SUN', location=(0, 0, 3000)); fill = bpy.context.object; fill.rotation_euler = (-.5, .65, 2.4); fill.data.energy = .8; fill.data.angle = .35
+# The studio lights turn with the kit's +90 degree export yaw so each portrait keeps
+# the light-to-building relation of the original orbital card recipe.
+TURN = math.pi / 2
+bpy.ops.object.light_add(type='SUN', location=(0, 0, 4000)); key = bpy.context.object; key.rotation_euler = (.35, -.4, -.65 + TURN); key.data.energy = 3; key.data.angle = .12
+bpy.ops.object.light_add(type='SUN', location=(0, 0, 3000)); fill = bpy.context.object; fill.rotation_euler = (-.5, .65, 2.4 + TURN); fill.data.energy = .8; fill.data.angle = .35
 bpy.ops.object.camera_add(); camera = bpy.context.object; camera.data.type = 'ORTHO'; camera.data.clip_end = 100000; scene.camera = camera
 ground = None
 if PREVIEW:
@@ -41,13 +44,16 @@ for name, obj in assets.items():
     corners = [obj.matrix_world @ Vector(v) for v in obj.bound_box]
     low = Vector(tuple(min(v[i] for v in corners) for i in range(3))); high = Vector(tuple(max(v[i] for v in corners) for i in range(3)))
     center = (low + high) / 2; extent = (high - low).length
-    camera.location = center + Vector((1.1, -1.5, 1.05)) * extent
+    # The saved meshes are already turned to their export orientation (front
+    # toward +X here, Unreal +X in game). Same front-and-right-side framing as
+    # the default game camera (yaw 135 looks at Unreal +X and -Y = Blender +Y).
+    camera.location = center + Vector((1.5, 1.1, 1.05)) * extent
     camera.rotation_euler = (center - camera.location).to_track_quat('-Z', 'Y').to_euler(); camera.data.ortho_scale = extent * .91
     scene.render.filepath = str(OUT / ('T_Building_' + key_name + '.png')); bpy.ops.render.render(write_still=True)
     report[key_name] = {'source_mesh': name, 'source_blend': 'Art/BuildingKitV092/Source/BuildingKitV092.blend', 'texture': '/Game/Art/Interface/T_Building_' + key_name, 'size': 384}
     if PREVIEW:
         ground.hide_render = False; scene.render.film_transparent = False; scene.render.resolution_x = 900; scene.render.resolution_y = 600
-        camera.data.ortho_scale = extent * 1.05; camera.location = center + Vector((1.25, -1.45, .9)) * extent
+        camera.data.ortho_scale = extent * 1.05; camera.location = center + Vector((1.45, 1.25, .9)) * extent
         camera.rotation_euler = (center - camera.location).to_track_quat('-Z', 'Y').to_euler()
         scene.render.filepath = str(PREV / (key_name + '.png')); bpy.ops.render.render(write_still=True)
         ground.hide_render = True; scene.render.film_transparent = True; scene.render.resolution_x = 384; scene.render.resolution_y = 384

@@ -71,6 +71,7 @@
   "grass_scale_min": 0.85,
   "grass_scale_max": 1.15,
   "grass_shadow_distance_m": 45,
+  "grass_wind_distance_m": 60,
   "grass_programmable_distance_m": 0,
   "forest_programmable_distance_m": 60,
   "grass_distance_field_lighting": false,

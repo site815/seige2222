@@ -230,4 +230,29 @@ void ASeigeGameMode::SyncConstructionVisuals(const FSeigeSimulation& Colony,cons
     }
 }
 
-void ASeigeGameMode::SyncServiceVisuals(const FSeigeSimulation&,const FSeigeBuilding&,FVector2D,const FString&,TSet<FString>&) {}
+void ASeigeGameMode::SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Appearance,const FString& Key,TSet<FString>& Live)
+{
+    // Inactive (stored) worker identities held by this building wait on the
+    // mesh's authored charging berths: one real body per berth, in ledger
+    // order; any beyond the berths are indoors. Nothing is drawn for a site,
+    // an empty bay or a mesh without berths, so the picture never adds a
+    // worker, and the keys never use the outdoor worker prefix.
+    const auto* Definition=Colony.Definition(Building);
+    if(Building.IsConstructing||Building.Health<=0||!Definition||!Definition->StoresInactiveWorkers)return;
+    const TArray<FVector4>* Berths=VisualBerths.Find(BuildingVisualKind(Appearance));
+    AActor* Body=Visuals.FindRef(Key).Get();
+    if(!Berths||Berths->IsEmpty()||!Body)return;
+    UStaticMeshComponent* Mesh=nullptr;
+    {TArray<UStaticMeshComponent*> Meshes;Body->GetComponents(Meshes);for(auto* Candidate:Meshes)if(Candidate->ComponentHasTag(TEXT("BuildingBody"))){Mesh=Candidate;break;}}
+    if(!Mesh)return; // the primitive fallback has no berths
+    const FTransform& Frame=Mesh->GetComponentTransform();int32 Berth=0;
+    for(const auto& W:Colony.Workers.Bodies)
+    {
+        if(Berth>=Berths->Num())break;
+        if(W.State!=TEXT("stored")||W.ContainerKind!=TEXT("building")||W.ContainerId!=Building.Id)continue;
+        const FVector4& Point=(*Berths)[Berth++];
+        const FString DockKey=Key+TEXT("_berth_")+W.Id;Live.Add(DockKey);
+        AActor* Docked=Visual(DockKey,TEXT("Robot"),Frame.TransformPosition(FVector(Point.X,Point.Y,Point.Z))+FVector(0,0,2),FLinearColor(.86f,.52f,.15f),95);
+        Docked->SetActorRotation(Frame.GetRotation().Rotator()+FRotator(0,Point.W,0));
+    }
+}

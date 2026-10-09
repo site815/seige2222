@@ -1,5 +1,5 @@
 {
-  "version": "prototype-9.2",
+  "version": "prototype-9.3",
   "scheduler_policy": "finite_shared_pool",
   "haul_mass_kg": 40,
   "body_radius_meters": 0.475,

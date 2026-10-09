@@ -311,6 +311,7 @@ void ASeigeGameMode::SyncVisuals()
             SyncConstructionVisuals(Colony,B,*Appearance,P,Key,Live);
 
             SyncInventoryVisuals(Colony,B,*D,P,Key,Live);
+            SyncServiceVisuals(Colony,B,*Appearance,Key,Live);
 
             SyncBuildingPlot(Colony,B,*D,P,Key,Live);
         }

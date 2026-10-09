@@ -112,8 +112,6 @@ void ASeigeGameMode::SyncInventoryVisuals(const FSeigeSimulation& Colony,const F
     }
 }
 
-void ASeigeGameMode::SyncWorkerVisuals(const FSeigeSimulation&,const FSeigeBuilding&,const FSeigeBuildingDef&,FVector2D,const FString&,TSet<FString>&) {}
-
 void ASeigeGameMode::SyncWorkerAgents(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live)
 {
     const auto* Snapshot=PresentationSnapshot(Colony);const double Alpha=PresentationAlpha(),Time=RenderSimulationTime(Colony);

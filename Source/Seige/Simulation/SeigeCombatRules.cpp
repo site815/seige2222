@@ -1,4 +1,5 @@
 #include "SeigeCombat.h"
+#include "SeigeCanonicalJson.h"
 #include "SeigeSimulation.h"
 #include "SeigeCombatJson.h"
 #include "Serialization/JsonSerializer.h"
@@ -22,7 +23,7 @@ bool FSeigeCombatSystem::Initialize(const FString& Directory,FSeigeSimulation& S
 {
     *this=FSeigeCombatSystem();O Main,WeaponDoc,ChassisDoc;FString A,B,C;
     if(!Read(FPaths::Combine(Directory,TEXT("combat.json")),Main,A)||!Read(FPaths::Combine(Directory,TEXT("weapons.json")),WeaponDoc,B)||!Read(FPaths::Combine(Directory,TEXT("chassis.json")),ChassisDoc,C)){Error=TEXT("Cannot read combat rules/schema_version 1");return false;}
-    Fingerprint=FMD5::HashAnsiString(*(A+B+C));MetresPerUnit=Sim.MetersPerWorldUnit();SectorHalfSize=Sim.WorldHalfSize;const TArray<TSharedPtr<FJsonValue>>* Values=nullptr;
+    Fingerprint=FMD5::HashAnsiString(*(SeigeCanonicalJson(Main)+SeigeCanonicalJson(WeaponDoc)+SeigeCanonicalJson(ChassisDoc)));MetresPerUnit=Sim.MetersPerWorldUnit();SectorHalfSize=Sim.WorldHalfSize;const TArray<TSharedPtr<FJsonValue>>* Values=nullptr;
     auto Fail=[&](const FString& Reason){Error=TEXT("Combat rules: ")+Reason;return false;};
     const O* Sizes=nullptr;const O* Profiles=nullptr;if(!WeaponDoc->TryGetObjectField(TEXT("hardpoint_sizes"),Sizes)||(*Sizes)->Values.Num()!=3||!Main->TryGetObjectField(TEXT("damage_profiles"),Profiles))return Fail(TEXT("hardpoint sizes/damage profiles missing"));
     for(const FString& Size:{FString(TEXT("small")),FString(TEXT("medium")),FString(TEXT("large"))})

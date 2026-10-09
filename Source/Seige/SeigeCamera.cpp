@@ -54,6 +54,7 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("camera_zoom_response"),1,30,CameraZoomResponse)||
        !Read(TEXT("near_forest_candidates"),100,30000,NearForest)||
        !Read(TEXT("grass_shadow_distance_m"),0,500,GrassShadowDistanceMeters)||
+       !Read(TEXT("grass_wind_distance_m"),0,150,GrassWindDistanceMeters)||
        !Read(TEXT("grass_detail_distance_m"),10,150,GrassDetailDistanceMeters)||
        !Read(TEXT("grass_lod_transition_m"),10,200,GrassLodTransitionMeters)||
        !Read(TEXT("grass_stream_radius_m"),150,1200,GrassStreamRadiusMeters)||

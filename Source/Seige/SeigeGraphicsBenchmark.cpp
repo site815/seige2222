@@ -274,7 +274,9 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         // not grant production/cargo or change the colony's elapsed development.
         const auto& CalendarRules=ScenarioCalendar.GetRules();
         const int64 BenchmarkDay=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkWinter"))?int64(CalendarRules.DaysPerSeason)*3+CalendarRules.DaysPerSeason/2:0;
-        ScenarioCalendar.SetElapsedMicroseconds(BenchmarkDay*(CalendarRules.DaylightMicroseconds+CalendarRules.NightMicroseconds)+CalendarRules.DaylightMicroseconds/2);BindScenarioCalendar();UpdateWeather(0);
+        // -BenchmarkNight starts at mid-night instead of midday (lit windows and lamps review).
+        const bool NightFixture=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNight"));
+        ScenarioCalendar.SetElapsedMicroseconds(BenchmarkDay*(CalendarRules.DaylightMicroseconds+CalendarRules.NightMicroseconds)+(NightFixture?CalendarRules.DaylightMicroseconds+CalendarRules.NightMicroseconds/2:CalendarRules.DaylightMicroseconds/2));BindScenarioCalendar();UpdateWeather(0);
         Paused=false;Speed=10;ResetSimulationPresentation();
         const FSeigeBuilding* Command=Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& Building){return Building.DefId==Sim.CoreDefinition;});
         if(Screen!=TEXT("playing")||Observer||!Command||Command->IsConstructing||Command->Health<=0)
@@ -294,10 +296,19 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             for(const FString& Id:Ids)
             {
                 const auto* D=Sim.BuildingDefs.Find(Id);if(!D||D->Role==TEXT("wall"))continue;
-                if(Sim.AddReviewBuilding(Id,Origin+FVector2D((Placed/Columns)*Pitch,(Placed%Columns)*Pitch)))++Placed;
+                const int32 ReviewId=Sim.AddReviewBuilding(Id,Origin+FVector2D((Placed/Columns)*Pitch,(Placed%Columns)*Pitch));
+                if(!ReviewId)continue;
+                ++Placed;
+                // Two stored bodies on the service bay's berths (one left empty)
+                // so the review shows docked and free charging positions.
+                if(D->Role==TEXT("service")&&D->StoresInactiveWorkers)Sim.AddReviewStoredWorkers(ReviewId,2);
             }
             const int32 Rows=FMath::DivideAndRoundUp(Placed,Columns);
             ShowcaseCenter=Origin+FVector2D((Rows-1)*Pitch*.5,(Columns-1)*Pitch*.5);
+            // -BenchmarkFocus=<building id> frames that one review building instead.
+            FString Focus;
+            if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkFocus="),Focus))
+                if(const auto* Focused=Sim.Buildings.FindByPredicate([&](const FSeigeBuilding& B){return B.DefId==Focus&&B.Status==TEXT("Review placement");}))ShowcaseCenter=Focused->Position;
             SyncVisuals();
             UE_LOG(LogTemp,Display,TEXT("GRAPHICS_BENCHMARK showcase placed %d buildings around (%.0f, %.0f)"),Placed,ShowcaseCenter.X,ShowcaseCenter.Y);
             // -BenchmarkBuildMenu=<group> opens the construction palette on that
@@ -511,6 +522,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetBoolField(TEXT("diagnostic_gpu_profile"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkGPUProfile")));
     Report->SetStringField(TEXT("thread_timing_method"),TEXT("Latest completed RenderTimer counters exclude idle; GPU uses RHIGetGPUFrameCycles(0). Counters can lag camera samples, and repeated GPU readback values are not de-duplicated. Zero counters are omitted and availability/sample counts reported. These distributions are bottleneck evidence, not synchronized CPU/GPU frame traces."));
     Report->SetNumberField(TEXT("grass_shadow_distance_m"),GrassShadowDistanceMeters);
+    Report->SetNumberField(TEXT("grass_wind_distance_m"),GrassWindDistanceMeters);
     Report->SetNumberField(TEXT("grass_programmable_distance_m"),GrassProgrammableDistanceMeters);
     Report->SetNumberField(TEXT("configured_nanite_max_pixels_per_edge"),NaniteMaxPixelsPerEdge);
     Report->SetBoolField(TEXT("diagnostic_nanite_baseline"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNaniteBaseline")));
@@ -520,7 +532,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetStringField(TEXT("profile"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkV05Epic"))?TEXT("v0.5 Epic reference"):TEXT("Medium"));
     const bool WinterFixture=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkWinter"));
     Report->SetBoolField(TEXT("diagnostic_winter"),WinterFixture);
-    Report->SetStringField(TEXT("lighting_fixture"),WinterFixture?TEXT("Midwinter, midday at benchmark start; advances at 10x during measurements"):TEXT("Spring day 1, midday at benchmark start; advances at 10x during measurements"));
+    const bool NightReport=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNight"));
+    Report->SetStringField(TEXT("lighting_fixture"),FString(WinterFixture?TEXT("Midwinter"):TEXT("Spring day 1"))+(NightReport?TEXT(", mid-night"):TEXT(", midday"))+TEXT(" at benchmark start; advances at 10x during measurements"));
     Report->SetNumberField(TEXT("season_index_at_finish"),ScenarioCalendar.Sample().SeasonIndex);
     Report->SetNumberField(TEXT("snow_coverage_at_finish"),SnowCoverage());
     Report->SetNumberField(TEXT("snowflake_instances_at_finish"),Snowflakes&&Snowflakes->IsVisible()?Snowflakes->GetInstanceCount():0);

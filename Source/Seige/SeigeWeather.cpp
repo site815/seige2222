@@ -57,6 +57,30 @@ bool ASeigeGameMode::LoadBuildingVisuals()
         const FString Id=Entry.Key;
         BuildingVisualOverrides.Add(Id,Kind);
     }
+    // Optional "berths": mesh kind -> [[x, y, z, yaw], ...] in the mesh's own
+    // centimetres (Tools/create_building_kit_v092.py writes them to the kit
+    // manifest; validate_configuration.mjs checks the two agree).
+    VisualBerths.Reset();
+    if(Doc->HasField(TEXT("berths")))
+    {
+        const TSharedPtr<FJsonObject>* Berths=nullptr;
+        if(!Doc->TryGetObjectField(TEXT("berths"),Berths)||!Berths||!Berths->IsValid()){Error=TEXT("building_visuals.berths must be an object");return false;}
+        for(const TPair<FString,TSharedPtr<FJsonValue>>& Entry:(*Berths)->Values)
+        {
+            const TArray<TSharedPtr<FJsonValue>>* Points=nullptr;
+            if(Entry.Key.IsEmpty()||!Entry.Value.IsValid()||!Entry.Value->TryGetArray(Points)||!Points||Points->IsEmpty()||Points->Num()>16)
+            {Error=TEXT("building_visuals.berths entries must list 1-16 points: ")+Entry.Key;return false;}
+            TArray<FVector4>& Out=VisualBerths.Add(Entry.Key);
+            for(const TSharedPtr<FJsonValue>& Point:*Points)
+            {
+                const TArray<TSharedPtr<FJsonValue>>* Values=nullptr;double V[4]={0,0,0,0};
+                if(!Point.IsValid()||!Point->TryGetArray(Values)||!Values||Values->Num()!=4){Error=TEXT("building_visuals berth points are [x, y, z, yaw]: ")+Entry.Key;return false;}
+                for(int32 I=0;I<4;++I)if(!(*Values)[I].IsValid()||!(*Values)[I]->TryGetNumber(V[I])||!FMath::IsFinite(V[I])){Error=TEXT("building_visuals berth values must be numbers: ")+Entry.Key;return false;}
+                if(FMath::Abs(V[0])>5000||FMath::Abs(V[1])>5000||V[2]<0||V[2]>2000||FMath::Abs(V[3])>360){Error=TEXT("building_visuals berth outside its mesh range: ")+Entry.Key;return false;}
+                Out.Add(FVector4(V[0],V[1],V[2],V[3]));
+            }
+        }
+    }
     return true;
 }
 FString ASeigeGameMode::BuildingVisualKind(const FSeigeBuildingDef& Definition) const
@@ -104,7 +128,13 @@ void ASeigeGameMode::UpdateWeather(float DeltaSeconds)
     }
     if(!WeatherCollection)WeatherCollection=LoadObject<UMaterialParameterCollection>(nullptr,*SnowCollectionPath,nullptr,LOAD_NoWarn);
     const float Coverage=float(SnowCoverage());
-    if(WeatherCollection)if(auto* Instance=GetWorld()->GetParameterCollectionInstance(WeatherCollection))Instance->SetScalarParameterValue(TEXT("SnowCoverage"),Coverage);
+    if(WeatherCollection)if(auto* Instance=GetWorld()->GetParameterCollectionInstance(WeatherCollection))
+    {
+        Instance->SetScalarParameterValue(TEXT("SnowCoverage"),Coverage);
+        // Industry surfaces light their windows and brighten their lamps with
+        // the same deterministic dark phase as the exposure lift above.
+        Instance->SetScalarParameterValue(TEXT("Night"),float(1-Light));
+    }
     if(Coverage<=.001f||!Camera||SnowflakeCount<=0)
     {if(Snowflakes)Snowflakes->SetVisibility(false);return;}
     if(!Snowflakes)

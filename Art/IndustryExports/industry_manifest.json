@@ -15,7 +15,10 @@
       "roughness": 0.43,
       "surface": "Paint",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.07
+      }
     },
     "IM_Slate": {
       "color": [
@@ -28,7 +31,10 @@
       "roughness": 0.43,
       "surface": "Paint",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.05
+      }
     },
     "IM_Steel": {
       "color": [
@@ -41,7 +47,11 @@
       "roughness": 0.31,
       "surface": "Steel",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.03,
+        "GrimeStrength": 0.35
+      }
     },
     "IM_Concrete": {
       "color": [
@@ -54,7 +64,11 @@
       "roughness": 0.86,
       "surface": "Concrete",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.05,
+        "GrimeStrength": 0.55
+      }
     },
     "IM_Carbon": {
       "color": [
@@ -67,7 +81,11 @@
       "roughness": 0.62,
       "surface": "Paint",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.02,
+        "GrimeStrength": 0.2
+      }
     },
     "IM_Glass": {
       "color": [
@@ -80,7 +98,13 @@
       "roughness": 0.17,
       "surface": "Steel",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0,
+        "GrimeStrength": 0.15,
+        "SnowAmount": 0.35,
+        "WindowGlow": 1.6
+      }
     },
     "IM_Copper": {
       "color": [
@@ -93,7 +117,11 @@
       "roughness": 0.46,
       "surface": "Steel",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.04,
+        "GrimeStrength": 0.3
+      }
     },
     "IM_Yellow": {
       "color": [
@@ -106,7 +134,10 @@
       "roughness": 0.5,
       "surface": "Paint",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.04
+      }
     },
     "IM_Blue": {
       "color": [
@@ -119,7 +150,10 @@
       "roughness": 0.48,
       "surface": "Paint",
       "emission": 0,
-      "normal_strength": 0.85
+      "normal_strength": 0.85,
+      "material_pass": {
+        "TintVariation": 0.05
+      }
     },
     "IM_Light": {
       "color": [
@@ -132,7 +166,13 @@
       "roughness": 0.25,
       "surface": "",
       "emission": 2.0,
-      "normal_strength": 0.0
+      "normal_strength": 0.0,
+      "material_pass": {
+        "TintVariation": 0,
+        "GrimeStrength": 0,
+        "SnowAmount": 0,
+        "LampDayScale": 0.35
+      }
     },
     "IM_Amber": {
       "color": [
@@ -145,7 +185,31 @@
       "roughness": 0.25,
       "surface": "",
       "emission": 1.5,
-      "normal_strength": 0.0
+      "normal_strength": 0.0,
+      "material_pass": {
+        "TintVariation": 0,
+        "GrimeStrength": 0,
+        "SnowAmount": 0,
+        "LampDayScale": 0.6
+      }
+    },
+    "IM_PV": {
+      "color": [
+        0.018,
+        0.045,
+        0.085,
+        1
+      ],
+      "metallic": 0.35,
+      "roughness": 0.12,
+      "surface": "Steel",
+      "emission": 0,
+      "normal_strength": 0.15,
+      "material_pass": {
+        "TintVariation": 0,
+        "GrimeStrength": 0.1,
+        "SnowAmount": 0.6
+      }
     }
   },
   "meshes": {
@@ -360,5 +424,10 @@
         }
       }
     }
+  },
+  "material_pass": {
+    "version": 4,
+    "date": "2026-10-09",
+    "note": "Per-building tint variation, ground grime, seasonal roof snow (MPC_Weather.SnowCoverage) and night windows/lamps (MPC_Weather.Night) in M_IndustrySurface; IM_PV separates photovoltaic glass from lit windows."
   }
 }

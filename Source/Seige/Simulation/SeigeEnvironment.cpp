@@ -1,4 +1,5 @@
 #include "SeigeEnvironment.h"
+#include "SeigeCanonicalJson.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Misc/FileHelper.h"
@@ -55,7 +56,7 @@ bool FSeigeEnvironment::Load(const FString& Filename,FString& Error)
         const auto O=Value->AsObject();FSeigeCliff C;
         if(!Number(O,TEXT("x"),-90000,90000,C.Center.X)||!Number(O,TEXT("y"),-90000,90000,C.Center.Y)||!Number(O,TEXT("radius_x"),500,15000,C.Radii.X)||!Number(O,TEXT("radius_y"),500,15000,C.Radii.Y)||!Number(O,TEXT("height"),0,1200,C.Height)||!Number(O,TEXT("edge_ratio"),.03,.6,C.EdgeRatio))return false;Next.Cliffs.Add(C);
     }
-    Next.Fingerprint=FMD5::HashAnsiString(*Raw);*this=MoveTemp(Next);return true;
+    Next.Fingerprint=FMD5::HashAnsiString(*SeigeCanonicalJson(Root));*this=MoveTemp(Next);return true;
 }
 FSeigeWaterSample FSeigeEnvironment::WaterAt(FVector2D Local) const
 {

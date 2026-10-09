@@ -1,7 +1,7 @@
 * text=auto
 *.json text eol=lf
-# Save compatibility fingerprints authored gameplay files byte-for-byte.
-# Preserve these external definitions exactly across repository checkouts.
+# Saves fingerprint the parsed rule content (SeigeCanonicalJson), so line endings
+# no longer matter for compatibility; keep the authored bytes untouched anyway.
 Rules/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 AIFILES/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 Interface/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

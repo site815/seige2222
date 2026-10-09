@@ -72,7 +72,8 @@ export function validateRules(d) {
   const logisticsExclusions=array(workers.logistics_excluded_roles,'workers.logistics_excluded_roles');
   if(new Set(logisticsExclusions).size!==logisticsExclusions.length||logisticsExclusions.some(role=>!roles.includes(role)))fail('Logistics exclusions require unique known building roles');
   for (const b of buildings.values()) {
-    for(const k of ['name','category','role','description','visual']) str(b[k],`${b.id}.${k}`);
+    for(const k of ['name','role','description','visual']) str(b[k],`${b.id}.${k}`);
+    if('category' in b)fail(`${b.id}: category is retired; build-menu groups come from Interface/ui.json`);
     str(b.recipe,`${b.id}.recipe`,true);
     amounts(b.extraction_rates,`${b.id}.extraction_rates`);
     if('extract_resource' in b || 'extract_rate' in b)fail(`${b.id}: use deposit-selected extraction_rates`);
@@ -105,6 +106,12 @@ export function validateRules(d) {
     if(b.stores_inactive_workers&&b.storage_capacity<workerCargo.litres_per_unit)fail(`${b.id}: no room for one inactive worker`);
     if(b.role==='worker_factory'&&(!b.allowed_recipes.length||b.allowed_recipes.some(id=>recipes.get(id).worker_output<=0)))fail(`${b.id}: worker factory needs worker recipes`);
     if(b.role==='core'&&(b.allowed_recipes.length!==recipes.size||b.allowed_recipes[0]!==d.policies.policies.population_recipe))fail(`${b.id}: universal core must offer every recipe, workers first`);
+  }
+  // Upgraded levels carry the cumulative installed bill: previous level cost
+  // plus its upgrade_cost, so documentation, review placement and losses agree.
+  for(const b of buildings.values())if(b.next_upgrade&&buildings.has(b.next_upgrade)){
+    const target=buildings.get(b.next_upgrade),ids=new Set([...Object.keys(b.cost),...Object.keys(b.upgrade_cost),...Object.keys(target.cost)]);
+    for(const id of ids)if(Math.abs((target.cost[id]??0)-(b.cost[id]??0)-(b.upgrade_cost[id]??0))>1e-6)fail(`${target.id}: cumulative cost of ${id} must equal ${b.id} cost plus upgrade_cost`);
   }
   const familyLevels=new Set();
   for(const b of buildings.values()){const base=buildings.get(b.family),target=buildings.get(b.next_upgrade);if(!base||base.family!==b.family||base.level!==1||base.role!==b.role||familyLevels.has(`${b.family}:${b.level}`))fail(`${b.id}: invalid or duplicate family level`);familyLevels.add(`${b.family}:${b.level}`);if(b.role!=='core'&&b.footprint!==base.footprint)fail(`${b.id}: upgraded building must keep its footprint`);if(b.next_upgrade&&(!target||target.role!==b.role||target.family!==b.family||target.level!==b.level+1||target.reserved_footprint!==b.reserved_footprint||sum(b.upgrade_cost)<=0))fail(`${b.id}: invalid in-place upgrade`);const visited=new Set();let current=b;while(current?.next_upgrade){if(visited.has(current.id))fail('Cyclic building upgrades');visited.add(current.id);current=buildings.get(current.next_upgrade);}}
@@ -365,6 +372,8 @@ function selfTest(source) {
     ['unknown workforce activity',d=>d.buildings.buildings[0].worker_activity='unbounded_patrol'],
     ['fractional builders',d=>d.buildings.buildings[1].construction_workers=1.5],
     ['negative support',d=>d.buildings.buildings[0].robot_support_capacity=-1],
+    ['cumulative bill drift',d=>{d.buildings.buildings.find(b=>b.id==='turret_2').cost.alloy+=1;}],
+    ['retired category field',d=>{d.buildings.buildings[0].category='command';}],
     ['missing landing kit',d=>d.scenario.scenario.starting_deployment_materials={}],
     ['unsupported starter crew',d=>d.buildings.buildings[0].robot_support_capacity=1],
     ['unsupported construction policy',d=>d.policies.policies.construction_policy='instant'],

@@ -10,6 +10,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Misc/App.h"
 #include "HAL/PlatformTime.h"
+#include "Async/ParallelFor.h"
 
 struct FSeigeStreamedCell
 {
@@ -294,9 +295,11 @@ void ASeigeGameMode::RebuildTerrainHeights(bool ReuseUnchangedTiles)
         FSeigeTerrainTile Tile;Tile.Offset=FVector2D(X,Y)*Half*2;Tile.Resolution=((Y+1)*3+X+1==DetailedSectorIndex())?DetailedTerrainResolution:128;
         const int32 Index=(Y+1)*3+X+1;
         if(Reuse&&Previous[Index].Resolution==Tile.Resolution&&Previous[Index].Offset==Tile.Offset){TerrainTiles.Add(MoveTemp(Previous[Index]));continue;}
-        Tile.Heights.Reserve((Tile.Resolution+1)*(Tile.Resolution+1));
-        for(int32 V=0;V<=Tile.Resolution;++V)for(int32 U=0;U<=Tile.Resolution;++U)
-            Tile.Heights.Add(VertexHeight(Prepared,Tile,U,V));
+        // Rows are independent pure reads of the prepared terrain, so a sector
+        // crossing evaluates the million-vertex focused grid on every core
+        // instead of one game-thread frame (the v0.9.2 travel hitch).
+        const int32 Row=Tile.Resolution+1;Tile.Heights.SetNumUninitialized(Row*Row);
+        ParallelFor(Row,[&Prepared,&Tile,Row](int32 V){for(int32 U=0;U<Row;++U)Tile.Heights[V*Row+U]=VertexHeight(Prepared,Tile,U,V);});
         TerrainTiles.Add(MoveTemp(Tile));
     }
     UE_LOG(LogTemp,Display,TEXT("Terrain height cache: detailed sector %d, %d subdivisions (%.2f m), %.3f seconds"),DetailedSectorIndex(),DetailedTerrainResolution,Half*2/DetailedTerrainResolution*RenderScale/100,FPlatformTime::Seconds()-Started);
@@ -356,13 +359,20 @@ TArray<FDirtPatch> PrepareDirt(const ASeigeGameMode& G)
     }
     return DirtPatches;
 }
-void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int32 StartX,int32 StartY,UProceduralMeshComponent* Terrain,const TArray<FDirtPatch>& DirtPatches)
+struct FTerrainChunkData
+{
+    TArray<FVector> Vertices,Normals;TArray<int32> Triangles;TArray<FVector2D> UVs;
+    TArray<FLinearColor> Colors;TArray<FProcMeshTangent> Tangents;
+};
+// Pure vertex/attribute preparation (thread-safe reads of the height cache and
+// procedural fields); component creation and section upload stay on the game thread.
+void PrepareTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int32 StartX,int32 StartY,const TArray<FDirtPatch>& DirtPatches,FTerrainChunkData& Data)
 {
         const int32 Resolution=Tile.Resolution,Cells=FMath::Min(TerrainChunkCells,Resolution);
         const FVector2D Offset=Tile.Offset;const bool Detailed=Offset.Equals(G.DetailedSectorOffset(),1.);
         const double Half=G.Sim.WorldHalfSize,Step=Half*2/Resolution;
-        TArray<FVector> Vertices,Normals; TArray<int32> Triangles; TArray<FVector2D> UVs;
-        TArray<FLinearColor> Colors; TArray<FProcMeshTangent> Tangents;
+        auto& Vertices=Data.Vertices;auto& Normals=Data.Normals;auto& Triangles=Data.Triangles;auto& UVs=Data.UVs;
+        auto& Colors=Data.Colors;auto& Tangents=Data.Tangents;
         const int32 Count=(Cells+1)*(Cells+1);
         Vertices.Reserve(Count);Normals.Reserve(Count);UVs.Reserve(Count);Colors.Reserve(Count);Tangents.Reserve(Count);Triangles.Reserve(Cells*Cells*6);
         for(int32 V=0;V<=Cells;V++)for(int32 U=0;U<=Cells;U++)
@@ -409,7 +419,11 @@ void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int
                 Triangles.Append({J,J+Cells+1,J+1,J+1,J+Cells+1,J+Cells+2});
             }
         }
-        Terrain->CreateMeshSection_LinearColor(0,Vertices,Triangles,Normals,UVs,Colors,Tangents,false);
+}
+void BuildTerrainChunk(const ASeigeGameMode& G,const FSeigeTerrainTile& Tile,int32 StartX,int32 StartY,UProceduralMeshComponent* Terrain,const TArray<FDirtPatch>& DirtPatches)
+{
+    FTerrainChunkData Data;PrepareTerrainChunk(G,Tile,StartX,StartY,DirtPatches,Data);
+    Terrain->CreateMeshSection_LinearColor(0,Data.Vertices,Data.Triangles,Data.Normals,Data.UVs,Data.Colors,Data.Tangents,false);
 }
 }
 void ASeigeGameMode::CreateLandscape(bool SectorTransition)
@@ -429,11 +443,18 @@ void ASeigeGameMode::CreateLandscape(bool SectorTransition)
     RenderedSector=DetailedSectorIndex();RebuildTerrainHeights(Reuse);
     const auto DirtPatches=PrepareDirt(*this);
     auto* TerrainMaterial=LoadObject<UMaterialInterface>(nullptr,*TerrainMaterialPath,nullptr,LOAD_NoWarn);
+    struct FChunkJob{int32 Tile,X,Y;};TArray<FChunkJob> Jobs;
     for(int32 TileIndex=0;TileIndex<TerrainTiles.Num();++TileIndex)
     {
-        const auto& Tile=TerrainTiles[TileIndex];
         if(Reuse&&TileIndex!=PreviousSector&&TileIndex!=RenderedSector)continue;
-        for(int32 Y=0;Y<Tile.Resolution;Y+=TerrainChunkCells)for(int32 X=0;X<Tile.Resolution;X+=TerrainChunkCells)
+        const auto& Tile=TerrainTiles[TileIndex];
+        for(int32 Y=0;Y<Tile.Resolution;Y+=TerrainChunkCells)for(int32 X=0;X<Tile.Resolution;X+=TerrainChunkCells)Jobs.Add({TileIndex,X,Y});
+    }
+    TArray<FTerrainChunkData> Chunks;Chunks.SetNum(Jobs.Num());
+    ParallelFor(Jobs.Num(),[&](int32 J){PrepareTerrainChunk(*this,TerrainTiles[Jobs[J].Tile],Jobs[J].X,Jobs[J].Y,DirtPatches,Chunks[J]);});
+    for(int32 J=0;J<Jobs.Num();++J)
+    {
+        const int32 TileIndex=Jobs[J].Tile,X=Jobs[J].X,Y=Jobs[J].Y;
         {
             auto* Terrain=NewObject<UProceduralMeshComponent>(Ground);
             Terrain->SetupAttachment(Root);Terrain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -443,7 +464,7 @@ void ASeigeGameMode::CreateLandscape(bool SectorTransition)
             Terrain->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
             Terrain->ComponentTags={FName(*FString::FromInt(TileIndex)),FName(*FString::FromInt(X)),FName(*FString::FromInt(Y))};
             Terrain->RegisterComponent();Ground->AddInstanceComponent(Terrain);
-            BuildTerrainChunk(*this,Tile,X,Y,Terrain,DirtPatches);
+            auto& Data=Chunks[J];Terrain->CreateMeshSection_LinearColor(0,Data.Vertices,Data.Triangles,Data.Normals,Data.UVs,Data.Colors,Data.Tangents,false);
             // The neighboring 128 grids retain the same continuous world-space
             // surface material. Their lower mesh density is the detail boundary,
             // rather than an unrelated flat-color surface around the home tile.
@@ -620,7 +641,7 @@ uint32 GroundCellSeed(int32 X,int32 Y)
     uint32 Seed=uint32(X)*0x9e3779b9u^uint32(Y)*0x85ebca6bu^2222u;
     Seed^=Seed>>16;Seed*=0x7feb352du;Seed^=Seed>>15;Seed*=0x846ca68bu;return Seed^(Seed>>16);
 }
-UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind,bool GrassIndirectLighting=false,float GrassProgrammableDistanceMeters=0,float MinDistance=0,float MaxDistance=0,float FadeStartDistance=0)
+UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root,UStaticMesh* Mesh,const FString& Kind,bool GrassIndirectLighting=false,float GrassProgrammableDistanceMeters=0,float MinDistance=0,float MaxDistance=0,float FadeStartDistance=0,float WindDistanceMeters=60)
 {
     if(!Mesh)return nullptr;
     // Nanite handles per-instance culling/LOD itself. CPU HISM trees were built
@@ -639,8 +660,10 @@ UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root
     // foundation moves instances; Static would incorrectly suppress that update.
     // Card grass animates in the material; its cached shadow stays rigid, which is
     // invisible for ankle-high motion and avoids per-frame shadow page redraws.
-    Set->SetEvaluateWorldPositionOffset(Cards&&Sward);
-    if(Cards&&Sward)Set->WorldPositionOffsetDisableDistance=6000;
+    // Wind sway (and the velocity pass and shadow-page churn it costs) is only
+    // visible near the camera; beyond the configured distance cards are static.
+    Set->SetEvaluateWorldPositionOffset(Cards&&Sward&&WindDistanceMeters>0);
+    if(Cards&&Sward)Set->WorldPositionOffsetDisableDistance=FMath::RoundToInt(WindDistanceMeters*100);
     Set->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
     // One float per instance carries the terrain's coherent meadow vigor so the
     // card tint follows the ground colour beneath it (see M_GrassCardV091).
@@ -764,16 +787,21 @@ void ASeigeGameMode::CreateFoliage(int32 PreviousSector)
             AddRoadClearances(*this,*Colony,Offset,Sector,Areas);
         }
         FRandomStream R(2222+Sector*100003);
-        auto Tree=[&](FVector2D P,int32 I)
+        // The random stream is consumed in the original order (position, then
+        // chance/size/yaw), so placements are identical to the serial loop; the
+        // clearance and woodland tests run in parallel, insertion stays ordered.
+        struct FCandidate{FVector2D P;double Chance,Size,Yaw;int32 I;};TArray<FCandidate> Candidates;Candidates.Reserve(ForestCandidates+NearForestCandidates);
+        for(int32 I=0;I<ForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
+        for(int32 I=0;I<NearForestCandidates;++I){FCandidate C;C.P=Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000));C.Chance=R.FRand();C.Size=R.FRandRange(.72,1.16);C.Yaw=R.FRandRange(0,360);C.I=I;Candidates.Add(C);}
+        TArray<uint8> Keep;Keep.SetNumZeroed(Candidates.Num());
+        ParallelFor(Candidates.Num(),[&](int32 K){const auto& C=Candidates[K];Keep[K]=!IsSceneryClear(*this,C.P,210,Offset,Half,Areas)&&C.Chance<=WoodlandDensity(C.P)*.9;});
+        for(int32 K=0;K<Candidates.Num();++K)if(Keep[K])
         {
-            const double Chance=R.FRand(),Size=R.FRandRange(.72,1.16),Yaw=R.FRandRange(0,360);
-            if(IsSceneryClear(*this,P,210,Offset,Half,Areas)||Chance>WoodlandDensity(P)*.9)return;
+            const auto& C=Candidates[K];const int32 I=C.I;
             const FString Kind=I%9==0?(I%2?TEXT("PineA"):TEXT("PineB")):(I%2?TEXT("OakA"):TEXT("OakB"));
             const int32 Band=int32(GroundCellSeed(I,Sector)%SceneryLodBands);
-            Add(Kind,P,Size,Yaw,Band);++Trees;
-        };
-        for(int32 I=0;I<ForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-Half,Half),R.FRandRange(-Half,Half)),I);
-        for(int32 I=0;I<NearForestCandidates;++I)Tree(Offset+FVector2D(R.FRandRange(-8000,8000),R.FRandRange(-8000,8000)),I);
+            Add(Kind,C.P,C.Size,C.Yaw,Band);++Trees;
+        }
 
     }
     for(auto& Pair:Batches)if(auto** Set=Sets.Find(Pair.Key))(*Set)->AddInstances(Pair.Value,false,false,false);
@@ -983,7 +1011,7 @@ void ASeigeGameMode::CreateGroundCover()
         const double Cut=(GrassDetailDistanceMeters+GrassLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
         const double End=Detail&&(HasProxy||!GrassFarProxy)?Cut:Sim.WorldHalfSize*RenderScale*8;
         const double FadeStart=Detail&&!GrassFarProxy?FMath::Max(0.,Cut-GrassLodTransitionMeters*100.*.5):0.;
-        auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),State.Meshes.FindRef(Proxy?TEXT("GrassProxy"):Kind).Get(),Kind,GrassDistanceFieldLighting,GrassProgrammableDistanceMeters,Proxy?Cut:0,End,FadeStart);
+        auto* Set=VegetationSet(GroundCover,GroundCover->GetRootComponent(),State.Meshes.FindRef(Proxy?TEXT("GrassProxy"):Kind).Get(),Kind,GrassDistanceFieldLighting,GrassProgrammableDistanceMeters,Proxy?Cut:0,End,FadeStart,GrassWindDistanceMeters);
         if(!Set)return nullptr;
         // Cheap incremental bounds remain confined to this page. They cannot
         // grow across the whole sector as cells are inserted and retired.

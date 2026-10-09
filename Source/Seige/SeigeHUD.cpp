@@ -126,6 +126,19 @@ bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
 }
 bool ASeigeHUD::BlocksCameraKeys() const{return Ui.BuildOpen;}
 bool ASeigeHUD::IsPointerOverUI() const{float X=0,Y=0;const auto* PC=GetOwningPlayerController();return PC&&PC->GetMousePosition(X,Y)&&!Ui.HitTest(X,Y).IsEmpty();}
+void ASeigeHUD::MoveChainFocus(const FKey& Key)
+{
+    const auto& L=ChainGraph.Layers;int32 Layer=INDEX_NONE,Row=INDEX_NONE;
+    for(int32 C=0;C<L.Num()&&Layer==INDEX_NONE;++C){const int32 R=L[C].IndexOfByKey(ChainFocus);if(R!=INDEX_NONE){Layer=C;Row=R;}}
+    if(Layer==INDEX_NONE){for(const auto& Column:L)if(Column.Num()){ChainFocus=Column[0];return;}return;}
+    if(Key==EKeys::Up&&Row>0)ChainFocus=L[Layer][Row-1];
+    else if(Key==EKeys::Down&&Row+1<L[Layer].Num())ChainFocus=L[Layer][Row+1];
+    else if(Key==EKeys::Left||Key==EKeys::Right)
+    {
+        const int32 Step=Key==EKeys::Left?-1:1;const float Relative=L[Layer].Num()>1?float(Row)/(L[Layer].Num()-1):.5f;
+        for(int32 C=Layer+Step;C>=0&&C<L.Num();C+=Step)if(L[C].Num()){ChainFocus=L[C][FMath::RoundToInt(Relative*(L[C].Num()-1))];return;}
+    }
+}
 bool ASeigeHUD::HandleShortcut(const FKey& K){auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;return G?ProcessShortcut(K,*G):false;}
 bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
 {
@@ -181,6 +194,12 @@ bool ASeigeHUD::ProcessShortcut(const FKey& Key,ASeigeGameMode& G)
         const bool Open=!Ui.BuildOpen;Ui.CloseMenus();Ui.BuildOpen=Open;ProgressionOpen=false;
         if(Open){G.CancelRoadTool();G.CancelWallTool();G.SelectedBuild.Empty();G.SelectedId=0;G.SelectedCompanionId=0;if(Ui.Categories.Num())Ui.Category=Ui.Categories[0].Id;}
         return true;
+    }
+    if(ProgressionOpen&&!Ui.BuildOpen)
+    {
+        if(Key==EKeys::Left||Key==EKeys::Right||Key==EKeys::Up||Key==EKeys::Down){MoveChainFocus(Key);return true;}
+        if(Key==EKeys::Enter&&ChainGraph.Nodes.IsValidIndex(ChainFocus))
+        {const auto& N=ChainGraph.Nodes[ChainFocus];if(N.Building&&!G.Observer&&G.Sim.BuildMenu.Contains(N.Id))return ExecuteAction(TEXT("build:")+N.Id,G);return true;}
     }
     if(Key==EKeys::P&&!Ui.BuildOpen)
     {
@@ -897,7 +916,14 @@ void ASeigeHUD::DrawHUD()
     if(ProgressionOpen&&!RegionMap)DrawProgression(*G,W,H);
     if(Ui.BuildOpen)
     {
-        Ui.HoverPanel.Empty();const float BW=980,BH=354,X=(W-BW)*.5f,Y=DockY-BH-12;
+        Ui.HoverPanel.Empty();
+        // Cards wrap into as many rows as the open category needs: up to 12
+        // entries keep the 6x2 grid, more use seven narrower columns and the
+        // panel grows by one card row (108 px) for every further seven.
+        int32 PaletteRows=2;
+        if(InterfaceLoaded)if(const auto* Open=Ui.Categories.FindByPredicate([this](const FSeigeMenuGroup& I){return I.Id==Ui.Category;}))
+        {const int32 Count=Open->Entries.Num(),Cols=Count>12?7:6;PaletteRows=FMath::Max(2,(Count+Cols-1)/Cols);}
+        const float BW=980,BH=354+(PaletteRows-2)*108.f,X=(W-BW)*.5f,Y=FMath::Max(8.f,DockY-BH-12);
         Frame(X,Y,BW,BH);Label(TEXT("CONSTRUCTION"),X+20,Y+18,17,Gold);Button(TEXT("Close"),TEXT("close"),X+BW-87,Y+9,69,31);
         if(!InterfaceLoaded){float EY=Y+78;Wrapped(InterfaceError,X+20,EY,BW-40,16,Red);}
         else
@@ -907,7 +933,7 @@ void ASeigeHUD::DrawHUD()
             for(const auto& Group:Ui.Categories){Button(Group.Shortcut+TEXT("  ")+Group.Name,TEXT("group:")+Group.Id,X+20+GI++*TabW,Y+51,TabW-6,39,Ui.Category==Group.Id,Group.Description);}
             if(const auto* Group=Ui.Categories.FindByPredicate([this](const FSeigeMenuGroup& I){return I.Id==Ui.Category;}))
             {
-                // Up to 12 cards keep the 6x2 grid; 13-14 entries use seven narrower columns.
+                // Up to 12 cards keep the 6x2 grid; more use seven narrower columns and extra rows.
                 const int32 Cols=Group->Entries.Num()>12?7:6;int32 EI=0;const float CardW=Cols==7?129.f:150.f,Gap=Cols==7?6.f:8.f;
                 for(const auto& Entry:Group->Entries)
                 {
@@ -942,7 +968,7 @@ void ASeigeHUD::DrawHUD()
                 }
                 if(PreviousHover.StartsWith(TEXT("build:")))if(const auto* D=G->Sim.BuildingDefs.Find(PreviousHover.RightChop(6)))Description(*D,*G,FMath::Min(X+BW-410,W-430),FMath::Max(90.f,Y-372),410);
             }
-            Label(Ui.GroupFocused?TEXT("Choose a blueprint key. Esc returns to categories."):TEXT("R / I / L / D selects a category. Hover a blueprint for its requirements."),X+20,Y+329,13,Muted);
+            Label(Ui.GroupFocused?TEXT("Choose a blueprint key. Esc returns to categories."):TEXT("R / I / L / D selects a category. Hover a blueprint for its requirements."),X+20,Y+BH-25,13,Muted);
         }
     }
     else if(!Ui.HoverPanel.IsEmpty())
@@ -1110,6 +1136,30 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
         if(Feeds>0&&Feedless==Feeds)return {Amber,TEXT("Buildable; no feedstock stored yet")};
         return {Text,TEXT("Buildable now; click to place")};
     };
+    // Recommended next: walk the graph in layer order (raw -> processing ->
+    // advanced) to the first menu blueprint not yet built or queued, then name
+    // the concrete step that unblocks it: build it, build the producer of its
+    // first missing material, wait for a working producer, or import it.
+    {
+        FString Next;
+        for(int32 C=0;C<Graph.Layers.Num()&&Next.IsEmpty();++C)for(int32 Idx:Graph.Layers[C])
+        {
+            const auto& N=Graph.Nodes[Idx];if(!N.Building||!S.BuildMenu.Contains(N.Id)||Built.FindRef(N.Id)||Constructing.FindRef(N.Id))continue;
+            const auto* D=S.BuildingDefs.Find(N.Id);if(!D)continue;
+            TArray<FString> Missing;TArray<FString> Keys;D->Cost.GetKeys(Keys);Keys.Sort();for(const FString& Id:Keys)if(S.ConstructionAvailable(Id)+1e-9<D->Cost[Id])Missing.Add(Id);
+            if(Missing.IsEmpty()){Next=TEXT("Next: build ")+Strip(D->Name)+TEXT(" - its bill is in stock");break;}
+            const FString Need=Missing[0];FString Maker,Working;
+            for(const auto& E:Graph.Edges)if(Graph.Nodes[E.To].Id==Need&&!Graph.Nodes[E.To].Building&&Graph.Nodes[E.From].Building&&Graph.Nodes[E.From].Id!=S.CoreDefinition)
+            {const FString& Id=Graph.Nodes[E.From].Id;if(Built.FindRef(Id)||Constructing.FindRef(Id))Working=Id;else if(Maker.IsEmpty()&&S.BuildMenu.Contains(Id))Maker=Id;}
+            const FString NeedName=ResourceName(S,Need),Target=Strip(D->Name);
+            if(!Working.IsEmpty())Next=FString::Printf(TEXT("Next: %s needs %s - %s is making it"),*Target,*NeedName,*Strip(S.BuildingDefs[Working].Name));
+            else if(!Maker.IsEmpty()&&Short(S.BuildingDefs[Maker].Cost).IsEmpty())Next=FString::Printf(TEXT("Next: build %s to make %s for %s"),*Strip(S.BuildingDefs[Maker].Name),*NeedName,*Target);
+            else Next=FString::Printf(TEXT("Next: %s needs %s - import it at a trading port or run it on the core replicator"),*Target,*NeedName);
+            break;
+        }
+        if(Next.IsEmpty())Next=TEXT("Every blueprint in the chain is built or under construction");
+        Label(Fit(Next,PW-330,12),X+230,Y+21,12,Gold);
+    }
     // Layout
     const int32 Columns=FMath::Max(1,Graph.Layers.Num());
     const float Left=X+20,Top=Y+58,Bottom=Y+PH-62,ColumnW=(PW-40)/Columns,NodeW=FMath::Min(150.f,ColumnW-14);
@@ -1126,7 +1176,23 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
     float MX=0,MY=0;auto* PC=GetOwningPlayerController();const bool HaveMouse=PC&&PC->GetMousePosition(MX,MY);MX/=Scale;MY/=Scale;
     int32 Hover=INDEX_NONE;
     if(HaveMouse)for(int32 I=0;I<Graph.Nodes.Num();++I)if(MX>=Pos[I].X&&MX<=Pos[I].X+NodeW&&MY>=Pos[I].Y&&MY<=Pos[I].Y+NodeH[I]){Hover=I;break;}
+    // Keyboard focus (arrows move, Enter places) and the mouse share one
+    // highlighted node; whichever moved last wins.
+    const bool MouseMoved=HaveMouse&&!FVector2D(MX,MY).Equals(ChainMouse,.5);if(HaveMouse)ChainMouse=FVector2D(MX,MY);
+    if(Hover!=INDEX_NONE&&MouseMoved)ChainFocus=Hover;
+    else if(Graph.Nodes.IsValidIndex(ChainFocus))Hover=ChainFocus;
     TSet<int32> Lit;if(Hover!=INDEX_NONE){Lit=Graph.Upstream(Hover);Lit.Append(Graph.Downstream(Hover));Lit.Add(Hover);}
+    // Common materials (construction alloys, conductors, ...) feed most of the
+    // graph. Their long edges become colour-coded ports on the consumer and are
+    // drawn in full only while one end is highlighted.
+    TMap<int32,int32> LayerOf;for(int32 C=0;C<Graph.Layers.Num();++C)for(int32 Idx:Graph.Layers[C])LayerOf.Add(Idx,C);
+    TMap<int32,int32> OutDegree;for(const auto& E:Graph.Edges)if(!Graph.Nodes[E.From].Building)OutDegree.FindOrAdd(E.From)++;
+    TArray<int32> Common;for(const auto& P:OutDegree)if(P.Value>=5)Common.Add(P.Key);
+    Common.Sort([&](int32 A,int32 B){return OutDegree[A]!=OutDegree[B]?OutDegree[A]>OutDegree[B]:A<B;});if(Common.Num()>6)Common.SetNum(6);
+    const FLinearColor PortColors[6]={FLinearColor(.86f,.86f,.80f),FLinearColor(.96f,.55f,.25f),FLinearColor(.45f,.80f,.95f),FLinearColor(.80f,.55f,.95f),FLinearColor(.95f,.45f,.62f),FLinearColor(.62f,.88f,.45f)};
+    auto PortOf=[&](int32 Node){return Common.IndexOfByKey(Node);};
+    auto IsBus=[&](const FSeigeDependencyEdge& E){return PortOf(E.From)!=INDEX_NONE&&LayerOf.FindRef(E.To)-LayerOf.FindRef(E.From)>1;};
+    TMap<int32,int32> PortsOnNode;
     // Edges first
     for(const auto& E:Graph.Edges)
     {
@@ -1134,9 +1200,17 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
         const bool Emphasis=Hover!=INDEX_NONE&&(E.From==Hover||E.To==Hover||(Lit.Contains(E.From)&&Lit.Contains(E.To)));
         FLinearColor C=E.Kind==FSeigeDependencyEdge::EKind::Ammunition?Gold:E.Kind==FSeigeDependencyEdge::EKind::Chassis?Blue:E.Kind==FSeigeDependencyEdge::EKind::Extraction?Muted:E.Kind==FSeigeDependencyEdge::EKind::Workers?Text:Green;
         C.A=(Hover==INDEX_NONE?.30f:Emphasis?.95f:.08f)*DrawOpacity;
+        const FVector2D A(Pos[E.From].X+NodeW,Pos[E.From].Y+NodeH[E.From]*.5f),B(Pos[E.To].X,Pos[E.To].Y+NodeH[E.To]*.5f);
+        if(IsBus(E)&&!Emphasis)
+        {
+            // Port: a small swatch on the consumer's left edge in the material's colour.
+            FLinearColor PC=PortColors[PortOf(E.From)];PC.A=Hover==INDEX_NONE?.95f:Lit.Contains(E.To)?.95f:.25f;
+            const int32 Slot=PortsOnNode.FindOrAdd(E.To)++;
+            Box(B.X-7,Pos[E.To].Y+3+Slot*5,5,4,PC);
+            continue;
+        }
         // Straight runs with short horizontal stubs read better than orthogonal
         // routing when many edges share a column gap.
-        const FVector2D A(Pos[E.From].X+NodeW,Pos[E.From].Y+NodeH[E.From]*.5f),B(Pos[E.To].X,Pos[E.To].Y+NodeH[E.To]*.5f);
         const float Stub=FMath::Min(10.f,(B.X-A.X)*.25f);
         DrawLine(A.X*Scale,A.Y*Scale,(A.X+Stub)*Scale,A.Y*Scale,C,(Emphasis?2.f:1.f)*Scale);
         DrawLine((A.X+Stub)*Scale,A.Y*Scale,(B.X-Stub)*Scale,B.Y*Scale,C,(Emphasis?2.f:1.f)*Scale);
@@ -1162,6 +1236,8 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
         if(I==Hover)Fill=FLinearColor(.12f,.24f,.28f,.98f);
         if(Faded){Fill.A*=.35f;Color.A*=.35f;}
         Box(P.X,P.Y,NodeW,NH,Fill);Box(P.X,P.Y,2,NH,Color);
+        if(PortOf(I)!=INDEX_NONE){FLinearColor PC=PortColors[PortOf(I)];PC.A*=Faded?.35f:1.f;Box(P.X+NodeW-5,P.Y,5,NH,PC);}
+        if(I==ChainFocus&&!MouseMoved){const FLinearColor F(Gold.R,Gold.G,Gold.B,.9f);Box(P.X-1,P.Y-1,NodeW+2,1,F);Box(P.X-1,P.Y+NH,NodeW+2,1,F);Box(P.X-1,P.Y,1,NH,F);Box(P.X+NodeW,P.Y,1,NH,F);}
         if(N.Building)
         {
             Label(Fit(Strip(N.Name),NodeW-14,10),P.X+8,P.Y+4,10,Color);
@@ -1205,8 +1281,10 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
     }
     else
     {
-        Label(TEXT("Hover a node to light its chain; click a buildable blueprint to place it.  Green running, white buildable, amber no feedstock, red short of materials.  Lines: teal recipes, grey extraction, gold ammunition, blue chassis materials."),X+20,DY,10,Muted);
+        Label(TEXT("Hover or use the arrow keys to light a chain; click or Enter places a buildable blueprint.  Green running, white buildable, amber no feedstock, red short.  Lines: teal recipes, grey extraction, gold ammunition, blue chassis."),X+20,DY,10,Muted);
+        float LX=X+20;Label(TEXT("Common inputs (ports):"),LX,DY+20,10,Muted);LX+=MeasureLabel(TEXT("Common inputs (ports):"),10).X+8;
+        for(int32 K=0;K<Common.Num();++K){Box(LX,DY+23,8,8,PortColors[K]);LX+=11;const FString Name=Graph.Nodes[Common[K]].Name;Label(Name,LX,DY+20,10,Text);LX+=MeasureLabel(Name,10).X+12;}
         FString Outside;for(const FString& Name:Graph.OutsideChain){if(!Outside.IsEmpty())Outside+=TEXT(", ");Outside+=Strip(Name);}
-        if(!Outside.IsEmpty())Label(Fit(TEXT("Outside the chain (power, storage, sensing, trade): ")+Outside,PW-40,10),X+20,DY+20,10,Muted);
+        if(!Outside.IsEmpty())Label(Fit(TEXT("/  Outside the chain: ")+Outside,FMath::Max(40.f,X+PW-20-LX),10),LX,DY+20,10,Muted);
     }
 }

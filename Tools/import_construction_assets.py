@@ -29,6 +29,12 @@ ME.layout_material_expressions(holo);ME.recompile_material(holo);ED.save_loaded_
 source=ED.load_asset('/Game/Art/Industry/M_IndustrySurface')
 if not source:raise RuntimeError('Original industrial material required before construction import')
 reveal=ED.load_asset(DEST+'/M_ConstructionReveal') if ED.does_asset_exist(DEST+'/M_ConstructionReveal') else None
+# -ConstructionMaterialsOnly re-clones the current industry master (after its
+# surface graph changes) and imports no meshes: the old shuttle here would
+# replace the v0.9 orbital SM_Shuttle, and the service bay now comes from the kit.
+MATERIALS_ONLY='-ConstructionMaterialsOnly' in u.SystemLibrary.get_command_line()
+if reveal and MATERIALS_ONLY:
+    ED.delete_asset(DEST+'/M_ConstructionReveal');reveal=None
 if not reveal:reveal=AT.duplicate_asset('M_ConstructionReveal',DEST,source)
 # Repeated imports replace only the construction cut, preserving the PBR graph.
 if not reveal:raise RuntimeError('Could not create construction reveal material')
@@ -41,6 +47,9 @@ height=node(reveal,u.MaterialExpressionScalarParameter,parameter_name='RevealHei
 mask=node(reveal,u.MaterialExpressionSubtract,desc='ConstructionReveal: visible below plane');wire(height,mask,'A');wire(z,mask,'B')
 output(mask,u.MaterialProperty.MP_OPACITY_MASK);ME.layout_material_expressions(reveal);ME.recompile_material(reveal);ED.save_loaded_asset(reveal,False)
 
+if MATERIALS_ONLY:
+    u.log('SEIGE_CONSTRUCTION_MATERIALS_SUCCESS '+json.dumps({'materials':[holo.get_path_name(),reveal.get_path_name()]}))
+    DATA['meshes']={}
 tasks=[]
 for name,r in DATA['meshes'].items():
     task=u.AssetImportTask();task.filename=str(ART/'Exports'/r['fbx']);task.destination_path='/Game/Art';task.destination_name=name
@@ -49,7 +58,7 @@ for name,r in DATA['meshes'].items():
     options.automated_import_should_detect_type=False;options.mesh_type_to_import=u.FBXImportType.FBXIT_STATIC_MESH
     sm=options.static_mesh_import_data;sm.combine_meshes=True;sm.auto_generate_collision=False;sm.generate_lightmap_u_vs=False;sm.normal_import_method=u.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS;sm.convert_scene=True;sm.convert_scene_unit=True
     task.options=options;tasks.append(task)
-AT.import_asset_tasks(tasks)
+if tasks:AT.import_asset_tasks(tasks)
 report={'source':'Original project Blender geometry','materials':[holo.get_path_name(),reveal.get_path_name()],'meshes':{}}
 for name,r in DATA['meshes'].items():
     mesh=ED.load_asset('/Game/Art/'+name)
@@ -68,4 +77,4 @@ for name,r in DATA['meshes'].items():
     ED.save_loaded_asset(mesh,False);box=mesh.get_bounding_box();lo,hi=box.min,box.max;size=[hi.x-lo.x,hi.y-lo.y,hi.z-lo.z]
     if abs(lo.z)>.5 or any(abs(a-b)>.5 for a,b in zip(size,r['dimensions_cm'])):raise RuntimeError('Bounds mismatch '+name)
     report['meshes'][name]={'path':mesh.get_path_name(),'dimensions_cm':size,'ground_z':lo.z,'lods':SME.get_lod_count(mesh),'materials':slots,'uv_channels':SME.get_num_uv_channels(mesh,0)}
-(ART/'import_report.json').write_text(json.dumps(report,indent=2));u.log('SEIGE_CONSTRUCTION_IMPORT_SUCCESS '+json.dumps(report))
+if not MATERIALS_ONLY:(ART/'import_report.json').write_text(json.dumps(report,indent=2));u.log('SEIGE_CONSTRUCTION_IMPORT_SUCCESS '+json.dumps(report))

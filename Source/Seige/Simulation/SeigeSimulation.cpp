@@ -4,6 +4,7 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "SeigeCanonicalJson.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/SecureHash.h"
@@ -152,7 +153,7 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error,
         FString Raw, Version; FObject O;
         if (!ReadJson(FPaths::Combine(RulesPath, Name + TEXT(".json")), O, Raw, Error) || !StringField(O, TEXT("version"), Version, Error)) return false;
         if (Version.IsEmpty() || (!RulesVersion.IsEmpty() && RulesVersion != Version)) { Error = TEXT("Rule file versions must match and be nonempty"); return false; }
-        RulesVersion = Version; Fingerprint += Raw; Documents.Add(Name, O);
+        RulesVersion = Version; Fingerprint += SeigeCanonicalJson(O); Documents.Add(Name, O);
     }
     RulesFingerprint = FMD5::HashAnsiString(*(Fingerprint+Environment.Fingerprint));
     const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
@@ -184,7 +185,7 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error,
     for (const auto& V : *Values)
     {
         const FObject O = V->AsObject(); FSeigeBuildingDef B;
-        if (!StringField(O, TEXT("id"), B.Id, Error) || !StringField(O, TEXT("name"), B.Name, Error) || !StringField(O, TEXT("category"), B.Category, Error) || !StringField(O, TEXT("role"), B.Role, Error) || !StringField(O, TEXT("description"), B.Description, Error) || !StringField(O, TEXT("visual"), B.Visual, Error) || !StringField(O, TEXT("recipe"), B.Recipe, Error) || !Amounts(O,TEXT("extraction_rates"),B.ExtractionRates,Resources,Error) || !ColorField(O, B.Color, Error) || !Amounts(O, TEXT("cost"), B.Cost, Resources, Error)) return false;
+        if (!StringField(O, TEXT("id"), B.Id, Error) || !StringField(O, TEXT("name"), B.Name, Error) || !StringField(O, TEXT("role"), B.Role, Error) || !StringField(O, TEXT("description"), B.Description, Error) || !StringField(O, TEXT("visual"), B.Visual, Error) || !StringField(O, TEXT("recipe"), B.Recipe, Error) || !Amounts(O,TEXT("extraction_rates"),B.ExtractionRates,Resources,Error) || !ColorField(O, B.Color, Error) || !Amounts(O, TEXT("cost"), B.Cost, Resources, Error)) return false;
         if(!Numeric(O,TEXT("reserved_footprint"),B.ReservedFootprint,UE_DOUBLE_SMALL_NUMBER,Error)||!PositionField(O,TEXT("access_port"),B.AccessPort,Error)||!O->TryGetBoolField(TEXT("deployment_defense"),B.DeploymentDefense))return false;
         if (!IntegerField(O, TEXT("jobs"), B.Jobs, 0, Error) || !Numeric(O, TEXT("health"), B.Health, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("footprint"), B.Footprint, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("storage_capacity"), B.StorageCapacity, UE_DOUBLE_SMALL_NUMBER, Error) || !Numeric(O, TEXT("sensor_range"), B.SensorRange, 0, Error) || !Numeric(O, TEXT("attack_range"), B.AttackRange, 0, Error) || !StringField(O,TEXT("weapon_name"),B.WeaponName,Error) || !Numeric(O,TEXT("damage_per_shot"),B.DamagePerShot,0,Error) || !Numeric(O,TEXT("reload_seconds"),B.ReloadSeconds,0,Error) || !Numeric(O,TEXT("power_usage_kw"),B.PowerUsageKW,0,Error) || !Numeric(O,TEXT("power_generation_kw"),B.PowerGenerationKW,0,Error)) return false;
         if (!Numeric(O,TEXT("construction_seconds"),B.ConstructionSeconds,UE_DOUBLE_SMALL_NUMBER,Error) || !IntegerField(O,TEXT("construction_workers"),B.ConstructionWorkers,1,Error) || !IntegerField(O,TEXT("robot_support_capacity"),B.RobotSupportCapacity,0,Error) || !IntegerField(O,TEXT("staffing_priority"),B.StaffingPriority,0,Error)) return false;
@@ -287,6 +288,11 @@ bool FSeigeSimulation::Initialize(const FString& RulesDirectory, FString& Error,
     if(!LoadSeigeCalendarRules(Documents[TEXT("calendar")],Calendar,Error)||!Workers.Initialize(Documents[TEXT("workers")],*this,Error)||!Energy.Initialize(Documents[TEXT("energy")],*this,Error)||!Trade.Initialize(Documents[TEXT("trade")],*this,Error)||!Companions.Initialize(RulesPath,*this,Error)||!Walls.Initialize(RulesPath,*this,Error)||!Combat.Initialize(RulesPath,*this,Error))return false;
     RulesFingerprint=FMD5::HashAnsiString(*(RulesFingerprint+Combat.GetFingerprint()));
     for(const auto& P:BuildingDefs){const auto& D=P.Value;if(!D.NextUpgrade.IsEmpty()&&(!BuildingDefs.Contains(D.NextUpgrade)||BuildingDefs[D.NextUpgrade].Role!=D.Role||BuildingDefs[D.NextUpgrade].ReservedFootprint!=D.ReservedFootprint||BuildingDefs[D.NextUpgrade].Family!=D.Family||BuildingDefs[D.NextUpgrade].Level!=D.Level+1||(D.Role!=TEXT("core")&&BuildingDefs[D.NextUpgrade].Footprint!=D.Footprint)||D.UpgradeCost.IsEmpty())){Error=TEXT("Invalid in-place building upgrade");return false;}}
+    // Upgraded levels document the cumulative installed bill (previous level
+    // cost plus its upgrade_cost); reject drift so placement review, losses and
+    // the HUD never disagree with what an upgrade actually charged.
+    for(const auto& P:BuildingDefs){const auto& D=P.Value;if(D.NextUpgrade.IsEmpty())continue;const auto& Next=BuildingDefs[D.NextUpgrade];TSet<FString> Ids;for(const auto& C:D.Cost)Ids.Add(C.Key);for(const auto& C:D.UpgradeCost)Ids.Add(C.Key);for(const auto& C:Next.Cost)Ids.Add(C.Key);
+        for(const FString& Id:Ids)if(FMath::Abs(Next.Cost.FindRef(Id)-D.Cost.FindRef(Id)-D.UpgradeCost.FindRef(Id))>1.e-6){Error=FString::Printf(TEXT("Cumulative cost of %s in %s must equal %s cost plus upgrade_cost"),*Id,*Next.Id,*D.Id);return false;}}
     TSet<FString> Renewable;
     for (const FSeigeNode& N : Nodes) for (const FString& Id : BuildMenu) if (BuildingDefs[Id].ExtractionRates.Contains(N.Resource)) Renewable.Add(N.Resource);
     // A working external trade port exchanges physically exported local goods for missing types.
@@ -574,6 +580,13 @@ int32 FSeigeSimulation::AddReviewBuilding(const FString& Id, FVector2D P)
     B.SelectedRecipe=D->Recipe.IsEmpty()?(D->AllowedRecipes.IsEmpty()?FString():D->AllowedRecipes[0]):D->Recipe;
     B.IsConstructing=false;B.ConstructionProgress=1;B.InstalledMaterials=D->Cost;
     Buildings.Add(B);++TransportRevision;return B.Id;
+}
+bool FSeigeSimulation::AddReviewStoredWorkers(int32 Id,int32 Count)
+{
+    FSeigeBuilding* B=FindBuilding(Id);const FSeigeBuildingDef* D=B?Definition(*B):nullptr;
+    if(!D||!D->StoresInactiveWorkers||B->Health<=0||B->IsConstructing||Count<=0||Count>16)return false;
+    B->Inventory.FindOrAdd(TextRule(TEXT("inactive_worker_resource")))+=Count;B->WorkerExportTarget+=Count;
+    Workers.NewStored(*this,Id,Count);return true;
 }
 void FSeigeSimulation::ToggleBuilding(int32 Id)
 {

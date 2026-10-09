@@ -27,7 +27,7 @@ struct FSeigeRecipeDef
 };
 struct FSeigeBuildingDef
 {
-    FString Id, Name, Category, Description, Visual, Recipe, Role, WeaponName;
+    FString Id, Name, Description, Visual, Recipe, Role, WeaponName;
     FLinearColor Color = FLinearColor::White;
     TMap<FString, double> Cost;
     int32 Jobs = 0;
@@ -151,6 +151,9 @@ public:
     // Review tooling only (graphics showcase): adds a completed, unpaid, unstaffed
     // building without placement checks. Gameplay never calls this.
     int32 AddReviewBuilding(const FString& DefinitionId, FVector2D Position);
+    // Review tooling only: real stored identities (with their inventory units) in a
+    // building that stores inactive workers, held there by its export target.
+    bool AddReviewStoredWorkers(int32 BuildingId, int32 Count);
     bool CanPlaceBuilding(const FString& DefinitionId, FVector2D Position, FString& Error) const;
     void ToggleBuilding(int32 Id);
     bool Save(const FString& Filename, FString& Error) const;
@@ -286,6 +289,7 @@ private:
     friend class FSeigeConstructionSourceTest;
     friend class FSeigeRawInputBufferTest;
     friend class FSeigeEnemyContactTest;
+    friend class FSeigeFirstPlayableTimelineDiagnostic;
 #endif
     TSharedPtr<class FJsonObject> Policy, Scenario, Transport;
     int32 NextId = 1;

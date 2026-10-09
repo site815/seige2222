@@ -415,7 +415,13 @@ void ASeigeGameMode::RunPresentationSmoke()
         int32 ActiveBodies=0;TSet<FString> VisibleBodies;for(const auto& W:Sim.Workers.Bodies)if(W.State==TEXT("active")){++ActiveBodies;if(W.Outdoor){const FString Key=TEXT("home_worker_")+W.Id;VisibleBodies.Add(Key);const auto* Actor=Visuals.FindRef(Key).Get();Require(Actor&&!Actor->IsHidden(),TEXT("Each outdoor worker identity must have exactly its corresponding visible body"));}}
         Require(ActiveBodies==Sim.Population&&Sim.Couriers.Num()<=ActiveBodies,TEXT("Delivery tasks must share the real worker population"));
         for(const auto& VisualEntry:Visuals)if(IsValid(VisualEntry.Value.Get())&&!VisualEntry.Value->IsHidden())
-        {const auto& Key=VisualEntry.Key;if(Key.StartsWith(TEXT("home_worker_"))&&!Key.EndsWith(TEXT("_cargo"))&&!Key.EndsWith(TEXT("_carrier"))&&!Key.EndsWith(TEXT("_tool")))Require(VisibleBodies.Contains(Key),TEXT("Worker rendering cannot invent an unaccounted body"));Require(!Key.StartsWith(TEXT("home_courier_")),TEXT("Legacy courier rendering cannot duplicate the worker body"));}
+        {
+            const auto& Key=VisualEntry.Key;if(Key.StartsWith(TEXT("home_worker_"))&&!Key.EndsWith(TEXT("_cargo"))&&!Key.EndsWith(TEXT("_carrier"))&&!Key.EndsWith(TEXT("_tool")))Require(VisibleBodies.Contains(Key),TEXT("Worker rendering cannot invent an unaccounted body"));Require(!Key.StartsWith(TEXT("home_courier_")),TEXT("Legacy courier rendering cannot duplicate the worker body"));
+            // Docked bodies on service-bay berths are stored identities of that building.
+            FString Holder,BodyId;
+            if(Key.StartsWith(TEXT("home_building_"))&&Key.Split(TEXT("_berth_"),&Holder,&BodyId))
+            {const auto* Body=Sim.Workers.Find(BodyId);Require(Body&&Body->State==TEXT("stored")&&Body->ContainerKind==TEXT("building")&&FString::Printf(TEXT("home_building_%d"),Body->ContainerId)==Holder,TEXT("A docked worker must be a stored body of that building"));}
+        }
         Speed=10;Paused=false;SelectedId=0;CameraCenter=FVector(HomePosition()+FVector2D(1000,0),0);Zoom=2000;UpdateCamera();break;
     }
     case 79:

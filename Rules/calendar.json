@@ -1,5 +1,5 @@
 {
-  "version": "prototype-9.2",
+  "version": "prototype-9.3",
   "calendar": {
     "daylight_seconds": 1800,
     "night_seconds": 1800,

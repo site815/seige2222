@@ -85,7 +85,7 @@ private:
     bool MakeDecision(FSeigeSimulation& Colony);
     void RunDecisionCycle(FSeigeSimulation& Colony);
     void ReportPreparationMilestone(const FSeigeSimulation& Colony);
-    bool BuildNear(FSeigeSimulation& Colony, const FString& Definition, FVector2D Anchor, double StartingAngle, double FirstRadius=-1);
+    bool BuildNear(FSeigeSimulation& Colony, const FString& Definition, FVector2D Anchor, double StartingAngle, double FirstRadius=-1, bool PreferShortRoad=false);
     int32 PlotDefenseCoverage(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Position) const;
     bool PlaceConnectedBuilding(FSeigeSimulation& Colony,const FString& Definition,FVector2D Position,FString& Error);
     bool FindPowerConnection(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuilding* ProspectivePlot,FVector2D& OutA,FVector2D& OutB,bool& NeedsSegment,FString& Error) const;

@@ -27,6 +27,7 @@ export function readConfiguration(root = defaultRoot) {
     graphics: read('Graphics/scene.json'),
     weather: read('Graphics/weather.json'),
     buildingVisuals: fs.existsSync(path.join(root, 'Graphics/building_visuals.json')) ? read('Graphics/building_visuals.json') : null,
+    kitManifest: fs.existsSync(path.join(root, 'Art/BuildingKitV092/kit_manifest.json')) ? read('Art/BuildingKitV092/kit_manifest.json') : null,
     availableAssetPackages,
   };
 }
@@ -87,6 +88,24 @@ export function validateConfiguration(data) {
       text(kind, `building_visuals.${id}`); if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(kind)) fail(`building_visuals.${id} kind must be alphanumeric`);
       const mesh = `/Game/Art/SM_${kind[0].toUpperCase()}${kind.slice(1)}`;
       if (!data.availableAssetPackages.has(mesh)) fail(`building_visuals.${id} references a missing Content mesh: ${mesh}`);
+    }
+    // Optional docking points: [x, y, z, yaw] per mesh kind, in the mesh's own
+    // centimetres; a kit mesh's points must match its generated manifest.
+    if (visuals.berths !== undefined) {
+      const berths = object(visuals.berths, 'Graphics/building_visuals.json berths');
+      const kinds = new Set(Object.values(entries).concat([...buildings.values()].map(b => b.visual)));
+      for (const [kind, points] of Object.entries(berths)) {
+        if (!kinds.has(kind)) fail(`building_visuals.berths names a kind no building uses: ${kind}`);
+        const list = array(points, `building_visuals.berths.${kind}`, 1, 16);
+        list.forEach((point, index) => {
+          const values = array(point, `building_visuals.berths.${kind}[${index}]`, 4, 4);
+          values.forEach(value => { if (typeof value !== 'number' || !Number.isFinite(value)) fail(`building_visuals.berths.${kind}[${index}] must hold numbers`); });
+          if (Math.abs(values[0]) > 5000 || Math.abs(values[1]) > 5000 || values[2] < 0 || values[2] > 2000 || Math.abs(values[3]) > 360) fail(`building_visuals.berths.${kind}[${index}] lies outside its mesh range`);
+        });
+        const generated = data.kitManifest?.meshes?.[`SM_${kind[0].toUpperCase()}${kind.slice(1)}`]?.berths_unreal;
+        if (generated && (generated.length !== list.length || generated.some((point, index) => point.some((value, axis) => Math.abs(value - list[index][axis]) > (axis === 3 ? .5 : 1)))))
+          fail(`building_visuals.berths.${kind} differs from the generated kit manifest (Art/BuildingKitV092/kit_manifest.json)`);
+      }
     }
   }
   for(const key of ['ambient_cubemap','snow_collection','snowflake_material']){text(weather[key],`Weather ${key}`);if(!/^\/Game\/(?:[A-Za-z0-9_]+\/)*[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?$/.test(weather[key]))fail(`Weather ${key} requires a game asset`);}
@@ -152,6 +171,7 @@ export function validateConfiguration(data) {
   number(graphics.forest_candidates, 'Graphics forest_candidates', 1000, 200000, true);
   number(graphics.near_forest_candidates, 'Graphics near_forest_candidates', 100, 30000, true);
   number(graphics.grass_shadow_distance_m, 'Graphics grass_shadow_distance_m', 0, 500);
+  number(graphics.grass_wind_distance_m, 'Graphics grass_wind_distance_m', 0, 150);
   number(graphics.grass_detail_distance_m, 'Graphics grass_detail_distance_m', 10, 150);
   number(graphics.grass_lod_transition_m, 'Graphics grass_lod_transition_m', 10, 200);
   number(graphics.grass_stream_radius_m, 'Graphics grass_stream_radius_m', 150, 1200);

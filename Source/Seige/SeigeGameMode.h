@@ -51,6 +51,10 @@ public:
     // so families can get distinct art without editing the fingerprinted Rules.
     bool LoadBuildingVisuals();
     TMap<FString,FString> BuildingVisualOverrides;
+    // Optional docking points per mesh kind (building_visuals.json "berths"):
+    // x, y, z in the mesh's own centimetres and yaw in degrees (W). Stored
+    // worker bodies are drawn there, scaled and placed with the building mesh.
+    TMap<FString,TArray<FVector4>> VisualBerths;
     FString BuildingVisualKind(const FSeigeBuildingDef& Definition) const;
     void UpdateWeather(float DeltaSeconds=0);
     double SnowCoverage() const;
@@ -105,6 +109,7 @@ public:
     int32 GroundCoverCandidates=350000;
     float GrassScaleMin=1.f,GrassScaleMax=1.3f;
     float GrassShadowDistanceMeters=100;
+    float GrassWindDistanceMeters=60;   // grass wind (WPO) and its velocity output stop beyond this camera distance
     float GrassProgrammableDistanceMeters=0,ForestProgrammableDistanceMeters=0;
     float GrassDetailDistanceMeters=45,GrassLodTransitionMeters=35,GrassStreamRadiusMeters=540,GrassStreamBudgetMs=2;
     int32 GrassStreamCellsPerFrame=32;
@@ -281,7 +286,8 @@ private:
     void SyncPlacementGhost(TSet<FString>& Live);
     void SyncConstructionVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
     void SetConstructionReveal(AActor* Actor,double Progress);
-    void SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
+    // Stored worker bodies on the authored berths of the building that holds them.
+    void SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Appearance,const FString& Key,TSet<FString>& Live);
     TMap<int32,FSeigeRenderSnapshot> PresentationSnapshots;
     void CaptureSimulationPresentation();
     void ResetSimulationPresentation();
@@ -289,7 +295,6 @@ private:
     double PresentationAlpha() const;
     double RenderSimulationTime(const FSeigeSimulation& Colony) const;
     double RenderConstructionProgress(const FSeigeSimulation& Colony,const FSeigeBuilding& Building) const;
-    void SyncWorkerVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
     void SyncWorkerAgents(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live);
     void SyncInventoryVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Definition,FVector2D WorldPosition,const FString& Key,TSet<FString>& Live);
     void SyncStockpile(const FSeigeResourceDef& Resource,double Amount,FVector2D Position,const FString& Key,TSet<FString>& Live);
@@ -355,6 +360,8 @@ public:
     FSeigeUiState Ui;
     bool ProgressionOpen=false;   // production-chain panel (P / dock button); review captures set it directly
     FSeigeDependencyGraph ChainGraph;int32 ChainGraphBuildings=-1;   // rebuilt when the loaded catalog changes
+    int32 ChainFocus=INDEX_NONE;FVector2D ChainMouse=FVector2D(-1,-1);   // keyboard/mouse highlight in the chain panel
+    void MoveChainFocus(const FKey& Key);
 private:
     float Scale=1;
     float DrawOpacity=1;

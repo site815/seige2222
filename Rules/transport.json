@@ -1,5 +1,5 @@
 {
-  "version": "prototype-9.2",
+  "version": "prototype-9.3",
   "transport": {
     "meters_per_world_unit": 0.06,
     "worker_walk_kmh": 5,

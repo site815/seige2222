@@ -1,10 +1,9 @@
 {
-  "version": "prototype-9.2",
+  "version": "prototype-9.3",
   "buildings": [
     {
       "id": "command_core",
       "name": "Orbital command shuttle \u00b7 Level 1",
-      "category": "command",
       "role": "core",
       "description": "Upright orbital command shuttle with fusion power, cargo storage, slow universal replication and two large weapon banks. Starts with one large, two medium and eight small lasers. Higher levels construct expansion wings around the same ship.",
       "visual": "shuttle",
@@ -84,7 +83,6 @@
     {
       "id": "extraction_mine",
       "name": "Extraction Mine",
-      "category": "resource",
       "role": "extractor",
       "description": "Extracts the resource in its local deposit. One mine per deposit; workers, connected road-grid power and local cargo storage are required.",
       "visual": "extractor",
@@ -148,7 +146,6 @@
     {
       "id": "alloy_refinery",
       "name": "Alloy refinery",
-      "category": "resource",
       "role": "processor",
       "description": "Receives inputs by courier and produces locally.",
       "visual": "factory",
@@ -203,7 +200,6 @@
     {
       "id": "conductor_works",
       "name": "Conductor works",
-      "category": "resource",
       "role": "processor",
       "description": "Receives inputs by courier and produces locally.",
       "visual": "factory",
@@ -258,7 +254,6 @@
     {
       "id": "substrate_works",
       "name": "Industrial glass works",
-      "category": "resource",
       "role": "processor",
       "description": "Receives inputs by courier and produces locally.",
       "visual": "factory",
@@ -313,7 +308,6 @@
     {
       "id": "circuit_works",
       "name": "Circuit works",
-      "category": "resource",
       "role": "processor",
       "description": "Receives inputs by courier and produces locally.",
       "visual": "factory",
@@ -368,7 +362,6 @@
     {
       "id": "component_works",
       "name": "Robotic parts works",
-      "category": "resource",
       "role": "processor",
       "description": "Receives inputs by courier and produces locally.",
       "visual": "factory",
@@ -423,7 +416,6 @@
     {
       "id": "sensor",
       "name": "Sensor mast",
-      "category": "logistics",
       "role": "sensor",
       "description": "Extends live visibility. Remote sensors are exposed.",
       "visual": "sensor",
@@ -478,7 +470,6 @@
     {
       "id": "turret",
       "name": "Laser tower \u00b7 Level 1",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -539,7 +530,6 @@
     {
       "id": "depot",
       "name": "Cargo depot",
-      "category": "logistics",
       "role": "storage",
       "description": "Receives overflow cargo and redistributes it to local demand.",
       "visual": "depot",
@@ -594,7 +584,6 @@
     {
       "id": "robot_service_bay",
       "name": "Worker charging and service bay",
-      "category": "logistics",
       "role": "service",
       "description": "Charging berths and maintenance for 16 workers, supplied through the connected road power grid and courier-delivered robotic parts.",
       "visual": "robotService",
@@ -650,7 +639,6 @@
     {
       "id": "solar_array",
       "name": "Solar array \u00b7 Level 1",
-      "category": "logistics",
       "role": "generator",
       "description": "Same-footprint solar installation; upgraded panels increase passive output on the connected road grid.",
       "visual": "depot",
@@ -711,7 +699,6 @@
     {
       "id": "battery_bank",
       "name": "Grid battery bank",
-      "category": "logistics",
       "role": "battery",
       "description": "Stores electricity for its connected road grid; installed battery capacity is separate from cargo storage.",
       "visual": "depot",
@@ -765,7 +752,6 @@
     {
       "id": "trading_port",
       "name": "Trading port \u00b7 Level 1",
-      "category": "logistics",
       "role": "trade",
       "description": "External imports and exports settle in Galactic credits. Starts with no free credits; sell local goods to fund imports.",
       "visual": "depot",
@@ -826,7 +812,6 @@
     {
       "id": "trading_port_2",
       "name": "Trading port \u00b7 Level 2",
-      "category": "logistics",
       "role": "trade",
       "description": "Upgraded external trade capacity and cargo handling.",
       "visual": "depot",
@@ -888,7 +873,6 @@
     {
       "id": "trading_port_3",
       "name": "Trading port \u00b7 Level 3",
-      "category": "logistics",
       "role": "trade",
       "description": "Highest current trading-port level; external credits remain separate from physical cargo.",
       "visual": "depot",
@@ -944,7 +928,6 @@
     {
       "id": "biofuel_refinery",
       "name": "Biomass refinery",
-      "category": "resource",
       "role": "processor",
       "description": "Receives physical inputs and consumes grid energy per production transaction.",
       "visual": "factory",
@@ -999,7 +982,6 @@
     {
       "id": "fuel_refinery",
       "name": "Hydrocarbon refinery",
-      "category": "resource",
       "role": "processor",
       "description": "Receives physical inputs and consumes grid energy per production transaction.",
       "visual": "factory",
@@ -1054,7 +1036,6 @@
     {
       "id": "food_producer",
       "name": "Organic food producer",
-      "category": "resource",
       "role": "processor",
       "description": "Produces organic food for Rex, the morale companion, and external export. Robotic workers do not eat food.",
       "visual": "factory",
@@ -1109,7 +1090,6 @@
     {
       "id": "battery_works",
       "name": "Battery works",
-      "category": "resource",
       "role": "processor",
       "description": "Receives physical inputs and consumes grid energy per production transaction.",
       "visual": "factory",
@@ -1165,7 +1145,6 @@
     {
       "id": "ai_chip_works",
       "name": "AI chip works",
-      "category": "resource",
       "role": "processor",
       "description": "Receives physical inputs and consumes grid energy per production transaction.",
       "visual": "factory",
@@ -1221,7 +1200,6 @@
     {
       "id": "fusion_reactor_works",
       "name": "Fusion assembly works",
-      "category": "resource",
       "role": "processor",
       "description": "Receives physical inputs and consumes grid energy per production transaction.",
       "visual": "factory",
@@ -1277,7 +1255,6 @@
     {
       "id": "fuel_generator",
       "name": "Fuel generator",
-      "category": "logistics",
       "role": "generator",
       "description": "Consumes delivered fuel to generate electricity on the connected road grid.",
       "visual": "factory",
@@ -1333,7 +1310,6 @@
     {
       "id": "command_core_2",
       "name": "Command center \u00b7 Level 2",
-      "category": "command",
       "role": "core",
       "description": "Upright orbital command shuttle with fusion power, cargo storage, slow universal replication and two large weapon banks. Starts with one large, two medium and eight small lasers. Higher levels construct expansion wings around the same ship.",
       "visual": "core",
@@ -1416,7 +1392,6 @@
     {
       "id": "command_core_3",
       "name": "Command center \u00b7 Level 3",
-      "category": "command",
       "role": "core",
       "description": "Upright orbital command shuttle with fusion power, cargo storage, slow universal replication and two large weapon banks. Starts with one large, two medium and eight small lasers. Higher levels construct expansion wings around the same ship.",
       "visual": "core",
@@ -1492,7 +1467,6 @@
     {
       "id": "solar_array_2",
       "name": "Solar array \u00b7 Level 2",
-      "category": "logistics",
       "role": "generator",
       "description": "Same-footprint solar installation; upgraded panels increase passive output on the connected road grid.",
       "visual": "depot",
@@ -1554,7 +1528,6 @@
     {
       "id": "solar_array_3",
       "name": "Solar array \u00b7 Level 3",
-      "category": "logistics",
       "role": "generator",
       "description": "Same-footprint solar installation; upgraded panels increase passive output on the connected road grid.",
       "visual": "depot",
@@ -1610,7 +1583,6 @@
     {
       "id": "vehicle_factory",
       "name": "Wheeled vehicle factory \u00b7 Level 1",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
@@ -1672,7 +1644,6 @@
     {
       "id": "vehicle_factory_2",
       "name": "Wheeled vehicle factory \u00b7 Level 2",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
@@ -1735,7 +1706,6 @@
     {
       "id": "vehicle_factory_3",
       "name": "Wheeled vehicle factory \u00b7 Level 3",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
@@ -1792,7 +1762,6 @@
     {
       "id": "tank_factory",
       "name": "Tracked vehicle factory \u00b7 Level 1",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
@@ -1855,17 +1824,16 @@
     {
       "id": "tank_factory_2",
       "name": "Tracked vehicle factory \u00b7 Level 2",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
       "cost": {
-        "alloy": 9000.0,
-        "conductors": 450.0,
-        "substrates": 450.0,
-        "circuits": 225.0,
-        "components": 1575.0,
-        "batteries": 150.0
+        "alloy": 9000,
+        "conductors": 450,
+        "substrates": 450,
+        "circuits": 225,
+        "components": 1575,
+        "batteries": 450
       },
       "jobs": 3,
       "health": 900,
@@ -1918,7 +1886,6 @@
     {
       "id": "tank_factory_3",
       "name": "Tracked vehicle factory \u00b7 Level 3",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
@@ -1929,7 +1896,7 @@
         "circuits": 400,
         "components": 2800,
         "ai_chips": 40,
-        "batteries": 150
+        "batteries": 450
       },
       "jobs": 4,
       "health": 1350,
@@ -1975,7 +1942,6 @@
     {
       "id": "mech_factory",
       "name": "Mech factory \u00b7 Level 1",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
@@ -2038,17 +2004,17 @@
     {
       "id": "mech_factory_2",
       "name": "Mech factory \u00b7 Level 2",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
       "cost": {
-        "alloy": 7875.0,
-        "conductors": 540.0,
-        "substrates": 360.0,
-        "circuits": 225.0,
-        "components": 2250.0,
-        "batteries": 150.0
+        "alloy": 7875,
+        "conductors": 540,
+        "substrates": 360,
+        "circuits": 225,
+        "components": 2250,
+        "batteries": 150,
+        "ai_chips": 20
       },
       "jobs": 3,
       "health": 900,
@@ -2101,7 +2067,6 @@
     {
       "id": "mech_factory_3",
       "name": "Mech factory \u00b7 Level 3",
-      "category": "defense",
       "role": "vehicle_factory",
       "description": "Builds physically paid configurable combat chassis. Higher levels support larger chassis and faster assembly; fleet and loadout rules remain external.",
       "visual": "factory",
@@ -2111,7 +2076,7 @@
         "substrates": 640,
         "circuits": 400,
         "components": 4000,
-        "ai_chips": 50,
+        "ai_chips": 70,
         "batteries": 150
       },
       "jobs": 4,
@@ -2158,7 +2123,6 @@
     {
       "id": "worker_factory",
       "name": "Worker factory",
-      "category": "logistics",
       "role": "worker_factory",
       "description": "Rapid, energy-efficient worker assembly from real materials. Inactive workers occupy physical storage and can be reactivated, recycled or traded.",
       "visual": "factory",
@@ -2215,7 +2179,6 @@
     {
       "id": "ammunition_works",
       "name": "Ammunition works",
-      "category": "resource",
       "role": "processor",
       "description": "Selectable kinetic or missile ammunition batches consume physical inputs and transaction energy.",
       "visual": "factory",
@@ -2273,7 +2236,6 @@
     {
       "id": "turret_2",
       "name": "Laser tower \u00b7 Level 2",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2335,7 +2297,6 @@
     {
       "id": "turret_3",
       "name": "Laser tower \u00b7 Level 3",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2391,7 +2352,6 @@
     {
       "id": "kinetic_tower",
       "name": "Kinetic tower \u00b7 Level 1",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2452,7 +2412,6 @@
     {
       "id": "kinetic_tower_2",
       "name": "Kinetic tower \u00b7 Level 2",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2514,7 +2473,6 @@
     {
       "id": "kinetic_tower_3",
       "name": "Kinetic tower \u00b7 Level 3",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2570,7 +2528,6 @@
     {
       "id": "missile_tower",
       "name": "Missile tower \u00b7 Level 1",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2631,7 +2588,6 @@
     {
       "id": "missile_tower_2",
       "name": "Missile tower \u00b7 Level 2",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2693,7 +2649,6 @@
     {
       "id": "missile_tower_3",
       "name": "Missile tower \u00b7 Level 3",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2749,7 +2704,6 @@
     {
       "id": "plasma_tower",
       "name": "Plasma tower \u00b7 Level 1",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
@@ -2811,16 +2765,16 @@
     {
       "id": "plasma_tower_2",
       "name": "Plasma tower \u00b7 Level 2",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
       "cost": {
-        "alloy": 990.0,
-        "conductors": 45.0,
-        "substrates": 45.0,
+        "alloy": 990,
+        "conductors": 45,
+        "substrates": 45,
         "circuits": 20.25,
-        "components": 69.75
+        "components": 69.75,
+        "ai_chips": 6
       },
       "jobs": 2,
       "health": 600,
@@ -2873,17 +2827,16 @@
     {
       "id": "plasma_tower_3",
       "name": "Plasma tower \u00b7 Level 3",
-      "category": "defense",
       "role": "defense",
       "description": "Automatic defense on one fixed-size plot; weapon size and layered defenses are defined by the combat catalog. Staffing, power and ammunition where required must be available.",
       "visual": "turret",
       "cost": {
-        "alloy": 3755.0,
+        "alloy": 3755,
         "conductors": 80,
         "substrates": 80,
-        "circuits": 93.0,
-        "components": 352.0,
-        "ai_chips": 12.0
+        "circuits": 93,
+        "components": 352,
+        "ai_chips": 18
       },
       "jobs": 2,
       "health": 900,
@@ -2929,7 +2882,6 @@
     {
       "id": "wall_segment",
       "name": "Wall segment \u00b7 Level 1",
-      "category": "defense",
       "role": "wall",
       "description": "A structural 6 m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
       "visual": "wall",
@@ -2982,7 +2934,6 @@
     {
       "id": "wall_segment_2",
       "name": "Wall segment \u00b7 Level 2",
-      "category": "defense",
       "role": "wall",
       "description": "A structural 6 m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
       "visual": "wall",
@@ -3035,7 +2986,6 @@
     {
       "id": "wall_segment_3",
       "name": "Wall segment \u00b7 Level 3",
-      "category": "defense",
       "role": "wall",
       "description": "A structural 6 m wall segment with a player-selected inside and outside. Remains a physical obstruction without operating power.",
       "visual": "wall",

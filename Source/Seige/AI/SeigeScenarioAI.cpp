@@ -1,4 +1,5 @@
 #include "SeigeScenarioAI.h"
+#include "Simulation/SeigeCanonicalJson.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -136,7 +137,7 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
     if(!Config->TryGetStringField(TEXT("developed_initialization"),DevelopedInitialization)||(DevelopedInitialization!=TEXT("established_manifest")&&DevelopedInitialization!=TEXT("simulated_history")))
     {Error=TEXT("Unsupported AI developed_initialization");return false;}
     if(!LoadEstablishedPreset(Colony,Preset,Error))return false;
-    ConfigFingerprint = FMD5::HashAnsiString(*(Raw + PresetRaw));
+    ConfigFingerprint = FMD5::HashAnsiString(*(SeigeCanonicalJson(Config) + SeigeCanonicalJson(Preset)));
     return true;
 }
 
@@ -305,7 +306,7 @@ int32 FSeigeScenarioAI::PlotDefenseCoverage(const FSeigeSimulation& Colony,const
     return Covered;
 }
 
-bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Definition, FVector2D Anchor, double StartingAngle, double FirstRadius)
+bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Definition, FVector2D Anchor, double StartingAngle, double FirstRadius, bool PreferShortRoad)
 {
     const FSeigeBuildingDef& Def = Colony.BuildingDefs[Definition];
     const bool PreferCoverage=DefenseCoveragePolicy==TEXT("prefer_covered_approaches")&&!CoverageExcludedRoles.Contains(Def.Role);
@@ -351,7 +352,21 @@ bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Defini
     // authored search order stands (bootstrap); otherwise equal coverage is
     // broken by the shorter new road.
     const bool Ranked=Candidates.ContainsByPredicate([](const FPlot& P){return P.Coverage>0;});
-    Candidates.StableSort([Ranked](const FPlot& A,const FPlot& B){return A.Coverage!=B.Coverage?A.Coverage>B.Coverage:Ranked&&A.GridDistance+1.<B.GridDistance;});
+    if(PreferShortRoad)
+    {
+        // Urgent support recovery: the colony is already short of worker
+        // support, so time to power matters more than the last few covered
+        // approaches. Any plot keeping at least half the best coverage is
+        // eligible and the shortest new road wins; others keep coverage order.
+        int32 Best=0;for(const auto& C:Candidates)Best=FMath::Max(Best,C.Coverage);const int32 Floor=Best/2;
+        Candidates.StableSort([Floor](const FPlot& A,const FPlot& B)
+        {
+            const bool AOk=A.Coverage>=Floor,BOk=B.Coverage>=Floor;if(AOk!=BOk)return AOk;
+            if(AOk&&FMath::Abs(A.GridDistance-B.GridDistance)>1.)return A.GridDistance<B.GridDistance;
+            return A.Coverage>B.Coverage;
+        });
+    }
+    else Candidates.StableSort([Ranked](const FPlot& A,const FPlot& B){return A.Coverage!=B.Coverage?A.Coverage>B.Coverage:Ranked&&A.GridDistance+1.<B.GridDistance;});
     for(const auto& Candidate:Candidates)
     {
         FString Error;if(!PlaceConnectedBuilding(Colony,Definition,Candidate.Position,Error)){Status=Error;continue;}
@@ -844,7 +859,7 @@ bool FSeigeScenarioAI::RecoverWorkerSupport(FSeigeSimulation& Colony,bool& Waiti
         Waiting=true;bool Affordable=true;
         for(const auto& Cost:Def.Cost)if(Colony.ConstructionAvailable(Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value)Affordable=false;
         if(!Affordable){Status=TEXT("Waiting for materials to restore worker support");return false;}
-        if(BuildNear(Colony,Target.Definition,Core->Position,Target.PlacementIndex*UE_TWO_PI/Angles))return true;
+        if(BuildNear(Colony,Target.Definition,Core->Position,Target.PlacementIndex*UE_TWO_PI/Angles,-1,true))return true;
         return false;
     }
     return false;
