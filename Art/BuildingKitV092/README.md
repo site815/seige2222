@@ -1,6 +1,6 @@
 # Building kit v0.9.2
 
-Distinct silhouettes for the building families that previously shared one factory hall (23 of 28 blueprints) or the warehouse (solar arrays, battery bank, trading ports), plus the service bay. Thirty-three original meshes, generated procedurally in Blender 4.5 on the project's industrial palette; no marketplace models, no photographs.
+Distinct silhouettes for the building families that previously shared one factory hall (23 of 28 blueprints) or the warehouse (solar arrays, battery bank, trading ports), plus the service bay, sensor mast and extraction rig. Thirty-five original meshes, generated procedurally in Blender 4.5 on the project's industrial palette; no marketplace models, no photographs.
 
 | Mesh | Buildings | Reads as |
 | --- | --- | --- |
@@ -23,11 +23,13 @@ Distinct silhouettes for the building families that previously shared one factor
 | SM_DepotYard | depot | Barrel-roofed warehouse, three marked loading docks, dispatch office, gantry-served container yard |
 | SM_WorkerFactory | worker_factory | Dark assembly hall with a glazed front, roof clerestories, receiving dock and a test track |
 | SM_ServiceBay | robot_service_bay | Three open charging berths (contact plates, pedestals, charge leads, diagnostic arms) under a canopy that covers only the pedestals, plant hall with control gallery and roof chillers, coolant plant, parts cage (2026-10-09) |
+| SM_SensorMast | sensor | Tapered lattice mast with phased-array faces, a rotating search radar and beacon whip; equipment shelter, UPS cabinet, cable tray, fenced pad (2026-10-09) |
+| SM_ExtractionRig | extraction_mine | Derrick on a substructure over the wellhead, top drive, pipe rack, process tanks, conveyor to an ore hopper over a loading bay, operator cabin, power skid (2026-10-09) |
 | SM_Tower*2 / *3 | turret, kinetic, missile, plasma L2–3 | Level growth around the unchanged 250 cm deck: deck rails, radar mast, second locker, barrier line (L2); armoured deck skirt, floodlight masts, generator pack, surveillance mast (L3) |
 
 The tower bases are authored at the 1080 cm tower plot with their weapon deck at **250 cm**, the fixed height at which `SeigeCombatVisuals.cpp` places the procedural mounts, so every level's mounts sit on the deck. The 2026-10-09 contrast pass gave the halls dark roof membranes, dark aprons with lane markings in front of doors and light hangar walls under dark barrel roofs, so buildings separate from the ground and from each other at colony zoom.
 
-Not covered: the sensor mast and the extraction mine keep their earlier meshes. See `docs/TODO.md`.
+Every buildable blueprint except the procedural wall segments now uses a kit mesh; the command core and its shuttle keep the v0.9 orbital meshes. See `docs/TODO.md`.
 
 **Orientation (2026-10-09).** Every kit mesh is authored with its front (doors, docks, berths) toward −Y and turned +90° about Z at export, so in Unreal the front faces **+X** — the side where every building's access port and road arrive (`access_port: [1, 0]` for all 52 definitions) and one of the two faces the default camera (yaw 135°) sees. Before this the fronts faced Unreal +Y, away from the camera: Blender's FBX export and Unreal's import keep X and mirror Y, so authored (x, y) lands at Unreal (−y, −x). The portraits are rendered from the same turned meshes with the studio lights turned with them.
 

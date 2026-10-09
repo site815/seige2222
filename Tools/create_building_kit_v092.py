@@ -867,6 +867,121 @@ def worker_factory():
     scatter_props(48, 1030, 1030, seed=83, count=7)
     export('SM_WorkerFactory', 'Dark assembly hall with a glazed front, roof clerestories, a receiving dock and a test track with charging posts', ['worker_factory'])
 
+# ------------------------------------------------------------------ LATTICE HELPERS
+def lattice_tower(cx, cy, z0, base, top, height, levels, leg=14, brace=7, mat='Steel'):
+    """Four-leg tapered lattice: legs, a horizontal ring per level and X-bracing
+    on every face. Returns the top z and the half-width at the top."""
+    def half(z): return base / 2 + (top - base) / 2 * (z - z0) / height
+    corners = ((1, 1), (-1, 1), (-1, -1), (1, -1))
+    for sx, sy in corners:
+        beam('Lattice leg', (cx + sx * base / 2, cy + sy * base / 2, z0), (cx + sx * top / 2, cy + sy * top / 2, z0 + height), leg, mat=mat)
+    for k in range(levels + 1):
+        z = z0 + height * k / levels; h = half(z)
+        for i in range(4):
+            (ax, ay), (bx, by) = corners[i], corners[(i + 1) % 4]
+            beam('Lattice ring', (cx + ax * h, cy + ay * h, z), (cx + bx * h, cy + by * h, z), brace, mat=mat)
+        if k < levels:
+            z2 = z0 + height * (k + 1) / levels; h2 = half(z2)
+            for i in range(4):
+                (ax, ay), (bx, by) = corners[i], corners[(i + 1) % 4]
+                beam('Lattice brace', (cx + ax * h, cy + ay * h, z), (cx + bx * h2, cy + by * h2, z2), brace * .8, mat=mat)
+                beam('Lattice brace', (cx + bx * h, cy + by * h, z), (cx + ax * h2, cy + ay * h2, z2), brace * .8, mat=mat)
+    return z0 + height, top / 2
+
+
+def fence(half_w, half_d, z0, gate_w=320, h=180):
+    """Perimeter fence: posts, two rails and a gate gap on the -Y side."""
+    def run(a, b):
+        n = max(1, int((b - a).length // 250))
+        for i in range(n + 1):
+            p = a + (b - a) * i / n; beam('Fence post', (p.x, p.y, z0), (p.x, p.y, z0 + h), 6, mat='Slate')
+        for z in (z0 + h * .45, z0 + h - 4): beam('Fence rail', (a.x, a.y, z), (b.x, b.y, z), 4, mat='Steel')
+    run(Vector((-half_w, half_d, 0)), Vector((half_w, half_d, 0)))
+    run(Vector((half_w, half_d, 0)), Vector((half_w, -half_d, 0))); run(Vector((-half_w, -half_d, 0)), Vector((-half_w, half_d, 0)))
+    run(Vector((-half_w, -half_d, 0)), Vector((-gate_w / 2, -half_d, 0))); run(Vector((gate_w / 2, -half_d, 0)), Vector((half_w, -half_d, 0)))
+
+
+# ------------------------------------------------------------------ SENSOR MAST (plot 780)
+def sensor_mast():
+    """Tapered lattice mast with a top platform, four phased-array faces, a
+    rotating search radar and a beacon whip; equipment shelter, UPS cabinet,
+    cable tray, floodlight and a perimeter fence on a compact pad."""
+    foundation(780, 780, 24)
+    z0 = 24; mx, my = 40, 60
+    for sx in (-1, 1):
+        for sy in (-1, 1): box('Mast footing', (mx + sx * 125, my + sy * 125, z0 + 14), (70, 70, 28), 'Concrete', 6)
+    top, half = lattice_tower(mx, my, z0 + 28, 250, 110, 1060, 7)
+    box('Mast platform grating', (mx, my, top + 4), (230, 230, 8), 'Steel', 1)
+    for sx in (-1, 1):
+        box('Platform guard rail', (mx + sx * 113, my, top + 92), (5, 230, 5), 'Yellow', 0); box('Platform guard rail', (mx, my + sx * 113, top + 92), (230, 5, 5), 'Yellow', 0)
+        for sy in (-1, 1): beam('Platform rail post', (mx + sx * 113, my + sy * 113, top + 8), (mx + sx * 113, my + sy * 113, top + 94), 5, mat='Steel')
+    for i, (dx, dy, rot) in enumerate(((0, -1, 0), (1, 0, math.pi / 2), (0, 1, math.pi), (-1, 0, -math.pi / 2))):
+        box('Phased array face', (mx + dx * 82, my + dy * 82, top + 110), (150, 16, 150), 'Slate', 3, rotation=rot)
+        box('Array radiating tiles', (mx + dx * 92, my + dy * 92, top + 110), (128, 4, 128), 'Glass', 0, rotation=rot)
+    cyl('Radar turntable', (mx, my, top + 205), 40, 22, 'Steel', 24)
+    box('Search radar antenna', (mx, my, top + 250), (300, 26, 64), 'Ceramic', 4)
+    box('Radar feed horn', (mx, my - 34, top + 236), (40, 30, 24), 'Carbon', 2)
+    tube('Beacon whip', (mx + 70, my + 70, top + 8), (mx + 70, my + 70, top + 380), 3, 'Steel', sides=6); box('Obstruction beacon', (mx + 70, my + 70, top + 386), (14, 14, 14), 'Amber', 0)
+    for sx in (-1, 1): tube('Whip antenna', (mx + sx * 95, my - 95, top + 8), (mx + sx * 95, my - 95, top + 220), 2, 'Steel', sides=6)
+    lx, ly = mx + 125 + 22, my - 20
+    for y in (ly - 22, ly + 22): beam('Mast ladder stile', (lx, y, z0 + 28), (lx - 70, y, top), 5, mat='Yellow')
+    box('Equipment shelter', (-230, -210, z0 + 125), (260, 210, 250), 'Ceramic', 6)
+    box('Shelter roof', (-230, -210, z0 + 254), (276, 226, 10), 'Slate', 2)
+    door_y(-290, -210 - 105 - 13, z0, 96, 200); box('Shelter AC unit', (-150, -317, z0 + 165), (90, 24, 70), 'Steel', 3); vent_y(-150, -330, z0 + 165, 70, 50)
+    box('UPS battery cabinet', (250, -250, z0 + 85), (120, 90, 170), 'Slate', 4); box('Cabinet status lamp', (250, -296, z0 + 150), (30, 4, 8), 'Light', 0)
+    beam('Cable tray', (-100, -210, z0 + 210), (mx - 120, my - 120, z0 + 210), 14, 6, 'Steel')
+    tube('Floodlight pole', (300, 280, z0), (300, 280, z0 + 520), 7, 'Steel', sides=8); box('Floodlight head', (300, 270, z0 + 528), (50, 30, 20), 'Light', 0)
+    fence(375, 375, z0)
+    export('SM_SensorMast', 'Tapered lattice sensor mast with phased-array faces, rotating search radar and beacon whip; equipment shelter, UPS cabinet, cable tray and fenced pad', ['sensor'])
+
+
+# ------------------------------------------------------------------ EXTRACTION RIG (plot 1380)
+def extraction_rig():
+    """Drilling derrick on a substructure over the wellhead (the bound
+    deposit), top drive and drill string, pipe rack, process tanks, inclined
+    conveyor to an ore hopper over a loading bay, operator cabin and power
+    skid: reads as extraction for any deposit type."""
+    foundation(1380, 1380, 36)
+    z0 = 36; wx, wy = 0, 150
+    box('Rig substructure', (wx, wy, z0 + 110), (440, 440, 220), 'Slate', 6)
+    for sx in (-1, 1): box('Substructure open bay', (wx + sx * 140, wy - 221, z0 + 90), (120, 6, 170), 'Carbon', 1)
+    box('Drill floor', (wx, wy, z0 + 226), (460, 460, 12), 'Steel', 2)
+    for sx in (-1, 1):
+        box('Drill floor rail', (wx + sx * 228, wy, z0 + 320), (5, 460, 5), 'Yellow', 0); box('Drill floor rail', (wx, wy + sx * 228, z0 + 320), (460, 5, 5), 'Yellow', 0)
+        for k in (-1, 0, 1):
+            beam('Drill floor rail post', (wx + sx * 228, wy + k * 225, z0 + 232), (wx + sx * 228, wy + k * 225, z0 + 322), 5, mat='Steel')
+            beam('Drill floor rail post', (wx + k * 225, wy + sx * 228, z0 + 232), (wx + k * 225, wy + sx * 228, z0 + 322), 5, mat='Steel')
+    top, half = lattice_tower(wx, wy, z0 + 232, 300, 130, 820, 6, leg=16)
+    box('Crown block', (wx, wy, top + 30), (150, 150, 60), 'Steel', 4); cyl('Crown sheave', (wx, wy - 40, top + 40), 28, 14, 'Slate', 20).rotation_euler = (math.pi / 2, 0, 0)
+    box('Top drive', (wx, wy, z0 + 640), (70, 90, 140), 'Yellow', 4); tube('Drill line', (wx, wy, z0 + 710), (wx, wy, top), 3, 'Steel', sides=6)
+    tube('Drill string', (wx, wy, z0 + 232), (wx, wy, z0 + 570), 9, 'Steel', sides=12)
+    cyl('Wellhead', (wx, wy, z0 + 260), 34, 50, 'Copper', 20)
+    box('Pipe rack', (-460, 380, z0 + 60), (320, 260, 20), 'Slate', 2)
+    for k in range(7): tube('Racked drill pipe', (-610, 270 + k * 36, z0 + 80), (-310, 270 + k * 36, z0 + 80), 8, 'Steel', sides=10)
+    for y in (300, 580):
+        cyl('Process tank', (470, y, z0 + 140), 110, 280, 'Ceramic', 32); cyl('Tank head', (470, y, z0 + 290), 110, 24, 'Steel', 32, 40)
+        torus('Tank ring', (470, y, z0 + 60), 112, 5, 'Slate')
+    pipe('Process line', [(wx + 200, wy + 40, z0 + 180), (360, wy + 40, z0 + 180), (360, 300, z0 + 180), (370, 300, z0 + 180)], 7, 'Copper')
+    hx, hy = 330, -360
+    for sx in (-1, 1):
+        for sy in (-1, 1): beam('Hopper leg', (hx + sx * 90, hy + sy * 70, z0), (hx + sx * 90, hy + sy * 70, z0 + 320), 14, mat='Steel')
+    box('Ore hopper', (hx, hy, z0 + 400), (220, 180, 160), 'Slate', 4); box('Hopper chute', (hx, hy, z0 + 290), (90, 70, 60), 'Steel', 2)
+    box('Loading bay marking', (hx, hy - 60, z0 + 2), (260, 300, 2), 'Carbon', 0)
+    for sx in (-1, 1): box('Loading bay stripe', (hx + sx * 125, hy - 60, z0 + 3), (8, 300, 1), 'Yellow', 0)
+    beam('Inclined conveyor', (wx + 150, wy - 150, z0 + 250), (hx - 20, hy + 60, z0 + 480), 50, 16, 'Steel')
+    beam('Conveyor belt', (wx + 150, wy - 150, z0 + 262), (hx - 20, hy + 60, z0 + 492), 40, 4, 'Carbon')
+    for t in (.3, .65):
+        x = wx + 150 + (hx - 20 - wx - 150) * t; y = wy - 150 + (hy + 60 - wy + 150) * t; z = z0 + 250 + 230 * t
+        beam('Conveyor trestle', (x, y, z0), (x, y, z - 8), 12, mat='Slate')
+    box('Operator cabin', (-420, -330, z0 + 130), (300, 220, 260), 'Ceramic', 6); box('Cabin roof', (-420, -330, z0 + 264), (316, 236, 10), 'Slate', 2)
+    window_y(-460, -330 - 110 - 7, z0 + 170, 150, 70); door_y(-330, -330 - 110 - 13, z0, 90, 200)
+    box('Power skid', (-470, 40, z0 + 80), (240, 150, 160), 'Slate', 4); vent_y(-470, 40 - 80, z0 + 90, 180, 100); fan(-470, 40, z0 + 168, 45)
+    box('Skid status lamp', (-400, 40 - 77, z0 + 140), (30, 4, 8), 'Light', 0)
+    for x in (-600, 600): tube('Rig floodlight pole', (x, -600, z0), (x, -600, z0 + 560), 7, 'Steel', sides=8); box('Rig floodlight', (x, -590, z0 + 566), (50, 30, 20), 'Light', 0)
+    scatter_props(z0, 690, 690, seed=97, count=5)
+    export('SM_ExtractionRig', 'Drilling derrick on a substructure over the wellhead with top drive, pipe rack, process tanks, inclined conveyor to an ore hopper over a loading bay, operator cabin and power skid', ['extraction_mine'])
+
+
 # ------------------------------------------------------------------ ROBOT SERVICE BAY (plot 2460)
 def service_bay():
     """Three open charging berths in front of a plant hall (charge electronics,
@@ -947,6 +1062,7 @@ BUILDERS = {
     'towerLaser2': lambda: tower_base('laser', 2), 'towerKinetic2': lambda: tower_base('kinetic', 2), 'towerMissile2': lambda: tower_base('missile', 2), 'towerPlasma2': lambda: tower_base('plasma', 2),
     'towerLaser3': lambda: tower_base('laser', 3), 'towerKinetic3': lambda: tower_base('kinetic', 3), 'towerMissile3': lambda: tower_base('missile', 3), 'towerPlasma3': lambda: tower_base('plasma', 3),
     'depotYard': depot, 'workerFactory': worker_factory, 'serviceBay': service_bay,
+    'sensorMast': sensor_mast, 'extractionRig': extraction_rig,
 }
 for kind, build in BUILDERS.items():
     if wanted(kind):
