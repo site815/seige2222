@@ -5,7 +5,7 @@ import {readConfiguration, validateConfiguration} from './validate_configuration
 // runtime definitions and the user's saved games are never modified.
 const data = readConfiguration();
 assert.doesNotThrow(() => validateConfiguration(data), 'current interface must validate');
-assert.deepEqual(data.ui.resource_groups.map(group => group.id), ['credits', 'energy', 'raw', 'basic', 'advanced']);
+assert.deepEqual(data.ui.resource_groups.map(group => group.id), ['credits', 'energy', 'workers', 'raw', 'basic', 'advanced']);
 const mines = data.rules.buildings.buildings.filter(building => building.role === 'extractor');
 assert.equal(mines.length, 1, 'one Extraction Mine definition replaces the resource-specific catalog');
 assert.equal(data.ui.build_groups.flatMap(group => group.entries).filter(entry => entry.definition === mines[0].id).length, 1,
@@ -13,6 +13,8 @@ assert.equal(data.ui.build_groups.flatMap(group => group.entries).filter(entry =
 
 const group = (candidate, id) => candidate.ui.resource_groups.find(value => value.id === id);
 const cases = [
+  ['wrong worker group order', candidate => { [candidate.ui.resource_groups[1],candidate.ui.resource_groups[2]]=[candidate.ui.resource_groups[2],candidate.ui.resource_groups[1]]; }, /resource group/],
+  ['physical material in workers group', candidate => { group(candidate, 'workers').entries.push(structuredClone(group(candidate, 'raw').entries[0])); }, /resource group workers entries/],
   ['missing resource group', candidate => candidate.ui.resource_groups.pop(), /resource_groups must be an array/],
   ['duplicate raw material', candidate => {
     const raw = group(candidate, 'raw');
@@ -36,4 +38,4 @@ for (const [name, mutate, diagnostic] of cases) {
   mutate(candidate);
   assert.throws(() => validateConfiguration(candidate), diagnostic, name);
 }
-console.log('UI configuration validation: five ordered resource groups, one mine entry and 7 invalid cases passed.');
+console.log(`UI configuration validation: six ordered resource groups, one mine entry and ${cases.length} invalid cases passed.`);

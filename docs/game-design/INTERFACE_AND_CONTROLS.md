@@ -2,9 +2,11 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
-**Current v0.8.1 revision:** The five-group resource HUD and single Extraction Mine are implemented in source and external definitions. Configuration validation passes, including seven invalid grouping cases. The revision has compiled and been staged; package boot and four display states passed. The final v0.8.1 Shipping executable passed 117 interaction stages, boot/offline checks and four display states; reconciled native coverage contains 88 unique clean results. The [v0.8.1 verification record](../verification/v0.8.1.json) identifies the exact evidence and retained limitations. The [v0.8 verification record](../verification/v0.8.0.json) covers the preceding package and keeps its 117-stage gameplay checkpoint separate from its final rendered executable; it does not verify these new changes.
+**Current v0.10 candidate:** A thin top row contains **Credits, Energy, Workers, Raw, Basic, Advanced** in exactly that order, with version/FPS at top left. Numeric displays use at most two decimals; a positive trade amount below 0.01 credits displays `<0.01 Cr`, with meaningful batch quotes and actual transaction totals. Nested resource hovers distinguish available, reserved, transported and committed goods. Workers show total owned, core assigned/capacity, active, stored, idle surplus and a separate vehicle count. Individual worker hover/click shows permanent crew, current task, cargo and battery. The bottom strip combines invasion pulse, calendar and colony age.
 
-## Five resource groups and one mine — v0.8.1
+Production chains open with **P** from any view without discarding that view; closing restores its context. Leaving a focused region restores the previous view. The Energy build category uses **B, E**; Fusion uses **B, E, F**. Full fabrication bills come from the actual chassis and all fitted weapon definitions. Only the core manufactures workers; specialist factories handle industrial and vehicle work. Surplus targets remain, but no automatic/manual surplus disassembly or queue-priority controls are exposed. Current compilation and bounded rendered checks are tracked separately in [the development report](../DEVELOPMENT_REPORT.md).
+
+## Historical five resource groups and one mine — v0.8.1
 
 **Confirmed direction:** The top resource overlay has five separate floating groups, in this order:
 
@@ -24,7 +26,7 @@ The worker/status row sits underneath the five groups: active workers/jobs and s
 
 [ui.json](../../Interface/ui.json) owns the ordered groups, compact item names, categories and shortcuts. The five cards share a compact band, with controls/dossiers below it. Version and FPS remain at the top left in a short row above the resource cards, preserving the earlier explicit requirement. Authored regression coverage checks viewport bounds/scaled hit tests at 1280×720, 1600×900 and 3840×1600, hover-button retention, hidden-state clearing and the single-mine shortcut. Those native checks passed; geometry assertions alone do not prove readable rendered text.
 
-## Current v0.8 command and transport revision
+## Historical v0.8 command and transport revision
 
 **Retained command behavior:** The population is labelled **workers** throughout the player interface. It remains robotic; stable IDs are unchanged. The bottom dock contains Build, Regions, time controls and Menu. The separate Colony button/menu is removed. Save/load, settings, credits, main menu and exit live in the game menu. **Launch shuttle** is confined to the selected live own command core's building dossier; observer, neighbor, missing/stale selection, other buildings and active placement tools cannot issue it.
 

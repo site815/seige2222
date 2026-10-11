@@ -89,8 +89,8 @@ for slot, settings in DATA['materials'].items():
                           sampler_type=u.MaterialSamplerType.SAMPLERTYPE_MASKS)
         normal_obj = node(m, u.MaterialExpressionTextureObjectParameter, parameter_name='FurNormal', texture=textures['T_Dog_FurNormal'],
                           sampler_type=u.MaterialSamplerType.SAMPLERTYPE_NORMAL)
-        scale = scalar(m, 'DetailScaleCm', 42.0)
-        strength = scalar(m, 'DetailStrength', .75)
+        scale = scalar(m, 'DetailScaleCm', 9.0)
+        strength = scalar(m, 'DetailStrength', .18)
         # Rest-pose position from the authored UV channels keeps the streaks fixed
         # to the skin while the dog animates; two planar projections blend by the
         # vertex normal (top view on the back, side view on the flanks and legs).
@@ -125,7 +125,7 @@ return float3(nm.xy, 1.0);
         # Tangent-space detail normal is only approximate under the planar UVs; keep it mild.
         nstrength = node(m, u.MaterialExpressionLinearInterpolate, const_a=0, const_alpha=.35)
         flat = node(m, u.MaterialExpressionConstant3Vector, constant=u.LinearColor(0, 0, 1, 1))
-        nmix = node(m, u.MaterialExpressionLinearInterpolate); link(flat, nmix, 'A'); link(tri, nmix, 'B'); link(scalar(m, 'DetailNormalStrength', .35), nmix, 'Alpha')
+        nmix = node(m, u.MaterialExpressionLinearInterpolate); link(flat, nmix, 'A'); link(tri, nmix, 'B'); link(scalar(m, 'DetailNormalStrength', .15), nmix, 'Alpha')
         output(nmix, u.MaterialProperty.MP_NORMAL)
         output(scalar(m, 'Roughness', .8), u.MaterialProperty.MP_ROUGHNESS)
         output(scalar(m, 'Specular', .2), u.MaterialProperty.MP_SPECULAR)

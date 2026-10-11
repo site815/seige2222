@@ -18,7 +18,7 @@ for(const [i,size] of ['small','medium','large'].entries()){
   assert.equal(h.length_meters,2*2**i);assert.equal(h.mass_limit_kg,500*8**i);assert.equal(h.mount_points,4**i);
   h.width_meters*=1.2;h.height_meters*=1.2;h.length_meters*=1.25;h.mass_limit_kg*=1.2;h.mount_points*=2;
 }
-for(const w of weapons.weapons){w.mount_points*=2;if(w.id==='laser_small'){w.mass_kg=550;w.cost.alloy=545;}}
+for(const w of weapons.weapons){w.mount_points*=2;if(w.id==='laser_small'){w.mass_kg=550;w.cost.alloy=w.mass_kg-Object.entries(w.cost).filter(([id])=>id!=='alloy').reduce((sum,[,kg])=>sum+kg,0);}}
 for(const c of chassis.chassis){assert.equal(c.capacity_points,2**(c.tier-1));c.capacity_points*=20;c.mount_points*=2;c.max_weapon_mass_kg*=2;}
 combat.fleet_capacity=60;
 for(const p of Object.values(combat.building_platforms)){p.mount_points*=2;p.max_weapon_mass_kg*=2;}
@@ -28,6 +28,7 @@ const reject=(name,change,pattern)=>{const doc=structuredClone({weapons,combat,c
 reject('weapons',d=>d.hardpoint_sizes.medium.mount_points=9,/frontal area/);
 reject('weapons',d=>d.weapons.find(w=>w.id==='laser_small').mass_kg=601,/mass_kg/);
 reject('weapons',d=>d.hardpoint_sizes.small.width_meters=0,/width_meters/);
+reject('weapons',d=>d.weapons.find(w=>w.id==='laser_small').cost.alloy+=1,/conserve mass/);
 reject('combat',d=>d.fleet_capacity=0,/fleet capacity/);
 reject('chassis',d=>d.chassis[0].capacity_points=1.5,/capacity points/);
-console.log('Combat editable-budget validation: authored defaults, consistent edited catalog, 5 invalid cases passed.');
+console.log('Combat editable-budget validation: authored defaults, consistent edited catalog, 6 invalid cases passed.');

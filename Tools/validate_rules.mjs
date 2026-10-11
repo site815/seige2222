@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCombatRules } from './validate_combat.mjs';
 import { validateEnvironment } from './validate_environment.mjs';
+import { validateTransportVehicles } from './validate_transport_vehicles.mjs';
 
 const defaultRules = fileURLToPath(new URL('../Rules/', import.meta.url));
 const names = ['resources', 'recipes', 'buildings', 'policies', 'scenario', 'transport', 'energy', 'trade', 'companions', 'walls', 'calendar', 'workers'];
@@ -18,7 +19,7 @@ const selectors = {
   logistics_policy:['local_delivery'], enemy_target_policy:['nearest_building'], extraction_limit_policy:['one_extractor_per_node'],
   repair_policy:['local_materials'], objective_policy:['survive_and_manufacture'], shuttle_policy:['preloaded_cargo_only'],
   storage_policy:['overflow_only'], rule_time_basis:['simulation_seconds'],
-  construction_policy:['phased_physical_delivery'], robot_support_policy:['local_capacity_and_maintenance'],
+  construction_policy:['phased_physical_delivery'], robot_support_policy:['individual_batteries_and_crews'],
   construction_source_policy:['surplus_then_largest_load'],
 };
 export function readRules(directory) {
@@ -29,6 +30,7 @@ export function validateRules(d) {
   const fail = text => { throw new Error(text); };
   if(!d.ruleDirectory)fail('Rules directory is required for independent combat catalogs');
   const combatErrors=validateCombatRules(d.ruleDirectory);if(combatErrors.length)fail(`Combat catalogs: ${combatErrors.join('; ')}`);
+  const transportErrors=validateTransportVehicles(d.ruleDirectory);if(transportErrors.length)fail(`Transport/mobility catalogs: ${transportErrors.join('; ')}`);
   const object = (v,n) => { if (!v || typeof v !== 'object' || Array.isArray(v)) fail(`${n} must be an object`); return v; };
   const array = (v,n) => { if (!Array.isArray(v)) fail(`${n} must be an array`); return v; };
   const str = (v,n,empty=false) => { if (typeof v !== 'string' || (!empty && !v.length)) fail(`${n} must be a ${empty?'':'nonempty '}string`); return v; };
@@ -43,8 +45,8 @@ export function validateRules(d) {
   num(calendar.days_per_season,'calendar.days_per_season',1,true);if(calendar.days_per_season>366)fail('Calendar season exceeds366 days');
   num(calendar.initial_elapsed_seconds,'calendar.initial_elapsed_seconds');if(calendar.initial_elapsed_seconds>9007199254||Math.abs(calendar.initial_elapsed_seconds*1e6-Math.round(calendar.initial_elapsed_seconds*1e6))>.001)fail('Calendar start is not a safe microsecond time');
   if(JSON.stringify(calendar.seasons)!==JSON.stringify(['spring','summer','autumn','winter'])||calendar.solar_curve!=='daylight_half_sine')fail('Unsupported season order or solar curve');
-  const workers=object(d.workers,'workers');if(workers.scheduler_policy!=='finite_shared_pool')fail('Worker scheduler must use the finite shared pool');
-  const workerBounds={body_radius_meters:[.1,5],haul_mass_kg:[.1,10000],haul_volume_litres:[.1,10000],logistics_workers:[1,1000,true],logistics_facilities_per_worker:[1,1000,true],logistics_max_workers:[1,1000,true],core_minimum_operators:[1,1000,true],loading_seconds:[.01,3600],unloading_seconds:[.01,3600],route_retry_seconds:[.01,3600],deployment_ground_seconds:[.01,3600],deployment_hatch_seconds:[.01,3600],hatch_exit_spacing_seconds:[.01,3600],core_hatch_fraction:[.01,1],workstation_spacing_meters:[.1,10],idle_return_seconds:[.01,3600]};
+  const workers=object(d.workers,'workers');if(workers.scheduler_policy!=='owned_building_crews')fail('Worker scheduler must use permanent owned building crews');
+  const workerBounds={charging_queue_spacing_meters:[1,10],battery_capacity_kwh:[.001,100],charge_minutes_per_day:[1,1440],charge_reserve_fraction:[.01,.9],charge_reserve_stagger_fraction:[.001,.1],initial_charge_stagger_fraction:[.001,.5],core_recovery_fraction:[.001,1],core_charging_berths:[1,1,true],station_charging_berths:[1,1,true],body_radius_meters:[.1,5],haul_mass_kg:[.1,10000],haul_volume_litres:[.1,10000],logistics_workers:[1,1000,true],logistics_facilities_per_worker:[1,1000,true],logistics_max_workers:[1,1000,true],core_minimum_operators:[1,1000,true],loading_seconds:[.01,3600],unloading_seconds:[.01,3600],route_retry_seconds:[.01,3600],deployment_ground_seconds:[.01,3600],deployment_hatch_seconds:[.01,3600],hatch_exit_spacing_seconds:[.01,3600],core_hatch_fraction:[.01,1],workstation_spacing_meters:[.1,10],idle_return_seconds:[.01,3600]};
   for(const [key,[min,max,integer]]of Object.entries(workerBounds)){num(workers[key],`workers.${key}`,min,!!integer);if(workers[key]>max)fail(`workers.${key} exceeds supported bound`);}
   if(!['fixed','completed_facilities'].includes(workers.logistics_scaling_policy))fail('Unsupported logistics scaling policy');
   if(workers.logistics_max_workers<workers.logistics_workers)fail('Logistics maximum cannot be below its base worker count');
@@ -55,6 +57,8 @@ export function validateRules(d) {
   if(!resources.has(dog.food_resource)||resources.get(dog.food_resource).unit!=='kg')fail('Companion food must be a kilogram cargo resource');
   const dogRanges={initial_count:[0,1,true],seed:[0,2147483647,true],walk_kmh:[.1,20],walk_cycle_meters:[.05,5],roam_radius_meters:[1,1000],food_per_meal_kg:[.001,100],meal_interval_seconds:[1,86400],fed_duration_seconds:[1,172800],feed_radius_meters:[1,1000],morale_bonus:[0,.5],morale_radius_meters:[1,1000],rest_seconds:[0,300],eye_height_cm:[20,150],view_fov:[45,110],look_sensitivity:[.01,1],body_radius_meters:[.05,1],maximum_slope_grade:[.1,2]};
   for(const [key,[min,max,integer]] of Object.entries(dogRanges)){num(dog[key],`dog.${key}`,min,!!integer);if(dog[key]>max)fail(`dog.${key} exceeds supported bound`);}
+  for(const key of ['territory_radius_meters','damage_alert_radius_meters','shelter_seconds','run_kmh'])num(dog[key],`dog.${key}`,.1);
+  if(dog.roam_radius_meters>dog.territory_radius_meters||dog.run_kmh<dog.walk_kmh||dog.run_kmh>40||dog.territory_radius_meters>1000||dog.damage_alert_radius_meters>1000||dog.shelter_seconds>3600)fail('Invalid companion territory or shelter rules');
   for(const key of ['mesh','walk_animation','idle_animation'])if(!dog[key].startsWith('/Game/Art/'))fail(`dog.${key} must refer to a cooked game asset`);
   for (const r of resources.values()) { str(r.name,`${r.id}.name`); num(r.tier,`${r.id}.tier`,0,true); color(r.color,`${r.id}.color`); if(!['bulk','ingots','crates'].includes(r.stockpile_visual)) fail(`${r.id}: invalid stockpile_visual`); if(!['standard','rare','manufactured'].includes(r.class)||!['kg','L','workers'].includes(r.unit))fail(`${r.id}: invalid resource class or unit`);num(r.unit_mass_kg,`${r.id}.unit_mass_kg`,0,false,true);num(r.litres_per_unit,`${r.id}.litres_per_unit`,0,false,true);if(r.unit==='kg'&&r.unit_mass_kg!==1)fail(`${r.id}: kilogram quantities must weigh one kilogram per unit`);if(typeof r.discrete!=='boolean'||r.discrete!==(r.unit==='workers')||(r.unit==='workers'&&(r.id!=='stored_workers'||r.class!=='manufactured')))fail(`${r.id}: invalid discrete cargo metadata`); }
   const expectedRaw={water:'standard',iron_ore:'standard',silica:'standard',carbon:'standard',copper_ore:'rare',radioactive_ore:'rare',crystalline:'rare',hydrocarbons:'rare'};
@@ -68,7 +72,7 @@ export function validateRules(d) {
   const workerCargo=resources.get('stored_workers');if(!workerCargo||!workerCargo.discrete)fail('Inactive workers require discrete physical cargo');
   for (const r of recipes.values()) { num(r.seconds,`${r.id}.seconds`,0,false,true); num(r.energy_kwh,`${r.id}.energy_kwh`);num(r.worker_output,`${r.id}.worker_output`,0,true);amounts(r.inputs,`${r.id}.inputs`); amounts(r.outputs,`${r.id}.outputs`); if(sum(r.inputs)<=0||sum(r.outputs)+r.worker_output<=0) fail(`${r.id} needs positive inputs and outputs`);if(r.inputs.stored_workers||r.outputs.stored_workers||(r.worker_output>0&&sum(r.outputs)>0))fail(`${r.id}: worker assembly must use worker_output exclusively`);if(Math.abs(mass(r.inputs)-mass(r.outputs)-r.worker_output*workerCargo.unit_mass_kg)>1e-6)fail(`${r.id}: physical recipe mass does not balance`); }
   const buildings = catalog(d.buildings.buildings,'buildings');
-  const roles = ['core','extractor','processor','storage','sensor','defense','service','generator','battery','trade','worker_factory','vehicle_factory','wall'];
+  const roles = ['core','extractor','processor','storage','sensor','defense','service','generator','battery','trade','worker_factory','construction','vehicle_factory','wall'];
   const logisticsExclusions=array(workers.logistics_excluded_roles,'workers.logistics_excluded_roles');
   if(new Set(logisticsExclusions).size!==logisticsExclusions.length||logisticsExclusions.some(role=>!roles.includes(role)))fail('Logistics exclusions require unique known building roles');
   for (const b of buildings.values()) {
@@ -105,7 +109,8 @@ export function validateRules(d) {
     for(const id of new Set([...b.allowed_recipes,...(b.recipe?[b.recipe]:[])])){const r=recipes.get(id);if(volume(r.inputs)*b.recipe_input_multiplier>b.storage_capacity||volume(r.outputs)+r.worker_output*workerCargo.litres_per_unit>b.storage_capacity)fail(`${b.id} recipe does not fit storage`);if(r.worker_output>0&&!b.stores_inactive_workers)fail(`${b.id}: worker production needs physical berth storage`);}
     if(b.stores_inactive_workers&&b.storage_capacity<workerCargo.litres_per_unit)fail(`${b.id}: no room for one inactive worker`);
     if(b.role==='worker_factory'&&(!b.allowed_recipes.length||b.allowed_recipes.some(id=>recipes.get(id).worker_output<=0)))fail(`${b.id}: worker factory needs worker recipes`);
-    if(b.role==='core'&&(b.allowed_recipes.length!==recipes.size||b.allowed_recipes[0]!==d.policies.policies.population_recipe))fail(`${b.id}: universal core must offer every recipe, workers first`);
+    if(b.role==='core'&&(b.allowed_recipes.length!==1||b.allowed_recipes[0]!==d.policies.policies.population_recipe||b.recipe))fail(`${b.id}: core manufactures workers only`);
+    if(b.role!=='core'&&[b.recipe,...b.allowed_recipes].some(id=>recipes.get(id)?.worker_output>0))fail(`${b.id}: only core may manufacture workers`);
   }
   // Upgraded levels carry the cumulative installed bill: previous level cost
   // plus its upgrade_cost, so documentation, review placement and losses agree.
@@ -307,7 +312,7 @@ function selfTest(source) {
     ['unknown selectable output',d=>d.buildings.buildings[0].allowed_recipes.push('missing')],
     ['core omits universal output',d=>d.buildings.buildings[0].allowed_recipes.pop()],
     ['instant factory multiplier',d=>d.buildings.buildings.find(b=>b.id==='worker_factory').recipe_time_multiplier=0],
-    ['worker factory no berth',d=>d.buildings.buildings.find(b=>b.id==='worker_factory').stores_inactive_workers=false],
+    ['core no storage berth',d=>d.buildings.buildings.find(b=>b.id==='command_core').stores_inactive_workers=false],
     ['wrong upgrade family',d=>d.buildings.buildings.find(b=>b.id==='solar_array_2').family='command_core'],
     ['upgraded fixed footprint grows',d=>d.buildings.buildings.find(b=>b.id==='solar_array_2').footprint+=1],
     ['core level width wrong',d=>d.buildings.buildings.find(b=>b.id==='command_core_2').footprint=240],

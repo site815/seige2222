@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "version": "0.9.3",
+  "generated_at_utc": "2026-10-11T07:30:02.786052+00:00",
+  "tested_source_commit": "c2c5f317fc55f6996cdb20f194b7682b5a6ac9e8",
+  "base_verification": "docs/verification/v0.9.3.json",
+  "source_and_package_hashes_rechecked": true,
+  "display": {
+    "path": "docs/verification/v0.9.3/DisplaySmoke-v0.9.3.json",
+    "bytes": 1179,
+    "sha256": "1FC2DF89B12535E3C6FCDB3FEF829E586B7B7A73C8AD099C78F25A47A144D2F8"
+  },
+  "visual_review": {
+    "method": "Automated packaged capture followed by image inspection; not manual mouse/keyboard play.",
+    "results": "Campus, day/night damage and original Rex render without missing materials. Packaged gameplay verified Rex selection and first-person control. Terrain repetition, foliage card edges, night aliasing and stylized Rex likeness remain visible prototype limitations.",
+    "captures": [
+      {
+        "name": "v093-campus3",
+        "capture": {
+          "path": "docs/verification/v0.9.3/v093-campus3.png",
+          "bytes": 4999727,
+          "sha256": "F70D54F4DE15B5A20D7435E11C1F82578021A07D8311F56F4CAF508009EAC329"
+        },
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-campus3.json",
+          "bytes": 7453,
+          "sha256": "C6E6D34876D961CF099A5A9B9E0ACD49C98E5D7E404B2833B37B19D4BBCEEDBA"
+        }
+      },
+      {
+        "name": "v093-damage-day",
+        "capture": {
+          "path": "docs/verification/v0.9.3/v093-damage-day.png",
+          "bytes": 4994811,
+          "sha256": "CC0630046E31811CDDCF5D1CDEB93EE26471577C075DCAED324C4DA3F97D3D3E"
+        },
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-damage-day.json",
+          "bytes": 7438,
+          "sha256": "E45DFA17ACA151E87DE7E64BD5B80DCA60FF7E91C42924CDBC12C65E1282BCDA"
+        }
+      },
+      {
+        "name": "v093-damage-night",
+        "capture": {
+          "path": "docs/verification/v0.9.3/v093-damage-night.png",
+          "bytes": 4421317,
+          "sha256": "A88CF1FD420ED1B9650B12B21A15C5D23123182A8889B7489B040601DDE0B96A"
+        },
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-damage-night.json",
+          "bytes": 7434,
+          "sha256": "71072886FADF834A62E534C64F90B4B844F9DD806158195A33B42DD2F12B31A6"
+        }
+      },
+      {
+        "name": "v093-rex",
+        "capture": {
+          "path": "docs/verification/v0.9.3/v093-rex.png",
+          "bytes": 6048770,
+          "sha256": "67BD63D7BA098CFD12B8ABD85F2D3230631A21457CCECF2F1D54701A4031BEA2"
+        },
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-rex.json",
+          "bytes": 7450,
+          "sha256": "DD3BB37707797A6B8A1DD72220142335AAA80814DC92BF9E66CF7D9C9DD40DD9"
+        }
+      }
+    ]
+  },
+  "performance": {
+    "hardware": "Ryzen 7 9800X3D, GeForce RTX 4070 Ti SUPER, 32 GB RAM",
+    "output": "3840x1600, Medium, 100% rendering resolution, simulation 10x",
+    "isolation": "Sequential runs; process inventory before each run confirmed no other Seige game or Unreal editor. This does not rule out unrelated background GPU activity.",
+    "method": "Five-second samples after scenery readiness and four seconds settling. Travel/orbit keep streaming active. Single runs, not a long-session 60 FPS guarantee.",
+    "runs": [
+      {
+        "name": "static",
+        "mode": "static",
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-static.json",
+          "bytes": 18774,
+          "sha256": "D5046100D9D476DD0096D47486FEA77EDBC854339390F6A76D63E5804463DA15"
+        }
+      },
+      {
+        "name": "travel",
+        "mode": "travel",
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-travel.json",
+          "bytes": 19680,
+          "sha256": "85A2FFDF240FE74D8EF2E3847A0D5FA411C23C2D7D3A65D2FA2CECE00B868D83"
+        }
+      },
+      {
+        "name": "orbit",
+        "mode": "orbit",
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-orbit.json",
+          "bytes": 18734,
+          "sha256": "CA2B1C4A099EB5907ADAE6697B74185C90134345B2F30414FF3B5638DB8A444C"
+        }
+      },
+      {
+        "name": "winter-neighbors",
+        "mode": "static",
+        "report": {
+          "path": "docs/verification/v0.9.3/GraphicsBenchmark-v093-winter-neighbors.json",
+          "bytes": 9885,
+          "sha256": "F677503AA73840CD8B3C09ECF82AC6A77A9BCE994E3D33DB154F928CA3176146"
+        }
+      }
+    ]
+  },
+  "archive": {
+    "path": "Builds/seige2222-v0.9.3-win64.zip",
+    "bytes": 744426266,
+    "sha256": "38DD72224C20EDD8566C020325B636435D7E0343285863FB2B0E9AA08EB89AFC",
+    "crc_check": "passed",
+    "all_runtime_bytes_match": true
+  },
+  "publication": {
+    "source_push_confirmed": "c2c5f317fc55f6996cdb20f194b7682b5a6ac9e8",
+    "release_published": false,
+    "github_api_status": "HTTP 403: Sorry. Your account was suspended",
+    "ci_result": "Unavailable after API suspension; no CI success claim.",
+    "note": "Final release metadata commit/tag push outcome is reported separately."
+  }
+}

@@ -1,8 +1,8 @@
 {
-  "version": "prototype-9.3",
+  "version": "prototype-10.0",
   "energy": {
     "dispatch_policy": "pending_defense_before_optional_transactions",
-    "worker_kw": 0.1,
+    "worker_kw": 0,
     "connection_tolerance_meters": 0.15,
     "minimum_operating_fraction": 1,
     "buildings": {
@@ -681,7 +681,47 @@
         "requires_road_grid": true,
         "priority": 4,
         "generation_source": "constant"
+      },
+      "fusion_power_plant": {
+        "generation_kw": 500,
+        "battery_capacity_kwh": 50,
+        "initial_battery_kwh": 0,
+        "idle_kw": 5,
+        "fuel_resource": "water",
+        "fuel_units_per_kwh": 0.004,
+        "fuel_buffer_seconds": 3600,
+        "self_start": true,
+        "requires_road_grid": false,
+        "priority": 1,
+        "generation_source": "constant"
+      },
+      "fusion_power_plant_2": {
+        "generation_kw": 1000,
+        "battery_capacity_kwh": 100,
+        "initial_battery_kwh": 0,
+        "idle_kw": 10,
+        "fuel_resource": "water",
+        "fuel_units_per_kwh": 0.004,
+        "fuel_buffer_seconds": 3600,
+        "self_start": true,
+        "requires_road_grid": false,
+        "priority": 1,
+        "generation_source": "constant"
+      },
+      "fusion_power_plant_3": {
+        "generation_kw": 1600,
+        "battery_capacity_kwh": 150,
+        "initial_battery_kwh": 0,
+        "idle_kw": 15,
+        "fuel_resource": "water",
+        "fuel_units_per_kwh": 0.004,
+        "fuel_buffer_seconds": 3600,
+        "self_start": true,
+        "requires_road_grid": false,
+        "priority": 1,
+        "generation_source": "constant"
       }
-    }
+    },
+    "worker_energy_note": "Each active drone consumes its own physical battery. Grid energy is charged exactly once at the physical berth; there is no duplicate remote worker passive load."
   }
 }

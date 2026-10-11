@@ -52,13 +52,10 @@
     "worker_factory": "workerFactory",
     "robot_service_bay": "serviceBay",
     "sensor": "sensorMast",
-    "extraction_mine": "extractionRig"
+    "extraction_mine": "extractionRig",
+    "fusion_power_plant": "fuelGenerator",
+    "fusion_power_plant_2": "fuelGenerator",
+    "fusion_power_plant_3": "fuelGenerator"
   },
-  "berths": {
-    "serviceBay": [
-      [470.0, 740.0, 76.0, -180.0],
-      [470.0, 0.0, 76.0, -180.0],
-      [470.0, -740.0, 76.0, -180.0]
-    ]
-  }
+  "berths": {}
 }

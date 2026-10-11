@@ -1,5 +1,5 @@
 {
-  "version": "prototype-9.3",
+  "version": "prototype-10.0",
   "dog": {
     "name": "Rex",
     "initial_count": 1,
@@ -9,7 +9,11 @@
     "walk_animation": "/Game/Art/CompanionDog/A_DogWalk.A_DogWalk",
     "idle_animation": "/Game/Art/CompanionDog/A_DogIdle.A_DogIdle",
     "walk_kmh": 5,
-    "roam_radius_meters": 35,
+    "roam_radius_meters": 100,
+    "territory_radius_meters": 100,
+    "damage_alert_radius_meters": 100,
+    "shelter_seconds": 60,
+    "run_kmh": 14,
     "food_per_meal_kg": 0.1,
     "meal_interval_seconds": 1800,
     "fed_duration_seconds": 2400,

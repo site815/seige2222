@@ -2,6 +2,7 @@
 
 namespace
 {
+FString CreditText(double Value){return Value>0&&Value<.01?TEXT("<0.01"):FString::Printf(TEXT("%.2f"),Value);}
 const FSeigeBuilding* SelectedTradePort(const ASeigeGameMode& G)
 {
     if(!G.Ready||G.Observer||G.CompanionView||G.Screen!=TEXT("playing")||G.MenuOpen||G.IsRegionMap()||G.DetailedSectorIndex()!=4||!G.SelectedBuild.IsEmpty()||G.IsRoadToolActive()||G.WallPlacementActive||G.FleetOrderActive||G.Sim.Failed||G.Sim.Escaped||(G.Sim.Won&&!G.WinAcknowledged))return nullptr;
@@ -51,11 +52,11 @@ void ASeigeHUD::DrawTradeInfo(ASeigeGameMode& G,float W,float H)
     const auto& Resource=G.Sim.Resources[TradeResourceSelection];const auto* Definition=G.Sim.Definition(*Port);
     const auto* PortDefinition=G.Sim.Trade.Definition(Port->DefId);
     const FLinearColor Text(.91f,.95f,.96f),Muted(.58f,.71f,.76f),Gold(.91f,.72f,.39f),Mint(.35f,.85f,.78f),Red(.91f,.48f,.39f);
-    const float X=24,Y=Ui.ContentTop,PW=410,PH=FMath::Min(590.f,H-Y-96.f);if(PH<500)return;
+    const float X=24,Y=Ui.ContentTop,PW=410,PH=FMath::Min(650.f,H-Y-96.f);if(PH<500)return;
     Frame(X,Y,PW,PH);Region(TEXT("trade:panel"),X,Y,PW,PH);
     Label(TEXT("EXTERNAL TRADE"),X+18,Y+16,18,Gold);
     Label(FString::Printf(TEXT("Level %d  /  %.0f kg shipment capacity"),PortDefinition?PortDefinition->Level:1,PortDefinition?PortDefinition->CapacityKg:0),X+18,Y+43,13,Muted);
-    Label(FString::Printf(TEXT("%.6f Galactic credits"),G.Sim.Credits),X+18,Y+69,17,Text);
+    Label(CreditText(G.Sim.Credits)+TEXT(" Galactic credits"),X+18,Y+69,17,Text);
     Label(TEXT("Price anchor: 1 credit = value of 1 kg gold"),X+18,Y+94,12,Muted);
     Button(TEXT("<"),TEXT("trade:previous"),X+18,Y+124,36,36);
     Button(TEXT(">"),TEXT("trade:next"),X+PW-54,Y+124,36,36);
@@ -64,10 +65,14 @@ void ASeigeHUD::DrawTradeInfo(ASeigeGameMode& G,float W,float H)
     Button(Resource.Discrete?TEXT("+1"):TEXT("+10"),TEXT("trade:more"),X+PW-78,Y+170,60,34);
     Label(FString::Printf(TEXT("%.0f %s"),TradeQuantity,*Resource.Unit),X+PW*.38f,Y+177,16,Text);
     Label(FString::Printf(TEXT("%.1f kg  /  %.1f L storage"),TradeQuantity*Resource.UnitMassKg,TradeQuantity*Resource.LitresPerUnit),X+18,Y+216,12,Muted);
+    double QuoteBatch=1;
+    for(int32 I=0;I<9&&FMath::Min(G.Sim.TradeQuote(TradeResourceSelection,QuoteBatch,true),G.Sim.TradeQuote(TradeResourceSelection,QuoteBatch,false))<.01;++I)QuoteBatch*=10;
+    Label(FString::Printf(TEXT("Reference quote / %.0f %s"),QuoteBatch,*Resource.Unit),X+18,Y+240,12,Muted);
+    Label(FString::Printf(TEXT("Buy %s Cr  /  Sell %s Cr"),*CreditText(G.Sim.TradeQuote(TradeResourceSelection,QuoteBatch,true)),*CreditText(G.Sim.TradeQuote(TradeResourceSelection,QuoteBatch,false))),X+18,Y+263,13,Gold);
     FString BuyReason,SellReason;const bool Buy=G.Sim.CanTrade(Port->Id,TradeResourceSelection,TradeQuantity,true,BuyReason),Sell=G.Sim.CanTrade(Port->Id,TradeResourceSelection,TradeQuantity,false,SellReason);
-    Button(FString::Printf(TEXT("Import  %.6f"),G.Sim.TradeQuote(TradeResourceSelection,TradeQuantity,true)),TEXT("trade:import"),X+18,Y+240,181,38,false,Buy?TEXT("Reserve credits and request a physical import shipment."):BuyReason);
-    Button(FString::Printf(TEXT("Export  %.6f"),G.Sim.TradeQuote(TradeResourceSelection,TradeQuantity,false)),TEXT("trade:export"),X+211,Y+240,181,38,false,Sell?TEXT("Deliver local goods to this port, then receive credits after shipment."):SellReason);
-    float StatusY=Y+291;const float StatusBottom=Y+PH-164;
+    Button(TEXT("Import ")+CreditText(G.Sim.TradeQuote(TradeResourceSelection,TradeQuantity,true))+TEXT(" Cr"),TEXT("trade:import"),X+18,Y+291,181,38,false,Buy?TEXT("Reserve credits and request a physical import shipment."):BuyReason);
+    Button(TEXT("Export ")+CreditText(G.Sim.TradeQuote(TradeResourceSelection,TradeQuantity,false))+TEXT(" Cr"),TEXT("trade:export"),X+211,Y+291,181,38,false,Sell?TEXT("Deliver local goods to this port, then receive credits after shipment."):SellReason);
+    float StatusY=Y+342;const float StatusBottom=Y+PH-164;
     auto StatusText=[&](const FString& Value,float Size,FLinearColor Color)
     {
         auto Lines=WrapLines(Value,PW-36,Size);const float LineHeight=Size+7;
@@ -79,6 +84,7 @@ void ASeigeHUD::DrawTradeInfo(ASeigeGameMode& G,float W,float H)
     {
         const auto& Shipment=Port->Shipment;const auto& R=G.Sim.Resources[Shipment.Resource];
         StatusText(FString::Printf(TEXT("%s %.1f %s %s · %.0f%%"),Shipment.Buy?TEXT("Import"):TEXT("Export"),Shipment.Quantity,*R.Unit,*R.Name,Shipment.Progress*100),14,Mint);
+        StatusText(TEXT("Shipment total: ")+CreditText(Shipment.PriceCredits)+TEXT(" Cr"),12,Gold);
         StatusText(Port->Status,12,Muted);
     }
     else

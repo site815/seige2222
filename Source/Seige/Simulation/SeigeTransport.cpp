@@ -101,30 +101,49 @@ bool FSeigeSimulation::ClearRoadLine(FVector2D From,FVector2D To,const FSeigeBui
     const auto* Def=ProspectivePlot?Definition(*ProspectivePlot):nullptr;
     return ClearWalkingLine(From,To,Clearance)&&(!ProspectivePlot||(Def&&!IntersectsPlot(From,To,ProspectivePlot->Position,Def->ReservedFootprint+Clearance)));
 }
-bool FSeigeSimulation::FindRoute(FVector2D From,FVector2D To,TArray<FVector2D>& Route,double ClearanceOverride,bool RoadPlan,const FSeigeBuilding* ProspectivePlot) const
+bool FSeigeSimulation::FindMobilityRoute(const FString& Profile,FVector2D From,FVector2D To,TArray<FVector2D>& Route,double AdditionalRadiusMeters) const
+{const auto* P=Mobility.Profile(Profile);if(!P){Route.Empty();return false;}return FindRoute(From,To,Route,(FMath::Max(P->BodyRadiusMeters,AdditionalRadiusMeters)+P->ClearanceMeters)/MetersPerWorldUnit(),false,nullptr,Profile);}
+bool FSeigeSimulation::FindRoute(FVector2D From,FVector2D To,TArray<FVector2D>& Route,double ClearanceOverride,bool RoadPlan,const FSeigeBuilding* ProspectivePlot,const FString& MobilityProfile) const
 {
-    Route.Empty();if(!Environment.CanStand(From)||!Environment.CanStand(To))return false;if(FVector2D::Distance(From,To)<.001){Route.Add(To);return true;}
-    const double Clearance=ClearanceOverride>=0?ClearanceOverride:Transport->GetNumberField(TEXT("path_clearance"));
+    const auto* Profile=Mobility.Profile(MobilityProfile);const bool WaterAllowed=!RoadPlan&&Profile&&Profile->AllowWater;
+    Route.Empty();if(!WaterAllowed&&(!Environment.CanStand(From)||!Environment.CanStand(To)))return false;if(FVector2D::Distance(From,To)<.001){Route.Add(To);return true;}
+    const double Clearance=ClearanceOverride>=0?ClearanceOverride:FMath::Max(Transport->GetNumberField(TEXT("path_clearance")),Mobility.ClearanceMeters(MobilityProfile)/MetersPerWorldUnit());
     const auto* ProspectiveDef=ProspectivePlot?Definition(*ProspectivePlot):nullptr;
     if(ProspectivePlot&&!ProspectiveDef)return false;
     auto ClearLine=[&](FVector2D A,FVector2D B)
-    {return ClearWalkingLine(A,B,Clearance)&&(!ProspectivePlot||!IntersectsPlot(A,B,ProspectivePlot->Position,ProspectiveDef->ReservedFootprint+Clearance));};
+    {if(WaterAllowed){for(const auto& Building:Buildings)if(Building.Health>0&&IntersectsPlot(A,B,Building.Position,Definition(Building)->ReservedFootprint+Clearance))return false;}else if(!ClearWalkingLine(A,B,Clearance))return false;return (RoadPlan||Mobility.MovementAllowed(*this,MobilityProfile,A,B))&&(!ProspectivePlot||!IntersectsPlot(A,B,ProspectivePlot->Position,ProspectiveDef->ReservedFootprint+Clearance));};
     const double MinimumRoad=Transport->GetNumberField(TEXT("minimum_segment_meters"))/MetersPerWorldUnit(),MaximumRoad=Transport->GetNumberField(TEXT("maximum_segment_meters"))/MetersPerWorldUnit();
     auto ExistingRoad=[&](FVector2D A,FVector2D B){for(const auto& R:Roads)if(R.Health>0&&!R.Tier.IsEmpty()&&OnSegment(A,R.A,R.B)&&OnSegment(B,R.A,R.B))return true;return false;};
-    if(Roads.IsEmpty()&&!RoadPlan&&ClearLine(From,To)){Route.Add(To);return true;}
-    FString Topology=Environment.Fingerprint+FString::Printf(TEXT(":%.6f:%.6f;"),Environment.WorldOffset.X,Environment.WorldOffset.Y);for(const auto& B:Buildings)if(B.Health>0)Topology+=FString::Printf(TEXT("b%d:%.6f:%.6f:%.6f;"),B.Id,B.Position.X,B.Position.Y,Definition(B)->ReservedFootprint);
-    for(const auto& R:Roads)if(R.Health>0&&!R.Tier.IsEmpty())Topology+=FString::Printf(TEXT("r%d:%s:%.6f:%.6f:%.6f:%.6f;"),R.Id,*R.Tier,R.A.X,R.A.Y,R.B.X,R.B.Y);
-    if(Topology!=CachedRouteTopology){CachedRouteTopology=Topology;CachedRoutes.Empty();}
-    FString Key=FString::Printf(TEXT("%.9f:%.9f:%.9f:%.9f:%.6f:%d"),From.X,From.Y,To.X,To.Y,Clearance,RoadPlan?1:0);
+    FString Topology=Environment.Fingerprint+Mobility.GetFingerprint()+FString::Printf(TEXT(":%.6f:%.6f:%.6f:%d;"),Environment.WorldOffset.X,Environment.WorldOffset.Y,WorldHalfSize,Mobility.GetTerrainRevision());for(const auto& B:Buildings)if(B.Health>0)Topology+=FString::Printf(TEXT("b%d:%.6f:%.6f:%.6f;"),B.Id,B.Position.X,B.Position.Y,Definition(B)->ReservedFootprint);
+    for(const auto& R:Roads)if(R.Health>0&&!R.Tier.IsEmpty())Topology+=FString::Printf(TEXT("r%d:%s:%.6f:%.6f:%.6f:%.6f:%d;"),R.Id,*R.Tier,R.A.X,R.A.Y,R.B.X,R.B.Y,Energy.RoadPowered(R.Id)?1:0);
+    if(Topology!=CachedRouteTopology){CachedRouteTopology=Topology;CachedRoutes.Empty();CachedRouteEdges.Empty();}
+    FString Key=Mobility.GetFingerprint()+MobilityProfile+FString::Printf(TEXT("%d:%.9f:%.9f:%.9f:%.9f:%.6f:%d"),Mobility.GetTerrainRevision(),From.X,From.Y,To.X,To.Y,Clearance,RoadPlan?1:0);
     // Preview a reserved plot without changing live buildings, IDs or stock.
     // Its geometry is part of the query key, never a cached result for the live topology.
     if(ProspectivePlot)Key+=FString::Printf(TEXT(":preview:%.9f:%.9f:%.6f"),ProspectivePlot->Position.X,ProspectivePlot->Position.Y,ProspectiveDef->ReservedFootprint);
     if(const auto* Existing=CachedRoutes.Find(Key)){Route=*Existing;return !Route.IsEmpty();}
+    auto Remember=[&](bool Success){if(CachedRoutes.Num()>4096)CachedRoutes.Empty();CachedRoutes.Add(Key,Route);return Success;};
+    if(Roads.IsEmpty()&&!RoadPlan&&ClearLine(From,To)){Route.Add(To);return Remember(true);}
+    // Complete visibility graphs used to resample every terrain edge for every
+    // worker/destination, including identical failed requests each simulation
+    // step. Reuse exact directed edges without weakening terrain or plot tests.
+    if(CachedRouteEdges.Num()>131072)CachedRouteEdges.Empty();
+    FString EdgeContext=MobilityProfile+FString::Printf(TEXT(":%.9f:%d"),Clearance,RoadPlan?1:0);
+    if(ProspectivePlot)EdgeContext+=FString::Printf(TEXT(":preview:%.9f:%.9f:%.9f"),ProspectivePlot->Position.X,ProspectivePlot->Position.Y,ProspectiveDef->ReservedFootprint);
+    auto EdgeCost=[&](FVector2D A,FVector2D B)
+    {
+        const FString EdgeKey=EdgeContext+FString::Printf(TEXT(":%.17g:%.17g:%.17g:%.17g"),A.X,A.Y,B.X,B.Y);
+        if(const double* Existing=CachedRouteEdges.Find(EdgeKey))return *Existing;
+        const double Length=FVector2D::Distance(A,B);
+        const double Cost=ClearLine(A,B)&&(!RoadPlan||Length+1.e-8>=MinimumRoad||ExistingRoad(A,B))?
+            Length/(RoadPlan?RouteSpeedMultiplier(A,B):FMath::Max(.0001,Mobility.Speed(*this,MobilityProfile,A,B))):-1.;
+        CachedRouteEdges.Add(EdgeKey,Cost);return Cost;
+    };
     TArray<FVector2D> Points={From,To};
     auto Add=[&](FVector2D P){for(const auto& Existing:Points)if(FVector2D::Distance(P,Existing)<.01)return;Points.Add(P);};
     // Geography waypoints are shared by workers, road plans and vehicles. Keep
     // the graph bounded to this colony; water never becomes a hidden shortcut.
-    if(!Environment.SegmentDry(From,To,Clearance))for(FVector2D P:Environment.RoutingWaypoints(Clearance))
+    if(!Environment.SegmentDry(From,To,Clearance)||(!RoadPlan&&!Mobility.MovementAllowed(*this,MobilityProfile,From,To)))for(FVector2D P:Environment.RoutingWaypoints(Clearance))
         if(FMath::Abs(P.X)+Clearance<WorldHalfSize&&FMath::Abs(P.Y)+Clearance<WorldHalfSize)Add(P);
     for(const auto& B:Buildings)if(B.Health>0)
     {const double R=Definition(B)->ReservedFootprint+Clearance;for(int X:{-1,1})for(int Y:{-1,1})Add(B.Position+FVector2D(X*R,Y*R));}
@@ -135,24 +154,34 @@ bool FSeigeSimulation::FindRoute(FVector2D From,FVector2D To,TArray<FVector2D>& 
     {const auto& A=Roads[I];const auto& B=Roads[J];const FVector2D U=A.B-A.A,V=B.B-B.A;const double Den=Cross(U,V);if(FMath::Abs(Den)>1.e-8){const double T=Cross(B.A-A.A,V)/Den,S=Cross(B.A-A.A,U)/Den;if(T>=0&&T<=1&&S>=0&&S<=1)Add(A.A+U*T);}}
     TArray<double> Distance;Distance.Init(TNumericLimits<double>::Max(),Points.Num());Distance[0]=0;
     TArray<int32> Previous;Previous.Init(INDEX_NONE,Points.Num());TArray<bool> Visited;Visited.Init(false,Points.Num());
+    // Euclidean distance divided by the fastest possible speed is an admissible
+    // A* bound. It only avoids edges that cannot improve a valid route; every
+    // selected edge still passes the same complete terrain/clearance checks.
+    double FastestMultiplier=1.;for(const auto& Tier:TransportTiers)FastestMultiplier=FMath::Max(FastestMultiplier,Tier.Value.SpeedMultiplier);
+    FastestMultiplier=FMath::Max(FastestMultiplier,Transport->GetNumberField(TEXT("unpowered_speed_multiplier")));
+    const double FastestSpeed=RoadPlan?FastestMultiplier:FMath::Max(.0001,Profile?Profile->SpeedKmh/3.6*FastestMultiplier:.0001);
+    TArray<double> Heuristic;for(const auto& P:Points)Heuristic.Add(FVector2D::Distance(P,To)/FastestSpeed);
     for(int Iteration=0;Iteration<Points.Num();++Iteration)
     {
-        int Current=INDEX_NONE;double Best=TNumericLimits<double>::Max();for(int I=0;I<Points.Num();++I)if(!Visited[I]&&Distance[I]<Best){Current=I;Best=Distance[I];}
-        if(Current==INDEX_NONE)break;if(Current==1)break;Visited[Current]=true;
-        for(int Other=0;Other<Points.Num();++Other)if(!Visited[Other]&&Other!=Current&&ClearLine(Points[Current],Points[Other]))
-        {const double Length=FVector2D::Distance(Points[Current],Points[Other]);
-            if(RoadPlan&&Length+1.e-8<MinimumRoad&&!ExistingRoad(Points[Current],Points[Other]))continue;
-            const double Cost=Length/RouteSpeedMultiplier(Points[Current],Points[Other]);if(Best+Cost<Distance[Other]){Distance[Other]=Best+Cost;Previous[Other]=Current;}}
+        int Current=INDEX_NONE;double Priority=TNumericLimits<double>::Max();for(int I=0;I<Points.Num();++I)if(!Visited[I]&&Distance[I]+Heuristic[I]<Priority){Current=I;Priority=Distance[I]+Heuristic[I];}
+        if(Current==INDEX_NONE)break;if(Current==1)break;Visited[Current]=true;const double Best=Distance[Current];
+        for(int Other=0;Other<Points.Num();++Other)if(!Visited[Other]&&Other!=Current)
+        {
+            const double Lower=FVector2D::Distance(Points[Current],Points[Other])/FastestSpeed;
+            if(Best+Lower>=Distance[Other]||Best+Lower+Heuristic[Other]>=Distance[1])continue;
+            const double Cost=EdgeCost(Points[Current],Points[Other]);
+            if(Cost>=0&&Best+Cost<Distance[Other]){Distance[Other]=Best+Cost;Previous[Other]=Current;}
+        }
     }
-    if(Previous[1]==INDEX_NONE)return false;TArray<FVector2D> Reverse;for(int I=1;I!=0;I=Previous[I]){if(I==INDEX_NONE)return false;Reverse.Add(Points[I]);}
+    if(Previous[1]==INDEX_NONE)return Remember(false);TArray<FVector2D> Reverse;for(int I=1;I!=0;I=Previous[I]){if(I==INDEX_NONE)return Remember(false);Reverse.Add(Points[I]);}
     FVector2D Last=From;
     for(int I=Reverse.Num()-1;I>=0;--I){const FVector2D End=Reverse[I];const int Parts=RoadPlan&&!ExistingRoad(Last,End)?FMath::Max(1,FMath::CeilToInt(FVector2D::Distance(Last,End)/MaximumRoad)):1;for(int J=1;J<=Parts;++J)Route.Add(FMath::Lerp(Last,End,double(J)/Parts));Last=End;}
-    if(CachedRoutes.Num()>4096)CachedRoutes.Empty();CachedRoutes.Add(Key,Route);return true;
+    return Remember(true);
 }
 bool FSeigeSimulation::WalkRoute(FVector2D& Position,const TArray<FVector2D>& Route,int32& Next,double Seconds) const
 {
     while(Route.IsValidIndex(Next)&&Seconds>UE_DOUBLE_SMALL_NUMBER)
-    {const FVector2D End=Route[Next];const double Distance=FVector2D::Distance(Position,End),Speed=WalkingSpeed()*RouteSpeedMultiplier(Position,End);if(Distance<=Speed*Seconds+.000001){Position=End;Seconds=FMath::Max(0.,Seconds-Distance/Speed);++Next;}else{Position+=(End-Position)/Distance*Speed*Seconds;Seconds=0;}}
+    {const FVector2D End=Route[Next];const double Distance=FVector2D::Distance(Position,End),Speed=Mobility.Speed(*this,TEXT("drone"),Position,End)/MetersPerWorldUnit();if(Speed<=0)return false;if(Distance<=Speed*Seconds+.000001){Position=End;Seconds=FMath::Max(0.,Seconds-Distance/Speed);++Next;}else{Position+=(End-Position)/Distance*Speed*Seconds;Seconds=0;}}
     return Next>=Route.Num()&&!Route.IsEmpty();
 }
 bool FSeigeSimulation::CanPlaceRoad(FVector2D A,FVector2D B,FString& Error,bool CheckMaterials) const
@@ -182,7 +211,7 @@ bool FSeigeSimulation::CanPlaceRoadGeometry(FVector2D A,FVector2D B,FString& Err
     Error.Empty();return true;
 }
 bool FSeigeSimulation::PlaceRoad(FVector2D A,FVector2D B,FString& Error)
-{if(!CanPlaceRoad(A,B,Error))return false;FSeigeTransportSegment R;R.Id=NextId++;R.A=A;R.B=B;R.TargetTier=Transport->GetStringField(TEXT("initial_tier"));R.MaxHealth=FVector2D::Distance(A,B)*MetersPerWorldUnit()*TransportTiers[R.TargetTier].HealthPerMeter;R.Health=R.MaxHealth;R.BuilderPosition=BuildingAccessPoint(*Core());FindRoute(R.BuilderPosition,RoadAccessPoint(R),R.BuilderRoute);Roads.Add(R);AllocateWorkers();AddEvent(TEXT("Road construction queued"));return true;}
+{if(!CanPlaceRoad(A,B,Error))return false;FSeigeTransportSegment R;R.Id=NextId++;R.A=A;R.B=B;R.TargetTier=Transport->GetStringField(TEXT("initial_tier"));R.MaxHealth=FVector2D::Distance(A,B)*MetersPerWorldUnit()*TransportTiers[R.TargetTier].HealthPerMeter;R.Health=R.MaxHealth;R.BuilderPosition=BuildingAccessPoint(*Core());FindRoute(R.BuilderPosition,RoadAccessPoint(R),R.BuilderRoute);Roads.Add(R);++TransportRevision;AllocateWorkers();AddEvent(TEXT("Road construction queued"));return true;}
 bool FSeigeSimulation::CanUpgradeRoad(int32 Id,FString& Error) const
 {
     const auto* R=FindRoad(Id);if(!R||R->Health<=0||R->IsConstructing||R->Tier.IsEmpty()||Escaped||Failed){Error=TEXT("Select a completed road to upgrade");return false;}
@@ -192,7 +221,7 @@ bool FSeigeSimulation::CanUpgradeRoad(int32 Id,FString& Error) const
     Error.Empty();return true;
 }
 bool FSeigeSimulation::UpgradeRoad(int32 Id,FString& Error)
-{if(!CanUpgradeRoad(Id,Error))return false;auto& R=*FindRoad(Id);for(const auto& P:R.InstalledMaterials)R.PreviousTierMaterials.FindOrAdd(P.Key)+=P.Value;R.TargetTier=TransportTiers[R.Tier].NextTier;R.IsConstructing=true;R.ConstructionProgress=0;R.BuildersOnSite=R.TravellingBuilders=0;R.InstalledMaterials.Empty();R.ConstructionMaterials.Empty();R.BuilderPosition=BuildingAccessPoint(*Core());R.BuilderNextWaypoint=0;FindRoute(R.BuilderPosition,RoadAccessPoint(R),R.BuilderRoute);AllocateWorkers();AddEvent(TEXT("Transport corridor upgrade queued; existing service remains open"));return true;}
+{if(!CanUpgradeRoad(Id,Error))return false;auto& R=*FindRoad(Id);for(const auto& P:R.InstalledMaterials)R.PreviousTierMaterials.FindOrAdd(P.Key)+=P.Value;R.TargetTier=TransportTiers[R.Tier].NextTier;R.IsConstructing=true;R.ConstructionProgress=0;R.BuildersOnSite=R.TravellingBuilders=0;R.InstalledMaterials.Empty();R.ConstructionMaterials.Empty();R.BuilderPosition=BuildingAccessPoint(*Core());R.BuilderNextWaypoint=0;FindRoute(R.BuilderPosition,RoadAccessPoint(R),R.BuilderRoute);++TransportRevision;AllocateWorkers();AddEvent(TEXT("Transport corridor upgrade queued; existing service remains open"));return true;}
 double FSeigeSimulation::IncomingRoad(int32 Id,const FString& Resource) const
 {double Result=0;for(const auto& C:Couriers)if(C.RoadTargetId==Id&&(Resource.IsEmpty()||C.Resource==Resource))Result+=C.Amount+C.ReservedAmount;return Result;}
 

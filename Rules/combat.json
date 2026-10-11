@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "balance_status": "Provisional local combat balance and finite starter vehicle manifest",
+  "balance_status": "0.10 provisional specialist factory capabilities; no armed starter vehicles. One autonomous transport is configured separately.",
   "fleet_capacity": 50,
   "maximum_vehicles": 150,
   "maximum_projectiles": 2048,
@@ -192,11 +192,6 @@
     "command_core_3": 3
   },
   "factories": {
-    "command_core": {
-      "family": "all",
-      "maximum_tier": 4,
-      "speed_multiplier": 0.25
-    },
     "vehicle_factory": {
       "family": "wheeled",
       "maximum_tier": 2,
@@ -212,11 +207,6 @@
       "maximum_tier": 2,
       "speed_multiplier": 1.0
     },
-    "command_core_2": {
-      "family": "all",
-      "maximum_tier": 4,
-      "speed_multiplier": 0.5
-    },
     "vehicle_factory_2": {
       "family": "wheeled",
       "maximum_tier": 3,
@@ -231,11 +221,6 @@
       "family": "mech",
       "maximum_tier": 3,
       "speed_multiplier": 1.25
-    },
-    "command_core_3": {
-      "family": "all",
-      "maximum_tier": 4,
-      "speed_multiplier": 0.75
     },
     "vehicle_factory_3": {
       "family": "wheeled",
@@ -253,22 +238,7 @@
       "speed_multiplier": 1.5
     }
   },
-  "initial_vehicles": [
-    {
-      "chassis": "wheeled_small",
-      "loadout": [
-        "laser_small"
-      ],
-      "battery_kwh": 20
-    },
-    {
-      "chassis": "wheeled_small",
-      "loadout": [
-        "laser_small"
-      ],
-      "battery_kwh": 20
-    }
-  ],
+  "initial_vehicles": [],
   "loot_range_meters": 12,
   "loot_kg_s": 10,
   "loot_priority": [

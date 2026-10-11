@@ -12,6 +12,7 @@ bool FSeigeCombatSystem::ClearFriendlyFire(const FSeigeSimulation& Sim,const FSt
     // still use the physical projectile collision path and can hit allies.
     for(const auto& B:Sim.Buildings)if(B.Health>0&&!(Kind==TEXT("building")&&B.Id==Owner)&&HitBox(From,Aim,B.Position,Sim.Definition(B)->Footprint)<=1){if(Blocker)*Blocker=Sim.Definition(B)->Name;return false;}
     for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&!(Kind==TEXT("vehicle")&&V.Id==Owner)&&HitCircle(From,Aim,V.Position,Chassis[V.ChassisId].RadiusMeters/MetresPerUnit)<=1){if(Blocker)*Blocker=Chassis[V.ChassisId].Name;return false;}
+    for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&HitCircle(From,Aim,V.Position,Sim.Mobility.ClearanceMeters(TEXT("transport"))/MetresPerUnit)<=1){if(Blocker)*Blocker=Sim.TransportVehicles.Definition().Name;return false;}
     return true;
 }
 double FSeigeCombatSystem::BuildingWeaponWork(const FSeigeSimulation& Sim,int32 Id) const
@@ -88,7 +89,7 @@ bool FSeigeCombatSystem::DefensivePosition(const FSeigeSimulation& Sim,const FSe
     {
         const double Distance=FVector2D::Distance(Candidate,Enemy.Position)*MetresPerUnit;
         if(Distance>=Range||Distance<SafeDistance||FVector2D::Distance(Candidate,Anchor)*MetresPerUnit>C.SensorMeters||FMath::Abs(Candidate.X)>Sim.WorldHalfSize-Clearance||FMath::Abs(Candidate.Y)>Sim.WorldHalfSize-Clearance||!Sim.ClearWalkingLine(Candidate,Candidate,Clearance)||!ClearFriendlyFire(Sim,TEXT("vehicle"),V.Id,Candidate,Enemy.Position))return;
-        TArray<FVector2D> Route;if(!Sim.FindRoute(V.Position,Candidate,Route,Clearance))return;double Length=0;FVector2D Previous=V.Position;
+        TArray<FVector2D> Route;if(!Sim.FindMobilityRoute(Chassis[V.ChassisId].Family,V.Position,Candidate,Route,Clearance*MetresPerUnit))return;double Length=0;FVector2D Previous=V.Position;
         for(const auto& P:Route)
         {
             // The building route graph does not contain mobile circles. A
@@ -117,6 +118,7 @@ void FSeigeCombatSystem::DamageBuilding(FSeigeSimulation& Sim,int32 Id,double Da
 {
     auto* B=Sim.FindBuilding(Id);if(!B||B->Health<=0||!FMath::IsFinite(Damage)||Damage<=0)return;EnsureBuildings(Sim);const auto Profile=DamageProfiles.FindRef(Family);const double SM=ShieldMultiplier>0?ShieldMultiplier:FMath::Max(.05,Profile.X),AM=ArmorMultiplier>0?ArmorMultiplier:FMath::Max(.05,Profile.Y);
     if(auto* State=BuildingState.Find(Id)){Layers(Damage,SM,AM,State->Shield,State->Armor,B->Health);State->LastDamageTime=Sim.Time;}else B->Health=FMath::Max(0.,B->Health-Damage);
+    Sim.Companions.NotifyBuildingDamaged(Sim,B->Position);
     if(B->Health<=0){UE_LOG(LogTemp,Log,TEXT("Seige combat destruction: seed=%d time=%.2f building=%d definition=%s final_damage_family=%s"),Sim.GenerationSeed,Sim.Time,Id,*B->DefId,*Family);FabricationPlans.Remove(Id);RefitPlans.Remove(Id);Sim.OnBuildingDestroyed(Id);}
 }
 void FSeigeCombatSystem::DamageVehicle(FSeigeSimulation& Sim,int32 Id,double Damage,const FString& Family,double ShieldMultiplier,double ArmorMultiplier)
@@ -136,10 +138,10 @@ bool FSeigeCombatSystem::Fire(FSeigeSimulation& Sim,const FString& Kind,int32 Ow
 void FSeigeCombatSystem::Impact(FSeigeSimulation& Sim,const FSeigeProjectile& P,const FString& Kind,int32 Id,FVector2D Position)
 {
     const auto& W=Weapons[P.WeaponId];++Hits;
-    auto Damage=[&](const FString& K,int32 I,double Amount){if(K==TEXT("building"))DamageBuilding(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(K==TEXT("vehicle"))DamageVehicle(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(auto* E=Sim.Enemies.FindByPredicate([&](const auto& V){return V.Id==I;}))E->Health=FMath::Max(0.,E->Health-Amount);};
+    auto Damage=[&](const FString& K,int32 I,double Amount){if(K==TEXT("building"))DamageBuilding(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(K==TEXT("vehicle"))DamageVehicle(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(K==TEXT("transport"))Sim.TransportVehicles.Damage(Sim,I,Amount);else if(auto* E=Sim.Enemies.FindByPredicate([&](const auto& V){return V.Id==I;}))E->Health=FMath::Max(0.,E->Health-Amount);};
     if(W.SplashMeters<=0){Damage(Kind,Id,W.Damage);return;}
     auto Splash=[&](const FString& K,int32 I,FVector2D Q){double Scale=1-FVector2D::Distance(Position,Q)*MetresPerUnit/W.SplashMeters;if(K==Kind&&I==Id)Scale=1;if(Scale>0)Damage(K,I,W.Damage*Scale);};
-    for(auto& B:Sim.Buildings)if(B.Health>0)Splash(TEXT("building"),B.Id,B.Position);for(auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4)Splash(TEXT("vehicle"),V.Id,V.Position);for(auto& E:Sim.Enemies)if(E.Health>0)Splash(TEXT("enemy"),E.Id,E.Position);
+    for(auto& B:Sim.Buildings)if(B.Health>0)Splash(TEXT("building"),B.Id,B.Position);for(auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4)Splash(TEXT("vehicle"),V.Id,V.Position);for(auto& E:Sim.Enemies)if(E.Health>0)Splash(TEXT("enemy"),E.Id,E.Position);for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated)Splash(TEXT("transport"),V.Id,V.Position);
 }
 void FSeigeCombatSystem::AdvanceProjectile(FSeigeSimulation& Sim,FSeigeProjectile& P,double Seconds,bool& Remove)
 {
@@ -149,7 +151,7 @@ void FSeigeCombatSystem::AdvanceProjectile(FSeigeSimulation& Sim,FSeigeProjectil
     auto Accept=[&](double T,const FString& K,int32 I){if(K==P.OwnerKind&&I==P.OwnerId)return;if(T<Best){Best=T;Kind=K;HitId=I;}};
     for(const auto& B:Sim.Buildings)if(B.Health>0)Accept(HitBox(P.Position,End,B.Position,Sim.Definition(B)->Footprint),TEXT("building"),B.Id);
     for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4)Accept(HitCircle(P.Position,End,V.Position,Chassis[V.ChassisId].RadiusMeters/MetresPerUnit),TEXT("vehicle"),V.Id);
-    for(const auto& E:Sim.Enemies)if(E.Health>0)Accept(HitCircle(P.Position,End,E.Position,EnemyRadiusMeters/MetresPerUnit),TEXT("enemy"),E.Id);
+    for(const auto& E:Sim.Enemies)if(E.Health>0)Accept(HitCircle(P.Position,End,E.Position,EnemyRadiusMeters/MetresPerUnit),TEXT("enemy"),E.Id);for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated)Accept(HitCircle(P.Position,End,V.Position,Sim.Mobility.ClearanceMeters(TEXT("transport"))/MetresPerUnit),TEXT("transport"),V.Id);
     P.Position=Best<=1?FMath::Lerp(P.Position,End,Best):End;P.RemainingMeters=FMath::Max(0.,P.RemainingMeters-Travel);P.AgeSeconds+=Seconds;
     if(Best<=1){Impact(Sim,P,Kind,HitId,P.Position);Remove=true;}else if(P.RemainingMeters<=1.e-8){if(W.SplashMeters>0)Impact(Sim,P,TEXT(""),0,P.Position);Remove=true;}
 }
@@ -190,13 +192,13 @@ void FSeigeCombatSystem::MoveVehicles(FSeigeSimulation& Sim,double Seconds)
         // line is clear. An obstacle corner can be less than a metre away while
         // the present muzzle is still screened; station tolerance must not
         // discard that final paid movement and strand the guard indefinitely.
-        const bool Arrived=Repositioning?Target.Equals(V.Position,UE_DOUBLE_SMALL_NUMBER):FVector2D::Distance(Target,V.Position)*MetresPerUnit<1;
+        const bool Arrived=Repositioning?Target.Equals(V.Position,UE_DOUBLE_SMALL_NUMBER):FVector2D::Distance(Target,V.Position)*MetresPerUnit<Sim.Mobility.AccessMeters(C.Family);
         if(Arrived){V.Status=Repositioning?TEXT("Defensive firing position"):TEXT("On station");if(Repositioning){V.Route.Empty();V.NextWaypoint=0;}continue;}
-        if(V.Route.IsEmpty()||FVector2D::Distance(Target,V.Destination)*MetresPerUnit>FormationSpacingMeters){V.Destination=Target;V.NextWaypoint=0;if(!Sim.FindRoute(V.Position,Target,V.Route,C.RadiusMeters/MetresPerUnit)){V.Status=TEXT("Route blocked");continue;}}
+        if(V.Route.IsEmpty()||FVector2D::Distance(Target,V.Destination)*MetresPerUnit>FormationSpacingMeters){V.Destination=Target;V.NextWaypoint=0;if(!Sim.FindMobilityRoute(C.Family,V.Position,Target,V.Route,C.RadiusMeters)){V.Status=TEXT("Route blocked");continue;}}
         if(!V.Route.IsValidIndex(V.NextWaypoint)){V.Route.Empty();V.NextWaypoint=0;continue;}const FVector2D Delta=V.Route[V.NextWaypoint]-V.Position;const double Distance=Delta.Size();if(Distance<(Repositioning?UE_DOUBLE_SMALL_NUMBER:.001)){++V.NextWaypoint;continue;}
         double Grade=0;const FVector2D Sample=V.Position+Delta.GetSafeNormal()*FMath::Min(Distance,5/MetresPerUnit);if(TerrainHeight){const double H0=TerrainHeight(V.Position),H1=TerrainHeight(Sample);if(!FMath::IsFinite(H0)||!FMath::IsFinite(H1)){V.Status=TEXT("Terrain unavailable");continue;}Grade=FMath::Abs(H1-H0)/FMath::Max(.001,FVector2D::Distance(V.Position,Sample));}if(Grade>C.MaxGrade){V.Status=TEXT("Slope blocked");continue;}
         bool Road=false;int32 RoadId=0;for(const auto& R:Sim.Roads)if(!R.IsConstructing&&!R.Tier.IsEmpty()&&R.Health>0){const auto AB=R.B-R.A;const double T=FMath::Clamp(FVector2D::DotProduct(V.Position-R.A,AB)/FMath::Max(1.,AB.SizeSquared()),0.,1.);if(FVector2D::Distance(V.Position,R.A+AB*T)*MetresPerUnit<Sim.TransportTiers[R.Tier].WidthMeters*.5){Road=true;RoadId=R.Id;break;}}
-        const double Speed=C.SpeedKmh/3.6*(Road&&C.Family==TEXT("wheeled")?RoadSpeedMultiplier:Grade>RoughGrade?C.RoughSpeedMultiplier:1.);const double Travel=FMath::Min3(Distance*MetresPerUnit,Speed*Seconds,V.BatteryKWh/C.TravelKWhPerKm*1000);if(Travel<=1.e-8){V.Status=TEXT("Battery empty");continue;}
+        if(!Sim.Mobility.MovementAllowed(Sim,C.Family,V.Position,Sample,C.RadiusMeters)){V.Status=TEXT("Movement profile blocks terrain");continue;}const double Speed=Sim.Mobility.Speed(Sim,C.Family,V.Position,V.Route[V.NextWaypoint],C.SpeedKmh);const double Travel=FMath::Min3(Distance*MetresPerUnit,Speed*Seconds,V.BatteryKWh/C.TravelKWhPerKm*1000);if(Travel<=1.e-8){V.Status=TEXT("Battery empty");continue;}
         const FVector2D Next=V.Position+Delta/Distance*Travel/MetresPerUnit;bool Blocked=false;for(const auto& B:Sim.Buildings)if(B.Health>0&&HitBox(V.Position,Next,B.Position,Sim.Definition(B)->Footprint+C.RadiusMeters/MetresPerUnit-.001)<=1){Blocked=true;break;}if(Blocked){V.Route.Empty();V.NextWaypoint=0;V.Status=TEXT("Route obstructed");continue;}
         V.Heading=FMath::RadiansToDegrees(FMath::Atan2(Delta.Y,Delta.X));V.Position=Next;V.DistanceMeters+=Travel;V.BatteryKWh=FMath::Max(0.,V.BatteryKWh-Travel*C.TravelKWhPerKm/1000);EnergySpentKWh+=Travel*C.TravelKWhPerKm/1000;V.Status=Repositioning?TEXT("Repositioning for defense"):TEXT("Moving");if(Travel>=Distance*MetresPerUnit-1.e-8)++V.NextWaypoint;if(RoadId&&C.RoadDamagePerMeter>0)Sim.DamageRoad(RoadId,Travel*C.RoadDamagePerMeter);
     }

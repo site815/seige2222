@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/App.h"
+#include "Misc/Paths.h"
 #include "HAL/PlatformTime.h"
 #include "Async/ParallelFor.h"
 #if WITH_DEV_AUTOMATION_TESTS
@@ -153,18 +154,18 @@ struct FPreparedTerrain
     TMap<FString,FVector4> Bounds;
     FString Signature;
     double RidgeCos=0,RidgeSin=0;
-    explicit FPreparedTerrain(const ASeigeGameMode& G):Game(G)
+    explicit FPreparedTerrain(const ASeigeGameMode& G,bool Authoritative=false):Game(G)
     {
         Signature=G.Sim.Environment.Fingerprint+TEXT(";");
         const double Angle=FMath::DegreesToRadians(double(G.RidgeAngleDegrees));
         RidgeCos=FMath::Cos(Angle);RidgeSin=FMath::Sin(Angle);
         auto AddColony=[&](const FSeigeSimulation& Colony,FVector2D Offset,int32 Index)
         {
-            if(Index<0||Index>8||(Index==4&&HidePendingHomeFoundation(G)))return;
+            if(Index<0||Index>8||(!Authoritative&&Index==4&&HidePendingHomeFoundation(G)))return;
             for(const auto& B:Colony.Buildings)
             {
                 const FVector2D P=B.Position+Offset;
-                if(B.Health<=0||(!G.Observer&&Index!=4&&!G.IsWorldVisible(P)))continue;
+                if(B.Health<=0||(!Authoritative&&!G.Observer&&Index!=4&&!G.IsWorldVisible(P)))continue;
                 if(const auto* D=Colony.Definition(B))
                 {
                     const double GridStep=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
@@ -200,7 +201,7 @@ struct FPreparedTerrain
                 const double Half=RoadHalfWidth(Colony,Road);if(Half<=0)continue;
                 const FVector2D A=Road.A+Offset,B=Road.B+Offset,Center=(A+B)*.5;
                 const double Inner=Half+Step,Outer=Inner+Step;
-                const bool RequiresSight=!G.Observer&&Index!=4;
+                const bool RequiresSight=!Authoritative&&!G.Observer&&Index!=4;
                 bool AnyVisible=true;const FString Sight=RequiresSight?RoadSightToken(G,A,B,AnyVisible):FString();
                 if(!AnyVisible)continue;
                 const FHeightRoad Grade{A,B,Inner,Outer,RequiresSight};
@@ -312,6 +313,31 @@ double SharedEdgeInfluence(const ASeigeGameMode& G,const FVector4& Area)
     // segment, even when most of that segment lies outside the analytical pad.
     return Half-FMath::Max(FMath::Abs(LocalX),FMath::Abs(LocalY))<=Area.W?Span/128:0;
 }
+}
+// Authoritative geometry is prepared once per construction/topology revision.
+// It includes unseen colonies, and never samples camera-dependent mesh LOD.
+struct FSeigeSimulationTerrainCache
+{
+    TSharedPtr<FPreparedTerrain> Prepared;
+    int32 Revisions[9]={};
+};
+double ASeigeGameMode::SimulationTerrainHeight(FVector2D P)
+{
+    bool Changed=!SimulationTerrainCache;
+    if(!Changed)
+    {
+        Changed=SimulationTerrainCache->Revisions[4]!=Sim.GeometryRevision();
+        for(const auto& N:Neighbors)Changed|=SimulationTerrainCache->Revisions[N.Index]!=N.Sim.GeometryRevision();
+    }
+    if(Changed)
+    {
+        auto Cache=MakeShared<FSeigeSimulationTerrainCache>();
+        Cache->Prepared=MakeShared<FPreparedTerrain>(*this,true);
+        Cache->Revisions[4]=Sim.GeometryRevision();Sim.Mobility.InvalidateTerrain();
+        for(auto& N:Neighbors){Cache->Revisions[N.Index]=N.Sim.GeometryRevision();N.Sim.Mobility.InvalidateTerrain();}
+        SimulationTerrainCache=MoveTemp(Cache);
+    }
+    return SimulationTerrainCache->Prepared->Height(P);
 }
 double ASeigeGameMode::TerrainHeight(FVector2D P) const
 {
@@ -1648,3 +1674,27 @@ void ASeigeGameMode::ClearSceneryAt(FVector2D Position,float Radius)
             return FMath::Abs(Delta.X)<=Radius&&FMath::Abs(Delta.Y)<=Radius;
         });
 }
+
+#if WITH_DEV_AUTOMATION_TESTS
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSimulationTerrainCacheTest,"Seige.NextUpdate.AuthoritativeTerrainStable",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeSimulationTerrainCacheTest::RunTest(const FString&)
+{
+    FTestWorldWrapper World;if(!World.CreateTestWorld(EWorldType::Game)){World.ForwardErrorMessages(this);return false;}
+    FURL Url;Url.AddOption(*FString::Printf(TEXT("game=%s"),*ASeigeGameMode::StaticClass()->GetPathName()));
+    if(!World.GetTestWorld()->SetGameMode(Url)){AddError(TEXT("Cannot create terrain fixture"));return false;}
+    auto* G=Cast<ASeigeGameMode>(World.GetTestWorld()->GetAuthGameMode());
+    if(!G||!G->Sim.Initialize(FPaths::ProjectDir()/TEXT("Rules"),G->Error,false,false)){AddError(G?G->Error:TEXT("No terrain fixture"));return false;}
+    G->Screen=TEXT("playing");G->ConfigureCombatTerrain();
+    const FVector2D P(2600,300);const double H=G->SimulationTerrainHeight(P);const auto Prepared=G->SimulationTerrainCache;
+    const int32 Revision=G->Sim.Mobility.GetTerrainRevision();
+    G->CameraCenter=FVector(10000,20000,0);G->Zoom=100000;G->Observer=true;
+    for(int32 I=0;I<100;++I)TestEqual(TEXT("View changes never alter authoritative slope height"),G->SimulationTerrainHeight(P),H);
+    TestTrue(TEXT("Repeated height probes reuse prepared geometry"),G->SimulationTerrainCache==Prepared);
+    const int32 Building=G->Sim.AddReviewBuilding(TEXT("solar_array"),P-FVector2D(180,0));
+    TestTrue(TEXT("New foundation exists"),Building>0);
+    G->SimulationTerrainHeight(P);
+    TestTrue(TEXT("Foundation changes invalidate prepared terrain"),G->SimulationTerrainCache!=Prepared);
+    TestTrue(TEXT("Geometry change invalidates mobility edges"),G->Sim.Mobility.GetTerrainRevision()>Revision);
+    return true;
+}
+#endif

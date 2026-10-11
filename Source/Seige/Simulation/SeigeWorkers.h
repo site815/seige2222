@@ -14,6 +14,11 @@ struct FSeigeWorker
     FVector2D Position=FVector2D::ZeroVector, Heading=FVector2D(1,0);
     int32 BuildingId=0, RoadId=0, ContainerId=0, DeliveryId=0;
     int32 StationSlot=0;
+    // Permanent ownership is independent of today's physical task/location.
+    int32 CrewBuildingId=0, ChargingBuildingId=0, TransportVehicleId=0, ChargeQueueSlot=0;
+    double BatteryKWh=0, BatteryCapacityKWh=0;
+    FString SuspendedActivity;
+    FVector2D HandlingPosition=FVector2D::ZeroVector;
     FString ContainerKind=TEXT("building");
     TArray<FVector2D> Route;
     int32 NextWaypoint=0, RouteRevision=0;
@@ -44,6 +49,9 @@ public:
     FVector2D HatchPoint(const FSeigeSimulation& Sim) const;
     double HaulUnits(const FSeigeSimulation& Sim,const FString& Resource) const;
     double PickupReserved(const FSeigeSimulation& Sim,int32 Source,const FString& Resource,bool Deployment=false) const;
+    // Read-only eligibility check for logistics search. Dispatch still validates
+    // the actual source, destination, amount and the selected physical body.
+    bool HasDispatchWorker(const FSeigeSimulation& Sim,const FString& Resource) const;
     bool Dispatch(FSeigeSimulation& Sim,int32 Source,int32 Target,int32 Road,const FString& Resource,double Amount,bool Construction,bool Deployment=false);
     void NewStored(FSeigeSimulation& Sim,int32 BuildingId,int32 Count);
     bool BeginDisassembly(FSeigeSimulation& Sim,int32 BuildingId);
@@ -56,6 +64,18 @@ public:
     bool ReceiveStored(const FSeigeSimulation& Sim,const FString& FromKind,int32 FromId,int32 BuildingId,int32 Count);
     bool TransferStoredTo(FSeigeWorkerSystem& Other,const FString& FromKind,int32 FromId,const FString& ToKind,int32 ToId,int32 Count);
     int32 StoredAt(int32 BuildingId) const;
+    int32 AssignedCount(int32 BuildingId) const;
+    int32 OwnedCount() const;
+    int32 ActiveCount() const;
+    int32 StoredCount() const;
+    int32 IdleSurplusCount() const;
+    double BatteryCapacity() const;
+    double RecoveryFraction() const;
+    int32 ChargerBerths(const FSeigeSimulation& Sim,int32 BuildingId) const;
+    double ChargeSessionSeconds(const FSeigeSimulation& Sim) const;
+    FString AcquireTransportHandler(FSeigeSimulation& Sim,int32 VehicleId,int32 BuildingId,int32 RoadId,FVector2D Position,bool Construction);
+    bool TransportHandlingReady(const FString& WorkerId,int32 VehicleId) const;
+    void ReleaseTransportHandler(const FString& WorkerId,int32 VehicleId);
     FSeigeWorker* Find(const FString& Id);
     const FSeigeWorker* Find(const FString& Id) const;
     int32 RoadId(const FSeigeSimulation& Sim,const FSeigeWorker& Body) const;
@@ -71,6 +91,11 @@ private:
     double Number(const TCHAR* Key) const;
     FSeigeWorker* IdleWorker(FSeigeSimulation& Sim,bool BorrowOperator,bool IncludeIdle=true);
     void Schedule(FSeigeSimulation& Sim);
+    void AssignCrews(FSeigeSimulation& Sim);
+    bool StepBattery(FSeigeSimulation& Sim,FSeigeWorker& Worker,double Seconds);
+    void ResumeAfterCharging(FSeigeSimulation& Sim,FSeigeWorker& Worker);
+    FSeigeWorker* TaskWorker(FSeigeSimulation& Sim,int32 Source,int32 Target,bool Construction);
+    void InitializeBattery(FSeigeWorker& Worker,int32 Sequence) const;
     void RouteTo(FSeigeSimulation& Sim,FSeigeWorker& W,FVector2D Destination);
     bool Move(FSeigeSimulation& Sim,FSeigeWorker& W,FVector2D Destination,double Seconds);
     void StepDelivery(FSeigeSimulation& Sim,FSeigeWorker& W,FSeigeCourier& C,double Seconds);

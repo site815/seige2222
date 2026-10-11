@@ -107,15 +107,15 @@ void ASeigeGameMode::UpdateWeather(float DeltaSeconds)
         PresentationCalendar.Advance(FMath::RoundToDouble(FMath::Clamp(Accumulator,0.,Sim.FixedStepSeconds())*1000000.)/1000000.);
     const auto Date=PresentationCalendar.Sample();
     const double Light=FMath::SmoothStep(0.,double(SunriseSoftness),Date.SolarFactor);
-    // Keep the authored daytime exposure exactly. A deterministic dark-phase
-    // lift makes terrain readable without automatic metering or extra lights.
+    // Preserve daytime exposure; night gets only a small authored lift. Nearby
+    // powered buildings and mobile units carry real, budgeted local lamps.
     if(Camera)Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=ExposureBias+NightExposureOffsetEV*float(1-Light);
     if(WeatherSun)
     {
         const double Elevation=Date.IsDay?SunElevation*Date.SolarFactor:-SunElevation;
         const FRotator Direction(-Elevation,-118+Date.CycleFraction*360,0);
-        // Movable-light rotation invalidates shadow pages. Smooth intensity can
-        // update per frame while direction uses bounded authored angular steps.
+        // A small angular threshold and 50 ms cadence keep shadows in motion
+        // at both 1x and 10x without invalidating their pages on every frame.
         if(Light>0&&(!HasWeatherSunDirection||(RenderClock-LastWeatherSunUpdate>=SunShadowUpdateSeconds&&!WeatherSun->GetComponentRotation().Equals(Direction,SunDirectionUpdateDegrees))))
         {WeatherSun->SetWorldRotation(Direction);LastWeatherSunUpdate=RenderClock;HasWeatherSunDirection=true;}
         WeatherSun->SetIntensity(SunIntensity*Light);

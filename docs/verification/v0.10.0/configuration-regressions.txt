@@ -1,0 +1,19 @@
+v0.10.0 focused configuration regressions
+Initial run: environment passed. AI/UI expected old policies; combat edited-mass test used an obsolete 5 kg non-alloy subtotal.
+Updated only test expectations: worker_only + no universal recipes, zero established idle workers valid, six HUD groups, mass-conserving edited weapon bill.
+Added rejection checks for old core policy, worker group order/content and module bill mismatch. No runtime rules changed.
+
+node Tools/test_ai_configuration.mjs
+exit_code=0
+AI configuration validation: worker-only economy, placement and established manifest passed (60 negative cases).
+node Tools/test_combat_configuration.mjs
+exit_code=0
+Combat editable-budget validation: authored defaults, consistent edited catalog, 6 invalid cases passed.
+node Tools/test_ui_configuration.mjs
+exit_code=0
+UI configuration validation: six ordered resource groups, one mine entry and 9 invalid cases passed.
+node Tools/test_environment_configuration.mjs
+exit_code=0
+Environment: authored + edited profile valid; 8 malformed physical profiles rejected.
+
+Result: all four requested scripts passed. No native/full gameplay tests run by this agent.

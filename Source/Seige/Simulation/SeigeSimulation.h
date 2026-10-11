@@ -8,6 +8,8 @@
 #include "SeigeWorkers.h"
 #include "SeigeWorldCalendar.h"
 #include "SeigeEnvironment.h"
+#include "SeigeMobility.h"
+#include "SeigeTransportVehicles.h"
 
 struct FSeigeResourceDef
 {
@@ -110,6 +112,7 @@ struct FSeigeNode
 struct FSeigeCourier
 {
     int32 Id = 0, SourceId = 0, TargetId = 0;
+    int32 TransportVehicleId=0;
     FString Resource;
     double Amount = 0;
     FVector2D Position = FVector2D::ZeroVector;
@@ -177,6 +180,7 @@ public:
     double FixedStepSeconds() const;
     double WalkingSpeed() const;
     double MetersPerWorldUnit() const;
+    int32 GeometryRevision() const{return TransportRevision;}
     FVector2D BuildingAccessPoint(const FSeigeBuilding& Building) const;
     FVector2D RoadAccessPoint(const FSeigeTransportSegment& Road) const;
     FString ConstructionStage(const FSeigeBuilding& Building) const;
@@ -235,7 +239,8 @@ public:
     FString InitialRoadTier() const;
     double MinimumRoadLength() const; // Simulation world units, matching route coordinates.
     double RoadConstructionSeconds(const FSeigeTransportSegment& Road) const;
-    bool FindRoute(FVector2D From, FVector2D To, TArray<FVector2D>& Route, double ClearanceOverride=-1, bool RoadPlan=false, const FSeigeBuilding* ProspectivePlot=nullptr) const;
+    bool FindRoute(FVector2D From, FVector2D To, TArray<FVector2D>& Route, double ClearanceOverride=-1, bool RoadPlan=false, const FSeigeBuilding* ProspectivePlot=nullptr,const FString& MobilityProfile=TEXT("drone")) const;
+    bool FindMobilityRoute(const FString& Profile,FVector2D From,FVector2D To,TArray<FVector2D>& Route,double AdditionalRadiusMeters=0) const;
     bool FindRoadRoute(FVector2D From,FVector2D To,TArray<FVector2D>& Route,const FSeigeBuilding* ProspectivePlot=nullptr) const;
     bool ClearRoadLine(FVector2D From,FVector2D To,const FSeigeBuilding* ProspectivePlot=nullptr) const;
     bool IsRoadGridConnected(int32 A,int32 B) const {const auto X=Energy.Info(*this,A),Y=Energy.Info(*this,B);return X.Connected&&Y.Connected&&X.ComponentId==Y.ComponentId;}
@@ -244,7 +249,10 @@ public:
     FVector2D SnapRoadPoint(FVector2D Position) const;
     TMap<FString,FSeigeTransportTier> TransportTiers;
     TArray<FSeigeTransportSegment> Roads;
-    double ConstructionAvailable(const FString& Resource) const;
+    // StopAfter permits threshold-only callers to stop after proving enough
+    // real unreserved stock; the default still returns the complete quantity.
+    double ConstructionAvailable(const FString& Resource,double StopAfter=TNumericLimits<double>::Max()) const;
+    double ConstructionReservedStock(const FString& Resource) const { return ConstructionReserved(Resource); }
     double OperatingBuffer(const FString& Resource) const;
     double OperatingEfficiency() const { return WorkforceEfficiency; }
     bool HasActiveWork(const FSeigeBuilding& Building) const;
@@ -260,6 +268,8 @@ public:
     FSeigeWorkerSystem Workers;
     FSeigeWorldCalendar Calendar;
     FSeigeEnvironment Environment;
+    FSeigeMobilityRules Mobility;
+    FSeigeTransportVehicleSystem TransportVehicles;
     double DeploymentElapsed=0;
     bool DeploymentGrounded=false, DeploymentHatchOpen=false;
     TArray<FSeigeEnemy> Enemies;
@@ -285,6 +295,7 @@ private:
     friend class FSeigeCombatSystem;
     friend class FSeigeWallSystem;
     friend class FSeigeWorkerSystem;
+    friend class FSeigeTransportVehicleSystem;
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FSeigeTransportNetworkTest;
     friend class FSeigeReplicatorWorkforceTest;
@@ -296,6 +307,8 @@ private:
     friend class FSeigeLogisticsPriorityTest;
     friend class FSeigeConstructionSourceTest;
     friend class FSeigeRawInputBufferTest;
+    friend class FSeigeDispatchEligibilityTest;
+    friend class FSeigeTransportConservationTest;
     friend class FSeigeEnemyContactTest;
     friend class FSeigeFirstPlayableTimelineDiagnostic;
 #endif
@@ -311,6 +324,9 @@ private:
     FString RulesFingerprint;
     mutable FString CachedRouteTopology;
     mutable TMap<FString,TArray<FVector2D>> CachedRoutes;
+    // Directed visibility edges are shared by routes to different destinations.
+    // A negative cost records a blocked edge for the current topology only.
+    mutable TMap<FString,double> CachedRouteEdges;
     double Number(const FString& Key) const;
     FString TextRule(const FString& Key) const;
     void AllocateWorkers();

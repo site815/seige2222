@@ -1,0 +1,134 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "M9800X3D",
+			"instance": "2D54BB9C4B89A1931C600FAF3EA0E433",
+			"instanceName": "M9800X3D-14128",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.11-08.51.30",
+	"succeeded": 7,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 1.0082610845565796,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "DamageTriggeredShelter",
+			"fullTestPath": "Seige.Companions.DamageTriggeredShelter",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2D54BB9C4B89A1931C600FAF3EA0E433"
+			],
+			"duration": 0.010570500046014786,
+			"dateTime": "2026.10.11-08.51.29",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AuthoritativeTerrainStable",
+			"fullTestPath": "Seige.NextUpdate.AuthoritativeTerrainStable",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2D54BB9C4B89A1931C600FAF3EA0E433"
+			],
+			"duration": 0.014846798032522202,
+			"dateTime": "2026.10.11-08.51.29",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AutonomousTransportConservation",
+			"fullTestPath": "Seige.NextUpdate.AutonomousTransportConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2D54BB9C4B89A1931C600FAF3EA0E433"
+			],
+			"duration": 0.035893999040126801,
+			"dateTime": "2026.10.11-08.51.29",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MobilityRouteCache",
+			"fullTestPath": "Seige.NextUpdate.MobilityRouteCache",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2D54BB9C4B89A1931C600FAF3EA0E433"
+			],
+			"duration": 0.0080542005598545074,
+			"dateTime": "2026.10.11-08.51.29",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OwnedCrewConservation",
+			"fullTestPath": "Seige.NextUpdate.OwnedCrewConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2D54BB9C4B89A1931C600FAF3EA0E433"
+			],
+			"duration": 0.87368291616439819,
+			"dateTime": "2026.10.11-08.51.29",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PhysicalChargingAndSurplus",
+			"fullTestPath": "Seige.NextUpdate.PhysicalChargingAndSurplus",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2D54BB9C4B89A1931C600FAF3EA0E433"
+			],
+			"duration": 0.056949298828840256,
+			"dateTime": "2026.10.11-08.51.30",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DestructionDuringChargingAndExport",
+			"fullTestPath": "Seige.Workers.DestructionDuringChargingAndExport",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2D54BB9C4B89A1931C600FAF3EA0E433"
+			],
+			"duration": 0.0082633011043071747,
+			"dateTime": "2026.10.11-08.51.30",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

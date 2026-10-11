@@ -8,11 +8,20 @@ the industry importer's bounds/ground checks; portraits go to /Game/Art/Interfac
 Rules are untouched: Graphics/building_visuals.json maps building ids to the new kinds.
 """
 from pathlib import Path
-import json, unreal
+import json, re, unreal
 
 ROOT = Path(__file__).resolve().parents[1]; ART = ROOT / 'Art'; KIT = ART / 'BuildingKitV092'
 DATA = json.loads((KIT / 'kit_manifest.json').read_text(encoding='utf-8'))
 PORTRAITS = json.loads((KIT / 'UI/portraits.json').read_text(encoding='utf-8')) if (KIT / 'UI/portraits.json').exists() else {}
+# A focused source correction can reimport just one family without resaving the
+# whole catalog: -KitOnly=SM_ServiceBay (comma-separated names are supported).
+subset=re.search(r'-KitOnly=([^\s"]+)',unreal.SystemLibrary.get_command_line())
+if subset:
+    names=set(subset.group(1).split(','))
+    missing=names-set(DATA['meshes'])
+    if missing: raise RuntimeError('Unknown kit mesh subset: '+str(sorted(missing)))
+    DATA['meshes']={k:v for k,v in DATA['meshes'].items() if k in names}
+    PORTRAITS={k:v for k,v in PORTRAITS.items() if 'SM_'+k in names}
 DEST = '/Game/Art/Industry'; MESH_DEST = '/Game/Art'; UI_DEST = '/Game/Art/Interface'
 ED = unreal.EditorAssetLibrary; TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
 unreal.SystemLibrary.execute_console_command(None, 'Interchange.FeatureFlags.Import.FBX 0')
@@ -35,6 +44,8 @@ for name, record in DATA['meshes'].items():
 TOOLS.import_asset_tasks(tasks)
 editor = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem) or unreal.get_default_object(unreal.StaticMeshEditorSubsystem)
 report = {'source': 'Original Blender-authored building kit v0.9.2 on the industrial palette', 'meshes': {}, 'portraits': {}}
+if subset and (KIT/'import_report.json').exists():
+    report=json.loads((KIT/'import_report.json').read_text(encoding='utf-8'))
 for name, record in DATA['meshes'].items():
     mesh = ED.load_asset(MESH_DEST + '/' + name)
     if not isinstance(mesh, unreal.StaticMesh):

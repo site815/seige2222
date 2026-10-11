@@ -30,6 +30,10 @@
     {
       "heading": "Asset provenance",
       "text": "Downloaded models and photographic or procedural PBR maps are CC0 and permit commercial use. Creator credits, source links, licenses and file hashes are retained with the project. Editable Blender derivatives and generation scripts are included. All game assets are local; no runtime downloads."
+    },
+    {
+      "heading": "Original audio / CC0 1.0",
+      "text": "Original synthesized sound effects — seige2222, CC0-1.0; generated offline in Tools/create_original_audio.py (no third-party recordings)."
     }
   ],
   "build_groups": [
@@ -102,6 +106,30 @@
       ]
     },
     {
+      "id": "energy",
+      "name": "Energy",
+      "shortcut": "E",
+      "description": "Solar generation, fuel and fusion power, and grid battery storage. Roads connect consumers to the shared grid.",
+      "entries": [
+        {
+          "definition": "solar_array",
+          "shortcut": "P"
+        },
+        {
+          "definition": "battery_bank",
+          "shortcut": "E"
+        },
+        {
+          "definition": "fuel_generator",
+          "shortcut": "G"
+        },
+        {
+          "definition": "fusion_power_plant",
+          "shortcut": "F"
+        }
+      ]
+    },
+    {
       "id": "logistics",
       "name": "Logistics",
       "shortcut": "L",
@@ -128,20 +156,8 @@
           "shortcut": "C"
         },
         {
-          "definition": "solar_array",
-          "shortcut": "P"
-        },
-        {
-          "definition": "battery_bank",
-          "shortcut": "E"
-        },
-        {
           "definition": "trading_port",
           "shortcut": "T"
-        },
-        {
-          "definition": "fuel_generator",
-          "shortcut": "G"
         },
         {
           "definition": "worker_factory",
@@ -202,8 +218,13 @@
       "entries": []
     },
     {
+      "id": "workers",
+      "label": "Workers",
+      "entries": []
+    },
+    {
       "id": "raw",
-      "label": "Raw materials",
+      "label": "Raw",
       "entries": [
         {
           "resource": "water",
@@ -241,7 +262,7 @@
     },
     {
       "id": "basic",
-      "label": "Basic production",
+      "label": "Basic",
       "entries": [
         {
           "resource": "alloy",
@@ -271,7 +292,7 @@
     },
     {
       "id": "advanced",
-      "label": "Adv production",
+      "label": "Advanced",
       "entries": [
         {
           "resource": "circuits",

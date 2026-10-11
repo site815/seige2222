@@ -1080,7 +1080,7 @@
         749.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 31440,
+      "source_triangles": 23780,
       "lod_count": 3,
       "material_slots": 11,
       "active_material_slots": [
@@ -1089,10 +1089,9 @@
         "IM_Ceramic",
         "IM_Slate",
         "IM_Glass",
-        "IM_Steel",
         "IM_Light",
+        "IM_Steel",
         "IM_Yellow",
-        "IM_Amber",
         "IM_Copper",
         "IM_Blue"
       ],

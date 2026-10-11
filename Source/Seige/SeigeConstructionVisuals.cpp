@@ -232,27 +232,24 @@ void ASeigeGameMode::SyncConstructionVisuals(const FSeigeSimulation& Colony,cons
 
 void ASeigeGameMode::SyncServiceVisuals(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuildingDef& Appearance,const FString& Key,TSet<FString>& Live)
 {
-    // Inactive (stored) worker identities held by this building wait on the
-    // mesh's authored charging berths: one real body per berth, in ledger
-    // order; any beyond the berths are indoors. Nothing is drawn for a site,
-    // an empty bay or a mesh without berths, so the picture never adds a
-    // worker, and the keys never use the outdoor worker prefix.
+    // One real charging place, exactly where the simulation queues and charges.
+    // Worker visuals alone draw identities; this pad never creates a fake body.
     const auto* Definition=Colony.Definition(Building);
-    if(Building.IsConstructing||Building.Health<=0||!Definition||!Definition->StoresInactiveWorkers)return;
-    const TArray<FVector4>* Berths=VisualBerths.Find(BuildingVisualKind(Appearance));
-    AActor* Body=Visuals.FindRef(Key).Get();
-    if(!Berths||Berths->IsEmpty()||!Body)return;
-    UStaticMeshComponent* Mesh=nullptr;
-    {TArray<UStaticMeshComponent*> Meshes;Body->GetComponents(Meshes);for(auto* Candidate:Meshes)if(Candidate->ComponentHasTag(TEXT("BuildingBody"))){Mesh=Candidate;break;}}
-    if(!Mesh)return; // the primitive fallback has no berths
-    const FTransform& Frame=Mesh->GetComponentTransform();int32 Berth=0;
-    for(const auto& W:Colony.Workers.Bodies)
+    auto* Body=Visuals.FindRef(Key).Get();
+    if(!Body||Building.IsConstructing||Building.Health<=0||!Definition||Definition->Role!=TEXT("service"))return;
+    const FVector2D LocalPort=Colony.BuildingAccessPoint(Building)-Building.Position;
+    const FVector2D WorldPort=FVector2D(Body->GetActorLocation())/RenderScale+LocalPort;
+    const FString PadKey=Key+TEXT("_charge_pad");Live.Add(PadKey);
+    auto* Pad=Visuals.FindRef(PadKey).Get();
+    if(!Pad)
     {
-        if(Berth>=Berths->Num())break;
-        if(W.State!=TEXT("stored")||W.ContainerKind!=TEXT("building")||W.ContainerId!=Building.Id)continue;
-        const FVector4& Point=(*Berths)[Berth++];
-        const FString DockKey=Key+TEXT("_berth_")+W.Id;Live.Add(DockKey);
-        AActor* Docked=Visual(DockKey,TEXT("Robot"),Frame.TransformPosition(FVector(Point.X,Point.Y,Point.Z))+FVector(0,0,2),FLinearColor(.86f,.52f,.15f),95);
-        Docked->SetActorRotation(Frame.GetRotation().Rotator()+FRotator(0,Point.W,0));
+        Pad=PresentationActor(GetWorld(),RenderPosition(WorldPort,3));Visuals.Add(PadKey,Pad);
+        Part(Pad,TEXT("Cube"),FVector(0,0,3),FVector(1.8,1.8,.06),Steel);
+        Part(Pad,TEXT("Cube"),FVector(0,0,8),FVector(1.1,1.1,.04),FLinearColor(.35,.42,.45));
+        for(float Y:{-86.f,86.f})Part(Pad,TEXT("Cube"),FVector(0,Y,8),FVector(1.75,.055,.015),Safety);
+        Part(Pad,TEXT("Cube"),FVector(-100,0,62),FVector(.35,.5,1.2),Steel);
+        Part(Pad,TEXT("Cube"),FVector(-81,0,90),FVector(.025,.3,.25),FLinearColor(.16,.7,.6));
+        Part(Pad,TEXT("Cylinder"),FVector(-55,0,14),FVector(.08,.08,.8),FLinearColor(.07,.09,.1),FRotator(0,0,90));
     }
+    Pad->SetActorHiddenInGame(false);Pad->SetActorLocation(RenderPosition(WorldPort,3));
 }

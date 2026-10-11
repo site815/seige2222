@@ -1,5 +1,5 @@
 {
-  "version": "prototype-9.3",
+  "version": "prototype-10.0",
   "policies": {
     "fixed_step_seconds": 0.05,
     "dispatch_interval": 2,
@@ -7,7 +7,17 @@
     "courier_min_batch": 2,
     "delivery_refill_trigger_fraction": 0.5,
     "construction_source_policy": "surplus_then_largest_load",
-    "delivery_priority_order": ["fuel", "maintenance", "repair", "defense", "construction", "production", "trade", "reserve", "storage"],
+    "delivery_priority_order": [
+      "fuel",
+      "maintenance",
+      "repair",
+      "defense",
+      "construction",
+      "production",
+      "trade",
+      "reserve",
+      "storage"
+    ],
     "max_couriers": 72,
     "delivery_buffer_cycles": 3,
     "delivery_raw_input_buffer_loads": 2,
@@ -18,11 +28,11 @@
     "extractor_snap_distance": 260,
     "placement_requires_visibility": 1,
     "population_policy": "fill_open_jobs",
-    "workforce_mode": "full_staff",
+    "workforce_mode": "proportional",
     "surplus_policy": "store_inactive",
     "population_recipe": "assemble_robot",
     "robot_retire_seconds": 120,
-    "minimum_population": 6,
+    "minimum_population": 5,
     "population_buffer_robots": 4,
     "upkeep_resource": "components",
     "upkeep_interval": 600,
@@ -73,7 +83,7 @@
     "storage_policy": "overflow_only",
     "rule_time_basis": "simulation_seconds",
     "construction_policy": "phased_physical_delivery",
-    "robot_support_policy": "local_capacity_and_maintenance",
+    "robot_support_policy": "individual_batteries_and_crews",
     "construction_stages": [
       {
         "name": "Foundations",
@@ -104,8 +114,8 @@
       "circuits": 3.6,
       "batteries": 3.6
     },
-    "auto_disassemble_parts_shortage": true,
-    "auto_disassemble_storage_full": true,
+    "auto_disassemble_parts_shortage": false,
+    "auto_disassemble_storage_full": false,
     "default_inactive_worker_target": 0,
     "default_port_worker_reserve_target": 0
   }

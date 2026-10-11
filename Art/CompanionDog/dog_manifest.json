@@ -8,18 +8,18 @@
   "root_motion": false,
   "reference_pose_bounds_cm": {
     "min": [
-      -97.97801208496094,
-      -20.456501007080078,
-      0.142805814743042
+      -97.58114624023438,
+      -20.299875259399414,
+      0.24408677220344543
     ],
     "max": [
-      74.0999984741211,
-      20.44898796081543,
-      86.79219055175781
+      74.0679931640625,
+      20.287540435791016,
+      86.76895904541016
     ]
   },
-  "triangles": 45442,
-  "vertices": 23017,
+  "triangles": 52682,
+  "vertices": 26637,
   "bones": [
     "root",
     "pelvis",
@@ -191,15 +191,15 @@
   "max_bone_influences": 4,
   "dog_name": "Rex",
   "name_on_tag": true,
-  "cosmetic_revision": "Rex authored release fallback: lofted retriever anatomy, broad skull, defined stop, deep muzzle, pendant ears and chest; cream muzzle and brow, golden coat and teal collar. No generated mesh or photograph pixels. Opaque coat with procedural detail; card feathering is opt-in.",
+  "cosmetic_revision": "Rex original likeness pass: corrected local-space nose geometry, broader eye spacing, narrower pendant ears, open panting mouth and tongue, feathered tail silhouette, pale muzzle and brow, golden coat and teal collar. Fine 9 cm rest-space coat detail replaces broad bands. Reviewed from front, three-quarter and profile; no generated mesh or photograph pixels.",
   "fur_cards": {
     "enabled": false
   },
   "shell_fur": false,
   "exports": {
-    "A_DogIdle.fbx": "e8e69170234602f6385183436e5c37a8985db2fb2c8fbf082815f01f772c0c11",
-    "A_DogWalk.fbx": "d0ecafe695d5983ba49ac6de1ecb723cfbcb137ead69f73e226b6ea6d46f6153",
-    "SK_CompanionDog.fbx": "79e1ec1808ba138345cc268820b39e5552580f08c74dbc35d59039fb8848a443"
+    "A_DogIdle.fbx": "c6c569ac9d8249831a05fb269f6db81db43234ccd159e70cf615be86a5c37ee8",
+    "A_DogWalk.fbx": "f3298c3f787c27c672525c55961b4d0ab7e40feaeaeea52b7f3f4567a100d92f",
+    "SK_CompanionDog.fbx": "537e82ac5db9adf282c7ef9249edfa9010779c2bd3c660854fce088da556b96b"
   },
   "unreal_import_pending": false,
   "runtime_review_pending": true

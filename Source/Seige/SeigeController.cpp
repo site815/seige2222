@@ -14,8 +14,11 @@ void ASeigeController::HandlePrimaryClick(float X,float Y)
     if(GetLocalPlayer())UpdateCursorFromScreen(X,Y);
     auto* UI=Cast<ASeigeHUD>(GetHUD());if(UI&&UI->Click(X,Y))return;
     if(G->IsRegionMap()||OrbitActive||G->CompanionView)return;
+    if(UI&&UI->SelectWorkerAt(X,Y,*G))return;
     FVector Origin,Direction;
     if(GetLocalPlayer()&&ScreenRay(FVector2D(X,Y),Origin,Direction)&&G->SelectBuildingRay(Origin,Direction))return;
+    if(G->Screen==TEXT("playing")&&G->SelectedId==0&&G->SelectedRoadId==0&&G->SelectedCompanionId==0&&G->SelectedBuild.IsEmpty()&&!G->IsRoadToolActive()&&!G->WallPlacementActive&&!G->FleetOrderActive&&!G->RegionViewHistory.IsEmpty()&&G->RegionViewHistory.Last().Zoom>=G->RegionMapZoom)
+    {G->RestoreRegionView();return;}
     G->ClickWorld();
 }
 bool ASeigeController::ScreenRay(const FVector2D& ScreenPosition,FVector& WorldOrigin,FVector& WorldDirection) const
@@ -71,7 +74,8 @@ void ASeigeController::PlayerTick(float Dt)
 {
     Super::PlayerTick(Dt);auto* G=GetWorld()?Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()):nullptr;if(!G)return;
     auto* UI=Cast<ASeigeHUD>(GetHUD());
-    const bool CaptureDog=G->CompanionView&&G->Screen==TEXT("playing")&&!G->MenuOpen;
+    const bool CaptureDog=G->CompanionView&&G->Screen==TEXT("playing")&&!G->MenuOpen&&!(UI&&UI->ProgressionOpen);
+    if(G->CompanionView&&UI&&UI->ProgressionOpen)G->Sim.Companions.SetControlDirection(FVector2D::ZeroVector);
     if(CaptureDog!=CompanionMouseCaptured)
     {
         EndOrbitGesture();CompanionMouseCaptured=CaptureDog;bShowMouseCursor=!CaptureDog;
@@ -80,6 +84,7 @@ void ASeigeController::PlayerTick(float Dt)
     }
     if(CaptureDog)
     {
+        if(WasInputKeyJustPressed(EKeys::P)&&UI){G->Sim.Companions.SetControlDirection(FVector2D::ZeroVector);UI->HandleShortcut(EKeys::P);return;}
         if(WasInputKeyJustPressed(EKeys::Escape)){G->ExitCompanionView();return;}
         if(WasInputKeyJustPressed(EKeys::F10)){G->Sim.Companions.SetControlDirection(FVector2D::ZeroVector);G->ToggleGameMenu();return;}
         if(WasInputKeyJustPressed(EKeys::SpaceBar))G->Paused=!G->Paused;
@@ -93,7 +98,7 @@ void ASeigeController::PlayerTick(float Dt)
     }
     bool Consumed=false;
     for(auto It=ConsumedKeysUntilRelease.CreateIterator();It;++It)if(!IsInputKeyDown(*It))It.RemoveCurrent();
-    TArray<FKey> Keys={EKeys::Enter,EKeys::BackSpace,EKeys::Delete,EKeys::Escape,EKeys::RightMouseButton,EKeys::SpaceBar,EKeys::F5,EKeys::F9,EKeys::F10,EKeys::Add,EKeys::Subtract,EKeys::Equals,EKeys::Hyphen};
+    TArray<FKey> Keys={EKeys::Left,EKeys::Right,EKeys::Up,EKeys::Down,EKeys::Enter,EKeys::BackSpace,EKeys::Delete,EKeys::Escape,EKeys::RightMouseButton,EKeys::SpaceBar,EKeys::F5,EKeys::F9,EKeys::F10,EKeys::Add,EKeys::Subtract,EKeys::Equals,EKeys::Hyphen};
     for(TCHAR Letter=TEXT('A');Letter<=TEXT('Z');++Letter)Keys.Add(FKey(FName(*FString::Chr(Letter))));
     for(const FKey& Key:Keys)if(WasInputKeyJustPressed(Key))
     {
@@ -101,8 +106,8 @@ void ASeigeController::PlayerTick(float Dt)
         else if(Key==EKeys::Escape||Key==EKeys::RightMouseButton){G->CancelRoadTool();G->SelectedRoadId=0;G->SelectedBuild.Empty();G->SelectedId=0;Consumed=true;}
     }
     const bool CameraScreen=G->Screen==TEXT("playing")||G->Screen==TEXT("landing");
-    if(OrbitActive&&(!IsInputKeyDown(EKeys::MiddleMouseButton)||!CameraScreen||G->IsRegionMap()))EndOrbitGesture();
-    if(CameraScreen&&!G->IsRegionMap()&&WasInputKeyJustPressed(EKeys::MiddleMouseButton)&&!(UI&&UI->IsPointerOverUI()))
+    if(OrbitActive&&(!IsInputKeyDown(EKeys::MiddleMouseButton)||!CameraScreen||G->IsRegionMap()||(UI&&UI->ProgressionOpen)))EndOrbitGesture();
+    if(CameraScreen&&!(UI&&UI->ProgressionOpen)&&!G->IsRegionMap()&&WasInputKeyJustPressed(EKeys::MiddleMouseButton)&&!(UI&&UI->IsPointerOverUI()))
     {float X=0,Y=0;if(GetMousePosition(X,Y))BeginOrbitGesture(X,Y);}
     if(OrbitActive){float X=0,Y=0;GetInputMouseDelta(X,Y);OrbitGestureDelta(X,-Y);}
     const bool Blocked=!CameraScreen||Consumed||!ConsumedKeysUntilRelease.IsEmpty()||(UI&&UI->BlocksCameraKeys());
@@ -116,7 +121,7 @@ void ASeigeController::PlayerTick(float Dt)
         if(IsInputKeyDown(EKeys::E))G->CameraYaw+=55*Dt;
         G->CameraYaw=FRotator::ClampAxis(G->CameraYaw);
     }
-    if(CameraScreen&&(G->IsRegionMap()||!(UI&&UI->IsPointerOverUI())))
+    if(CameraScreen&&!(UI&&UI->ProgressionOpen)&&(G->IsRegionMap()||!(UI&&UI->IsPointerOverUI())))
     {
         if(WasInputKeyJustPressed(EKeys::MouseScrollUp))
         {

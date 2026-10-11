@@ -1124,50 +1124,29 @@
     },
     "SM_ServiceBay": {
       "fbx": "SM_ServiceBay.fbx",
-      "sha256": "b9ec2128a565f3f0273c2ad23aa9ac4d496f5e824ccc43aa7580e0ad973dcd25",
+      "sha256": "6bbe00fdbc32bdf310011ede7c1a3fe79e7d79d7710cb2b60e631685c840e8a0",
       "dimensions": [
         2460.0,
         2460.0,
         749.0
       ],
-      "triangles": 31440,
+      "triangles": 23780,
       "materials": [
         "IM_Concrete",
         "IM_Carbon",
         "IM_Ceramic",
         "IM_Slate",
         "IM_Glass",
-        "IM_Steel",
         "IM_Light",
+        "IM_Steel",
         "IM_Yellow",
-        "IM_Amber",
         "IM_Copper",
         "IM_Blue"
       ],
-      "description": "Open three-berth worker charging and service bay: exposed contact plates, pedestals with charge leads and diagnostic arms under a cantilever canopy, plant hall with control gallery, coolant plant and parts cage",
+      "description": "Single-worker charging service hall with control gallery, coolant plant, parts cage and canopy; the single live charging plate is rendered at the building access point",
       "unreal_path": "/Game/Art/SM_ServiceBay",
       "building_families": [
         "robot_service_bay"
-      ],
-      "berths_unreal": [
-        [
-          470.0,
-          740.0,
-          76.0,
-          -180
-        ],
-        [
-          470.0,
-          0.0,
-          76.0,
-          -180
-        ],
-        [
-          470.0,
-          -740.0,
-          76.0,
-          -180
-        ]
       ]
     },
     "SM_SensorMast": {

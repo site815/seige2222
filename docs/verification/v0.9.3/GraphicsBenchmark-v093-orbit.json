@@ -1,0 +1,542 @@
+{
+	"name": "v093-orbit",
+	"views": [
+		{
+			"view": "colony",
+			"samples": 353,
+			"displayed_zoom": 3500,
+			"camera_yaw": 136.31080627441406,
+			"camera_pitch": 52.183010101318359,
+			"simple_terrain_components": 0,
+			"synchronous_setup_seconds": 0.0070916004478931427,
+			"scenery_ready_wall_seconds": 0.87578779831528664,
+			"scenery_wait_seconds": 0.86869619786739349,
+			"initial_pending_scenery_cells": 78,
+			"pending_scenery_cells_at_sample_start": 0,
+			"pending_scenery_cells_max": 9,
+			"pending_scenery_cells_mean": 0.34560906515580736,
+			"pending_scenery_cells_at_sample_end": 0,
+			"pending_visible_cells_max": 0,
+			"pending_near_cells_max": 0,
+			"frames_with_pending_visible_cells": 0,
+			"max_consecutive_visible_pending_seconds": 0,
+			"initial_visibility_counters_available": true,
+			"initial_pending_visible_cells": 20,
+			"initial_pending_near_cells": 12,
+			"initial_visible_coverage_ready": true,
+			"initial_near_coverage_ready": true,
+			"initial_visible_ready_wall_seconds": 0.46093659847974777,
+			"initial_visible_wait_seconds": 0.45384499803185463,
+			"initial_near_ready_wall_seconds": 0.30142059922218323,
+			"initial_near_wait_seconds": 0.29432899877429008,
+			"nanite_max_pixels_per_edge": 6,
+			"r.Shadow.Virtual.SMRT.RayCountDirectional": 2,
+			"r.Shadow.Virtual.SMRT.SamplesPerRayDirectional": 2,
+			"sample_seconds": 5.0098389983177185,
+			"simulation_seconds_advanced": 50.099999999954434,
+			"effective_simulation_speed": 10.00032137096178,
+			"mean_fps": 70.461346186681013,
+			"mean_frame_ms": 14.192178465489288,
+			"p95_frame_ms": 16.338199377059937,
+			"p99_frame_ms": 19.119199365377426,
+			"max_frame_ms": 19.849099218845367,
+			"timings":
+			{
+				"wall":
+				{
+					"available": true,
+					"samples": 353,
+					"mean_ms": 14.192178465489288,
+					"p95_ms": 16.338199377059937,
+					"p99_ms": 19.119199365377426,
+					"max_ms": 19.849099218845367
+				},
+				"game":
+				{
+					"available": true,
+					"samples": 353,
+					"mean_ms": 1.0647201158169646,
+					"p95_ms": 4.638700008392334,
+					"p99_ms": 4.9159998893737793,
+					"max_ms": 5.021399974822998
+				},
+				"render":
+				{
+					"available": true,
+					"samples": 353,
+					"mean_ms": 1.1273572238072458,
+					"p95_ms": 1.6045999526977539,
+					"p99_ms": 1.8147000074386597,
+					"max_ms": 2.274399995803833
+				},
+				"rhi":
+				{
+					"available": true,
+					"samples": 353,
+					"mean_ms": 0.79605637241693128,
+					"p95_ms": 0.9243999719619751,
+					"p99_ms": 1.0434999465942383,
+					"max_ms": 1.2646000385284424
+				},
+				"gpu":
+				{
+					"available": true,
+					"samples": 353,
+					"mean_ms": 13.37735070993137,
+					"p95_ms": 14.91409969329834,
+					"p99_ms": 15.431300163269043,
+					"max_ms": 16.605300903320312
+				}
+			},
+			"spikes": []
+		},
+		{
+			"view": "meadow",
+			"samples": 275,
+			"displayed_zoom": 900,
+			"camera_yaw": 150.49638366699219,
+			"camera_pitch": 25.069309234619141,
+			"simple_terrain_components": 0,
+			"synchronous_setup_seconds": 0.0040866993367671967,
+			"scenery_ready_wall_seconds": 0.33652110025286674,
+			"scenery_wait_seconds": 0.33243440091609955,
+			"initial_pending_scenery_cells": 27,
+			"pending_scenery_cells_at_sample_start": 0,
+			"pending_scenery_cells_max": 0,
+			"pending_scenery_cells_mean": 0,
+			"pending_scenery_cells_at_sample_end": 0,
+			"pending_visible_cells_max": 0,
+			"pending_near_cells_max": 0,
+			"frames_with_pending_visible_cells": 0,
+			"max_consecutive_visible_pending_seconds": 0,
+			"initial_visibility_counters_available": true,
+			"initial_pending_visible_cells": 0,
+			"initial_pending_near_cells": 0,
+			"initial_visible_coverage_ready": true,
+			"initial_near_coverage_ready": true,
+			"initial_visible_ready_wall_seconds": 0.0040866993367671967,
+			"initial_visible_wait_seconds": 0,
+			"initial_near_ready_wall_seconds": 0.0040866993367671967,
+			"initial_near_wait_seconds": 0,
+			"nanite_max_pixels_per_edge": 6,
+			"r.Shadow.Virtual.SMRT.RayCountDirectional": 2,
+			"r.Shadow.Virtual.SMRT.SamplesPerRayDirectional": 2,
+			"sample_seconds": 5.0025358013808727,
+			"simulation_seconds_advanced": 50.04999999995448,
+			"effective_simulation_speed": 10.00492589900885,
+			"mean_fps": 54.972120324274442,
+			"mean_frame_ms": 18.191039277748629,
+			"p95_frame_ms": 23.044001311063766,
+			"p99_frame_ms": 23.670200258493423,
+			"max_frame_ms": 24.367000907659531,
+			"timings":
+			{
+				"wall":
+				{
+					"available": true,
+					"samples": 275,
+					"mean_ms": 18.191039277748629,
+					"p95_ms": 23.044001311063766,
+					"p99_ms": 23.670200258493423,
+					"max_ms": 24.367000907659531
+				},
+				"game":
+				{
+					"available": true,
+					"samples": 275,
+					"mean_ms": 0.71668327374891805,
+					"p95_ms": 0.90289998054504395,
+					"p99_ms": 1.0089999437332153,
+					"max_ms": 1.1957000494003296
+				},
+				"render":
+				{
+					"available": true,
+					"samples": 275,
+					"mean_ms": 1.1361952713402834,
+					"p95_ms": 1.5957000255584717,
+					"p99_ms": 1.7937999963760376,
+					"max_ms": 2.2402000427246094
+				},
+				"rhi":
+				{
+					"available": true,
+					"samples": 275,
+					"mean_ms": 0.81069454453208234,
+					"p95_ms": 0.98210000991821289,
+					"p99_ms": 1.1243000030517578,
+					"max_ms": 1.3250000476837158
+				},
+				"gpu":
+				{
+					"available": true,
+					"samples": 275,
+					"mean_ms": 17.378250534751199,
+					"p95_ms": 22.088300704956055,
+					"p99_ms": 23.119899749755859,
+					"max_ms": 23.888599395751953
+				}
+			},
+			"spikes": []
+		},
+		{
+			"view": "ground",
+			"samples": 270,
+			"displayed_zoom": 180,
+			"camera_yaw": 35.598808288574219,
+			"camera_pitch": 20.083608627319336,
+			"simple_terrain_components": 0,
+			"synchronous_setup_seconds": 8.5301697254180908e-05,
+			"scenery_ready_wall_seconds": 0.00084000080823898315,
+			"scenery_wait_seconds": 0.00075469911098480225,
+			"initial_pending_scenery_cells": 0,
+			"pending_scenery_cells_at_sample_start": 0,
+			"pending_scenery_cells_max": 0,
+			"pending_scenery_cells_mean": 0,
+			"pending_scenery_cells_at_sample_end": 0,
+			"pending_visible_cells_max": 0,
+			"pending_near_cells_max": 0,
+			"frames_with_pending_visible_cells": 0,
+			"max_consecutive_visible_pending_seconds": 0,
+			"initial_visibility_counters_available": true,
+			"initial_pending_visible_cells": 0,
+			"initial_pending_near_cells": 0,
+			"initial_visible_coverage_ready": true,
+			"initial_near_coverage_ready": true,
+			"initial_visible_ready_wall_seconds": 8.5301697254180908e-05,
+			"initial_visible_wait_seconds": 0,
+			"initial_near_ready_wall_seconds": 8.5301697254180908e-05,
+			"initial_near_wait_seconds": 0,
+			"nanite_max_pixels_per_edge": 6,
+			"r.Shadow.Virtual.SMRT.RayCountDirectional": 2,
+			"r.Shadow.Virtual.SMRT.SamplesPerRayDirectional": 2,
+			"sample_seconds": 5.0005623996257782,
+			"simulation_seconds_advanced": 49.999999999954525,
+			"effective_simulation_speed": 9.9988753272424571,
+			"mean_fps": 53.993926767158371,
+			"mean_frame_ms": 18.520601480095475,
+			"p95_frame_ms": 21.860901266336441,
+			"p99_frame_ms": 22.616900503635406,
+			"max_frame_ms": 23.350398987531662,
+			"timings":
+			{
+				"wall":
+				{
+					"available": true,
+					"samples": 270,
+					"mean_ms": 18.520601480095475,
+					"p95_ms": 21.860901266336441,
+					"p99_ms": 22.616900503635406,
+					"max_ms": 23.350398987531662
+				},
+				"game":
+				{
+					"available": true,
+					"samples": 270,
+					"mean_ms": 0.70174000042456164,
+					"p95_ms": 0.88040000200271606,
+					"p99_ms": 0.982200026512146,
+					"max_ms": 1.0146000385284424
+				},
+				"render":
+				{
+					"available": true,
+					"samples": 270,
+					"mean_ms": 1.1386470373030062,
+					"p95_ms": 1.5465999841690063,
+					"p99_ms": 1.7690000534057617,
+					"max_ms": 2.0085000991821289
+				},
+				"rhi":
+				{
+					"available": true,
+					"samples": 270,
+					"mean_ms": 0.81864629630689267,
+					"p95_ms": 0.97089999914169312,
+					"p99_ms": 1.1470999717712402,
+					"max_ms": 1.3269000053405762
+				},
+				"gpu":
+				{
+					"available": true,
+					"samples": 270,
+					"mean_ms": 17.703591834174262,
+					"p95_ms": 20.913999557495117,
+					"p99_ms": 21.876100540161133,
+					"max_ms": 23.042400360107422
+				}
+			},
+			"spikes": []
+		},
+		{
+			"view": "hills",
+			"samples": 302,
+			"displayed_zoom": 7000,
+			"camera_yaw": 156.63009643554688,
+			"camera_pitch": 48.227573394775391,
+			"simple_terrain_components": 0,
+			"synchronous_setup_seconds": 0.0041265971958637238,
+			"scenery_ready_wall_seconds": 0.33001729846000671,
+			"scenery_wait_seconds": 0.32589070126414299,
+			"initial_pending_scenery_cells": 73,
+			"pending_scenery_cells_at_sample_start": 13,
+			"pending_scenery_cells_max": 14,
+			"pending_scenery_cells_mean": 2.3443708609271523,
+			"pending_scenery_cells_at_sample_end": 10,
+			"pending_visible_cells_max": 0,
+			"pending_near_cells_max": 0,
+			"frames_with_pending_visible_cells": 0,
+			"max_consecutive_visible_pending_seconds": 0,
+			"initial_visibility_counters_available": true,
+			"initial_pending_visible_cells": 2,
+			"initial_pending_near_cells": 0,
+			"initial_visible_coverage_ready": true,
+			"initial_near_coverage_ready": true,
+			"initial_visible_ready_wall_seconds": 0.014188699424266815,
+			"initial_visible_wait_seconds": 0.010062102228403091,
+			"initial_near_ready_wall_seconds": 0.0041265971958637238,
+			"initial_near_wait_seconds": 0,
+			"nanite_max_pixels_per_edge": 6,
+			"r.Shadow.Virtual.SMRT.RayCountDirectional": 2,
+			"r.Shadow.Virtual.SMRT.SamplesPerRayDirectional": 2,
+			"sample_seconds": 5.0056440979242325,
+			"simulation_seconds_advanced": 50.04999999995448,
+			"effective_simulation_speed": 9.9987132566435335,
+			"mean_fps": 60.331896174007852,
+			"mean_frame_ms": 16.574980456702757,
+			"p95_frame_ms": 20.610202103853226,
+			"p99_frame_ms": 21.99699729681015,
+			"max_frame_ms": 23.768600076436996,
+			"timings":
+			{
+				"wall":
+				{
+					"available": true,
+					"samples": 302,
+					"mean_ms": 16.574980456702757,
+					"p95_ms": 20.610202103853226,
+					"p99_ms": 21.99699729681015,
+					"max_ms": 23.768600076436996
+				},
+				"game":
+				{
+					"available": true,
+					"samples": 302,
+					"mean_ms": 2.171174173915623,
+					"p95_ms": 4.9387998580932617,
+					"p99_ms": 5.1117000579833984,
+					"max_ms": 5.2129001617431641
+				},
+				"render":
+				{
+					"available": true,
+					"samples": 302,
+					"mean_ms": 1.1875692027688816,
+					"p95_ms": 1.6598999500274658,
+					"p99_ms": 1.8566000461578369,
+					"max_ms": 2.2421000003814697
+				},
+				"rhi":
+				{
+					"available": true,
+					"samples": 302,
+					"mean_ms": 0.79304072892429023,
+					"p95_ms": 0.95120000839233398,
+					"p99_ms": 1.0442999601364136,
+					"max_ms": 1.0743999481201172
+				},
+				"gpu":
+				{
+					"available": true,
+					"samples": 302,
+					"mean_ms": 15.717429097914538,
+					"p95_ms": 17.561899185180664,
+					"p99_ms": 18.380100250244141,
+					"max_ms": 18.99839973449707
+				}
+			},
+			"spikes": []
+		},
+		{
+			"view": "boundary",
+			"samples": 327,
+			"displayed_zoom": 14000,
+			"camera_yaw": 1.833566427230835,
+			"camera_pitch": 60.255970001220703,
+			"simple_terrain_components": 0,
+			"synchronous_setup_seconds": 0.0042205005884170532,
+			"scenery_ready_wall_seconds": 1.8436805978417397,
+			"scenery_wait_seconds": 1.8394600972533226,
+			"initial_pending_scenery_cells": 223,
+			"pending_scenery_cells_at_sample_start": 21,
+			"pending_scenery_cells_max": 38,
+			"pending_scenery_cells_mean": 11.923547400611621,
+			"pending_scenery_cells_at_sample_end": 35,
+			"pending_visible_cells_max": 0,
+			"pending_near_cells_max": 0,
+			"frames_with_pending_visible_cells": 0,
+			"max_consecutive_visible_pending_seconds": 0,
+			"initial_visibility_counters_available": true,
+			"initial_pending_visible_cells": 41,
+			"initial_pending_near_cells": 0,
+			"initial_visible_coverage_ready": true,
+			"initial_near_coverage_ready": true,
+			"initial_visible_ready_wall_seconds": 0.32087379693984985,
+			"initial_visible_wait_seconds": 0.3166532963514328,
+			"initial_near_ready_wall_seconds": 0.0042205005884170532,
+			"initial_near_wait_seconds": 0,
+			"nanite_max_pixels_per_edge": 6.1417498588562012,
+			"r.Shadow.Virtual.SMRT.RayCountDirectional": 2,
+			"r.Shadow.Virtual.SMRT.SamplesPerRayDirectional": 2,
+			"sample_seconds": 5.011066198348999,
+			"simulation_seconds_advanced": 50.04999999995448,
+			"effective_simulation_speed": 9.9878943958961273,
+			"mean_fps": 65.255573775444631,
+			"mean_frame_ms": 15.324361462840976,
+			"p95_frame_ms": 18.742602318525314,
+			"p99_frame_ms": 20.083200186491013,
+			"max_frame_ms": 20.231202244758606,
+			"timings":
+			{
+				"wall":
+				{
+					"available": true,
+					"samples": 327,
+					"mean_ms": 15.324361462840976,
+					"p95_ms": 18.742602318525314,
+					"p99_ms": 20.083200186491013,
+					"max_ms": 20.231202244758606
+				},
+				"game":
+				{
+					"available": true,
+					"samples": 327,
+					"mean_ms": 3.4846321052732088,
+					"p95_ms": 6.2404999732971191,
+					"p99_ms": 6.4386000633239746,
+					"max_ms": 6.531400203704834
+				},
+				"render":
+				{
+					"available": true,
+					"samples": 327,
+					"mean_ms": 1.3155550475514264,
+					"p95_ms": 1.8848999738693237,
+					"p99_ms": 2.0216000080108643,
+					"max_ms": 2.1621999740600586
+				},
+				"rhi":
+				{
+					"available": true,
+					"samples": 327,
+					"mean_ms": 0.70468348756842658,
+					"p95_ms": 0.84320002794265747,
+					"p99_ms": 0.92390000820159912,
+					"max_ms": 1.1531000137329102
+				},
+				"gpu":
+				{
+					"available": true,
+					"samples": 327,
+					"mean_ms": 14.504777050893241,
+					"p95_ms": 15.7322998046875,
+					"p99_ms": 16.009000778198242,
+					"max_ms": 16.302099227905273
+				}
+			},
+			"spikes": []
+		}
+	],
+	"selected_view": "all",
+	"schema_version": 4,
+	"simulation_speed": 10,
+	"simulation_seconds": 1796.7499999989136,
+	"diagnostic_developed_neighbors": false,
+	"simulated_neighbor_count": 0,
+	"neighbor_worker_bodies": 0,
+	"neighbor_buildings": 0,
+	"camera_mode": "orbit",
+	"travel_meters_per_second": 0,
+	"camera_path_version": "five-views-v1",
+	"orbit_degrees_per_second": 72,
+	"orbit_pitch_amplitude_degrees": 8,
+	"warmup_seconds": 4,
+	"sample_seconds_per_view": 5,
+	"warmup_policy": "initial-scenery-ready-then-4s-settling",
+	"streaming_sample_policy": "Orbit includes live camera-driven streaming; pending cells reported, no sample reset.",
+	"scenery_readiness_timeout_seconds": 120,
+	"diagnostic_simple_terrain": false,
+	"diagnostic_gpu_profile": false,
+	"thread_timing_method": "Latest completed RenderTimer counters exclude idle; GPU uses RHIGetGPUFrameCycles(0). Counters can lag camera samples, and repeated GPU readback values are not de-duplicated. Zero counters are omitted and availability/sample counts reported. These distributions are bottleneck evidence, not synchronized CPU/GPU frame traces.",
+	"grass_shadow_distance_m": 45,
+	"grass_wind_distance_m": 60,
+	"grass_programmable_distance_m": 0,
+	"configured_nanite_max_pixels_per_edge": 6,
+	"diagnostic_nanite_baseline": false,
+	"diagnostic_clearing_view": false,
+	"grass_distance_field_lighting": false,
+	"ground_cover_candidates": 300000,
+	"profile": "Medium",
+	"diagnostic_winter": false,
+	"lighting_fixture": "Spring day 1, midday at benchmark start; advances at 10x during measurements",
+	"season_index_at_finish": 0,
+	"snow_coverage_at_finish": 0,
+	"snowflake_instances_at_finish": 0,
+	"calendar_elapsed_seconds_at_finish": 1399.75,
+	"sky_realtime_capture": false,
+	"fog_density": 0.0030000000260770321,
+	"atmosphere_mie_scale": 0.15000000596046448,
+	"atmosphere_aerial_perspective_scale": 0.30000001192092896,
+	"sun_source_angle": 0.60000002384185791,
+	"cloud_shadow_resolution_scale": 0.5,
+	"diagnostic_sward_hidden": false,
+	"diagnostic_sward_opaque": false,
+	"diagnostic_sward_only_a": false,
+	"diagnostic_sward_only_b": false,
+	"width": 3840,
+	"height": 1600,
+	"engine": "5.8.3-58210709+++UE5+Release-5.8",
+	"quality":
+	{
+		"sg.ResolutionQuality": 100,
+		"sg.ViewDistanceQuality": 2,
+		"sg.AntiAliasingQuality": 2,
+		"sg.ShadowQuality": 2,
+		"sg.GlobalIlluminationQuality": 1,
+		"sg.ReflectionQuality": 1,
+		"sg.PostProcessQuality": 2,
+		"sg.TextureQuality": 3,
+		"sg.EffectsQuality": 2,
+		"sg.FoliageQuality": 3,
+		"sg.ShadingQuality": 2,
+		"sg.LandscapeQuality": 2,
+		"r.ScreenPercentage": 100,
+		"r.ScreenPercentage.Default.Desktop.Mode": 1,
+		"r.SecondaryScreenPercentage.GameViewport": 0,
+		"r.Nanite.MaxPixelsPerEdge": 6.1417498588562012,
+		"r.Nanite.PrimaryRaster.TimeBudgetMs": 0,
+		"r.Shadow.Virtual.SMRT.RayCountDirectional": 2,
+		"r.Shadow.Virtual.SMRT.SamplesPerRayDirectional": 2,
+		"r.VSync": 0,
+		"t.MaxFPS": 0,
+		"r.DynamicRes.OperationMode": 0,
+		"runtime_resolution_quality": 100,
+		"r.TSR.History.ScreenPercentage": 100,
+		"r.TSR.ThinGeometryDetection": 1,
+		"r.TSR.ThinGeometryDetection.Coverage.ShadingRange": 0,
+		"r.TSR.Velocity.WeightClampingSampleCount": 2,
+		"r.Tonemapper.Sharpen": 0.25,
+		"r.MaxAnisotropy": 16,
+		"r.TemporalAA.Quality": 2,
+		"r.TemporalAAFilterSize": 0.80000001192092896,
+		"r.TemporalAACurrentFrameWeight": 0.079999998211860657,
+		"r.Shadow.Virtual.ResolutionLodBiasDirectional": 0.5,
+		"r.Shadow.Virtual.ResolutionLodBiasDirectionalMoving": 0.5,
+		"r.VolumetricCloud.ViewRaySampleMaxCount": 160,
+		"r.VolumetricCloud.ShadowMap.RaySampleMaxCount": 32,
+		"r.VolumetricCloud.ReflectionRaySampleMaxCount": 40,
+		"r.HZBOcclusion": 1,
+		"r.AntiAliasingMethod": 2
+	},
+	"method": "Wall frame timings; named benchmark profile and 100 percent resolution quality, never saved; fresh player core deployed through normal construction at origin, then runs at10x with eight empty neighbors; wait for initial required scenery cells (120s watchdog), then at least 4s settling and at least 5s of complete frame intervals. Orbit and travel samples include camera-driven streaming without resetting; travel translates 36m/s. Both report pending-cell counts and visible/near backlogs, including longest consecutive visible backlog. Initial visible/near-ready times use initialized CPU residency counters and are recorded before the full-ready wait; they are not GPU upload fences or pixel coverage. Static samples require complete scenery. Setup/wait duration is separate. Older schema-2 baselines started 4s warmup directly after synchronous setup. Screenshot cost is excluded."
+}

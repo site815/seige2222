@@ -8,7 +8,7 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     if(!Policy||!Def||(BuildingId&&(!B||B->DefId!=DefinitionId)))return Rows;
     const auto& D=*Def;
     if(!FMath::IsFinite(CentimetersPerUnit)||CentimetersPerUnit<=0)CentimetersPerUnit=1;
-    auto N=[](double Value){return FString::SanitizeFloat(Value,0);};
+    auto N=[](double Value){FString Text=FString::Printf(TEXT("%.2f"),Value);while(Text.EndsWith(TEXT("0")))Text.LeftChopInline(1);if(Text.EndsWith(TEXT(".")))Text.LeftChopInline(1);return Text;};
     auto Name=[&](const FString& Id){const auto* R=Resources.Find(Id);return R?R->Name:Id;};
     auto Add=[&](const TCHAR* Section,const TCHAR* Label,const FString& Value){Rows.Add({Section,Label,Value});};
     auto Amounts=[&](const TMap<FString,double>& Values)
@@ -26,8 +26,8 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     if(!D.NextUpgrade.IsEmpty())Add(TEXT("Overview"),TEXT("Next-level upgrade"),BuildingDefs[D.NextUpgrade].Name+TEXT(": ")+Amounts(D.UpgradeCost));
     Add(TEXT("Overview"),TEXT("Status"),B?B->Status:TEXT("Blueprint"));
     Add(TEXT("Overview"),TEXT("Health"),B?N(B->Health)+TEXT(" / ")+N(D.Health):N(D.Health)+TEXT(" maximum"));
-    Add(TEXT("Overview"),TEXT("Jobs"),B?FString::Printf(TEXT("%d / %d staffed"),B->Workers,D.Jobs):FString::FromInt(D.Jobs));
-    Add(TEXT("Overview"),TEXT("Automatic staffing priority"),FString::FromInt(D.StaffingPriority)+TEXT(" (lower first; includes construction)"));
+    Add(TEXT("Overview"),TEXT("Jobs"),B?FString::Printf(TEXT("%d / %d assigned; %d operating now"),Workers.AssignedCount(B->Id),D.Jobs,B->Workers):FString::FromInt(D.Jobs));
+    Add(TEXT("Overview"),TEXT("Staffing"),TEXT("Permanent crew; idle/stored bodies reused before paid core manufacture"));
     Add(TEXT("Overview"),TEXT("Operating efficiency"),N(Fraction*100)+TEXT("%")+(B?TEXT(""):TEXT(" at full staffing and upkeep")));
     Add(TEXT("Overview"),TEXT("Current building width"),Metres(D.Footprint*2));
     Add(TEXT("Overview"),TEXT("Reserved plot width"),Metres(D.ReservedFootprint*2));
@@ -134,18 +134,20 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
         const double Inbound=B?Incoming(B->Id,Key):0;if(Inbound>0)Value+=TEXT(" (+")+N(Inbound)+TEXT(" inbound)");
         Rows.Add({TEXT("Resources"),Name(Key),Value});
     }
-    Add(TEXT("Resources"),TEXT("Transport"),TEXT("Physical couriers; ")+N(Number(TEXT("courier_capacity")))+TEXT(" kg per cargo batch"));
+    Add(TEXT("Resources"),TEXT("Transport"),TEXT("Owned drones: 40 kg / 60 L; autonomous transport: 2,000 kg / 3,000 L with real endpoint handlers"));
 
     Add(TEXT("Maintenance"),TEXT("Repair material"),Name(TextRule(TEXT("repair_resource"))));
     Add(TEXT("Maintenance"),TEXT("Maximum repair rate"),N(Number(TEXT("repair_health_per_second")))+TEXT(" health / s from local stock"));
     Add(TEXT("Maintenance"),TEXT("Repair conversion"),N(Number(TEXT("repair_health_per_unit")))+TEXT(" health / material unit"));
     Add(TEXT("Maintenance"),TEXT("Local repair buffer"),N(Number(TEXT("repair_buffer_units")))+TEXT(" units"));
     Add(TEXT("Maintenance"),TEXT("Repair operation"),TEXT("Automatic after construction, including while disabled; destroyed buildings do not repair"));
-    Add(TEXT("Maintenance"),TEXT("Worker upkeep"),N(Number(TEXT("upkeep_per_robot")))+TEXT(" ")+Name(TextRule(TEXT("upkeep_resource")))+TEXT(" / worker every ")+N(Number(TEXT("upkeep_interval")))+TEXT(" s"));
-    Add(TEXT("Maintenance"),TEXT("Worker support capacity"),FString::FromInt(D.RobotSupportCapacity)+TEXT(" workers when completed and operating"));
-    Add(TEXT("Maintenance"),TEXT("Upkeep payment"),TEXT("Local core/service-bay stock, delivered by physical couriers"));
-    if(B&&D.RobotSupportCapacity>0){Add(TEXT("Maintenance"),TEXT("Workers supported here"),FString::FromInt(B->SupportedRobots));Add(TEXT("Maintenance"),TEXT("Service supply"),B->IsConstructing?TEXT("Under construction"):B->MaintenanceSupplied?TEXT("Supplied at last maintenance interval"):TEXT("Maintenance shortage"));}
-    Add(TEXT("Maintenance"),TEXT("Shortage efficiency"),N(Number(TEXT("upkeep_shortage_efficiency"))*100)+TEXT("% until a supplied upkeep interval"));
+    Add(TEXT("Maintenance"),TEXT("Worker batteries"),N(Workers.BatteryCapacity())+TEXT(" kWh each; physical charging trips, no remote refill"));
+    if(CoreBuilding||D.Role==TEXT("service")){
+        Add(TEXT("Maintenance"),TEXT("Charging berths"),TEXT("1 physical berth"));
+        Add(TEXT("Maintenance"),TEXT("Charging session"),TEXT("10 calendar minutes; maximum 144 sessions per day including attendants"));
+        Add(TEXT("Maintenance"),TEXT("Queue and staffing"),TEXT("Trips, queuing and charging remove the same bodies from productive work"));
+    }
+    if(D.Role==TEXT("construction"))Add(TEXT("Maintenance"),TEXT("Construction crew"),TEXT("Works only when physically on site with delivered materials"));
     if(CoreBuilding)
     {
         Add(TEXT("Maintenance"),TEXT("Shuttle capacity"),N(Number(TEXT("shuttle_capacity")))+TEXT(" units; preloaded cargo only"));

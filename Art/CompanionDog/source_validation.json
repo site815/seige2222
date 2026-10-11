@@ -32,8 +32,7 @@
     }
   },
   "walk_authored_ik_max_error_cm": 1.5553957395839777e-05,
-  "source_triangles": 45442,
-  "source_cosmetic_revision": "Rex authored release fallback: lofted retriever anatomy, broad skull, defined stop, deep muzzle, pendant ears and chest; cream muzzle and brow, golden coat and teal collar. No generated mesh or photograph pixels. Opaque coat with procedural detail; card feathering is opt-in.",
-  "unreal_import_verified": true,
-  "unreal_import_report": "import_report.json"
+  "source_triangles": 52682,
+  "source_cosmetic_revision": "Rex original likeness pass: corrected local-space nose geometry, broader eye spacing, narrower pendant ears, open panting mouth and tongue, feathered tail silhouette, pale muzzle and brow, golden coat and teal collar. Fine 9 cm rest-space coat detail replaces broad bands. Reviewed from front, three-quarter and profile; no generated mesh or photograph pixels.",
+  "unreal_import_verified": false
 }

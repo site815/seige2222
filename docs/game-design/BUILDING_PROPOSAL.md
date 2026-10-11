@@ -9,9 +9,11 @@
 | Family | Levels and capability |
 | --- | --- |
 | Extraction Mine | One blueprint for all eight raw types; placement binds output to the underlying deposit. Per-resource rates remain external balance. |
-| Command core | Parked shuttle at level 1; levels 2/3 double/triple body width. All reserve the level-3 plot. Fusion power, storage, two large hardpoint banks carrying one large, two medium and eight small lasers and a slow selectable universal replicator, including workers and combat production. |
+| Command core | Parked shuttle at level 1; levels 2/3 double/triple body width. All reserve the level-3 plot. Fusion power, storage, two large hardpoint banks carrying one large, two medium and eight small lasers and a slow worker-only assembler. Industrial material, chassis and weapon production require specialist facilities. |
 | Solar array | Levels 1–3, unchanged footprint, increasing externally configured output. |
-| Worker factory | Fast worker assembly with lower process electricity than core replication; physical inactive-worker berths. |
+| Construction Hub (former worker-factory ID) | Permanent construction crew; no worker manufacture. |
+| Charging / maintenance bay | One charging berth and its own attendant; physically serves individual worker batteries. |
+| Fusion power plant | Levels 1–3, shared reserved footprint; grid generation independent of daylight. |
 | Wheeled / tracked / mech factories | Separate families, levels 1–3 at fixed family footprints. Paid, timed manufacture uses combat-defined size access and throughput. |
 | Laser / kinetic / missile / plasma towers | Four separate families, levels 1–3 at fixed family footprints; hardpoints and loadouts are combat data. |
 | Ammunition works | Selectable kinetic-shell or missile manufacture, with physical kilogram cargo. |
@@ -38,7 +40,7 @@ See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for version-specific evidenc
 
 ## Organization
 
-**Confirmed broad direction:** Buildings need at least resource-related, logistics, and defense categories. The current interface separates resource work into Extraction and Production, alongside Logistics and Defense. Logistics includes movement, trade, storage, power and worker charging/service. Storage overlaps functions, and resource or logistics buildings may have secondary defensive capabilities.
+**Confirmed broad direction:** Buildings need at least resource-related, logistics, and defense categories. The current interface separates Extraction, Production, Energy, Logistics and Defense. Energy contains generation and battery storage; Logistics includes movement, trade, cargo storage and worker charging/service. Storage overlaps functions, and resource or logistics buildings may have secondary defensive capabilities.
 
 **Remaining organization proposal:** Secondary functional tags could supplement the current primary categories. The core combines several capabilities and is selected directly for its commands. Tags are an optional presentation proposal; current catalog entries and shortcuts are defined in [ui.json](../../Interface/ui.json).
 
@@ -46,7 +48,8 @@ See [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) for version-specific evidenc
 | --- | --- | --- |
 | Extraction | One deposit-driven Extraction Mine | Storage, power, logistics access |
 | Production | Processing and component manufacture | Storage, power, service, defensive |
-| Logistics | Local transport, storage, power, external trade, fleet support, and worker service | Storage, repair, charging, manufacturing, defensive |
+| Energy | Solar/fusion/fuel generation and batteries | Storage, logistics access |
+| Logistics | Local transport, storage, external trade, fleet support, and worker service | Storage, repair, charging, manufacturing, defensive |
 | Defense | Fixed protection, perimeter control, and protective infrastructure | Sensor, storage, logistics access |
 
 Tags would describe existing capabilities; they would not automatically add weapons, generation or repairs. The prototype already uses local inventories and physical deliveries. Additional transfer-hub types and broader allocation policies remain future design work.
@@ -54,7 +57,7 @@ Tags would describe existing capabilities; they would not automatically add weap
 ## Established constraints
 
 - One central command center and central zone per player. The core houses central command and the shuttle and moves with relocation. Remote extraction, including risky extensions into empty neighboring sectors, does not establish another core.
-- The core's slow universal replicator and a dedicated faster worker factory can both assemble workers from materials and electricity. They share one colony workforce. Surplus workers become physical inactive cargo; configurable reserve targets govern production, reactivation and recycling. Core-exclusive worker production and unconditional deletion of surplus workers are superseded ideas.
+- The core alone assembles workers from real materials and electricity. Permanent building crews take physical tasks; inactive stock and colony/port targets remain. The old worker factory is now a Construction Hub. Automatic recycling and the manual surplus-disassembly HUD action are removed in v0.10.
 - Constructed buildings staff and operate automatically when inputs and labor are sufficient. The player can turn a building off and see demand or unfilled jobs. Repairs and hauling are automatic.
 - Resource output is rate-limited. Additional population alone does not bypass extraction ceilings.
 - The selected tiered families above have authored level 1–3 upgrade paths. Numerical benefits, costs and additional future families remain provisional.
@@ -71,7 +74,7 @@ The older starter proposal assumed all four industrial materials could be obtain
 | Solar array and road connection | Logistics | Establish a shared generating network | Electricity follows completed connected roads; batteries store charge rather than create it. |
 | Trading port | Logistics | Sell available goods, then import missing inputs | Credits start at zero. Orders use physical cargo, timed shipments and paid imports. |
 | Materials, electronics and mechanical works | Resource-related | Make alloys, conductors, glass, circuits and parts | Authored recipes are provisional balance; local input stocks and energy are required. |
-| Worker service bay and worker factory | Logistics | Support the active workforce and expand worker assembly | Service and manufacture are distinct functions; the factory assembles into the same workforce and inactive-worker inventory. |
+| Worker service bay and Construction Hub | Logistics | Charge physical worker batteries and provide construction crews | Neither manufactures workers; only the core does. |
 | Logistics depot | Logistics; storage | Hold goods for automatic physical delivery | Stored volume and courier mass constrain transfers; no manual hauling orders are required. |
 | Defensive tower and sensor | Defense | Extend protection and paid sensor coverage | Four tiered weapon families are confirmed. Damage, ranges, upkeep and bills remain editable prototype balance; full sensor theft remains future work. |
 
@@ -85,7 +88,7 @@ This historical crosswalk preserves the original sixteen ideas while stating the
 
 | Earlier proposed function | Current treatment | Status and purpose |
 | --- | --- | --- |
-| Core | Tiered command core | Confirmed shuttle, fusion power, storage, two large hardpoint banks carrying one large, two medium and eight small lasers and slow universal replication; exact rates and bills remain provisional. |
+| Core | Tiered command core | Confirmed shuttle, fusion power, storage, two large hardpoint banks carrying one large, two medium and eight small lasers and worker-only manufacture; exact rates and bills remain provisional. |
 | Habitat | Reconsider as a robot service or social space, or omit | Human housing is deferred. Robot accommodation and its satisfaction effects are not selected. |
 | Waterworks | Extraction Mine on water | The same mine blueprint gathers this standard resource. Water has industrial uses and does not imply worker drinking needs. |
 | Cultivation | Biomass extraction and food manufacture | Biomass is currently a deposit resource. Organic food feeds Rex and can be exported; workers do not eat it. Cultivation as a separate renewable source remains a proposal. |
@@ -95,7 +98,7 @@ This historical crosswalk preserves the original sixteen ideas while stating the
 | Power plant | Core fusion, tiered solar, fuel generation and batteries | Confirmed shared road-grid operation. Authored output, fuel, idle demand and storage values remain editable balance. |
 | Machine works | Component manufacture | Current input source for workers, logistics, repairs and defense; no free remote inventory access. |
 | Electronics facility | Circuits and AI-chip manufacture | Current product branches with authored recipes; additional specialist processes remain future design. |
-| Advanced assembly | Worker factory and higher-order manufacture | Dedicated faster worker assembly is confirmed alongside the core's slow replicator. Both feed one workforce; advanced products have separate recipes. |
+| Advanced assembly | Specialist industrial and vehicle factories | Cores manufacture workers only; advanced products, chassis and weapons require their actual specialist producers. |
 | Depot / logistics | Local storage and automatic deliveries | Implemented local inventory and courier rules; additional transfer-hub types remain proposals. |
 | Trade terminal | Level 1–3 trading port | Current timed import/export, credits, physical goods and whole-worker trade. Provisional shipment capacity is 1/2/3 tonnes by level; nominal flight time is 120 seconds and departure costs 0.25 kWh. See the [economy baseline](ECONOMY_BASELINE_0_9.md#provisional-external-freight-capacity) for the revision and pending acceptance. |
 | Fleet yard | Wheeled, tracked and mech factory families | Current level 1–3 manufacture and outfitting, physical bills and separate combat vehicle state; these do not create colony workers. |

@@ -1,0 +1,3 @@
+Configuration valid: prototype-10.0; 22 items, 14 recipes, 55 buildings.
+AI: 22 priorities, 24 established buildings, 43 active + 4 stored workers. Interface: 5 groups, 32 building/tool entries, 21 summary resources, 6 credits.
+Graphics: 10 nature roles resolve to Content assets; 6 rendered centimeters per simulation unit.

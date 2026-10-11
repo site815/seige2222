@@ -1,0 +1,14 @@
+{
+  "select": "/Game/Art/Audio/S_select.S_select",
+  "confirm": "/Game/Art/Audio/S_confirm.S_confirm",
+  "cancel": "/Game/Art/Audio/S_cancel.S_cancel",
+  "error": "/Game/Art/Audio/S_error.S_error",
+  "build": "/Game/Art/Audio/S_build.S_build",
+  "complete": "/Game/Art/Audio/S_complete.S_complete",
+  "alert": "/Game/Art/Audio/S_alert.S_alert",
+  "laser": "/Game/Art/Audio/S_laser.S_laser",
+  "kinetic": "/Game/Art/Audio/S_kinetic.S_kinetic",
+  "missile": "/Game/Art/Audio/S_missile.S_missile",
+  "plasma": "/Game/Art/Audio/S_plasma.S_plasma",
+  "rex": "/Game/Art/Audio/S_rex.S_rex"
+}

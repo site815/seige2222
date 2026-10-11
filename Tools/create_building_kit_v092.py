@@ -1294,13 +1294,15 @@ def extraction_rig():
 
 # ------------------------------------------------------------------ ROBOT SERVICE BAY (plot 2460)
 def service_bay():
-    """Three open charging berths in front of a plant hall (charge electronics,
+    """Plant hall serving one external access-point berth (charge electronics,
     control gallery, roof chillers), with a coolant plant and a parts cage on
     the sides. The cantilever canopy covers only the pedestals so the contact
     plates, and the stored worker bodies docked on them at runtime, stay
     visible from the strategy camera; berth positions go to the manifest."""
     foundation(2460, 2460, 40)
-    z0 = 40; lanes = (-740, 0, 740)
+    # The one live charging pad is drawn at BuildingAccessPoint by the game;
+    # putting it inside this reserved plot would require workers to clip walls.
+    z0 = 40; lanes = ()
     hall_y, hall_w, hall_d, hall_h = 700, 2000, 640, 560
     front = hall_y - hall_d / 2
     box('Service plant hall', (0, hall_y, z0 + hall_h / 2), (hall_w, hall_d, hall_h), 'Ceramic', 8)
@@ -1359,7 +1361,7 @@ def service_bay():
         box('Spare parts crate', (-1110, y, z0 + 50), (150, 110, 90), ('Blue', 'Yellow', 'Ceramic')[k % 3], 3)
         box('Spare parts crate', (-1110, y, z0 + 145), (130, 100, 90), ('Ceramic', 'Blue', 'Yellow')[k % 3], 3)
     scatter_props(z0, 1230, 1230, seed=89, count=6)
-    export('SM_ServiceBay', 'Open three-berth worker charging and service bay: exposed contact plates, pedestals with charge leads and diagnostic arms under a cantilever canopy, plant hall with control gallery, coolant plant and parts cage', ['robot_service_bay'])
+    export('SM_ServiceBay', 'Single-worker charging service hall with control gallery, coolant plant, parts cage and canopy; the single live charging plate is rendered at the building access point', ['robot_service_bay'])
 
 
 # ------------------------------------------------------------------ WALL SECTIONS (6 m segment, 1.2 m wide; heights from Rules/walls.json)

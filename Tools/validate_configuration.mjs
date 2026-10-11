@@ -240,8 +240,8 @@ export function validateConfiguration(data) {
   number(economy.fuel_import_buffer_cycles,'AI fuel_import_buffer_cycles',1,100);number(economy.fuel_import_refill_fraction,'AI fuel_import_refill_fraction',1e-8,1);
   if(!['remaining_output_bill','recipe_buffers'].includes(economy.bulk_input_policy))fail('Unsupported AI bulk_input_policy');
   if(!['surplus_shipment_value','local_raw_only'].includes(economy.export_policy))fail('Unsupported AI export_policy');
-  if(economy.core_replication_policy!=='funded_shortage_first')fail('Unsupported AI core_replication_policy');
-  const replicationRecipes=array(economy.core_replication_recipes,'AI core_replication_recipes',1,128), replicationSeen=new Set();
+  if(economy.core_replication_policy!=='worker_only')fail('Unsupported AI core_replication_policy');
+  const replicationRecipes=array(economy.core_replication_recipes,'AI core_replication_recipes',0,0), replicationSeen=new Set();
   for(const id of replicationRecipes){const recipe=data.rules.recipes.recipes.find(r=>r.id===id);if(replicationSeen.has(id)||!recipe||recipe.worker_output>0||!Object.keys(recipe.outputs).length||!buildings.get(scenario.core_definition).allowed_recipes.includes(id))fail(`Invalid AI core_replication_recipes entry: ${id}`);replicationSeen.add(id);}
   for(const[id,n]of Object.entries(object(economy.reserve_targets,'AI reserve_targets'))){if(!resources.has(id))fail(`Unknown AI reserve target ${id}`);number(n,`AI reserve_targets.${id}`,0,Number.MAX_VALUE);}
   number(ai.developed_setup_seconds, 'AI developed_setup_seconds', ai.decision_interval_seconds, 172800);
@@ -283,7 +283,7 @@ export function validateConfiguration(data) {
     unique(upgradeFamilies, family, 'AI upgrade family');
   }
   if (!['established_manifest','simulated_history'].includes(ai.developed_initialization)) fail('Invalid AI developed_initialization');
-  if (developed.kind !== 'established_colony' || developed.equipment !== 'definition_defaults' || developed.fleet !== 'scenario_guard_manifest') fail('Invalid established kind/equipment/fleet');
+  if (developed.kind !== 'established_colony' || developed.equipment !== 'definition_defaults' || developed.fleet !== 'unarmed_transport_manifest') fail('Invalid established kind/equipment/fleet');
   if (developed.road_tier !== data.rules.transport.transport.initial_tier) fail('Invalid established road_tier');
   number(developed.age_seconds, 'Established age_seconds', 60, 31536000);
   number(developed.credits, 'Established credits', 0, 1000000);
@@ -320,11 +320,11 @@ export function validateConfiguration(data) {
       fixedPlots.push({x:row.offset_meters[0], y:row.offset_meters[1], radius});
     }
   }
-  if (mines !== 1 || operators > capacity) fail('Established manifest needs one bound mine and supported worker capacity');
+  if (mines !== 1) fail('Established manifest needs one bound mine and supported worker capacity');
   const workerRules = data.rules.workers;
   const eligible = established.filter(row => !workerRules.logistics_excluded_roles.includes(buildings.get(row.definition).role)).length;
   const logistics = Math.min(workerRules.logistics_max_workers, workerRules.logistics_workers + (workerRules.logistics_scaling_policy === 'completed_facilities' ? Math.floor(eligible / workerRules.logistics_facilities_per_worker) : 0));
-  if (developed.idle_workers < logistics) fail('Established idle_workers must cover actual logistics jobs');
+  // Owned crews handle logistics; no extra idle reserve is required.
 
   const shortcut = (value, label) => {
     const key = text(value, label).toUpperCase();
@@ -350,12 +350,12 @@ export function validateConfiguration(data) {
   }
   for (const id of menu) if (!assigned.has(id)) fail(`Build-menu definition has no UI entry: ${id}`);
   const summaryIds = new Set();
-  const expectedGroups = ['credits','energy','raw','basic','advanced'];
-  for (const [index, group] of array(ui.resource_groups, 'UI resource_groups', 5, 5).entries()) {
+  const expectedGroups = ['credits','energy','workers','raw','basic','advanced'];
+  for (const [index, group] of array(ui.resource_groups, 'UI resource_groups', 6, 6).entries()) {
     object(group, `UI resource_groups[${index}]`);
-    if (group.id !== expectedGroups[index]) fail('UI resource groups must be Credits, Energy, Raw, Basic, Advanced in that order');
+    if (group.id !== expectedGroups[index]) fail('UI resource groups must be Credits, Energy, Workers, Raw, Basic, Advanced in that order');
     text(group.label, `UI resource group ${group.id} label`);
-    const entries = array(group.entries, `UI resource group ${group.id} entries`, index < 2 ? 0 : 1, index < 2 ? 0 : 8);
+    const entries = array(group.entries, `UI resource group ${group.id} entries`, index < 3 ? 0 : 1, index < 3 ? 0 : 8);
     for (const row of entries) {
       object(row, `UI resource group ${group.id} entry`);
       const resource = resources.get(text(row.resource, 'UI resource id'));

@@ -40,6 +40,7 @@ const FSeigeSimulation* ASeigeGameMode::ViewedSimulation() const
 void ASeigeGameMode::FocusSector(int32 Index,bool SmoothTransition)
 {
     if(Index<0||Index>8||(Screen==TEXT("landing")&&Index!=4))return;
+    if(SmoothTransition&&IsRegionMap())RegionViewHistory.Add({CameraCenter,Zoom,CameraYaw,CameraPitch,SelectedId,SelectedRoadId,SelectedCompanionId});
     CameraCenter=FVector(FVector2D(Index%3-1,Index/3-1)*Sim.WorldHalfSize*2,0);
     if(Index==4)CameraCenter=FVector(HomePosition(),0);
     else if(Observer)for(const auto& N:Neighbors)if(N.Index==Index)for(const auto& B:N.Sim.Buildings)
@@ -48,6 +49,30 @@ void ASeigeGameMode::FocusSector(int32 Index,bool SmoothTransition)
     // User map navigation uses the same damped zoom as the wheel. Direct setup
     // calls retain their deterministic snap for loading and verification.
     if(!SmoothTransition)UpdateCamera();
+}
+void ASeigeGameMode::ToggleRegionSurvey()
+{
+    if(IsRegionMap()){if(!RestoreRegionView())FocusSector(4,true);return;}
+    if(!RegionViewHistory.IsEmpty()&&RegionViewHistory.Last().Zoom>=RegionMapZoom){RestoreRegionView();return;}
+    RegionViewHistory.Add({CameraCenter,Zoom,CameraYaw,CameraPitch,SelectedId,SelectedRoadId,SelectedCompanionId});
+    SelectedId=SelectedRoadId=SelectedCompanionId=0;SelectedBuild.Empty();
+    CancelRoadTool();CancelWallTool();CameraCenter=FVector::ZeroVector;Zoom=MaximumZoom;
+}
+bool ASeigeGameMode::RestoreRegionView()
+{
+    if(RegionViewHistory.IsEmpty())return false;
+    const auto Saved=RegionViewHistory.Pop();
+    CameraCenter=Saved.Center;Zoom=Saved.Zoom;CameraYaw=Saved.Yaw;CameraPitch=Saved.Pitch;
+    SelectedId=Saved.Building;SelectedRoadId=Saved.Road;SelectedCompanionId=Saved.Companion;
+    return true;
+}
+FVector ASeigeGameMode::WorkerWorldPosition(const FSeigeWorker& Worker,int32 Sector) const
+{
+    const FString Prefix=Sector==4?FString(TEXT("home_")):FString::Printf(TEXT("zone_%d_"),Sector);
+    if(const auto* Actor=Visuals.FindRef(Prefix+TEXT("worker_")+Worker.Id).Get())
+        if(!Actor->IsHidden())return Actor->GetActorLocation();
+    const FVector2D Offset=FVector2D(Sector%3-1,Sector/3-1)*Sim.WorldHalfSize*2;
+    return RenderPosition(Worker.Position+Offset,30);
 }
 void ASeigeGameMode::ApplyOrbitDrag(FVector2D Pixels)
 {

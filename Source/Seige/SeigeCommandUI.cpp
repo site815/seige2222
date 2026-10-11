@@ -8,7 +8,7 @@ bool CanManage(const ASeigeGameMode& G)
 FString RecipeLabel(const FSeigeSimulation& Sim,const FString& Id)
 {
     const auto* R=Sim.Recipes.Find(Id);if(!R)return TEXT("Idle");
-    if(R->WorkerOutput)return TEXT("Workers / automatic demand");
+    if(R->WorkerOutput)return TEXT("Workers / command-center assembly");
     TArray<FString> Names;for(const auto& P:R->Outputs)if(const auto* D=Sim.Resources.Find(P.Key))Names.Add(D->Name);Names.Sort();return FString::Join(Names,TEXT(" + "));
 }
 }
@@ -20,18 +20,18 @@ bool ASeigeHUD::HandleCommandAction(const FString& A,ASeigeGameMode& G)
     FString Error;auto* B=G.Sim.FindBuilding(G.SelectedId);
     if(A==TEXT("command:reserve-less")||A==TEXT("command:reserve-more"))
     {G.Sim.SetWorkerSurplusTarget(FMath::Clamp(G.Sim.WorkerSurplusTarget+(A.EndsWith(TEXT("more"))?1:-1),0,100000),Error);G.Notice=Error.IsEmpty()?TEXT("Colony spare-worker target updated."):Error;}
-    else if(A==TEXT("command:disassemble"))
-    {
-        int32 Queued=0;
-        // Queue only whole, unreserved bodies already inside real storage.
-        for(const auto& Store:G.Sim.Buildings)
-            while(G.Sim.CanDisassembleWorkers(Store.Id,1,Error))
-            {if(!G.Sim.DisassembleWorkers(Store.Id,1,Error))break;++Queued;}
-        G.Notice=Queued?FString::Printf(TEXT("Recycling %d surplus workers for parts; %.2f kWh each. Reserve targets are protected."),Queued,G.Sim.DisassemblyEnergyKWh()):TEXT("No stored workers above job demand and reserve targets are available.");
-    }
     else if(B&&B->Health>0)
     {
-        if(A==TEXT("command:upgrade"))G.Notice=G.Sim.UpgradeBuilding(B->Id,Error)?TEXT("Upgrade committed. Materials and workers will build the next level."):Error;
+        if(A==TEXT("command:transport-build"))
+            G.Notice=G.Sim.TransportVehicles.QueueVehicle(G.Sim,B->Id,Error)?TEXT("Transport fabrication ordered. Materials and energy are required before assembly."):Error;
+        else if(A==TEXT("command:transport-prev")||A==TEXT("command:transport-next"))
+        {
+            TArray<int32> Ids;for(const auto& V:G.Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Evacuated)Ids.Add(V.Id);
+            if(!Ids.IsEmpty()){int32 I=Ids.IndexOfByKey(TransportFocusId);if(I<0)I=0;TransportFocusId=Ids[(I+(A.EndsWith(TEXT("next"))?1:Ids.Num()-1))%Ids.Num()];}
+        }
+        else if(A==TEXT("command:transport-board")&&G.Sim.Definition(*B)->Role==TEXT("core"))
+            G.Notice=G.Sim.TransportVehicles.BoardShuttle(G.Sim,TransportFocusId,Error)?TEXT("Transport shuttle order accepted."):Error;
+        else if(A==TEXT("command:upgrade"))G.Notice=G.Sim.UpgradeBuilding(B->Id,Error)?TEXT("Upgrade committed. Materials and workers will build the next level."):Error;
         else if(A==TEXT("command:recipe-prev")||A==TEXT("command:recipe-next"))
         {
             const auto Options=G.Sim.ProductionOptions(B->Id);if(Options.Num())
@@ -43,13 +43,12 @@ bool ASeigeHUD::HandleCommandAction(const FString& A,ASeigeGameMode& G)
 
 void ASeigeHUD::DrawWorkforceControls(ASeigeGameMode& G,float X,float Y,float W)
 {
-    Label(FString::Printf(TEXT("Stored: %d  /  colony spare target: %d"),G.Sim.InactiveWorkerCount(),G.Sim.WorkerSurplusTarget),X,Y,14,Text);
+    Label(FString::Printf(TEXT("Stored: %d  /  spare target: %d"),G.Sim.Workers.StoredCount(),G.Sim.WorkerSurplusTarget),X,Y,14,Text);
     Label(FString::Printf(TEXT("Total target including trading ports: %d"),G.Sim.WorkerReserveTarget()),X,Y+24,12,Muted);
     if(!CanManage(G))return;
     Button(TEXT("-"),TEXT("command:reserve-less"),X,Y+48,38,34);
     Button(TEXT("+"),TEXT("command:reserve-more"),X+44,Y+48,38,34);
     Label(TEXT("Spare production target"),X+94,Y+57,13,Mint);
-    Button(TEXT("Disassemble surplus for parts"),TEXT("command:disassemble"),X,Y+93,W,37,false,FString::Printf(TEXT("Recycles stored bodies above all reserve targets. Each worker requires %.2f kWh; occupied jobs are protected."),G.Sim.DisassemblyEnergyKWh()));
 }
 
 void ASeigeHUD::DrawCommandInfo(ASeigeGameMode& G,float W,float H)
@@ -60,9 +59,9 @@ void ASeigeHUD::DrawCommandInfo(ASeigeGameMode& G,float W,float H)
     const auto Options=G.Sim.ProductionOptions(B->Id);const bool Core=D->Role==TEXT("core");
     const bool CombatCapable=G.Sim.Combat.Factories.Contains(B->DefId)||G.Sim.Combat.BuildingPlatforms.Contains(B->DefId);
     if(Options.IsEmpty()&&D->NextUpgrade.IsEmpty()&&!Core&&!CombatCapable)return;
-    const float X=24,Y=Ui.ContentTop,PW=410,PH=FMath::Min(Core?640.f:440.f,H-Y-96.f);
+    const float X=24,Y=Ui.ContentTop,PW=410,PH=FMath::Min(Core?700.f:480.f,H-Y-96.f);
     if(PH<360)return;
-    const float FooterTop=Y+PH-68,WorkforceTop=FooterTop-145,TextBottom=Core?WorkforceTop-8:FooterTop-8;
+    const float FooterTop=Y+PH-68,WorkforceTop=FooterTop-105,TransportTop=WorkforceTop-145,TextBottom=Core?TransportTop-8:FooterTop-8;
     Frame(X,Y,PW,PH);Label(Core?TEXT("COMMAND & PRODUCTION"):TEXT("BUILDING OPERATIONS"),X+18,Y+18,17,Gold);float TY=Y+56;
     auto BoundedText=[&](const FString& Value,float Left,float Width,float Size,FLinearColor Color,int32 MaximumLines)
     {
@@ -73,6 +72,21 @@ void ASeigeHUD::DrawCommandInfo(ASeigeGameMode& G,float W,float H)
     };
     if(CombatCapable)
     {Button(TEXT("Fleets / chassis / hardpoints"),TEXT("combat:open"),X+18,TY,PW-36,34);TY+=45;}
+    const auto& Hauler=G.Sim.TransportVehicles.Definition();
+    if(Hauler.Factories.Contains(B->DefId))
+    {
+        FString Reason;const bool Can=G.Sim.TransportVehicles.CanQueueVehicle(G.Sim,B->Id,Reason);
+        Button(TEXT("Build transport hauler"),TEXT("command:transport-build"),X+18,TY,PW-36,36,false,Can?TEXT("Manufacture one physical transport vehicle using the listed material bill."):Reason);TY+=47;
+        BoundedText(FString::Printf(TEXT("%.2f kg / %.2f L cargo / %.2f kWh battery"),Hauler.CargoMassKg,Hauler.CargoLitres,Hauler.BatteryKWh),X+18,PW-36,12,Mint,2);
+        TArray<FString> Costs;for(const auto& P:Hauler.BuildCost)Costs.Add(FString::Printf(TEXT("%.2f %s %s"),P.Value,*G.Sim.Resources[P.Key].Unit,*G.Sim.Resources[P.Key].Name));Costs.Sort();
+        // Each component gets its own row, so the complete rules-defined bill
+        // remains visible instead of being elided into a short tooltip.
+        for(const auto& Cost:Costs)BoundedText(Cost,X+18,PW-36,12,Muted,1);
+        const double FactoryRate=FMath::Max(.0001,Hauler.Factories.FindRef(B->DefId));
+        BoundedText(FString::Printf(TEXT("%.2f kWh / %.2f min assembly"),Hauler.BuildEnergyKWh,Hauler.BuildSeconds/FactoryRate/60),X+18,PW-36,12,Muted,1);
+        int32 Pending=0;double Progress=0;for(const auto& Job:G.Sim.TransportVehicles.Jobs)if(Job.FactoryId==B->Id){++Pending;Progress=FMath::Max(Progress,Job.ProgressSeconds);}
+        if(Pending)BoundedText(FString::Printf(TEXT("%d ordered / current %.2f%%"),Pending,Hauler.BuildSeconds>0?Progress*100/Hauler.BuildSeconds:0),X+18,PW-36,12,Gold,1);
+    }
     if(!Options.IsEmpty())
     {
         const FString Selected=B->SelectedRecipe.IsEmpty()?D->Recipe:B->SelectedRecipe;
@@ -87,10 +101,27 @@ void ASeigeHUD::DrawCommandInfo(ASeigeGameMode& G,float W,float H)
         }
         const FString Active=G.Sim.ActiveProductionRecipe(*B);
         BoundedText(FString::Printf(TEXT("Now: %s  /  %.0f%%"),*RecipeLabel(G.Sim,Active),B->Progress*100),X+18,PW-36,13,Text,2);
-        if(Core)BoundedText(TEXT("Vacancies take priority until worker-factory supply."),X+18,PW-36,11,Muted,1);
+        if(Core)BoundedText(TEXT("Only the command center manufactures new workers."),X+18,PW-36,11,Muted,1);
         TY+=12;
     }
-    if(Core)DrawWorkforceControls(G,X+18,WorkforceTop,PW-36);
+    if(Core)
+    {
+        Label(TEXT("TRANSPORT / SHUTTLE BAY"),X+18,TransportTop,11,Muted);
+        auto* V=G.Sim.TransportVehicles.Find(TransportFocusId);
+        if(!V||V->Health<=0||V->Evacuated)
+        {V=G.Sim.TransportVehicles.Bodies.FindByPredicate([](const auto& Unit){return Unit.Health>0&&!Unit.Evacuated;});TransportFocusId=V?V->Id:0;}
+        if(V)
+        {
+            Button(TEXT("<"),TEXT("command:transport-prev"),X+18,TransportTop+23,32,31);
+            Button(TEXT(">"),TEXT("command:transport-next"),X+PW-50,TransportTop+23,32,31);
+            Label(FString::Printf(TEXT("Hauler #%d / %.2f kWh"),V->Id,V->BatteryKWh),X+62,TransportTop+32,12,Text);
+            FString Status=V->Status;if(Status.Len()>48)Status=Status.Left(45)+TEXT("...");
+            Label(Status,X+18,TransportTop+64,11,Muted);
+            Button(V->Embarked?TEXT("Deploy from shuttle"):TEXT("Return to shuttle bay"),TEXT("command:transport-board"),X+18,TransportTop+88,PW-36,34,false,TEXT("Only an empty, available hauler can board. Combat and transport vehicles share shuttle capacity."));
+        }
+        else Label(TEXT("No owned transport vehicles"),X+18,TransportTop+39,13,Muted);
+        DrawWorkforceControls(G,X+18,WorkforceTop,PW-36);
+    }
     if(!D->NextUpgrade.IsEmpty())
     {
         FString Reason;const bool Can=G.Sim.CanUpgradeBuilding(B->Id,Reason);const auto* Next=G.Sim.BuildingDefs.Find(D->NextUpgrade);

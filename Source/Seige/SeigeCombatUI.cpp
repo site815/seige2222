@@ -91,7 +91,7 @@ void ASeigeHUD::DrawCombatInfo(ASeigeGameMode& G,float W,float H)
     const bool Factory=CombatTab==TEXT("factory");const auto Available=Building?Hulls(G.Sim,Building->Id):TArray<FString>();
     if(Factory)
     {
-        if(Available.IsEmpty()){Wrapped(TEXT("Select a command center or a completed vehicle, tank, or mech factory. Its level controls available chassis."),X+18,TY,PW-36,15,Muted);return;}
+        if(Available.IsEmpty()){Wrapped(TEXT("Select a completed vehicle, tank, or mech factory. Its family and level control available chassis. The command center manufactures workers only."),X+18,TY,PW-36,15,Muted);return;}
         if(!Available.Contains(ChosenChassis)){ChosenChassis=Available[0];DraftWeapons.Empty();}
         Button(TEXT("<"),TEXT("combat:hull-prev"),X+18,TY,34,34);Button(TEXT(">"),TEXT("combat:hull-next"),X+PW-52,TY,34,34);Label(C.Chassis[ChosenChassis].Name,X+66,TY+7,14,Text);TY+=45;
     }
@@ -106,6 +106,27 @@ void ASeigeHUD::DrawCombatInfo(ASeigeGameMode& G,float W,float H)
     const auto* Hull=Factory?C.Chassis.Find(ChosenChassis):!OutfitBuilding&&Vehicle?C.Chassis.Find(Vehicle->ChassisId):nullptr;
     const auto* Platform=!Factory&&OutfitBuilding&&Building?C.BuildingPlatforms.Find(Building->DefId):nullptr;
     if(!Hull&&!Platform){Wrapped(TEXT("Select a platform with equipment hardpoints."),X+18,TY,PW-36,14,Muted);return;}
+    TMap<FString,double> Bill;if(Factory&&Hull)Bill=Hull->Cost;
+    for(const auto& Id:DraftWeapons)if(const auto* Module=C.Weapons.Find(Id))for(const auto& Cost:Module->Cost)Bill.FindOrAdd(Cost.Key)+=Cost.Value;
+    // A separate, fully enumerated bill stays readable while choosing modules.
+    // Quantities come from the same chassis/weapon rules used by fabrication.
+    const float BillX=X+PW+12,BillW=FMath::Min(430.f,W-BillX-24);
+    Frame(BillX,Y,BillW,PH);Label(Factory?TEXT("COMPLETE ASSEMBLY BILL"):TEXT("COMPLETE REFIT BILL"),BillX+16,Y+18,16,Gold);
+    float BY=Y+52;Wrapped(Factory?TEXT("Chassis + all fitted weapons"):TEXT("All draft weapons; removed equipment is not refunded."),BillX+16,BY,BillW-32,12,Muted);BY+=12;
+    Label(TEXT("Material"),BillX+16,BY,11,Muted);Label(TEXT("Required / local stock"),BillX+BillW-188,BY,11,Muted);BY+=25;
+    TArray<FString> BillIds;Bill.GetKeys(BillIds);BillIds.Sort();
+    const float RowH=FMath::Clamp((Y+PH-105-BY)/FMath::Max(1,BillIds.Num()),18.f,25.f);
+    if(BillIds.IsEmpty()){Label(TEXT("No material inputs"),BillX+16,BY,13,Muted);BY+=RowH;}
+    double BillMass=0;
+    for(const auto& Id:BillIds)
+    {
+        const auto* Resource=G.Sim.Resources.Find(Id);const double Local=Building?Building->Inventory.FindRef(Id):0;
+        Label(Resource?Resource->Name:Id,BillX+16,BY,11,Text);
+        Label(FString::Printf(TEXT("%.2f / %.2f %s"),Bill[Id],Local,Resource?*Resource->Unit:TEXT("")),BillX+BillW-188,BY,11,Local+1.e-9>=Bill[Id]?Mint:Gold);
+        if(Resource)BillMass+=Bill[Id]*Resource->UnitMassKg;BY+=RowH;
+    }
+    float NoteY=Y+PH-90;
+    Wrapped(FString::Printf(TEXT("Total material mass: %.2f kg. Local stock is at the selected building; reservations and factory eligibility are checked before payment."),BillMass),BillX+16,NoteY,BillW-32,12,Muted);
     int32 Used=0;double Mass=0,Dps=0;for(const auto& Id:DraftWeapons)if(const auto* Weapon=C.Weapons.Find(Id)){Used+=Weapon->MountPoints;Mass+=Weapon->MassKg;Dps+=Weapon->Damage/Weapon->ReloadSeconds;}
     const int32 Capacity=Hull?Hull->MountPoints:Platform->MountPoints;const double MassCap=Hull?Hull->MaxWeaponMassKg:Platform->MaxWeaponMassKg;
     Label(FString::Printf(TEXT("Mounts %d / %d small-equivalent  |  %.0f / %.0f kg"),Used,Capacity,Mass,MassCap),X+18,TY,12,Used<=Capacity&&Mass<=MassCap?Mint:Gold);TY+=23;
@@ -113,7 +134,12 @@ void ASeigeHUD::DrawCombatInfo(ASeigeGameMode& G,float W,float H)
     const auto Ids=WeaponIds(G.Sim);if(!Ids.Contains(ChosenWeapon)&&Ids.Num())ChosenWeapon=Ids[0];
     Button(TEXT("<"),TEXT("combat:weapon-prev"),X+18,TY,34,34);Button(TEXT(">"),TEXT("combat:weapon-next"),X+PW-52,TY,34,34);
     const auto* Weapon=C.Weapons.Find(ChosenWeapon);if(Weapon)Label(Weapon->Name,X+66,TY+7,14,Gold);TY+=42;
-    if(Weapon){Wrapped(FString::Printf(TEXT("%.0f damage / %.1fs reload / %.1f DPS / %.2f kWh + %.0f %s per shot"),Weapon->Damage,Weapon->ReloadSeconds,Weapon->Damage/Weapon->ReloadSeconds,Weapon->EnergyKWh,Weapon->AmmoPerShot,Weapon->Ammo.IsEmpty()?TEXT("ammo"):*Weapon->Ammo),X+18,TY,PW-36,12,Muted);TY+=6;}
+    if(Weapon)
+    {
+        FString Shot=FString::Printf(TEXT("%.2f kWh"),Weapon->EnergyKWh);
+        if(!Weapon->Ammo.IsEmpty()){const auto* Ammo=G.Sim.Resources.Find(Weapon->Ammo);Shot+=FString::Printf(TEXT(" + %.2f %s %s"),Weapon->AmmoPerShot,Ammo?*Ammo->Unit:TEXT(""),Ammo?*Ammo->Name:*Weapon->Ammo);}else Shot+=TEXT(" / no ammunition");
+        Wrapped(FString::Printf(TEXT("%.2f damage / %.2fs reload / %.2f DPS / %s per shot"),Weapon->Damage,Weapon->ReloadSeconds,Weapon->Damage/Weapon->ReloadSeconds,*Shot),X+18,TY,PW-36,12,Muted);TY+=6;
+    }
     Button(TEXT("Add module"),TEXT("combat:add"),X+18,TY,132,34);Button(TEXT("Remove"),TEXT("combat:remove"),X+158,TY,132,34);Button(TEXT("Clear"),TEXT("combat:clear"),X+298,TY,134,34);TY+=44;
     TMap<FString,int32> Counts;for(const auto& Id:DraftWeapons)++Counts.FindOrAdd(Id);TArray<FString> Rows;for(const auto& Pair:Counts)Rows.Add(FString::Printf(TEXT("%d x %s"),Pair.Value,*C.Weapons[Pair.Key].Name));Rows.Sort();
     auto Lines=WrapLines(Rows.IsEmpty()?TEXT("No modules fitted"):FString::Join(Rows,TEXT(" / ")),PW-36,12);const int32 MaxLines=FMath::Max(1,FMath::FloorToInt((Y+PH-110-TY)/19));if(Lines.Num()>MaxLines){Lines.SetNum(MaxLines);Lines.Last()+=TEXT(" ...");}for(const auto& Line:Lines){Label(Line,X+18,TY,12,Text);TY+=19;}
@@ -125,7 +151,7 @@ void ASeigeHUD::DrawCombatInfo(ASeigeGameMode& G,float W,float H)
     }
     else
     {
-        Label(FString::Printf(TEXT("%.1f nominal DPS / select a home service building for parts"),Dps),X+18,Y+PH-89,12,Muted);
+        Label(FString::Printf(TEXT("%.2f nominal DPS / specialist factory installs vehicle outfits"),Dps),X+18,Y+PH-89,12,Muted);
         Button(TEXT("Request parts"),TEXT("combat:refit-request"),X+18,Y+PH-57,201,38,false,TEXT("Requests the draft weapon bill at the selected own building; a vehicle must reach a completed factory to install it."));
         Button(TEXT("Install outfit"),TEXT("combat:refit"),X+231,Y+PH-57,201,38,false,TEXT("Requires local delivered materials and energy. Removed modules are not refunded."));
     }

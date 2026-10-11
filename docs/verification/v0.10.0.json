@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "version": "0.10.0",
+  "date": "2026-10-11",
+  "status": "focused_local_checks_passed",
+  "scope": "User-requested reduced verification. Not the old full release gate, long balance soak, crowded-neighbor benchmark or minimum-FPS certification.",
+  "source_identity": {
+    "base_commit": "c2c5f317fc55f6996cdb20f194b7682b5a6ac9e8",
+    "identity": "Exact source/runtime input SHA-256 manifest in packaged-smoke.json; integrated commit recorded after commit creation.",
+    "input_count": 540,
+    "unchanged_during_check": true
+  },
+  "editor_build": "passed",
+  "shipping_package": "passed",
+  "configuration": {
+    "status": "passed",
+    "items": 22,
+    "recipes": 14,
+    "buildings": 55,
+    "rules_negative_cases": 133,
+    "focused_regressions": {
+      "ai_negative_cases": 60,
+      "combat_negative_cases": 6,
+      "environment_negative_cases": 8,
+      "ui_negative_cases": 9
+    }
+  },
+  "native": {
+    "passed": 7,
+    "failed": 0,
+    "report": "v0.10.0/native-focused.json",
+    "filter": "Seige.NextUpdate+Seige.Companions.DamageTriggeredShelter+Seige.Workers.DestructionDuringChargingAndExport"
+  },
+  "packaged_smoke": {
+    "report": "v0.10.0/packaged-smoke.json",
+    "passed": true,
+    "assertions": 86,
+    "failures": 0,
+    "completed_stages": 23,
+    "elapsed_seconds": 35.532163098454475,
+    "simulation_speed": 10,
+    "simulation_seconds_advanced": 337.30000000005737,
+    "resolution": "1600x900 offscreen rendered window",
+    "screenshots": [
+      {
+        "path": "v0.10.0/01_worker_and_hud.png",
+        "bytes": 2031413,
+        "sha256": "d993e6953c154e4fd78a45197734ecf1f6843fddb3130394afff5715b1af7a5b"
+      },
+      {
+        "path": "v0.10.0/02_map_chain.png",
+        "bytes": 166195,
+        "sha256": "08caf489a51383abd273c5981e48904af4e1f643c8a4ff8029ebb051d50de4eb"
+      },
+      {
+        "path": "v0.10.0/03_equipment_bill.png",
+        "bytes": 1633289,
+        "sha256": "5925de2a2b3d0b9fd0ffb1389bb5c25f192d81a75d38b82e1b2c07ffb991d976"
+      },
+      {
+        "path": "v0.10.0/04_night_trade.png",
+        "bytes": 823167,
+        "sha256": "8edc9f030cc14f4c7486dd29a36ae0af5bd5dce354a07b3740df9c9a4f491ef5"
+      }
+    ],
+    "visual_review": "All four inspected; no blocking clipping/overlap. Some chain labels truncate with hover details; night outskirts remain dark."
+  },
+  "network_observation": {
+    "samples": 17,
+    "tcp_observed": 0,
+    "udp_observed": 0,
+    "scope": "Sampled game process tree only; not a proof about every possible run."
+  },
+  "staged_json": {
+    "count": 25,
+    "all_match": true
+  },
+  "package_files": [
+    {
+      "path": "Builds/v0.10.0/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+      "bytes": 167263232,
+      "sha256": "98C149A251DD789863408DCA68EF5E895024C163762C38856415401523381E5E"
+    },
+    {
+      "path": "Builds/v0.10.0/Windows/seige2222/Content/Paks/global.ucas",
+      "bytes": 3205888,
+      "sha256": "656F9CC750D6B9EA0B7B6FC221B8BFDC8BE20E737E66D5A18AF7CD7C118012D3"
+    },
+    {
+      "path": "Builds/v0.10.0/Windows/seige2222/Content/Paks/global.utoc",
+      "bytes": 782,
+      "sha256": "D4F99BC37B29DC911C8B2F0549314F2E4D974CB5B6D9B68EE5E9C5023A70CB6D"
+    },
+    {
+      "path": "Builds/v0.10.0/Windows/seige2222/Content/Paks/seige2222-Windows.pak",
+      "bytes": 11244862,
+      "sha256": "17B1384D836BFDA9F7B3C1EBC72EB8DAF177A7AD57D481F2229D21BB90DAC010"
+    },
+    {
+      "path": "Builds/v0.10.0/Windows/seige2222/Content/Paks/seige2222-Windows.ucas",
+      "bytes": 644145936,
+      "sha256": "CBF9DF1F30CF7D4E2D08B65BF70D503F85B9146733A9DC57A3FC9FB344CE511F"
+    },
+    {
+      "path": "Builds/v0.10.0/Windows/seige2222/Content/Paks/seige2222-Windows.utoc",
+      "bytes": 429299,
+      "sha256": "57858B74D50B37CB2F9BF0468E87F0ECB224EF7F9F2C53C6B7615D833AA72A2A"
+    }
+  ],
+  "archive": {
+    "path": "Builds/seige2222-v0.10.0-win64.zip",
+    "bytes": 744334858,
+    "sha256": "FFDD58BCF6315BD08ACBC08FFDA69AEFA298C1DC1F009A5DB6B5840B75229AB7",
+    "crc_check": "passed",
+    "all_runtime_bytes_match": true
+  },
+  "save_compatibility": {
+    "format": 8,
+    "rules": "prototype-10.0",
+    "new_colony_required": true
+  },
+  "publication": {
+    "git_push": "pending",
+    "hosted_release": "blocked",
+    "github_api_check": "HTTP 403: Sorry. Your account was suspended",
+    "ci": "unconfirmed"
+  },
+  "limits": [
+    "No rerun of the old 117-stage route or complete native suite.",
+    "Eight-developed-neighbor performance and long economy pacing remain unverified.",
+    "No minimum FPS or Manor Lords visual parity claim.",
+    "Rex remains stylized."
+  ]
+}

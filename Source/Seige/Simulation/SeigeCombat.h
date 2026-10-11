@@ -122,7 +122,7 @@ public:
     bool OrderFleet(const FSeigeSimulation& Sim,int32 FleetId,const FString& Mission,FVector2D Destination,int32 EscortBuildingId,FString& Error);
     bool OrderPrivateer(const FSeigeSimulation& Home,const FSeigeSimulation& Target,int32 FleetId,int32 SectorIndex,FVector2D Destination,FString& Error);
     bool BoardFleet(const FSeigeSimulation& Sim,int32 FleetId,FString& Error);
-    void EvacuateShuttle();
+    void EvacuateShuttle(int32 Capacity=1);
     double ShuttleFleetCargoStock(const FString& Resource) const;
     void TickExternalSector(FSeigeSimulation& Home,FSeigeSimulation& Target,int32 SectorIndex,double Seconds);
     bool IsVisibleInSector(int32 SectorIndex,FVector2D Position) const;

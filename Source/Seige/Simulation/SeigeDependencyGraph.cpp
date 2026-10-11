@@ -28,7 +28,6 @@ void FSeigeDependencyGraph::Build(const FSeigeSimulation& Sim)
         const auto* D=Sim.BuildingDefs.Find(Id);if(!D||D->Role==TEXT("wall"))continue;
         bool InChain=false;
         TArray<FString> RecipeIds;if(!D->Recipe.IsEmpty())RecipeIds.Add(D->Recipe);for(const FString& R:D->AllowedRecipes)RecipeIds.AddUnique(R);
-        if(D->Role==TEXT("core"))RecipeIds.Reset();   // the universal replicator would connect everything; shown as a note instead
         const int32 B=Node(TEXT("b:")+Id,D->Name,true,D->Level,D->Role);
         for(const auto& Pair:D->ExtractionRates){Link(B,Resource(Pair.Key),FSeigeDependencyEdge::EKind::Extraction,Pair.Value);InChain=true;}
         for(const FString& RecipeId:RecipeIds)
@@ -47,8 +46,15 @@ void FSeigeDependencyGraph::Build(const FSeigeSimulation& Sim)
             for(const auto& Pair:Sim.Combat.Chassis)
                 if((Factory->Family==TEXT("all")||Pair.Value.Family==Factory->Family)&&Pair.Value.Tier<=Factory->MaximumTier)
                     for(const auto& Cost:Pair.Value.Cost)Materials.FindOrAdd(Cost.Key)=FMath::Max(Materials.FindOrAdd(Cost.Key),Cost.Value);
+            // Factories assemble fitted weapons too; display every actual
+            // material dependency without suggesting that the core can do so.
+            for(const auto& Weapon:Sim.Combat.Weapons)if(!Weapon.Key.StartsWith(TEXT("bug")))
+                for(const auto& Cost:Weapon.Value.Cost)Materials.FindOrAdd(Cost.Key)=FMath::Max(Materials.FindOrAdd(Cost.Key),Cost.Value);
             if(D->Role!=TEXT("core"))for(const auto& Pair:Materials){Link(Resource(Pair.Key),B,FSeigeDependencyEdge::EKind::Chassis,Pair.Value);InChain=true;}
         }
+        const auto& Transport=Sim.TransportVehicles.Definition();
+        if(Transport.Factories.Contains(Id))for(const auto& Cost:Transport.BuildCost)
+        {Link(Resource(Cost.Key),B,FSeigeDependencyEdge::EKind::Chassis,Cost.Value);InChain=true;}
         if(!InChain&&D->Role!=TEXT("core")&&D->Role!=TEXT("defense")){OutsideChain.Add(D->Name);Nodes.RemoveAt(B);Index.Remove(TEXT("b:")+Id);Out.RemoveAt(B);In.RemoveAt(B);}
     }
     Layer();
@@ -73,8 +79,7 @@ void FSeigeDependencyGraph::Layer()
     {
         // Pure consumers with no inputs (energy towers) and resources nobody makes
         // sit in the last column rather than among the sources.
-        if(Nodes[I].Building&&Nodes[I].Role==TEXT("core"))Depth[I]=0;   // the landing kit is where every chain starts
-        else if(In[I].Num()==0&&Out[I].Num()==0)Depth[I]=Nodes[I].Building?MaxDepth:FMath::Max(0,MaxDepth-1);
+        if(In[I].Num()==0&&Out[I].Num()==0)Depth[I]=Nodes[I].Building?MaxDepth:FMath::Max(0,MaxDepth-1);
         else if(Nodes[I].Building&&In[I].Num()==0&&Nodes[I].Role==TEXT("defense"))Depth[I]=MaxDepth;
         Nodes[I].Layer=FMath::Clamp(Depth[I],0,FMath::Max(MaxDepth,0));
     }

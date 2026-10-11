@@ -1,4 +1,6 @@
-# seige2222 — Provisional Economy Baseline 0.9
+#**Historical versioned baseline.** Rules `prototype-10.0` and save format 8 use permanent building crews, worker-only manufacture at the command core, individual worker batteries and charging berths, and autonomous transport vehicles. The old `worker_factory` ID is a Construction Hub. Automatic surplus recycling and its manual HUD action are disabled/removed. Worker/port reserve targets remain. No service-capacity or courier-reserve count is a global population cap. See [Population and Morale](POPULATION_AND_MORALE.md), [production grid](PRODUCTION_GRID_0_10_0.md) and [current verification status](../DEVELOPMENT_REPORT.md). The old worker-factory, universal-replication, support-cap and recycling descriptions below apply to their labeled historical versions.
+
+ seige2222 — Provisional Economy Baseline 0.9
 
 [Design index](README.md) · [Resource proposal](RESOURCE_PROPOSAL.md) · [Building proposal](BUILDING_PROPOSAL.md) · [Production dependencies](PRODUCTION_DEPENDENCIES_AND_STARTER_VIABILITY.md)
 

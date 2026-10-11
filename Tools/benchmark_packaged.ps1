@@ -9,6 +9,9 @@ the launched process, not player preferences. -SimpleTerrain isolates terrain
 shading; -HideSward isolates dense meadow geometry while retaining other foliage.
 Use -View ground (or colony/meadow/hills/boundary) for one sampled camera and
 its screenshot. Omit -View to retain the complete five-view route.
+Release acceptance should add -RequireSimulationPacing, including the
+-Winter -DevelopedNeighbors fixture: measured simulation must sustain at
+least 95% of the requested speed. Reports are retained when this gate fails.
 
 Each view waits for complete scenery (120s watchdog), settles for four seconds,
 then samples five seconds. Schema-2 baselines instead began warmup immediately
@@ -29,6 +32,7 @@ param(
     [switch]$Orbit, [switch]$Travel, [switch]$SimpleTerrain, [switch]$HideSward, [switch]$Clearing,
     [ValidateSet('colony','meadow','ground','hills','boundary')][string]$View,
     [switch]$NativeResolution, [switch]$Winter, [switch]$DevelopedNeighbors,
+    [switch]$RequireSimulationPacing,
     [int]$Width=1600, [int]$Height=900,
     [string]$ExecutablePath,
     [string]$BaselineReport
@@ -111,6 +115,23 @@ if($DevelopedNeighbors -and (!$report.diagnostic_developed_neighbors -or $report
 $shadowQuality=if($EpicReference){3}else{2}
 if($report.quality.runtime_resolution_quality -ne 100 -or $report.quality.'sg.ShadowQuality' -ne $shadowQuality){throw 'Unexpected benchmark quality settings'}
 Copy-Item -LiteralPath $reportPath -Destination (Join-Path $projectRoot "Saved/GraphicsBenchmark-$Name.json")
+if($RequireSimulationPacing){
+    # A diagnostic report is still retained when the game cannot keep up. This
+    # optional release gate checks measured simulation progress, not the speed
+    # button's selected value or an arbitrary machine-specific FPS target.
+    $requestedSpeed=[double]$report.simulation_speed
+    if($requestedSpeed -le 0 -or [double]::IsNaN($requestedSpeed) -or [double]::IsInfinity($requestedSpeed)){throw 'Simulation pacing requires a finite positive requested speed'}
+    $lagging=@($report.views | Where-Object {
+        $null -eq $_.effective_simulation_speed -or
+        [double]::IsNaN([double]$_.effective_simulation_speed) -or
+        [double]::IsInfinity([double]$_.effective_simulation_speed) -or
+        [double]$_.effective_simulation_speed -lt $requestedSpeed*.95
+    })
+    if($lagging.Count -gt 0){
+        $details=($lagging | ForEach-Object {"$($_.view): $($_.effective_simulation_speed)x"}) -join ', '
+        throw "Simulation did not sustain 95% of requested $($requestedSpeed)x: $details"
+    }
+}
 if($BaselineReport){
     $baseline=Get-Content -LiteralPath $BaselineReport -Raw | ConvertFrom-Json
     $baselineMode=if($baseline.camera_mode){$baseline.camera_mode}else{'static'}

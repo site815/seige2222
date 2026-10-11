@@ -1,13 +1,13 @@
 # Rex companion asset
 
-The release uses an original, locally authored golden-dog fallback rebuilt on 2026-10-11. Its golden coat, pale muzzle and brow, hanging ears, dark nose and teal collar are guided by the owner's photographs of Rex. The result remains a stylized prototype; photographic likeness is not achieved.
+The release uses an original, locally authored golden-dog model rebuilt on 2026-10-11. Its golden coat, pale muzzle and brow, hanging ears, dark nose and teal collar are guided by the owner's photographs of Rex. The current pass corrects a distorted nose, widens the eye spacing, rounds the pendant ears, opens the panting jaw and tongue, fills the tail silhouette and reduces oversized texture streaks. The result remains a stylized prototype; photographic likeness is not achieved.
 
 The earlier Hunyuan3D-derived revision 7 was retired because its output licence does not meet the project's unrestricted commercial-use requirement. Its generated GLB, photo-baked albedo and generated source scene are no longer part of the current asset set. The hosted-generation client was removed. Historical generator/importer scripts stop immediately and direct users to the original pipeline below. This does not rewrite prior Git history.
 
 ## Offline pipeline
 
 1. [Tools/create_companion_dog_v2.py](../../Tools/create_companion_dog_v2.py) builds the anatomy from authored lofts and shapes in Blender 4.5. It never opens or uploads a photograph, generated model or photo-derived texture. Coat zoning uses authored vertex colours; fur relief textures are generated numerically.
-2. The source mesh has **45,442 triangles**, **24 bones**, ten active material slots and at most four bone influences per vertex. Coordinates are centimetres, +X forward, +Z up, with a ground-level root and no root motion. Shell fur is disabled; feathering cards are an opt-in authoring experiment (`--cards`), disabled for the release.
+2. The source mesh has **52,682 triangles**, **24 bones**, ten active material slots and at most four bone influences per vertex. Coordinates are centimetres, +X forward, +Z up, with a ground-level root and no root motion. Shell fur is disabled; feathering cards are an opt-in authoring experiment (`--cards`), disabled for the release.
 3. The existing idle and planted-foot walk are authored locally. Walk stride is **0.60185185 m per 13/30-second cycle**, matching 5 km/h. The runtime asset paths, skeleton names and rules remain unchanged.
 4. [Source/validate.py](Source/validate.py) round-trips the FBX exports through Blender and checks bone names, normalized weights, material slots, export hashes, clip durations and loop continuity. Results are in [source_validation.json](source_validation.json).
 5. [Tools/import_companion_dog_v2.py](../../Tools/import_companion_dog_v2.py) imports the mesh, three LODs and clips to `/Game/Art/CompanionDog`. The opaque default-lit coat uses the authored vertex colours and procedural detail. Unused material slots retained by Unreal reimport are bound to the original coat so that retired texture dependencies cannot survive in the active mesh.
@@ -27,7 +27,9 @@ Exports under `Exports/` are regenerated and ignored by Git. The source scene an
 
 ## Remaining art work
 
-The face, ear attachment, leg contours and smooth coat still need a dedicated likeness pass. This fallback preserves Rex's gameplay and avoids shipping the incompatible generated asset; it does not claim to satisfy the requested realism. Runtime review uses `-GraphicsBenchmark -BenchmarkView=rex` with optional zoom, yaw and pitch overrides.
+The face, neck-to-shoulder transition, leg contours and smooth coat still need a more detailed sculpt and fur treatment. Front, three-quarter, profile and walk-pose Blender renders were inspected after this pass; the open mouth, nose and ear silhouette are improved, but the model does not yet satisfy the requested realism. Runtime review uses `-GraphicsBenchmark -BenchmarkView=rex` with optional zoom, yaw and pitch overrides.
+
+Rex's simulation territory is a 100 m circle around the command shuttle. Actual damage to a building inside that radius triggers a physical run to the shuttle hatch and shelter until a quiet interval has elapsed. Enemy proximity alone does not trigger it. The first-person controller observes the same territory and releases control when Rex retreats.
 
 ![Original authored fallback, Blender preview](Previews/dog_three_quarter.png)
 

@@ -4,15 +4,15 @@
 
 How a constructed colony operates with minimal routine adjustment. Automatic behavior and the single-player setup flow are established; prototype algorithms and numerical values remain distinct from final design decisions.
 
-## Current v0.9 workers, plots and construction
+## Current v0.10 workers, plots and construction
 
-The player-facing population term is **workers**; the population remains robotic. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns current behavior and pending verification. The latest expansion adds tiered facilities, selectable core replication, a worker factory, physical inactive-worker storage and export targets. Square reserved plots govern placement/routing and vegetation clearing; grading and foundations use the actual built footprint. The core reserves three times its level-one width and nine times its area for its three authored levels.
+The player-facing population term is **workers**; the population remains robotic. Permanent building crews, individual batteries and physical charging govern current work. The core alone manufactures workers; the old worker factory is a Construction Hub. Inactive-worker storage and export targets remain, without automatic or manual surplus recycling. Square reserved plots govern placement/routing and vegetation clearing; grading and foundations use the actual built footprint. The core reserves three times its level-one width and nine times its area. [Production Grid 0.10.0](PRODUCTION_GRID_0_10_0.md) records the current producer/bill contracts.
 
 Orders reserve eligible physical stock after operating buffers. The same finite worker bodies take operating, hauling and building tasks, follow access-port routes around plots, and must arrive before working. Delivered stock becomes installed material proportionally through Foundations, Frame and utilities, Enclosure and equipment, and Commissioning. Partial delivery can advance construction. The core's carried kit bootstraps its deployment, with an explicit defensive/sensor exception while other ordinary operations await completion. Completed road/rail/vacuum links provide 2×/4×/8× transport; upgrades keep earlier service during construction.
 
 General actions use Menu; the removed Colony overlay no longer carries escape. Manual shuttle launch requires selecting the live own command core. Speed cycles include Paused/1×/5×/10× with Space restoring the previous nonzero rate. New facility upgrades do not add individual worker commands or a full traffic simulation.
 
-**Candidate hauling demand:** one desired logistics job grows by one per four living, enabled, completed facilities, up to eight. Core and wall roles are excluded; temporary power, staffing or supply shortages do not reduce the count. The same demand enters total jobs and the scheduler's hauling reserve. Normal paid worker production/reactivation and support must fill it, with essential core/service staffing retaining priority. The initial six-body manifest is unchanged, and current deliveries continue if demand falls. The compiled change still needs native and full-scenario acceptance.
+**Current crew demand:** The initial five workers belong to the core, whose crew capacity is 5/10/15 by level. Other buildings own permanent crews; temporary hauling, charging and construction assignments do not duplicate those identities. There is no additional colony-wide courier reserve or global service-capacity population cap. Autonomous transport vehicles have no drivers or worker jobs, but real endpoint workers load and unload their physical cargo.
 
 **Candidate dispatch policy:** the next free hauler serves fuel, maintenance, repair and defensive-ammunition requests before construction, production, trade, worker reserves and general storage, following the externally editable order. Standing supplies refill at a provisional half-target low-water mark; higher-priority targets are accounted for before the same local/incoming stock serves lower classes. Small final deliveries for finite construction, exports, fabrication/refits and worker targets are exempt. Construction now prefers useful surplus that preserves source operating buffers, then larger usable loads, with distance as a tie-breaker; reserved stock inside a buffer remains a fallback when no useful surplus exists. Existing carried loads are not interrupted, and no stock or carrying capacity is granted. Focused dispatch and source-selection regressions have passed; adaptive-hauling and full AI acceptance remain pending. See [the economy baseline](ECONOMY_BASELINE_0_9.md#physical-delivery-priority-and-refill-policy).
 
@@ -67,7 +67,7 @@ Automatic operation does not remove physical goods or transport. Inputs and outp
 
 ## Population, throughput, and consumption
 
-**Confirmed direction:** Core or dedicated-factory production uses materials and energy to fill open jobs. Surplus workers become inactive physical stock, with configurable colony and trading-port reserve targets. Surplus can be recycled manually, or automatically for missing parts or insufficient storage, at 1 kWh per worker. Automatic staffing remains the default; reserve targets do not require individual worker management. Exact rates, material returns and capacity remain editable prototype balance.
+**Current v0.10 direction:** Only the core manufactures workers from materials and electricity to fill jobs and configured reserves. Surplus workers remain physical identities and can enter storage or export through trading ports. Automatic disassembly is disabled and the manual disassembly HUD action is removed. Exact worker rates, battery and storage values remain editable prototype balance.
 
 **Confirmed direction:** More population provides more potential labor and can support defense through numbers, but also creates more consumption. Population alone should not multiply resource extraction: extraction remains constrained by defined rates per time unit.
 
@@ -75,7 +75,7 @@ A populous colony and a small specialized colony should both be viable strategie
 
 ## Current prototype policies
 
-Enabled buildings require staffing and power, couriers physically deliver inputs between local inventories, and repairs consume local materials. The new population policy is `store_inactive`: job demand plus configured reserves drives worker manufacture, and a stored-worker item has one physical location. Reactivation consumes that item; disassembly returns the explicit parts bill. This replaces historical retirement without refunds. Local support/upkeep and allocation priorities remain external balance, not a complete happiness system.
+Enabled buildings require their own permanent crew and power. Couriers and autonomous transports physically deliver local inputs; repairs consume local materials. Job demand plus configured reserves drives core worker manufacture, while stored bodies retain one physical location. Individual batteries, charging berths and crew ownership replace the old abstract support-capacity and logistics-reserve model. Reactivation moves the same identity; reserve and storage pressure do not grant or automatically destroy bodies.
 
 Construction reserves eligible surplus inventories without removing goods at order time. Physical couriers deliver to the site; arrived crews consume available materials incrementally into installed stock. Local AI uses the same commands, worker requirements, services, recipes, logistics, repairs and threats. Its ordered plan waits for required buildings to finish and be staffed before later spending, with prerequisite recovery after losses. It receives no recurring free inventory. The current privateering bridge lets a player-owned fleet travel into an occupied neighbor, fight and capture physically accessible cargo, then carry surviving units and loot home. Each colony retains its own inventory and power grid. Ordinary neighbor-to-neighbor trade and general cross-sector supply convoys remain unimplemented; external trading-port shipments are a separate system.
 
@@ -89,7 +89,7 @@ Road-connected power and batteries have an explicit energy ledger. Idle use is k
 - Final throughput, consumption and outage balance for selectable recipes and dedicated production.
 - The exact effects of disabling a building on its assigned workers, inputs, queued work, and stored output.
 - How job demand is counted for population production and reduction, including treatment of disabled buildings, temporary resource shortages, hauling, repair work, and defense roles.
-- Final inactive-worker capacity, response delays and recovered parts; storage and disassembly are now selected mechanisms.
+- Final inactive-worker capacity and response delays; physical storage remains selected, while surplus disassembly is disabled in v0.10.
 - Final construction, automatic-repair and upkeep balance beyond the implemented external prototype values.
 - Which capabilities make a specialized low-population colony competitive, and how labor relates to defensive participation.
 
@@ -102,3 +102,9 @@ None of these open details establishes manual worker assignment, required produc
 - [Resources, Industry, and Progression](RESOURCES_AND_INDUSTRY.md)
 - [Fleets, Physical Logistics, and Loot](FLEETS_AND_LOGISTICS.md)
 - [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md)
+
+## v0.10 worker lifecycle correction
+
+A building's permanent crew assignment and each worker's charging trip are separate. If the crew's workplace is destroyed while a worker is charging elsewhere, the charging trip continues and the suspended job is cancelled. If a charger is disabled or destroyed, the worker stays at its current physical position and must travel back to a surviving workstation or delivery endpoint before resuming work. Interrupted loading and unloading return to their travel phases; they cannot consume or deposit cargo remotely.
+
+Destruction of a trading port destroys worker bodies held in that port's departed export escrow, matching the existing destruction of the shipment escrow. Those identities become terminal destroyed records, are excluded from owned population, and are never recreated as local stock. Ordinary stored workers that survive a building's destruction retain their identity and become active at that container's existing access position.

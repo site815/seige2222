@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "balance_status": "Provisional v0.8 attrition candidate: player damage and per-shot electricity/ammunition doubled together; bug plasma unchanged. Area ratios and envelope dimensions are confirmed; size mass ceilings are provisional loaded budgets. Consult the versioned verification record for gameplay acceptance.",
+  "balance_status": "0.10 provisional module bills conserve exact installed mass. Small weapons use standard industrial goods; medium sensors use AI; large modules require fusion assemblies. Existing damage/armor/shield balance retained.",
   "weapons": [
     {
       "id": "laser_small",
@@ -22,9 +22,10 @@
       "armor_multiplier": 1.25,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 35.0,
-        "components": 4.0,
-        "circuits": 1.0
+        "alloy": 28.8,
+        "components": 7.2,
+        "circuits": 2.4,
+        "batteries": 1.6
       }
     },
     {
@@ -47,9 +48,12 @@
       "armor_multiplier": 1.25,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 280.0,
-        "components": 32.0,
-        "circuits": 8.0
+        "alloy": 195.2,
+        "components": 64.0,
+        "circuits": 22.4,
+        "batteries": 22.4,
+        "ai_chips": 6.4,
+        "crystalline": 9.6
       }
     },
     {
@@ -72,9 +76,13 @@
       "armor_multiplier": 1.25,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 2240.0,
-        "components": 256.0,
-        "circuits": 64.0
+        "alloy": 1228.8,
+        "components": 512.0,
+        "circuits": 179.2,
+        "batteries": 204.8,
+        "ai_chips": 76.8,
+        "crystalline": 102.4,
+        "fusion_reactors": 256.0
       }
     },
     {
@@ -97,9 +105,9 @@
       "armor_multiplier": 0.65,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 35.0,
-        "components": 4.0,
-        "circuits": 1.0
+        "alloy": 32.0,
+        "components": 6.0,
+        "circuits": 2.0
       }
     },
     {
@@ -122,9 +130,11 @@
       "armor_multiplier": 0.65,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 280.0,
-        "components": 32.0,
-        "circuits": 8.0
+        "alloy": 230.4,
+        "components": 57.6,
+        "circuits": 16.0,
+        "batteries": 6.4,
+        "ai_chips": 9.6
       }
     },
     {
@@ -147,9 +157,13 @@
       "armor_multiplier": 0.65,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 2240.0,
-        "components": 256.0,
-        "circuits": 64.0
+        "alloy": 1536.0,
+        "components": 512.0,
+        "circuits": 128.0,
+        "batteries": 76.8,
+        "ai_chips": 76.8,
+        "crystalline": 25.6,
+        "fusion_reactors": 204.8
       }
     },
     {
@@ -172,9 +186,9 @@
       "armor_multiplier": 1,
       "homing_degrees_s": 65,
       "cost": {
-        "alloy": 35.0,
-        "components": 4.0,
-        "circuits": 1.0
+        "alloy": 32.0,
+        "components": 6.0,
+        "circuits": 2.0
       }
     },
     {
@@ -197,9 +211,11 @@
       "armor_multiplier": 1,
       "homing_degrees_s": 65,
       "cost": {
-        "alloy": 280.0,
-        "components": 32.0,
-        "circuits": 8.0
+        "alloy": 230.4,
+        "components": 57.6,
+        "circuits": 16.0,
+        "batteries": 6.4,
+        "ai_chips": 9.6
       }
     },
     {
@@ -222,9 +238,13 @@
       "armor_multiplier": 1,
       "homing_degrees_s": 65,
       "cost": {
-        "alloy": 2240.0,
-        "components": 256.0,
-        "circuits": 64.0
+        "alloy": 1536.0,
+        "components": 512.0,
+        "circuits": 128.0,
+        "batteries": 76.8,
+        "ai_chips": 76.8,
+        "crystalline": 25.6,
+        "fusion_reactors": 204.8
       }
     },
     {
@@ -247,9 +267,10 @@
       "armor_multiplier": 1.8,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 35.0,
-        "components": 4.0,
-        "circuits": 1.0
+        "alloy": 28.8,
+        "components": 7.2,
+        "circuits": 2.4,
+        "batteries": 1.6
       }
     },
     {
@@ -272,9 +293,12 @@
       "armor_multiplier": 1.8,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 280.0,
-        "components": 32.0,
-        "circuits": 8.0
+        "alloy": 195.2,
+        "components": 64.0,
+        "circuits": 22.4,
+        "batteries": 22.4,
+        "ai_chips": 6.4,
+        "crystalline": 9.6
       }
     },
     {
@@ -297,9 +321,13 @@
       "armor_multiplier": 1.8,
       "homing_degrees_s": 0,
       "cost": {
-        "alloy": 2240.0,
-        "components": 256.0,
-        "circuits": 64.0
+        "alloy": 1228.8,
+        "components": 512.0,
+        "circuits": 179.2,
+        "batteries": 204.8,
+        "ai_chips": 76.8,
+        "crystalline": 102.4,
+        "fusion_reactors": 256.0
       }
     },
     {

@@ -1,0 +1,185 @@
+Using bundled DotNet SDK version: 10.0 win-x64
+Running UnrealBuildTool: dotnet "..\..\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" SeigeEditor Win64 Development -Project=C:/Users/g9800x3d/Desktop/SEIGE/seige2222.uproject -WaitMutex -NoHotReloadFromIDE -NoUBA
+Log file: C:\Users\g9800x3d\AppData\Local\UnrealBuildTool\Log.txt
+Determining max actions to execute in parallel (8 physical cores, 8 logical cores)
+  Executing up to 8 processes, one per physical core
+Using 'git status' to determine working set for adaptive non-unity build (C:\Users\g9800x3d\Desktop\SEIGE).
+UbaSessionServer - Disable remote execution (remote sessions will finish current processes)
+Available x64 toolchains (1):
+ * C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231
+    (Family=14.51.36231, FamilyRank=2, Version=14.51.36260, HostArchitecture=x64, ReleaseChannel=Latest, Architecture=x64)
+Visual Studio compiler version 14.51.36260 is newer than latest preferred version 14.50.35717. Please use caution as this compiler has not been heavily tested
+UHT compiled-in object format Default
+Building SeigeEditor...
+===== Toolchain Information =====
+Using ISPC compiler (C:\Program Files\Epic Games\UE_5.8\Engine\Source\ThirdParty\Intel\ISPC\bin\Windows\ispc.exe)
+  Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2)
+Using Visual Studio 14.51.36260 toolchain (C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231) and Windows 10.0.28000.0 SDK (C:\Program Files (x86)\Windows Kits\10).
+Warning: Visual Studio compiler 14.51.36260 is not a preferred version
+[Adaptive Build] Excluded from Seige unity file: SeigeAudioSubsystem.cpp, SeigeCamera.cpp, SeigeCombatUI.cpp, SeigeCombatVisuals.cpp, SeigeCommandUI.cpp, SeigeCompanionVisuals.cpp, SeigeConstructionVisuals.cpp, SeigeController.cpp, SeigeDamageVisuals.cpp, SeigeDisplaySmoke.cpp, SeigeEnvironmentWater.cpp, SeigeGameMode.cpp, SeigeGraphicsBenchmark.cpp, SeigeHUD.cpp, SeigeNextUpdateSmoke.cpp, SeigePersistence.cpp, SeigePresentationSmoke.cpp, SeigeRegionResources.cpp, SeigeRegions.cpp, SeigeScenario.cpp, SeigeTerrain.cpp, SeigeTradeUI.cpp, SeigeTransportVisuals.cpp, SeigeWallVisuals.cpp, SeigeWeather.cpp, SeigeWorkerVisuals.cpp, SeigeWorldReview.cpp, SeigeEstablishedScenario.cpp, SeigeScenarioAI.cpp, SeigeAdaptiveLogisticsTests.cpp, SeigeBuildingInfo.cpp, SeigeCombat.cpp, SeigeCombatActions.cpp, SeigeCombatRules.cpp, SeigeCombatState.cpp, SeigeCombatWorld.cpp, SeigeCompanions.cpp, SeigeCompanionTests.cpp, SeigeDependencyGraph.cpp, SeigeEconomyTests.cpp, SeigeEnergy.cpp, SeigeEstablishedWorkerTests.cpp, SeigeExtractionTests.cpp, SeigeLogisticsTests.cpp, SeigeMobility.cpp, SeigeRenderInterpolationTests.cpp, SeigeRoadRepairTests.cpp, SeigeSimulation.cpp, SeigeSimulationTests.cpp, SeigeThreatTests.cpp, SeigeTransport.cpp, SeigeTransportTests.cpp, SeigeTransportVehiclePersistence.cpp, SeigeTransportVehicles.cpp, SeigeWallTests.cpp, SeigeWorkerAgentTests.cpp, SeigeWorkerCrews.cpp, SeigeWorkerLifecycleTests.cpp, SeigeWorkerPersistence.cpp, SeigeWorkerReserveTests.cpp, SeigeWorkers.cpp, SeigeWorkforce.cpp, SeigeWorkforceTests.cpp, SeigeAIPreparationDiagnostics.cpp, SeigeCalendarEnergyTests.cpp, SeigeCameraTests.cpp, SeigeCombatArrivalTests.cpp, SeigeCombatConfigurationTests.cpp, SeigeCombatEnergyTests.cpp, SeigeCombatTests.cpp, SeigeCompanionViewTests.cpp, SeigeEnvironmentTests.cpp, SeigeFirstPlayableDiagnostic.cpp, SeigeFrontendTests.cpp, SeigeInteractionTests.cpp, SeigeOwnedCrewTests.cpp, SeigeRegionResourceTests.cpp, SeigeTransportConservationTests.cpp
+=================================
+Using Unreal Build Accelerator local executor to run 37 action(s)
+  CPU 8 physical cores, 8 logical cores
+  Memory 31.38 GB physical, 15 GB/33.38 GB committed
+  UBA Storage capacity 40 GB
+[1/37] Compile [x64] Module.Seige.gen.cpp [NoUba]
+[2/37] Compile [x64] SeigeCamera.cpp [NoUba]
+[3/37] Compile [x64] SeigeCombatUI.cpp [NoUba]
+[4/37] Compile [x64] SeigeCameraTests.cpp [NoUba]
+[5/37] Compile [x64] SeigeAudioSubsystem.cpp [NoUba]
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeAudioSubsystem.cpp(151,110): warning C4305: 'argument': truncation from 'double' to 'float'
+        C->SetAttenuationRadius(Building?2400:Vehicle?1400:500);C->SetLightColor(Building?FLinearColor(1,.76,.47):FLinearColor(.68,.87,1));
+                                                                                                             ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeAudioSubsystem.cpp(151,106): warning C4305: 'argument': truncation from 'double' to 'float'
+        C->SetAttenuationRadius(Building?2400:Vehicle?1400:500);C->SetLightColor(Building?FLinearColor(1,.76,.47):FLinearColor(.68,.87,1));
+                                                                                                         ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeAudioSubsystem.cpp(151,132): warning C4305: 'argument': truncation from 'double' to 'float'
+        C->SetAttenuationRadius(Building?2400:Vehicle?1400:500);C->SetLightColor(Building?FLinearColor(1,.76,.47):FLinearColor(.68,.87,1));
+                                                                                                                                   ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeAudioSubsystem.cpp(151,128): warning C4305: 'argument': truncation from 'double' to 'float'
+        C->SetAttenuationRadius(Building?2400:Vehicle?1400:500);C->SetLightColor(Building?FLinearColor(1,.76,.47):FLinearColor(.68,.87,1));
+                                                                                                                               ^
+[6/37] Compile [x64] SeigeCombatVisuals.cpp [NoUba]
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeCombatVisuals.cpp(68,120): warning C4305: 'argument': truncation from 'double' to 'float'
+            Part(A,TEXT("Cube"),FVector(Size.X*.485,0,Size.Z*.57),FVector(.025,Size.Y*.55/100,.08),FLinearColor(.25,.8,.95));
+                                                                                                                       ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeCombatVisuals.cpp(68,117): warning C4305: 'argument': truncation from 'double' to 'float'
+            Part(A,TEXT("Cube"),FVector(Size.X*.485,0,Size.Z*.57),FVector(.025,Size.Y*.55/100,.08),FLinearColor(.25,.8,.95));
+                                                                                                                    ^
+[7/37] Compile [x64] SeigeCompanionViewTests.cpp [NoUba]
+[8/37] Compile [x64] SeigeCommandUI.cpp [NoUba]
+[9/37] Compile [x64] SeigeCompanionVisuals.cpp [NoUba]
+[10/37] Compile [x64] SeigeController.cpp [NoUba]
+[11/37] Compile [x64] SeigeDamageVisuals.cpp [NoUba]
+[12/37] Compile [x64] SeigeEnvironmentTests.cpp [NoUba]
+[13/37] Compile [x64] SeigeDisplaySmoke.cpp [NoUba]
+[14/37] Compile [x64] SeigeConstructionVisuals.cpp [NoUba]
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(248,88): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cube"),FVector(0,0,8),FVector(1.1,1.1,.04),FLinearColor(.35,.42,.45));
+                                                                                       ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(248,84): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cube"),FVector(0,0,8),FVector(1.1,1.1,.04),FLinearColor(.35,.42,.45));
+                                                                                   ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(248,80): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cube"),FVector(0,0,8),FVector(1.1,1.1,.04),FLinearColor(.35,.42,.45));
+                                                                               ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(251,90): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cube"),FVector(-81,0,90),FVector(.025,.3,.25),FLinearColor(.16,.7,.6));
+                                                                                         ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(251,87): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cube"),FVector(-81,0,90),FVector(.025,.3,.25),FLinearColor(.16,.7,.6));
+                                                                                      ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(251,83): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cube"),FVector(-81,0,90),FVector(.025,.3,.25),FLinearColor(.16,.7,.6));
+                                                                                  ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(252,94): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cylinder"),FVector(-55,0,14),FVector(.08,.08,.8),FLinearColor(.07,.09,.1),FRotator(0,0,90));
+                                                                                             ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(252,90): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cylinder"),FVector(-55,0,14),FVector(.08,.08,.8),FLinearColor(.07,.09,.1),FRotator(0,0,90));
+                                                                                         ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeConstructionVisuals.cpp(252,86): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Pad,TEXT("Cylinder"),FVector(-55,0,14),FVector(.08,.08,.8),FLinearColor(.07,.09,.1),FRotator(0,0,90));
+                                                                                     ^
+[15/37] Compile [x64] SeigeEnvironmentWater.cpp [NoUba]
+[16/37] Compile [x64] SeigeFrontendTests.cpp [NoUba]
+[17/37] Compile [x64] SeigeGameMode.cpp [NoUba]
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Engine\Classes\Components\HierarchicalInstancedStaticMeshComponent.h(353,26): warning C4996: 'UInstancedStaticMeshComponent::BuildComponentInstanceData': Please use BuildComponentInstanceData with EShaderPlatform argument and not ERHIFeatureLevel::Type - Please update your code to the new API before upgrading to the next release, otherwise your project will no longer compile.
+	ENGINE_API virtual void BuildComponentInstanceData(ERHIFeatureLevel::Type FeatureLevel, FInstanceUpdateComponentDesc& OutData) override;
+	                        ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(277,88): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Actor,TEXT("Sphere"),FVector(0,0,48),FVector(.55,.48,.8),FLinearColor(.87,.97,1));
+                                                                                       ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(277,84): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Actor,TEXT("Sphere"),FVector(0,0,48),FVector(.55,.48,.8),FLinearColor(.87,.97,1));
+                                                                                   ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(284,129): warning C4305: 'argument': truncation from 'double' to 'float'
+        for(int i=0;i<6;i++) Part(Actor,TEXT("Cone"),FVector(i%2?60:-60,(i/2-1)*40,23),FVector(.16,.18,.8),FLinearColor(.17,.05,.15),FRotator(i%2?55:-55,0,0));
+                                                                                                                                ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(284,125): warning C4305: 'argument': truncation from 'double' to 'float'
+        for(int i=0;i<6;i++) Part(Actor,TEXT("Cone"),FVector(i%2?60:-60,(i/2-1)*40,23),FVector(.16,.18,.8),FLinearColor(.17,.05,.15),FRotator(i%2?55:-55,0,0));
+                                                                                                                            ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(284,121): warning C4305: 'argument': truncation from 'double' to 'float'
+        for(int i=0;i<6;i++) Part(Actor,TEXT("Cone"),FVector(i%2?60:-60,(i/2-1)*40,23),FVector(.16,.18,.8),FLinearColor(.17,.05,.15),FRotator(i%2?55:-55,0,0));
+                                                                                                                        ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(295,103): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Actor,TEXT("Cylinder"),FVector(0,0,20),FVector(Size/80,Size/80,.35),FLinearColor(.13,.26,.31));
+                                                                                                      ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(295,99): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Actor,TEXT("Cylinder"),FVector(0,0,20),FVector(Size/80,Size/80,.35),FLinearColor(.13,.26,.31));
+                                                                                                  ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(295,95): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Actor,TEXT("Cylinder"),FVector(0,0,20),FVector(Size/80,Size/80,.35),FLinearColor(.13,.26,.31));
+                                                                                              ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(297,104): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Actor,TEXT("Sphere"),FVector(0,0,Size*.65),FVector(Size/115,Size/115,.5),FLinearColor(.87,.96,1));
+                                                                                                       ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeGameMode.cpp(297,100): warning C4305: 'argument': truncation from 'double' to 'float'
+        Part(Actor,TEXT("Sphere"),FVector(0,0,Size*.65),FVector(Size/115,Size/115,.5),FLinearColor(.87,.96,1));
+                                                                                                   ^
+[18/37] Compile [x64] SeigeGraphicsBenchmark.cpp [NoUba]
+[19/37] Compile [x64] SeigeHUD.cpp [NoUba]
+[20/37] Compile [x64] SeigeNextUpdateSmoke.cpp [NoUba]
+[21/37] Compile [x64] SeigeInteractionTests.cpp [NoUba]
+[22/37] Compile [x64] SeigePersistence.cpp [NoUba]
+[23/37] Compile [x64] SeigeRegionResources.cpp [NoUba]
+[24/37] Compile [x64] SeigeRegionResourceTests.cpp [NoUba]
+[25/37] Compile [x64] SeigeRegions.cpp [NoUba]
+[26/37] Compile [x64] SeigePresentationSmoke.cpp [NoUba]
+[27/37] Compile [x64] SeigeScenario.cpp [NoUba]
+[28/37] Compile [x64] SeigeTradeUI.cpp [NoUba]
+[29/37] Compile [x64] SeigeTerrain.cpp [NoUba]
+[30/37] Compile [x64] SeigeTransportVisuals.cpp [NoUba]
+[31/37] Compile [x64] SeigeWallVisuals.cpp [NoUba]
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(69,133): warning C4305: 'argument': truncation from 'double' to 'float'
+                Part(A,TEXT("Cube"),FVector(0,0,Height-15),FVector(Length/100.+.12,Colony.Walls.WidthMeters+.2,.3),FLinearColor(.19,.24,.25));
+                                                                                                                                    ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(69,129): warning C4305: 'argument': truncation from 'double' to 'float'
+                Part(A,TEXT("Cube"),FVector(0,0,Height-15),FVector(Length/100.+.12,Colony.Walls.WidthMeters+.2,.3),FLinearColor(.19,.24,.25));
+                                                                                                                                ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(70,167): warning C4305: 'argument': truncation from 'double' to 'float'
+                for(double X:{-.47,.47})Part(A,TEXT("Cube"),FVector(Length*X,0,Height*.5),FVector(.3,Colony.Walls.WidthMeters+.3,Height/100.+.2),FLinearColor(.32,.37,.38));
+                                                                                                                                                                      ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(70,163): warning C4305: 'argument': truncation from 'double' to 'float'
+                for(double X:{-.47,.47})Part(A,TEXT("Cube"),FVector(Length*X,0,Height*.5),FVector(.3,Colony.Walls.WidthMeters+.3,Height/100.+.2),FLinearColor(.32,.37,.38));
+                                                                                                                                                                  ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(70,159): warning C4305: 'argument': truncation from 'double' to 'float'
+                for(double X:{-.47,.47})Part(A,TEXT("Cube"),FVector(Length*X,0,Height*.5),FVector(.3,Colony.Walls.WidthMeters+.3,Height/100.+.2),FLinearColor(.32,.37,.38));
+                                                                                                                                                              ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(71,163): warning C4305: 'argument': truncation from 'double' to 'float'
+                Part(A,TEXT("Cube"),FVector(0,(S.InsideLeft?1:-1)*(Colony.Walls.WidthMeters*50+2),Height*.7),FVector(Length/100.*.86,.04,.07),FLinearColor(.25,.6,.55));
+                                                                                                                                                                  ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(71,160): warning C4305: 'argument': truncation from 'double' to 'float'
+                Part(A,TEXT("Cube"),FVector(0,(S.InsideLeft?1:-1)*(Colony.Walls.WidthMeters*50+2),Height*.7),FVector(Length/100.*.86,.04,.07),FLinearColor(.25,.6,.55));
+                                                                                                                                                               ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(87,163): warning C4305: 'argument': truncation from 'double' to 'float'
+    FSeigeWallPlan Plan;FString Why;const bool Valid=Sim.Walls.Plan(Sim,WallJoints,WallInsideLeft,Plan,Why);const FLinearColor Color=Valid?FLinearColor(.2,.75,.5,.3):FLinearColor(.8,.25,.2,.3);
+                                                                                                                                                                  ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(87,153): warning C4305: 'argument': truncation from 'double' to 'float'
+    FSeigeWallPlan Plan;FString Why;const bool Valid=Sim.Walls.Plan(Sim,WallJoints,WallInsideLeft,Plan,Why);const FLinearColor Color=Valid?FLinearColor(.2,.75,.5,.3):FLinearColor(.8,.25,.2,.3);
+                                                                                                                                                        ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(87,190): warning C4305: 'argument': truncation from 'double' to 'float'
+    FSeigeWallPlan Plan;FString Why;const bool Valid=Sim.Walls.Plan(Sim,WallJoints,WallInsideLeft,Plan,Why);const FLinearColor Color=Valid?FLinearColor(.2,.75,.5,.3):FLinearColor(.8,.25,.2,.3);
+                                                                                                                                                                                             ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(87,187): warning C4305: 'argument': truncation from 'double' to 'float'
+    FSeigeWallPlan Plan;FString Why;const bool Valid=Sim.Walls.Plan(Sim,WallJoints,WallInsideLeft,Plan,Why);const FLinearColor Color=Valid?FLinearColor(.2,.75,.5,.3):FLinearColor(.8,.25,.2,.3);
+                                                                                                                                                                                          ^
+C:\Users\g9800x3d\Desktop\SEIGE\Source\Seige\SeigeWallVisuals.cpp(87,180): warning C4305: 'argument': truncation from 'double' to 'float'
+    FSeigeWallPlan Plan;FString Why;const bool Valid=Sim.Walls.Plan(Sim,WallJoints,WallInsideLeft,Plan,Why);const FLinearColor Color=Valid?FLinearColor(.2,.75,.5,.3):FLinearColor(.8,.25,.2,.3);
+                                                                                                                                                                                   ^
+[32/37] Compile [x64] SeigeWeather.cpp [NoUba]
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Engine\Classes\Engine\TextureCube.h(43,26): warning C4996: 'UTexture::GetAssetRegistryTags': Implement the version that takes FAssetRegistryTagsContext instead. - Please update your code to the new API before upgrading to the next release, otherwise your project will no longer compile.
+	ENGINE_API virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+	                        ^
+[33/37] Compile [x64] SeigeWorkerVisuals.cpp [NoUba]
+[34/37] Compile [x64] SeigeWorldReview.cpp [NoUba]
+[35/37] Link [x64] UnrealEditor-Seige.lib [NoUba]
+[36/37] Link [x64] UnrealEditor-Seige.dll [NoUba]
+[37/37] WriteMetadata SeigeEditor.target [NoUba]
+
+Total time in Unreal Build Accelerator local executor: 38.64 seconds
+Output binary: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe
+
+Result: Succeeded
+Total execution time: 40.74 seconds
+Trace written to file C:\Users\g9800x3d\AppData\Local\UnrealBuildTool\Trace.uba with size 10.5kb

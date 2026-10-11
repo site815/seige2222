@@ -4,11 +4,11 @@
   "balance_status": "Explicit provisional starting state, not simulated growth or a grant during live play. Quantities and layout are editable. Player and Starting AI keep the finite landing manifest.",
   "age_seconds": 60,
   "credits": 0.5,
-  "idle_workers": 6,
+  "idle_workers": 0,
   "layout_rotations": 4,
   "road_tier": "road",
   "equipment": "definition_defaults",
-  "fleet": "scenario_guard_manifest",
+  "fleet": "unarmed_transport_manifest",
   "buildings": [
     {
       "definition": "command_core",
@@ -17,7 +17,7 @@
         0,
         0
       ],
-      "operators": 6,
+      "operators": 5,
       "battery_kwh": 30,
       "recipe": "assemble_robot",
       "inventory": {
@@ -128,7 +128,7 @@
         -84,
         -42
       ],
-      "operators": 0,
+      "operators": 2,
       "battery_kwh": 5,
       "recipe": "",
       "inventory": {
@@ -142,7 +142,7 @@
         -84,
         42
       ],
-      "operators": 0,
+      "operators": 2,
       "battery_kwh": 5,
       "recipe": "",
       "inventory": {
@@ -244,9 +244,9 @@
         84,
         -42
       ],
-      "operators": 2,
+      "operators": 4,
       "battery_kwh": 0,
-      "recipe": "assemble_robot",
+      "recipe": "",
       "inventory": {
         "alloy": 24,
         "components": 120,

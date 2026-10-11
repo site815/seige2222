@@ -4,21 +4,21 @@
 
 The current robotic population scope, population-serving commodities, growth, and the earlier needs and morale ideas that require adaptation.
 
-## Current worker terminology and v0.9 identities
+## Current v0.10 worker ownership and charging
 
-The interface calls the robotic population **workers**. The v0.9 source gives each body a persistent identity across deployment, walking, operating, construction, hauling, storage and recycling. The finite shared workforce scheduler assigns jobs automatically; the player does not command individual workers. The slow core replicator and faster worker factory pay real materials and electricity. The accepted provisional body is 80 kg/160 L packed, with a 40 kg/60 L cargo capacity; an inactive worker moves by self-relocation instead of fitting inside that smaller payload. [Economy Baseline 0.9](ECONOMY_BASELINE_0_9.md) owns the current values and acceptance boundaries. [Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) retains the earlier routing/construction history.
+The interface calls the robotic population **workers**. Each body has a persistent identity, a permanent building crew owner, a temporary task and a battery. The core alone manufactures workers from physical materials and electricity; the former worker factory is a Construction Hub. The provisional body remains 80 kg/160 L packed, with a 40 kg/60 L carried payload. Whole inactive workers relocate physically rather than fitting inside that smaller payload. [Production Grid 0.10.0](PRODUCTION_GRID_0_10_0.md) records the current producer and starter contracts; older economy baselines retain their historical acceptance boundaries.
 
 The current economy source adds actual road-connected electricity and shared battery storage; this supersedes the historical v0.5 abstract-charging boundary below. [Rex](COMPANIONS_AND_REX.md) adds one specific companion morale mechanism: local physical organic-food consumption and a capped benefit near the fed dog. Workers still do not eat food, and the broader happiness/revolt model remains open. Rex's direct walking controls do not extend to worker micromanagement.
 
-**Implemented candidate hauling demand:** the current worker policy reserves **min(8, 1 + floor(eligible completed facilities / 4))** desired logistics jobs. Eligible facilities are living, enabled and complete, excluding the `core` and `wall` roles. A power or supply shortage does not remove a completed facility from the count, so a shortage does not repeatedly shrink and regrow hauling demand. The initial core alone still requires one logistics job and receives no extra starting bodies.
+**Current crew policy:** Player and Starting-AI colonies land with five workers assigned to the core. Core crew capacity is 5/10/15 by level; this is the core's workplace capacity, not a global population limit. Buildings obtain their own permanent crews. Hauling and transport loading use those actual crew members, and `LogisticsJobs` contributes no extra phantom population demand. Construction Hubs specialize in building work.
 
-The same derived count enters total job demand and the scheduler's reserve of idle workers plus workers already hauling. Ordinary paid manufacture or reactivation, physical arrival and service support must fill it; the formula does not create workers. Essential core and service staffing retain priority. Self-relocating packed workers are not counted as available haulers. The eight-job cap is a desired reserve, not a hard limit on deliveries already underway: active loads continue if the reserve shrinks. The policy and its provisional values are external in [workers.json](../../Rules/workers.json); compilation is complete, but its new native regressions and full v0.9 acceptance remain pending.
+Workers have 0.2 kWh batteries under the current provisional rules. Charging requires physical travel to the core or a charging/maintenance bay, a berth and delivered grid electricity. A berth serves one worker at a time; the station has its own crew requirement. Charging temporarily interrupts work without changing permanent crew ownership. No abstract service-support cap deletes bodies or limits total ownership. Exact autonomy, charge time and crew balance remain editable and require current-source checks.
 
 ## Historical v0.6 visible population boundary
 
 The historical v0.6 source displayed aggregate examples of existing builders, operating workers and supported service robots. Exterior tool-fetch/workstation cycles were presentation, not extra population or an independent worker simulation. Real staffing and supplies determined whether work was active, and interpolated simulation time froze animations when paused. Capacity, growth, maintenance and retirement rates were unchanged by that presentation pass. The v0.6 editor compiled; all 34 native tests passed cleanly (zero warnings, failed or unrun), and the 79-stage editor route passed with zero failures, including 413 interpolated courier-motion frames at 1×. The v0.6 Shipping route also passed 79 stages with zero failures and exit 0, recording 831 between-tick courier-motion frames at 1×; older release evidence remains version-specific.
 
-## Service mechanism introduced in v0.5
+## Historical service mechanism introduced in v0.5
 
 The user now requires a robot charging/maintenance building analogous to housing. The source implements a service bay with a real population-support capacity and a staffed operating requirement. The core supports the initial crew, so the player can establish the first bay before expansion. Exact capacities, worker counts, construction duration and upkeep remain external prototype values in `Rules/buildings.json` and `Rules/policies.json`.
 
@@ -37,16 +37,16 @@ The user chose this scope to support plausible growth at an accelerated game pac
 **Confirmed direction:**
 
 - The robotic population is produced.
-- Core replication or a dedicated worker factory produces workers using materials and energy to fill jobs, with an optional configurable inactive-worker reserve target.
+- Only the command core produces workers, using materials and electricity to fill jobs and an optional inactive-worker reserve target. Material processing, chassis and weapon manufacture require their specialist buildings.
 - When job demand falls, excess workers leave active staffing and occupy physical storage. A player need not micromanage their jobs.
 - Robot production has a maximum rate: a ceiling on the number produced per unit of time.
 - Resource production provides a second bottleneck, with resources produced at defined rates per time unit. Having more production capacity does not remove the need for sufficient inputs.
 
-**Superseded:** Core-only worker manufacture. A separate worker factory is now confirmed, with faster assembly and lower transaction energy than the universal core replicator.
+**Superseded:** The v0.8/v0.9 universal replicator and faster worker factory. v0.10 restores core-only worker manufacture and repurposes the old factory as a Construction Hub.
 
-The earlier suggestion that only the core has lithography is historical speculation, not a current restriction on worker manufacturing.
+The earlier lithography explanation remains historical speculation; the current worker-only core restriction is an explicit production rule.
 
-**Confirmed:** Inactive workers are whole physical cargo items. Configurable colony and trading-port reserve targets can retain them for later work or export. Surplus workers disassemble automatically for a parts shortage or insufficient storage; manual surplus disassembly and target controls are implemented in the worker HUD, with bounded controls/lifecycle checks in the [v0.8.1 record](../verification/v0.8.1.json). Individual worker identities and the accepted 80 kg balance are implemented in the v0.9 source and still undergoing broader acceptance. Disassembly costs 1 kWh by default and returns 72 kg of the original 80 kg inputs, recording 8 kg of unrecovered material rather than creating matter. Exact assembly, response and recycling rates, energy, body mass, berth volume and refund quantities remain provisional external balance. Effects of broader satisfaction on production remain open. A maximum production rate is not a decided absolute population cap.
+**Current v0.10 rule:** Inactive workers remain whole physical stock with colony and trading-port reserve targets for later work or export. Automatic disassembly for parts shortage or full storage is disabled, and the manual surplus-disassembly control is removed. Storage pressure must not silently destroy bodies. Legacy disassembly recipe values and earlier v0.8.1 tests remain historical data, not an active lifecycle policy. Active, stored and idle-surplus states are reported alongside total owned identities; combat and transport vehicles are separate counts.
 
 ## Population needs and growth
 

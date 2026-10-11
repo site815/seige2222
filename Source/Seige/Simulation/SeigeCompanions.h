@@ -9,8 +9,8 @@ struct FSeigeCompanion
     FVector2D Position=FVector2D::ZeroVector,Home=FVector2D::ZeroVector,Target=FVector2D::ZeroVector;
     TArray<FVector2D> Route;
     int32 NextWaypoint=0;
-    double FedUntil=0,NextMeal=0,RestUntil=0,Heading=0,DistanceWalked=0,FoodConsumedKg=0;
-    bool Moving=false,Evacuated=false;
+    double FedUntil=0,NextMeal=0,RestUntil=0,Heading=0,DistanceWalked=0,FoodConsumedKg=0,ShelterUntil=0;
+    bool Moving=false,Evacuated=false,Retreating=false,Sheltered=false,ExitingShuttle=false;
 };
 
 // Companions are not workforce. Physical food is consumed from nearby stores;
@@ -21,6 +21,7 @@ public:
     bool Initialize(const FString& RulesDirectory,const FSeigeSimulation& Sim,FString& Error);
     void Tick(FSeigeSimulation& Sim,double Seconds);
     void ShiftHome(FVector2D Delta);
+    void NotifyBuildingDamaged(const FSeigeSimulation& Sim,FVector2D Position);
     double EfficiencyAt(FVector2D Position) const;
     bool Save(const TSharedPtr<FJsonObject>& Object) const;
     bool Load(const TSharedPtr<FJsonObject>& Object,const FSeigeSimulation& Sim,FString& Error);
@@ -34,6 +35,7 @@ public:
     int32 ControlledId=0;
     double WalkCycleMeters=.6018518518518519;
     double BodyRadiusMeters=.3,MaximumSlopeGrade=.8;
+    double TerritoryRadiusMeters=100,DamageAlertRadiusMeters=100,ShelterSeconds=60,RunKmh=14;
 private:
     double MetresPerUnit=.06,RoamRadiusMeters=35,FeedRadiusMeters=100,RestSeconds=8,FedDurationSeconds=2400,Clock=0;
     FVector2D ControlDirection=FVector2D::ZeroVector;

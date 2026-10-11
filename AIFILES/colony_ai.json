@@ -28,14 +28,49 @@
   },
   "build_targets": [
     {
+      "definition": "trading_port",
+      "count": 1,
+      "placement_index": 12
+    },
+    {
+      "definition": "extraction_mine",
+      "count": 1,
+      "placement_index": 4
+    },
+    {
       "definition": "solar_array",
       "count": 1,
       "placement_index": 0
     },
     {
+      "definition": "solar_array",
+      "count": 2,
+      "placement_index": 26
+    },
+    {
       "definition": "robot_service_bay",
       "count": 1,
       "placement_index": 1
+    },
+    {
+      "definition": "robot_service_bay",
+      "count": 2,
+      "placement_index": 16
+    },
+    {
+      "definition": "robot_service_bay",
+      "count": 3,
+      "placement_index": 24
+    },
+    {
+      "definition": "alloy_refinery",
+      "count": 1,
+      "placement_index": 17
+    },
+    {
+      "definition": "component_works",
+      "count": 1,
+      "placement_index": 22
     },
     {
       "definition": "sensor",
@@ -46,21 +81,6 @@
       "definition": "turret",
       "count": 1,
       "placement_index": 3
-    },
-    {
-      "definition": "component_works",
-      "count": 1,
-      "placement_index": 22
-    },
-    {
-      "definition": "extraction_mine",
-      "count": 1,
-      "placement_index": 4
-    },
-    {
-      "definition": "trading_port",
-      "count": 1,
-      "placement_index": 12
     },
     {
       "definition": "fuel_generator",
@@ -81,21 +101,6 @@
       "definition": "sensor",
       "count": 2,
       "placement_index": 15
-    },
-    {
-      "definition": "robot_service_bay",
-      "count": 2,
-      "placement_index": 16
-    },
-    {
-      "definition": "solar_array",
-      "count": 2,
-      "placement_index": 26
-    },
-    {
-      "definition": "alloy_refinery",
-      "count": 1,
-      "placement_index": 17
     },
     {
       "definition": "conductor_works",
@@ -128,11 +133,6 @@
       "placement_index": 23
     },
     {
-      "definition": "robot_service_bay",
-      "count": 3,
-      "placement_index": 24
-    },
-    {
       "definition": "ai_chip_works",
       "count": 1,
       "placement_index": 28,
@@ -156,16 +156,8 @@
     "credit_buffer_batches": 3,
     "fuel_import_buffer_cycles": 4,
     "fuel_import_refill_fraction": 0.5,
-    "core_replication_policy": "funded_shortage_first",
-    "core_replication_recipes": [
-      "refine_biofuel",
-      "make_components",
-      "smelt_alloy",
-      "draw_conductors",
-      "make_substrates",
-      "make_circuits",
-      "make_batteries"
-    ],
+    "core_replication_policy": "worker_only",
+    "core_replication_recipes": [],
     "bulk_input_policy": "remaining_output_bill",
     "export_policy": "surplus_shipment_value"
   },

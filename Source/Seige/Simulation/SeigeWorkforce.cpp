@@ -16,6 +16,7 @@ bool FSeigeSimulation::LoadWorkforce(FString& Error)
     if(Mass<=0||Mass>Resources[Resource].UnitMassKg+1.e-8){Error=TEXT("Disassembly cannot create physical mass");return false;}
     for(const auto& P:Recipes)if(P.Value.WorkerOutput>0&&InventoryMassKg(P.Value.Inputs)+1.e-8<P.Value.WorkerOutput*Resources[Resource].UnitMassKg){Error=TEXT("Worker assembly requires its full physical mass");return false;}
     for(const auto& P:BuildingDefs){const auto& D=P.Value;TArray<FString> Options=D.AllowedRecipes;if(!D.Recipe.IsEmpty())Options.AddUnique(D.Recipe);for(const auto& Id:Options){const auto& R=Recipes[Id];TMap<FString,double> Inputs=R.Inputs;for(auto& I:Inputs){I.Value*=D.RecipeInputMultiplier;if(Resources[I.Key].Discrete&&I.Value!=FMath::FloorToDouble(I.Value)){Error=TEXT("Production cannot consume fractional discrete cargo");return false;}}if(InventoryLitres(Inputs)>D.StorageCapacity||ProductionOutputLitres(R)>D.StorageCapacity||InventoryMassKg(Inputs)+1.e-8<InventoryMassKg(R.Outputs)+R.WorkerOutput*Resources[Resource].UnitMassKg){Error=TEXT("Building recipe cannot fit storage or conserve physical mass");return false;}}}
+    for(const auto& Pair:BuildingDefs){const auto& D=Pair.Value;for(const auto& Id:D.AllowedRecipes)if((D.Role==TEXT("core"))!=(Recipes[Id].WorkerOutput>0)){if(D.Role==TEXT("core")||Recipes[Id].WorkerOutput>0){Error=TEXT("Only command centers manufacture workers; core cannot manufacture other products");return false;}}if(!D.Recipe.IsEmpty()&&((Recipes[D.Recipe].WorkerOutput>0&&D.Role!=TEXT("core"))||(Recipes[D.Recipe].WorkerOutput<=0&&D.Role==TEXT("core")))){Error=TEXT("Worker manufacture requires a command center");return false;}}
     return true;
 }
 
@@ -39,7 +40,7 @@ double FSeigeSimulation::DisassemblyEnergyKWh() const{return Policy?Number(TEXT(
 int32 FSeigeSimulation::WorkerReserveTarget() const{int32 Target=WorkerSurplusTarget;for(const auto& B:Buildings)if(B.Health>0)Target+=B.WorkerExportTarget;return Target;}
 int32 FSeigeSimulation::PendingWorkers() const{int32 Count=0;const FString Resource=TextRule(TEXT("inactive_worker_resource"));for(const auto& B:Buildings)if(B.Health>0){if(B.ProductionCommitted)if(const auto* R=Recipes.Find(B.CommittedRecipe))Count+=R->WorkerOutput;if(B.Shipment.Buy&&B.Shipment.Resource==Resource)Count+=FMath::RoundToInt(B.Shipment.Quantity);}return Count;}
 int32 FSeigeSimulation::WorkersNeeded() const
-{const int32 Active=FMath::Min(RobotSupportCapacity,FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population")))));return FMath::Max(0,Active+WorkerReserveTarget()-Population-InactiveWorkerCount()-PendingWorkers());}
+{const int32 Active=FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))));return FMath::Max(0,Active+WorkerReserveTarget()-Population-InactiveWorkerCount()-PendingWorkers());}
 FString FSeigeSimulation::ActiveProductionRecipe(const FSeigeBuilding& B) const
 {
     if(B.ProductionCommitted)return B.CommittedRecipe;
@@ -48,20 +49,19 @@ FString FSeigeSimulation::ActiveProductionRecipe(const FSeigeBuilding& B) const
     if(Id.IsEmpty()&&!D->AllowedRecipes.IsEmpty())Id=D->AllowedRecipes[0];
     if(D->Role==TEXT("core"))
     {
-        bool Factory=false;for(const auto& Other:Buildings)if(Other.Id!=B.Id&&Definition(Other)->Role==TEXT("worker_factory")&&WorkFraction(Other)>0){Factory=true;break;}
-        if(WorkersNeeded()>0&&!Factory)
+        if(WorkersNeeded()>0)
         {
             const FString WorkerRecipe=TextRule(TEXT("population_recipe"));const auto Inputs=ProductionInputs(B,WorkerRecipe);bool Ready=true;
             for(const auto& P:Inputs)if(B.Inventory.FindRef(P.Key)+1.e-8<P.Value){Ready=false;break;}
             const double Reserved=FMath::Max(InventoryLitres(Inputs),ProductionOutputLitres(Recipes[WorkerRecipe]));
             if(Reserved>StorageRoom(B)+InventoryLitres(Inputs)+1.e-8||!Energy.CanConsume(*this,B.Id,ProductionEnergy(B,WorkerRecipe)))Ready=false;
-            // A blocked automatic worker batch must not prevent the selected
-            // replicator recipe from making its missing parts or freeing storage.
+            // The core has one paid worker recipe. Missing materials must
+            // arrive from specialist production or trade.
             if(Ready)Id=WorkerRecipe;
         }
-        else if(Recipes.Contains(Id)&&Recipes[Id].WorkerOutput>0&&Factory)return {};
+
     }
-    if(const auto* R=Recipes.Find(Id)){if(R->WorkerOutput>0&&WorkersNeeded()<=0)return {};return Id;}return {};
+    if(const auto* R=Recipes.Find(Id)){if(R->WorkerOutput>0&&(D->Role!=TEXT("core")||WorkersNeeded()<=0))return {};return Id;}return {};
 }
 bool FSeigeSimulation::SetProductionRecipe(int32 Id,const FString& Recipe,FString& Error)
 {
@@ -113,6 +113,7 @@ bool FSeigeSimulation::DisassembleWorkers(int32 Id,int32 Count,FString& Error)
 void FSeigeSimulation::StepWorkerDisassembly(double Seconds)
 {
     const FString Resource=TextRule(TEXT("inactive_worker_resource"));const auto Returns=DisassemblyOutputs();const double Volume=InventoryLitres(Returns);
+    TOptional<bool> PartsShortage;
     for(auto& B:Buildings)
     {
         if(B.Health<=0||B.IsConstructing||!Definition(B)->StoresInactiveWorkers||WorkFraction(B)<=0)continue;
@@ -120,9 +121,6 @@ void FSeigeSimulation::StepWorkerDisassembly(double Seconds)
         // scanning colony construction demand every fixed step in that case.
         // Active overflow has already committed a workstation in StepPopulation.
         if(!B.DisassemblyCommitted&&B.DisassemblyQueued==0&&B.Inventory.FindRef(Resource)<1)continue;
-        bool Shortage=false;if(Policy->GetBoolField(TEXT("auto_disassemble_parts_shortage")))for(const auto& P:Returns)if(ConstructionAvailable(P.Key)+1.e-8<P.Value){Shortage=true;break;}
-        const bool Full=Policy->GetBoolField(TEXT("auto_disassemble_storage_full"))&&StorageRoom(B)+1.e-8<Resources[Resource].LitresPerUnit;
-        if(B.DisassemblyQueued==0&&(Shortage||Full)&&DisassemblyAvailable(B)>=1)B.DisassemblyQueued=1;
         if(B.DisassemblyQueued<=0)continue;
         if(!B.DisassemblyCommitted)
         {
@@ -131,23 +129,18 @@ void FSeigeSimulation::StepWorkerDisassembly(double Seconds)
             if(B.DisassemblyQueued<=0)continue;
             if(Workers.StoredAt(B.Id)<1||Volume>StorageRoom(B)+Resources[Resource].LitresPerUnit+1.e-8||!Energy.Consume(*this,B.Id,Number(TEXT("worker_disassembly_kwh"))))continue;
             Workers.BeginDisassembly(*this,B.Id);B.Inventory.FindOrAdd(Resource)-=1;B.DisassemblyCommitted=true;B.DisassemblyReservedLitres=Volume;B.DisassemblyProgress=0;
+            // A real transaction can change worker-production buffers and
+            // available energy. Never reuse its pre-transaction demand result.
+            PartsShortage.Reset();
         }
         B.DisassemblyProgress=FMath::Min(1.,B.DisassemblyProgress+Seconds*WorkFraction(B)/Number(TEXT("worker_disassemble_seconds")));
-        if(B.DisassemblyProgress+UE_DOUBLE_SMALL_NUMBER>=1){for(const auto& P:Returns)B.Inventory.FindOrAdd(P.Key)+=P.Value;Workers.FinishDisassembly(*this,B.Id);++WorkersDisassembled;--B.DisassemblyQueued;B.DisassemblyCommitted=false;B.DisassemblyProgress=B.DisassemblyReservedLitres=0;}
+        if(B.DisassemblyProgress+UE_DOUBLE_SMALL_NUMBER>=1){for(const auto& P:Returns)B.Inventory.FindOrAdd(P.Key)+=P.Value;Workers.FinishDisassembly(*this,B.Id);++WorkersDisassembled;--B.DisassemblyQueued;B.DisassemblyCommitted=false;B.DisassemblyProgress=B.DisassemblyReservedLitres=0;PartsShortage.Reset();}
     }
 }
 
 void FSeigeSimulation::StepPopulation(double Seconds)
 {
-    auto* C=Core();if(!C||C->Health<=0||C->IsConstructing)return;
-    const int32 Target=FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))));const FString Worker=TextRule(TEXT("inactive_worker_resource"));
-    // Bodies reactivate/store only through the physical worker lifecycle.
-    WorkerReactivateClock=WorkerStoreClock=0;
-    PopulationClock=0; // Kept in the serialized base clock set; batches own assembly time.
-    UpkeepClock+=Seconds;
-    while(UpkeepClock>=Number(TEXT("upkeep_interval")))
-    {
-        UpkeepClock-=Number(TEXT("upkeep_interval"));const FString Resource=TextRule(TEXT("upkeep_resource"));
-        for(auto& B:Buildings)if(B.SupportedRobots>0){const double Need=B.SupportedRobots*Number(TEXT("upkeep_per_robot"));const bool Supplied=Spendable(B,Resource)+UE_DOUBLE_SMALL_NUMBER>=Need;if(Supplied)B.Inventory.FindOrAdd(Resource)=FMath::Max(0.,B.Inventory.FindRef(Resource)-Need);B.MaintenanceSupplied=Supplied;}UpdateSupport();
-    }
+    // No passive birth/retirement or remote maintenance. Manufacturing batches
+    // pay inputs, energy and time; bodies charge and store themselves physically.
+    WorkerReactivateClock=WorkerStoreClock=PopulationClock=UpkeepClock=0;
 }

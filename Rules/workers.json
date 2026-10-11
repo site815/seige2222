@@ -1,6 +1,6 @@
 {
-  "version": "prototype-9.3",
-  "scheduler_policy": "finite_shared_pool",
+  "version": "prototype-10.0",
+  "scheduler_policy": "owned_building_crews",
   "haul_mass_kg": 40,
   "body_radius_meters": 0.475,
   "haul_volume_litres": 60,
@@ -8,7 +8,10 @@
   "logistics_scaling_policy": "completed_facilities",
   "logistics_facilities_per_worker": 4,
   "logistics_max_workers": 8,
-  "logistics_excluded_roles": ["core", "wall"],
+  "logistics_excluded_roles": [
+    "core",
+    "wall"
+  ],
   "core_minimum_operators": 1,
   "loading_seconds": 1,
   "unloading_seconds": 1,
@@ -18,5 +21,15 @@
   "hatch_exit_spacing_seconds": 1,
   "core_hatch_fraction": 0.71177,
   "workstation_spacing_meters": 1.2,
-  "idle_return_seconds": 5
+  "idle_return_seconds": 5,
+  "battery_capacity_kwh": 0.2,
+  "charge_minutes_per_day": 10,
+  "charge_reserve_fraction": 0.12,
+  "charge_reserve_stagger_fraction": 0.08,
+  "initial_charge_stagger_fraction": 0.2,
+  "core_recovery_fraction": 0.1,
+  "core_charging_berths": 1,
+  "station_charging_berths": 1,
+  "balance_note": "Permanent building crews. No additional courier population reserve. 0.2 kWh battery has 23h50m nominal uncharged autonomy per 24-hour calendar day; physical travel/queue reserve starts trips earlier. A berth occupies a full 10 calendar minutes, including its own attendant. Core automatic fabrication at 10% speed is only a zero-crew recovery exception and still pays the full bill.",
+  "charging_queue_spacing_meters": 2
 }

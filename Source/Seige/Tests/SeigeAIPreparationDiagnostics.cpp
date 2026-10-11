@@ -5,6 +5,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
+#include "HAL/PlatformTime.h"
 #include "Serialization/JsonSerializer.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -87,5 +88,20 @@ bool FSeigeAIPreparationSnapshotDiagnostic::RunTest(const FString&)
     Raw.Empty();if(!FJsonSerializer::Serialize(Report,TJsonWriterFactory<>::Create(&Raw))||!FFileHelper::SaveStringToFile(Raw,*(Stem+TEXT("-logistics.json")))){AddError(TEXT("Cannot save logistics diagnostic"));return false;}
     AddInfo(FString::Printf(TEXT("Diagnostic snapshot at %.2f, failed=%d, status=%s, output=%s.json"),Sim.Time,Sim.Failed?1:0,*Brain.GetStatus(),*Stem));
     TestTrue(TEXT("The requested pre-loss state was actually reached"),FMath::Abs(Sim.Time-Stop)<1.e-6);return true;
+}
+// Isolates CPU simulation from any rendered world. Timing is informational;
+// functional regression tests, not wall-clock thresholds, gate correctness.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeAISimulationProfileDiagnostic,"Diagnostics.AISimulationProfile",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeAISimulationProfileDiagnostic::RunTest(const FString&)
+{
+    FSeigeSimulation Sim;FSeigeScenarioAI Brain;FString Error;
+    const FString Rules=FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),AI=FPaths::Combine(FPaths::ProjectDir(),TEXT("AIFILES"));
+    if(!Brain.Initialize(Sim,Rules,AI,true,Error,false,false,2201)){AddError(Error);return false;}
+    double Seconds=100;FParse::Value(FCommandLine::Get(),TEXT("SeigeProfileSeconds="),Seconds);
+    if(!FMath::IsFinite(Seconds)||Seconds<=0){AddError(TEXT("Profile duration must be positive"));return false;}
+    const double Initial=Sim.Time,Start=FPlatformTime::Seconds();Brain.Tick(Sim,Seconds);
+    AddInfo(FString::Printf(TEXT("AI profile: %.3f simulated seconds in %.3f wall seconds, %d buildings, %d roads, %d bodies"),Sim.Time-Initial,FPlatformTime::Seconds()-Start,Sim.Buildings.Num(),Sim.Roads.Num(),Sim.Workers.Bodies.Num()));
+    TestTrue(TEXT("Diagnostic advanced the requested time"),FMath::Abs(Sim.Time-Initial-Seconds)<1.e-5);
+    return true;
 }
 #endif

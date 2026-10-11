@@ -1,18 +1,18 @@
 {
-  "version": "prototype-9.3",
+  "version": "prototype-10.0",
   "buildings": [
     {
       "id": "command_core",
       "name": "Orbital command shuttle \u00b7 Level 1",
       "role": "core",
-      "description": "Upright orbital command shuttle with fusion power, cargo storage, slow universal replication and two large weapon banks. Starts with one large, two medium and eight small lasers. Higher levels construct expansion wings around the same ship.",
+      "description": "Upright command shuttle: permanent general-purpose crew, fusion electricity, storage, one charging berth and two large weapon banks. Manufactures only workers. Specialist factories supply all materials, weapons and vehicles. Higher levels add wings around the same shuttle.",
       "visual": "shuttle",
       "cost": {
         "alloy": 12,
         "circuits": 6,
         "components": 2
       },
-      "jobs": 6,
+      "jobs": 5,
       "health": 1800,
       "footprint": 240,
       "storage_capacity": 40000,
@@ -30,8 +30,8 @@
       "power_usage_kw": 0,
       "power_generation_kw": 0,
       "construction_seconds": 900,
-      "construction_workers": 6,
-      "robot_support_capacity": 8,
+      "construction_workers": 3,
+      "robot_support_capacity": 144,
       "staffing_priority": 0,
       "inventory_presentation": "outdoor",
       "worker_activity": "assembly",
@@ -53,25 +53,13 @@
         "substrates": 160,
         "circuits": 100,
         "components": 500,
-        "fusion_reactors": 80
+        "fusion_reactors": 80,
+        "batteries": 80
       },
       "level": 1,
       "family": "command_core",
       "allowed_recipes": [
-        "assemble_robot",
-        "smelt_alloy",
-        "draw_conductors",
-        "make_substrates",
-        "make_circuits",
-        "make_components",
-        "refine_biofuel",
-        "refine_hydrocarbons",
-        "make_organic_food",
-        "make_batteries",
-        "make_ai_chips",
-        "make_fusion_reactors",
-        "make_shells",
-        "make_missiles"
+        "assemble_robot"
       ],
       "recipe_time_multiplier": 10,
       "recipe_energy_multiplier": 4,
@@ -131,7 +119,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {
         "iron_ore": 1,
         "copper_ore": 1,
@@ -194,7 +182,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -248,7 +236,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -302,7 +290,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -356,7 +344,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -410,7 +398,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -464,7 +452,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -524,14 +512,14 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
       "id": "depot",
-      "name": "Cargo depot",
+      "name": "Warehouse",
       "role": "storage",
-      "description": "Receives overflow cargo and redistributes it to local demand.",
+      "description": "Permanent logistics crew receives, stores and ships physical goods and intact inactive surplus drones.",
       "visual": "depot",
       "cost": {
         "alloy": 600,
@@ -578,14 +566,14 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
       "id": "robot_service_bay",
-      "name": "Worker charging and service bay",
+      "name": "Charging station",
       "role": "service",
-      "description": "Charging berths and maintenance for 16 workers, supplied through the connected road power grid and courier-delivered robotic parts.",
+      "description": "One physical charging berth with one assigned attendant. A full session occupies ten calendar minutes; the attendant also uses the berth. Power, travel and queues reduce the ideal 144 daily sessions.",
       "visual": "robotService",
       "cost": {
         "alloy": 600,
@@ -614,7 +602,7 @@
       "power_generation_kw": 0,
       "construction_seconds": 1200,
       "construction_workers": 2,
-      "robot_support_capacity": 16,
+      "robot_support_capacity": 144,
       "staffing_priority": 1,
       "inventory_presentation": "indoor",
       "worker_activity": "service",
@@ -633,7 +621,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -649,7 +637,7 @@
         "circuits": 10,
         "batteries": 25
       },
-      "jobs": 0,
+      "jobs": 1,
       "health": 250,
       "footprint": 210,
       "storage_capacity": 800,
@@ -683,8 +671,9 @@
         "alloy": 500.0,
         "conductors": 50.0,
         "substrates": 125.0,
-        "circuits": 12.5,
-        "batteries": 31.25
+        "circuits": 90,
+        "batteries": 55,
+        "components": 200
       },
       "level": 1,
       "family": "solar_array",
@@ -693,7 +682,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -746,7 +735,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -796,8 +785,9 @@
         "alloy": 1000.0,
         "conductors": 75.0,
         "substrates": 50.0,
-        "circuits": 25.0,
-        "components": 100.0
+        "circuits": 80,
+        "components": 120,
+        "batteries": 80
       },
       "level": 1,
       "family": "trading_port",
@@ -806,7 +796,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -819,8 +809,9 @@
         "alloy": 1800.0,
         "conductors": 135.0,
         "substrates": 90.0,
-        "circuits": 45.0,
-        "components": 180.0
+        "circuits": 100,
+        "components": 200,
+        "batteries": 80
       },
       "jobs": 2,
       "health": 250,
@@ -856,9 +847,10 @@
         "alloy": 1400.0,
         "conductors": 105.0,
         "substrates": 70.0,
-        "circuits": 35.0,
-        "components": 140.0,
-        "ai_chips": 30
+        "components": 120,
+        "ai_chips": 80,
+        "crystalline": 40,
+        "batteries": 80
       },
       "level": 2,
       "family": "trading_port",
@@ -867,7 +859,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -880,9 +872,11 @@
         "alloy": 3200,
         "conductors": 240,
         "substrates": 160,
-        "circuits": 80,
+        "circuits": 100,
         "components": 320,
-        "ai_chips": 30
+        "ai_chips": 80,
+        "crystalline": 40,
+        "batteries": 160
       },
       "jobs": 3,
       "health": 250,
@@ -922,7 +916,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -976,7 +970,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1030,7 +1024,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1084,7 +1078,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1139,7 +1133,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1194,7 +1188,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1249,7 +1243,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1304,14 +1298,14 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
       "id": "command_core_2",
       "name": "Command center \u00b7 Level 2",
       "role": "core",
-      "description": "Upright orbital command shuttle with fusion power, cargo storage, slow universal replication and two large weapon banks. Starts with one large, two medium and eight small lasers. Higher levels construct expansion wings around the same ship.",
+      "description": "Upright command shuttle: permanent general-purpose crew, fusion electricity, storage, one charging berth and two large weapon banks. Manufactures only workers. Specialist factories supply all materials, weapons and vehicles. Higher levels add wings around the same shuttle.",
       "visual": "core",
       "cost": {
         "alloy": 4012,
@@ -1319,9 +1313,10 @@
         "substrates": 160,
         "circuits": 106,
         "components": 502,
-        "fusion_reactors": 80
+        "fusion_reactors": 80,
+        "batteries": 80
       },
-      "jobs": 8,
+      "jobs": 10,
       "health": 3600,
       "footprint": 480,
       "storage_capacity": 60000,
@@ -1339,8 +1334,8 @@
       "power_usage_kw": 0,
       "power_generation_kw": 0,
       "construction_seconds": 3600,
-      "construction_workers": 6,
-      "robot_support_capacity": 24,
+      "construction_workers": 4,
+      "robot_support_capacity": 144,
       "staffing_priority": 0,
       "inventory_presentation": "outdoor",
       "worker_activity": "assembly",
@@ -1362,25 +1357,15 @@
         "substrates": 320,
         "circuits": 200,
         "components": 1000,
-        "fusion_reactors": 160
+        "fusion_reactors": 160,
+        "ai_chips": 80,
+        "crystalline": 40,
+        "batteries": 80
       },
       "level": 2,
       "family": "command_core",
       "allowed_recipes": [
-        "assemble_robot",
-        "smelt_alloy",
-        "draw_conductors",
-        "make_substrates",
-        "make_circuits",
-        "make_components",
-        "refine_biofuel",
-        "refine_hydrocarbons",
-        "make_organic_food",
-        "make_batteries",
-        "make_ai_chips",
-        "make_fusion_reactors",
-        "make_shells",
-        "make_missiles"
+        "assemble_robot"
       ],
       "recipe_time_multiplier": 10,
       "recipe_energy_multiplier": 4,
@@ -1393,7 +1378,7 @@
       "id": "command_core_3",
       "name": "Command center \u00b7 Level 3",
       "role": "core",
-      "description": "Upright orbital command shuttle with fusion power, cargo storage, slow universal replication and two large weapon banks. Starts with one large, two medium and eight small lasers. Higher levels construct expansion wings around the same ship.",
+      "description": "Upright command shuttle: permanent general-purpose crew, fusion electricity, storage, one charging berth and two large weapon banks. Manufactures only workers. Specialist factories supply all materials, weapons and vehicles. Higher levels add wings around the same shuttle.",
       "visual": "core",
       "cost": {
         "alloy": 12012,
@@ -1401,9 +1386,12 @@
         "substrates": 480,
         "circuits": 306,
         "components": 1502,
-        "fusion_reactors": 240
+        "fusion_reactors": 240,
+        "ai_chips": 80,
+        "crystalline": 40,
+        "batteries": 160
       },
-      "jobs": 10,
+      "jobs": 15,
       "health": 7200,
       "footprint": 720,
       "storage_capacity": 80000,
@@ -1421,8 +1409,8 @@
       "power_usage_kw": 0,
       "power_generation_kw": 0,
       "construction_seconds": 7200,
-      "construction_workers": 8,
-      "robot_support_capacity": 48,
+      "construction_workers": 5,
+      "robot_support_capacity": 144,
       "staffing_priority": 0,
       "inventory_presentation": "outdoor",
       "worker_activity": "assembly",
@@ -1442,20 +1430,7 @@
       "level": 3,
       "family": "command_core",
       "allowed_recipes": [
-        "assemble_robot",
-        "smelt_alloy",
-        "draw_conductors",
-        "make_substrates",
-        "make_circuits",
-        "make_components",
-        "refine_biofuel",
-        "refine_hydrocarbons",
-        "make_organic_food",
-        "make_batteries",
-        "make_ai_chips",
-        "make_fusion_reactors",
-        "make_shells",
-        "make_missiles"
+        "assemble_robot"
       ],
       "recipe_time_multiplier": 10,
       "recipe_energy_multiplier": 4,
@@ -1474,10 +1449,11 @@
         "alloy": 900.0,
         "conductors": 90.0,
         "substrates": 225.0,
-        "circuits": 22.5,
-        "batteries": 56.25
+        "circuits": 100,
+        "batteries": 80,
+        "components": 200
       },
-      "jobs": 0,
+      "jobs": 2,
       "health": 500,
       "footprint": 210,
       "storage_capacity": 800,
@@ -1511,9 +1487,9 @@
         "alloy": 700.0,
         "conductors": 70.0,
         "substrates": 175.0,
-        "circuits": 17.5,
-        "batteries": 43.75,
-        "ai_chips": 20
+        "batteries": 80,
+        "ai_chips": 80,
+        "crystalline": 40
       },
       "level": 2,
       "family": "solar_array",
@@ -1522,7 +1498,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1535,14 +1511,16 @@
         "alloy": 1600,
         "conductors": 160,
         "substrates": 400,
-        "circuits": 40,
-        "batteries": 100,
-        "ai_chips": 20
+        "circuits": 100,
+        "batteries": 160,
+        "ai_chips": 80,
+        "crystalline": 40,
+        "components": 200
       },
-      "jobs": 0,
+      "jobs": 3,
       "health": 750,
       "footprint": 210,
-      "storage_capacity": 800,
+      "storage_capacity": 1000,
       "recipe": "",
       "sensor_range": 0,
       "attack_range": 0,
@@ -1577,7 +1555,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1629,7 +1607,7 @@
         "substrates": 250.0,
         "circuits": 125.0,
         "components": 625.0,
-        "batteries": 150
+        "batteries": 150.0
       },
       "level": 1,
       "family": "vehicle_factory",
@@ -1638,7 +1616,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1691,7 +1669,10 @@
         "substrates": 350.0,
         "circuits": 175.0,
         "components": 875.0,
-        "ai_chips": 40
+        "ai_chips": 80,
+        "batteries": 10.0,
+        "crystalline": 40,
+        "fusion_reactors": 200
       },
       "level": 2,
       "family": "vehicle_factory",
@@ -1700,7 +1681,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1715,8 +1696,10 @@
         "substrates": 800,
         "circuits": 400,
         "components": 2000,
-        "ai_chips": 40,
-        "batteries": 150
+        "ai_chips": 80,
+        "batteries": 160,
+        "crystalline": 40,
+        "fusion_reactors": 200
       },
       "jobs": 4,
       "health": 1350,
@@ -1756,7 +1739,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1804,11 +1787,11 @@
       "deployment_defense": false,
       "next_upgrade": "tank_factory_2",
       "upgrade_cost": {
-        "alloy": 5000.0,
-        "conductors": 250.0,
-        "substrates": 250.0,
-        "circuits": 125.0,
-        "components": 875.0,
+        "alloy": 5000,
+        "conductors": 250,
+        "substrates": 250,
+        "circuits": 125,
+        "components": 875,
         "batteries": 150
       },
       "level": 1,
@@ -1818,7 +1801,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1866,12 +1849,14 @@
       "deployment_defense": false,
       "next_upgrade": "tank_factory_3",
       "upgrade_cost": {
-        "alloy": 7000.0,
-        "conductors": 350.0,
-        "substrates": 350.0,
-        "circuits": 175.0,
-        "components": 1225.0,
-        "ai_chips": 40
+        "alloy": 7000,
+        "conductors": 350,
+        "substrates": 350,
+        "circuits": 175,
+        "components": 1225,
+        "ai_chips": 80,
+        "crystalline": 40,
+        "fusion_reactors": 200
       },
       "level": 2,
       "family": "tank_factory",
@@ -1880,7 +1865,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1895,8 +1880,10 @@
         "substrates": 800,
         "circuits": 400,
         "components": 2800,
-        "ai_chips": 40,
-        "batteries": 450
+        "ai_chips": 80,
+        "batteries": 450,
+        "crystalline": 40,
+        "fusion_reactors": 200
       },
       "jobs": 4,
       "health": 1350,
@@ -1936,7 +1923,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -1984,11 +1971,11 @@
       "deployment_defense": false,
       "next_upgrade": "mech_factory_2",
       "upgrade_cost": {
-        "alloy": 4375.0,
-        "conductors": 300.0,
-        "substrates": 200.0,
-        "circuits": 125.0,
-        "components": 1250.0,
+        "alloy": 4375,
+        "conductors": 300,
+        "substrates": 200,
+        "circuits": 125,
+        "components": 1250,
         "batteries": 150
       },
       "level": 1,
@@ -1998,7 +1985,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2047,12 +2034,15 @@
       "deployment_defense": false,
       "next_upgrade": "mech_factory_3",
       "upgrade_cost": {
-        "alloy": 6125.0,
-        "conductors": 420.0,
-        "substrates": 280.0,
-        "circuits": 175.0,
-        "components": 1750.0,
-        "ai_chips": 50
+        "alloy": 6125,
+        "conductors": 420,
+        "substrates": 280,
+        "circuits": 175,
+        "components": 1750,
+        "ai_chips": 60,
+        "batteries": 10,
+        "crystalline": 40,
+        "fusion_reactors": 200
       },
       "level": 2,
       "family": "mech_factory",
@@ -2061,7 +2051,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2076,8 +2066,10 @@
         "substrates": 640,
         "circuits": 400,
         "components": 4000,
-        "ai_chips": 70,
-        "batteries": 150
+        "ai_chips": 80,
+        "batteries": 160,
+        "crystalline": 40,
+        "fusion_reactors": 200
       },
       "jobs": 4,
       "health": 1350,
@@ -2117,14 +2109,14 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
       "id": "worker_factory",
-      "name": "Worker factory",
-      "role": "worker_factory",
-      "description": "Rapid, energy-efficient worker assembly from real materials. Inactive workers occupy physical storage and can be reactivated, recycled or traded.",
+      "name": "Construction hub",
+      "role": "construction",
+      "description": "Four permanent construction specialists physically build and unload at sites. Drones are manufactured only at the command center.",
       "visual": "factory",
       "cost": {
         "alloy": 1000,
@@ -2133,7 +2125,7 @@
         "circuits": 20,
         "components": 200
       },
-      "jobs": 2,
+      "jobs": 4,
       "health": 300,
       "footprint": 210,
       "storage_capacity": 3000,
@@ -2166,14 +2158,12 @@
       "upgrade_cost": {},
       "level": 1,
       "family": "worker_factory",
-      "allowed_recipes": [
-        "assemble_robot"
-      ],
-      "recipe_time_multiplier": 0.5,
-      "recipe_energy_multiplier": 0.5,
+      "allowed_recipes": [],
+      "recipe_time_multiplier": 1,
+      "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": true,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2230,7 +2220,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2282,7 +2272,7 @@
         "substrates": 35.0,
         "circuits": 72.75,
         "components": 282.25,
-        "ai_chips": 8
+        "ai_chips": 8.0
       },
       "family": "turret",
       "level": 2,
@@ -2291,7 +2281,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2346,7 +2336,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2406,7 +2396,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2458,7 +2448,7 @@
         "substrates": 35.0,
         "circuits": 72.75,
         "components": 282.25,
-        "ai_chips": 8
+        "ai_chips": 8.0
       },
       "family": "kinetic_tower",
       "level": 2,
@@ -2467,7 +2457,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2522,7 +2512,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2582,7 +2572,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2634,7 +2624,7 @@
         "substrates": 35.0,
         "circuits": 72.75,
         "components": 282.25,
-        "ai_chips": 8
+        "ai_chips": 8.0
       },
       "family": "missile_tower",
       "level": 2,
@@ -2643,7 +2633,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2698,7 +2688,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2747,8 +2737,8 @@
       "next_upgrade": "plasma_tower_2",
       "upgrade_cost": {
         "alloy": 655.0,
-        "conductors": 25.0,
-        "substrates": 25.0,
+        "conductors": 25,
+        "substrates": 25,
         "circuits": 14.25,
         "components": 50.75
       },
@@ -2759,7 +2749,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2807,9 +2797,9 @@
       "deployment_defense": false,
       "next_upgrade": "plasma_tower_3",
       "upgrade_cost": {
-        "alloy": 2765.0,
-        "conductors": 35.0,
-        "substrates": 35.0,
+        "alloy": 2765,
+        "conductors": 35,
+        "substrates": 35,
         "circuits": 72.75,
         "components": 282.25,
         "ai_chips": 12
@@ -2821,7 +2811,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2876,7 +2866,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2928,7 +2918,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -2980,7 +2970,7 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     },
     {
@@ -3030,7 +3020,201 @@
       "recipe_energy_multiplier": 1,
       "recipe_input_multiplier": 1,
       "stores_inactive_workers": false,
-      "workforce_mode": "full_staff",
+      "workforce_mode": "proportional",
+      "extraction_rates": {}
+    },
+    {
+      "id": "fusion_power_plant",
+      "name": "Fusion power plant \u00b7 Level 1",
+      "role": "generator",
+      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Connect roads for shared power; output scales with actual operating crew time.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 4000,
+        "conductors": 300,
+        "substrates": 160,
+        "components": 300,
+        "circuits": 120,
+        "batteries": 100,
+        "ai_chips": 60,
+        "crystalline": 40,
+        "fusion_reactors": 400
+      },
+      "jobs": 4,
+      "health": 2000,
+      "footprint": 520,
+      "storage_capacity": 30000,
+      "recipe": "",
+      "sensor_range": 0,
+      "attack_range": 0,
+      "color": [
+        0.12,
+        0.38,
+        0.52
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0,
+      "construction_seconds": 3600,
+      "construction_workers": 4,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4,
+      "inventory_presentation": "outdoor",
+      "worker_activity": "handling",
+      "reserved_footprint": 520,
+      "access_port": [
+        1,
+        0
+      ],
+      "deployment_defense": false,
+      "next_upgrade": "fusion_power_plant_2",
+      "upgrade_cost": {
+        "alloy": 4000,
+        "conductors": 300,
+        "substrates": 160,
+        "components": 300,
+        "circuits": 120,
+        "batteries": 100,
+        "ai_chips": 60,
+        "crystalline": 40,
+        "fusion_reactors": 400
+      },
+      "level": 1,
+      "family": "fusion_power_plant",
+      "allowed_recipes": [],
+      "recipe_time_multiplier": 1,
+      "recipe_energy_multiplier": 1,
+      "recipe_input_multiplier": 1,
+      "stores_inactive_workers": false,
+      "workforce_mode": "proportional",
+      "extraction_rates": {}
+    },
+    {
+      "id": "fusion_power_plant_2",
+      "name": "Fusion power plant \u00b7 Level 2",
+      "role": "generator",
+      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Connect roads for shared power; output scales with actual operating crew time.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 8000,
+        "conductors": 600,
+        "substrates": 320,
+        "components": 600,
+        "circuits": 240,
+        "batteries": 200,
+        "ai_chips": 120,
+        "crystalline": 80,
+        "fusion_reactors": 800
+      },
+      "jobs": 6,
+      "health": 2600,
+      "footprint": 520,
+      "storage_capacity": 30000,
+      "recipe": "",
+      "sensor_range": 0,
+      "attack_range": 0,
+      "color": [
+        0.12,
+        0.38,
+        0.52
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0,
+      "construction_seconds": 7200,
+      "construction_workers": 4,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4,
+      "inventory_presentation": "outdoor",
+      "worker_activity": "handling",
+      "reserved_footprint": 520,
+      "access_port": [
+        1,
+        0
+      ],
+      "deployment_defense": false,
+      "next_upgrade": "fusion_power_plant_3",
+      "upgrade_cost": {
+        "alloy": 4000,
+        "conductors": 300,
+        "substrates": 160,
+        "components": 300,
+        "circuits": 120,
+        "batteries": 100,
+        "ai_chips": 60,
+        "crystalline": 40,
+        "fusion_reactors": 400
+      },
+      "level": 2,
+      "family": "fusion_power_plant",
+      "allowed_recipes": [],
+      "recipe_time_multiplier": 1,
+      "recipe_energy_multiplier": 1,
+      "recipe_input_multiplier": 1,
+      "stores_inactive_workers": false,
+      "workforce_mode": "proportional",
+      "extraction_rates": {}
+    },
+    {
+      "id": "fusion_power_plant_3",
+      "name": "Fusion power plant \u00b7 Level 3",
+      "role": "generator",
+      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Connect roads for shared power; output scales with actual operating crew time.",
+      "visual": "factory",
+      "cost": {
+        "alloy": 12000,
+        "conductors": 900,
+        "substrates": 480,
+        "components": 900,
+        "circuits": 360,
+        "batteries": 300,
+        "ai_chips": 180,
+        "crystalline": 120,
+        "fusion_reactors": 1200
+      },
+      "jobs": 8,
+      "health": 3200,
+      "footprint": 520,
+      "storage_capacity": 30000,
+      "recipe": "",
+      "sensor_range": 0,
+      "attack_range": 0,
+      "color": [
+        0.12,
+        0.38,
+        0.52
+      ],
+      "weapon_name": "",
+      "damage_per_shot": 0,
+      "reload_seconds": 0,
+      "power_usage_kw": 0,
+      "power_generation_kw": 0,
+      "construction_seconds": 10800,
+      "construction_workers": 4,
+      "robot_support_capacity": 0,
+      "staffing_priority": 4,
+      "inventory_presentation": "outdoor",
+      "worker_activity": "handling",
+      "reserved_footprint": 520,
+      "access_port": [
+        1,
+        0
+      ],
+      "deployment_defense": false,
+      "next_upgrade": "",
+      "upgrade_cost": {},
+      "level": 3,
+      "family": "fusion_power_plant",
+      "allowed_recipes": [],
+      "recipe_time_multiplier": 1,
+      "recipe_energy_multiplier": 1,
+      "recipe_input_multiplier": 1,
+      "stores_inactive_workers": false,
+      "workforce_mode": "proportional",
       "extraction_rates": {}
     }
   ],
@@ -3062,7 +3246,8 @@
     "mech_factory",
     "kinetic_tower",
     "missile_tower",
-    "plasma_tower"
+    "plasma_tower",
+    "fusion_power_plant"
   ],
   "balance_status": "Provisional costs, durations, staffing, capacities and health. Confirmed tier geometry and hardpoint constraints are validated separately. Upgrade bills are incremental and stored on the source level. prototype-9.2 adds progression gates: AI chip works, tank factory and battery works need tier-2 products beyond the landing kit; fusion works, mech factory and plasma towers need locally made AI chips; every level-3 upgrade needs AI chips and the core needs fusion reactors.",
   "capacity_note": "Provisional closed storage in litres. Vehicle factories and cores hold the full largest permitted chassis plus a legal full weapon loadout, ammunition and local operating buffers; capacity adds no starting materials. Advanced assembly still needs enough charged batteries on the connected road grid.",

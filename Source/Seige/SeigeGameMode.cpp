@@ -26,6 +26,7 @@
 #include "Misc/Parse.h"
 #include "Misc/App.h"
 #include "HAL/FileManager.h"
+#include "HAL/PlatformTime.h"
 #include "HighResScreenshot.h"
 
 namespace
@@ -47,7 +48,7 @@ void ASeigeGameMode::BeginPlay()
     if(!LoadGraphicsSettings()||!LoadWeatherSettings()||!LoadBuildingVisuals())
     {
         GraphicsSettingsValid=false;Notice=Error;Screen=TEXT("main");
-        if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark"))||FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("WorldReview"))||FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke")))
+        if(FParse::Param(FCommandLine::Get(),TEXT("NextUpdateSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark"))||FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))||FParse::Param(FCommandLine::Get(),TEXT("WorldReview"))||FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke")))
         {UE_LOG(LogTemp,Error,TEXT("Automated presentation cannot start: %s"),*Error);FPlatformMisc::RequestExitWithStatus(false,1);}
         return;
     }
@@ -167,13 +168,18 @@ void ASeigeGameMode::ResetColony()
 void ASeigeGameMode::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    static const bool ProfileNextUpdate=FParse::Param(FCommandLine::Get(),TEXT("NextUpdateSmoke"));
+    const double FrameStarted=ProfileNextUpdate?FPlatformTime::Seconds():0;
     if(IsPreparingScenario())TickScenarioPreparation();
     if(!Ready)
     {
+        if(ProfileNextUpdate)
+        {const double Cost=FPlatformTime::Seconds()-FrameStarted;NextUpdateTiming.Preparation+=Cost;NextUpdateTiming.MaxPreparation=FMath::Max(NextUpdateTiming.MaxPreparation,Cost);++NextUpdateTiming.Frames;RunNextUpdateSmoke();}
         if(IsPreparingScenario())
         {RenderClock+=DeltaSeconds;if(FParse::Param(FCommandLine::Get(),TEXT("UiSmoke")))RunPresentationSmoke();}
         return;
     }
+    const double PreparationDone=ProfileNextUpdate?FPlatformTime::Seconds():0;
     if(CompanionView&&(Sim.Escaped||Sim.Failed||Observer))ExitCompanionView();
     if(CompanionView)Speed=1;
     if(Screen==TEXT("playing")&&!Paused)
@@ -181,6 +187,9 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
         const double Step=Sim.FixedStepSeconds(); Accumulator+=FMath::Min(DeltaSeconds,.25f)*Speed;
         while(Accumulator>=Step)
         {
+            // Refresh authoritative grading once per geometry revision before
+            // any route-cache lookup; camera LOD never changes simulation slopes.
+            SimulationTerrainHeight(HomePosition());
             BindScenarioCalendar();
             CaptureSimulationPresentation();
             if(Observer&&CenterBrain) CenterBrain->Tick(Sim,Step); else Sim.Tick(Step);
@@ -191,12 +200,21 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
             Accumulator-=Step;
         }
     }
+    const double SimulationDone=ProfileNextUpdate?FPlatformTime::Seconds():0;
     RenderClock+=DeltaSeconds;
     UpdateWeather(DeltaSeconds);
     RefreshEnvironment();
     SyncVisuals();
+    if(ProfileNextUpdate)
+    {
+        const double PreparationCost=PreparationDone-FrameStarted,SimulationCost=SimulationDone-PreparationDone,RenderCost=FPlatformTime::Seconds()-SimulationDone;
+        ++NextUpdateTiming.Frames;NextUpdateTiming.Preparation+=PreparationCost;NextUpdateTiming.FixedSimulation+=SimulationCost;NextUpdateTiming.RenderSync+=RenderCost;
+        NextUpdateTiming.MaxPreparation=FMath::Max(NextUpdateTiming.MaxPreparation,PreparationCost);NextUpdateTiming.MaxFixedSimulation=FMath::Max(NextUpdateTiming.MaxFixedSimulation,SimulationCost);NextUpdateTiming.MaxRenderSync=FMath::Max(NextUpdateTiming.MaxRenderSync,RenderCost);
+        if(SimulationCost>1||RenderCost>1)UE_LOG(LogTemp,Display,TEXT("NEXT_UPDATE_FRAME fixed_simulation=%.3f render_sync=%.3f preparation=%.3f"),SimulationCost,RenderCost,PreparationCost);
+    }
     if(FParse::Param(FCommandLine::Get(),TEXT("GraphicsBenchmark")))RunGraphicsBenchmark(DeltaSeconds);
     if(FParse::Param(FCommandLine::Get(),TEXT("UiSmoke"))) RunPresentationSmoke();
+    if(FParse::Param(FCommandLine::Get(),TEXT("NextUpdateSmoke"))) RunNextUpdateSmoke();
     if(FParse::Param(FCommandLine::Get(),TEXT("WorldReview"))) RunWorldReview();
     if(FParse::Param(FCommandLine::Get(),TEXT("DisplaySmoke"))) RunDisplaySmoke();
     if(!ScreenshotRequested && RenderClock>8 && FParse::Param(FCommandLine::Get(),TEXT("PrototypeScreenshot")))

@@ -80,6 +80,7 @@ FVector2D ASeigeGameMode::CompanionRenderPosition() const
 }
 void ASeigeGameMode::SyncCompanionVisuals(TSet<FString>& Live)
 {
+    if(CompanionView&&Sim.Companions.ControlledId==0){ExitCompanionView();Notice=TEXT("Rex is returning to shelter after a nearby building took damage.");}
     if(Screen==TEXT("landing")||(MenuOpen&&MenuReturnScreen==TEXT("landing"))||Sim.Escaped||Sim.Failed)return;
     if(Screen!=TEXT("playing")&&!MenuOpen)return;
     const FString AssetKey=Sim.Companions.MeshPath+TEXT("|")+Sim.Companions.WalkAnimation+TEXT("|")+Sim.Companions.IdleAnimation;
@@ -93,7 +94,7 @@ void ASeigeGameMode::SyncCompanionVisuals(TSet<FString>& Live)
     if(!CompanionMesh)return;
     for(const auto& D:Sim.Companions.Dogs)
     {
-        if(D.Evacuated)continue;
+        if(D.Evacuated||D.Sheltered)continue;
         const auto* Snapshot=PresentationSnapshot(Sim);
         const FVector2D P=Snapshot?Snapshot->Companion(D,PresentationAlpha()):D.Position;
         if(FVector2D::Distance(P,FVector2D(CameraCenter))*Sim.MetersPerWorldUnit()>600)continue;

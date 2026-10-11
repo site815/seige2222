@@ -13,6 +13,7 @@ class UTexture2D;
 struct FSeigeSceneryStreamState;
 struct FSeigeTerrainUpload;
 struct FSeigeForestBuild;
+struct FSeigeSimulationTerrainCache;
 struct FSeigeScenarioPreparation;
 struct FSeigeNeighbor
 {
@@ -38,6 +39,7 @@ struct FSeigeRegionResources
 UCLASS()
 class SEIGE_API ASeigeGameMode : public AGameModeBase
 {
+    friend class FSeigeSimulationTerrainCacheTest;
     GENERATED_BODY()
 public:
     ASeigeGameMode();
@@ -212,8 +214,14 @@ public:
     FVector2D DetailedSectorOffset() const;
     const FSeigeSimulation* ViewedSimulation() const;
     void FocusSector(int32 Index,bool SmoothTransition=false);
+    void ToggleRegionSurvey();
+    bool RestoreRegionView();
+    FVector WorkerWorldPosition(const FSeigeWorker& Worker,int32 Sector) const;
+    struct FRegionViewBookmark { FVector Center; float Zoom,Yaw,Pitch; int32 Building,Road,Companion; };
+    TArray<FRegionViewBookmark> RegionViewHistory;
     float WoodlandDensity(FVector2D WorldLogical) const;
 private:
+    friend class USeigeAudioSubsystem;
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FSeigeIncrementalSectorSeamTest;
     friend class FSeigeTransportClearanceTest;
@@ -248,6 +256,12 @@ private:
     void RunPresentationSmoke();
     void RunWorldReview();
     void RunDisplaySmoke();
+    void RunNextUpdateSmoke();
+    struct FNextUpdateTiming
+    {
+        int32 Frames=0;
+        double FixedSimulation=0, MaxFixedSimulation=0, RenderSync=0, MaxRenderSync=0, Preparation=0, MaxPreparation=0;
+    } NextUpdateTiming;
     void RunGraphicsBenchmark(float DeltaSeconds);
     TSharedPtr<FSeigeScenarioAI> CenterBrain;
     FString DataDirectory(const TCHAR* Folder) const;
@@ -301,6 +315,8 @@ private:
     int32 RenderedSector=-1;
     FVector2D FoliageCenter=FVector2D(1.e10,1.e10);
     double TerrainHeight(FVector2D Position) const;
+    double SimulationTerrainHeight(FVector2D Position);
+    TSharedPtr<FSeigeSimulationTerrainCache> SimulationTerrainCache;
     bool LoadGraphicsSettings();
     TArray<FSeigeTerrainTile> TerrainTiles;
     void ClearSceneryAt(FVector2D Position,float Radius);
@@ -370,9 +386,9 @@ struct FSeigeResourceGroup { FString Id,Label; TArray<FSeigeSummaryResource> Ent
 struct FSeigeDepositLabelState { FVector2D Offset=FVector2D(14,-14); bool Initialized=false; };
 struct FSeigeUiState
 {
-    float ViewportWidth=1600,ViewportHeight=900,Scale=1,ContentTop=178;
+    float ViewportWidth=1600,ViewportHeight=900,Scale=1,ContentTop=86;
     bool BuildOpen=false,GroupFocused=false;
-    FString Category,HoverPanel;
+    FString Category,HoverPanel,HoverResource;
     TArray<FSeigeMenuGroup> Categories;
     TArray<FSeigeCredit> Credits;
     TArray<FSeigeResourceGroup> ResourceGroups;
@@ -399,9 +415,13 @@ public:
     bool LoadInterface(const FString& Directory,FString& Error);
     FSeigeUiState Ui;
     bool ProgressionOpen=false;   // production-chain panel (P / dock button); review captures set it directly
-    FSeigeDependencyGraph ChainGraph;int32 ChainGraphBuildings=-1;   // rebuilt when the loaded catalog changes
+    FSeigeDependencyGraph ChainGraph;FString ChainGraphCore;int32 ChainGraphBuildings=-1;   // rebuilt when the loaded catalog changes
     int32 ChainFocus=INDEX_NONE;FVector2D ChainMouse=FVector2D(-1,-1);   // keyboard/mouse highlight in the chain panel
     void MoveChainFocus(const FKey& Key);
+    bool SelectWorkerAt(float ScreenX,float ScreenY,ASeigeGameMode& GameMode);
+    // Enabled only by the bounded opt-in UI smoke, never by ordinary play.
+    bool SmokeLabelCapture=false;
+    TArray<FString> SmokeLabels;
 private:
     float Scale=1;
     float DrawOpacity=1;
@@ -410,6 +430,9 @@ private:
     bool InterfaceLoaded=false,InterfaceAttempted=false;
     FString InterfaceError,Version,LastNotice;
     FString BuildingInfoSection;
+    FString SelectedWorkerId,HoveredWorkerId;
+    int32 SelectedWorkerSector=4;
+    int32 TransportFocusId=0;
     int32 BuildingInfoPage=0;
     TMap<FString,FSeigeDepositLabelState> DepositLabels;
     UPROPERTY(Transient) TMap<FString,TObjectPtr<UTexture2D>> PortraitTextures;
@@ -422,6 +445,9 @@ private:
     void DrawCommandInfo(ASeigeGameMode& GameMode,float Width,float Height);
     bool HandleCommandAction(const FString& Action,ASeigeGameMode& GameMode);
     void DrawWorkforceControls(ASeigeGameMode& GameMode,float X,float Y,float Width);
+    void DrawResourceDetail(const FSeigeSimulation& Colony,const FString& Resource,float X,float Y,float Width,float Height);
+    void DrawWorkerInspector(ASeigeGameMode& GameMode,float Width,float Height);
+    FString WorkerAt(float ScreenX,float ScreenY,const ASeigeGameMode& GameMode) const;
     void DrawWallPlan(ASeigeGameMode& GameMode,float Width,float Height);
     void DrawCombatInfo(ASeigeGameMode& GameMode,float Width,float Height);
     bool HandleCombatAction(const FString& Action,ASeigeGameMode& GameMode);

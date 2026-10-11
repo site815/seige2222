@@ -1,4 +1,4 @@
-param([ValidateSet('UiSmoke','PrototypeSmoke')][string]$Mode='UiSmoke')
+param([ValidateSet('UiSmoke','PrototypeSmoke','NextUpdateSmoke')][string]$Mode='UiSmoke')
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $versionLine=Get-Content (Join-Path $projectRoot 'Config/DefaultGame.ini') | Where-Object {$_ -match '^ProjectVersion='} | Select-Object -First 1
@@ -48,9 +48,11 @@ $packagedInputs=@(Get-PackagedInputs)
 $runtimeFiles=@(Get-RuntimeFiles)
 if($runtimeFiles.Count -eq 0 -or @($runtimeFiles | Where-Object {-not $_.match}).Count -gt 0){throw 'Source and staged runtime JSON differ'}
 $saveRoot=Join-Path $env:LOCALAPPDATA 'seige2222/Saved'
-$reportName=if($Mode -eq 'UiSmoke'){'PresentationSmoke.json'}else{'SmokeReport.json'}
+$reportName=if($Mode -eq 'UiSmoke'){'PresentationSmoke.json'}elseif($Mode -eq 'NextUpdateSmoke'){'NextUpdateSmoke.json'}else{'SmokeReport.json'}
+$timeoutSeconds=if($Mode -eq 'NextUpdateSmoke'){120}else{3600}
+$audioArgument=if($Mode -eq 'NextUpdateSmoke'){''}else{'-NoSound'}
 $started=Get-Date
-$launch=Start-Process -FilePath $gameExe -ArgumentList "-$Mode -RenderOffscreen -windowed -ForceRes -ResX=1600 -ResY=900 -unattended -nosplash -NoSound" -WindowStyle Hidden -PassThru
+$launch=Start-Process -FilePath $gameExe -ArgumentList "-$Mode -RenderOffscreen -windowed -ForceRes -ResX=1600 -ResY=900 -unattended -nosplash -NoSaveDisplay $audioArgument" -WindowStyle Hidden -PassThru
 $samples=[System.Collections.Generic.List[object]]::new()
 do {
   Start-Sleep -Seconds 2
@@ -64,7 +66,7 @@ do {
     $samples.Add([pscustomobject]@{seconds=[math]::Round(((Get-Date)-$started).TotalSeconds,2);process_ids=$gameIds;tcp=$tcp.Count;udp=$udp.Count})
   }
   $launch.Refresh()
-} while(($gameProcesses.Count -gt 0 -or -not $launch.HasExited) -and ((Get-Date)-$started).TotalSeconds -lt 3600)
+} while(($gameProcesses.Count -gt 0 -or -not $launch.HasExited) -and ((Get-Date)-$started).TotalSeconds -lt $timeoutSeconds)
 if($gameProcesses.Count -gt 0){throw 'Packaged smoke did not finish before the verification timeout'}
 $reportPath=Join-Path $saveRoot $reportName
 if(-not (Test-Path -LiteralPath $reportPath)){throw "Missing $reportName"}
@@ -83,6 +85,8 @@ $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $recordPath -Encodi
 [pscustomobject]@{record=$recordPath;exit_code=$launch.ExitCode;report=$result;socket_samples=$samples.Count;source_files=$sourceInputs.Count;runtime_files=$runtimeFiles.Count;inputs_unchanged=$inputsUnchanged} | ConvertTo-Json -Depth 5
 if(-not $inputsUnchanged){throw 'Source, cooked assets, executable or runtime JSON changed during verification'}
 if($launch.ExitCode -ne 0){throw "Packaged game exited with code $($launch.ExitCode)"}
-if(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 117))){throw 'Packaged smoke assertions failed'}
+if($Mode -eq 'NextUpdateSmoke'){
+  if(-not $result.passed -or $result.failures -ne 0 -or $result.completed_stages -ne 23){throw 'Bounded packaged check assertions failed'}
+}elseif(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 117))){throw 'Packaged smoke assertions failed'}
 if($samples.Count -eq 0){throw 'No live process observed'}
 if(@($samples | Where-Object {$_.tcp -gt 0 -or $_.udp -gt 0}).Count -gt 0){throw 'Game opened a network endpoint'}

@@ -6,11 +6,11 @@ Working design document. The opening, current robotic population scope, and main
 
 The user has now authorized implementation. [First Playable Scope](FIRST_PLAYABLE_SCOPE.md) records the concrete Unreal prototype subset and its deviations; this document continues to describe the broader intended colony loop.
 
-**Current v0.8 implementation direction:** The robotic population is called **workers** in the interface. Construction uses physical deliveries, travelling aggregate crews and staged installation; local road/rail/vacuum tiers improve transport. The initial command structure occupies one ninth of its reserved future plot. [Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns these rules and their external data; the broader open choices below remain separate. Runtime/package verification is not implied.
+**Current v0.10.0 correction:** Rules `prototype-10.0` and save format 8 use permanent building crews, worker-only manufacture at the command core, individual worker batteries and charging berths, and autonomous transport vehicles. The old `worker_factory` ID is a Construction Hub. Automatic surplus recycling and its manual HUD action are disabled/removed. Worker/port reserve targets remain. No service-capacity or courier-reserve count is a global population cap. See [Population and Morale](POPULATION_AND_MORALE.md), [production grid](PRODUCTION_GRID_0_10_0.md) and [current verification status](../DEVELOPMENT_REPORT.md).
 
 ## Starting colony
 
-**Confirmed direction:** The player starts with a command center and some robotic workers. The exact worker count and starting supplies remain open.
+**Current provisional start:** The player chooses a landing site and deploys a vertical command shuttle with five owned hover workers and the finite 9.57-tonne loose-material kit. The autonomous transport vehicle and installed ship/worker hardware are separate explicit starting assets. Final balance remains open.
 
 Only one central command center and central zone may be maintained at a time. The core contains central command and the orbital escape shuttle; moving the home center requires relocation.
 
@@ -22,9 +22,9 @@ Only one central command center and central zone may be maintained at a time. Th
 
 **Confirmed direction:** New population is produced as robots. Growth is constrained by a maximum robot-production rate and by resource production at defined rates per time unit.
 
-Workers automatically fill open jobs. Surplus workers occupy physical inactive storage, with optional colony/trading-port reserve targets. Surplus disassembly is automatic for parts shortages or full storage and can be requested manually; each disassembly costs 1 kWh and returns configured parts.
+Workers automatically take permanent building crew assignments and physically perform temporary tasks. Surplus workers can occupy inactive storage under colony/trading-port targets; v0.10 does not automatically recycle surplus or expose a manual disassembly action.
 
-**Confirmed correction:** The core has a slow selectable universal replicator; a separate worker factory assembles workers faster with less electricity. Both use real material inputs and energy. The old core-only/lithography explanation is superseded.
+**Current v0.10 correction:** Only the command core assembles workers, using real inputs and electricity. It does not replicate industrial materials, chassis or weapons. The former worker factory becomes a Construction Hub; industrial and vehicle manufacture belong to specialist producers.
 
 **Open balance:** Exact production and response rates, capacity, body mass/volume, parts returns and broader worker needs. Staffing remains automatic. [Population, Necessities, and Morale](POPULATION_AND_MORALE.md) and [the v0.8 construction contract](CONSTRUCTION_AND_TRANSPORT_0_8.md) distinguish these choices from confirmed storage/replication mechanics.
 

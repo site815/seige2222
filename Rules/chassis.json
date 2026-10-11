@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "balance_status": "Provisional mass, storage, mobility, armor and fabrication balance; 12 types and 1/2/4/8 fleet cost confirmed",
+  "balance_status": "0.10 provisional material grid: exact chassis mass conservation; batteries in all bodies, AI in medium+, fusion assemblies in large/behemoth. Specialist factories only.",
   "chassis": [
     {
       "id": "wheeled_small",
@@ -23,16 +23,17 @@
       "speed_kmh": 24,
       "radius_meters": 1.1,
       "sensor_meters": 120,
-      "max_grade": 0.25,
-      "rough_speed_multiplier": 0.3,
+      "max_grade": 0.2,
+      "rough_speed_multiplier": 0.15,
       "travel_kwh_km": 1,
       "road_damage_hp_m": 0,
-      "build_seconds": 60,
-      "build_kwh": 2,
+      "build_seconds": 600,
+      "build_kwh": 20,
       "cost": {
-        "alloy": 170.0,
-        "components": 20.0,
-        "circuits": 10.0
+        "alloy": 140.0,
+        "components": 30.0,
+        "circuits": 10.0,
+        "batteries": 20.0
       }
     },
     {
@@ -56,16 +57,18 @@
       "speed_kmh": 22.799999999999997,
       "radius_meters": 2.1,
       "sensor_meters": 140,
-      "max_grade": 0.25,
-      "rough_speed_multiplier": 0.3,
+      "max_grade": 0.2,
+      "rough_speed_multiplier": 0.15,
       "travel_kwh_km": 4,
       "road_damage_hp_m": 0,
-      "build_seconds": 240,
-      "build_kwh": 8,
+      "build_seconds": 1800,
+      "build_kwh": 100,
       "cost": {
-        "alloy": 1360.0,
-        "components": 160.0,
-        "circuits": 80.0
+        "alloy": 1088.0,
+        "components": 224.0,
+        "circuits": 96.0,
+        "batteries": 160.0,
+        "ai_chips": 32.0
       }
     },
     {
@@ -89,16 +92,20 @@
       "speed_kmh": 20.4,
       "radius_meters": 4.1,
       "sensor_meters": 160,
-      "max_grade": 0.25,
-      "rough_speed_multiplier": 0.3,
+      "max_grade": 0.2,
+      "rough_speed_multiplier": 0.15,
       "travel_kwh_km": 16,
       "road_damage_hp_m": 0,
-      "build_seconds": 960,
-      "build_kwh": 32,
+      "build_seconds": 3600,
+      "build_kwh": 500,
       "cost": {
-        "alloy": 10880.0,
-        "components": 1280.0,
-        "circuits": 640.0
+        "alloy": 7680.0,
+        "components": 1792.0,
+        "circuits": 640.0,
+        "batteries": 1280.0,
+        "ai_chips": 256.0,
+        "crystalline": 128.0,
+        "fusion_reactors": 1024.0
       }
     },
     {
@@ -122,16 +129,20 @@
       "speed_kmh": 16.799999999999997,
       "radius_meters": 7.5,
       "sensor_meters": 180,
-      "max_grade": 0.25,
-      "rough_speed_multiplier": 0.3,
+      "max_grade": 0.2,
+      "rough_speed_multiplier": 0.15,
       "travel_kwh_km": 64,
       "road_damage_hp_m": 0,
-      "build_seconds": 3840,
-      "build_kwh": 128,
+      "build_seconds": 10800,
+      "build_kwh": 2000,
       "cost": {
-        "alloy": 87040.0,
-        "components": 10240.0,
-        "circuits": 5120.0
+        "alloy": 56320.0,
+        "components": 15360.0,
+        "circuits": 5120.0,
+        "batteries": 10240.0,
+        "ai_chips": 3072.0,
+        "crystalline": 2048.0,
+        "fusion_reactors": 10240.0
       }
     },
     {
@@ -155,16 +166,17 @@
       "speed_kmh": 10,
       "radius_meters": 1.1,
       "sensor_meters": 120,
-      "max_grade": 1,
-      "rough_speed_multiplier": 0.75,
+      "max_grade": 0.5,
+      "rough_speed_multiplier": 0.6,
       "travel_kwh_km": 2.5,
       "road_damage_hp_m": 0.2,
-      "build_seconds": 60,
-      "build_kwh": 2,
+      "build_seconds": 720.0,
+      "build_kwh": 20,
       "cost": {
-        "alloy": 170.0,
-        "components": 20.0,
-        "circuits": 10.0
+        "alloy": 140.0,
+        "components": 30.0,
+        "circuits": 10.0,
+        "batteries": 20.0
       }
     },
     {
@@ -188,16 +200,18 @@
       "speed_kmh": 9.5,
       "radius_meters": 2.1,
       "sensor_meters": 140,
-      "max_grade": 1,
-      "rough_speed_multiplier": 0.75,
+      "max_grade": 0.5,
+      "rough_speed_multiplier": 0.6,
       "travel_kwh_km": 10.0,
       "road_damage_hp_m": 0.4,
-      "build_seconds": 240,
-      "build_kwh": 8,
+      "build_seconds": 2160.0,
+      "build_kwh": 100,
       "cost": {
-        "alloy": 1360.0,
-        "components": 160.0,
-        "circuits": 80.0
+        "alloy": 1088.0,
+        "components": 224.0,
+        "circuits": 96.0,
+        "batteries": 160.0,
+        "ai_chips": 32.0
       }
     },
     {
@@ -221,16 +235,20 @@
       "speed_kmh": 8.5,
       "radius_meters": 4.1,
       "sensor_meters": 160,
-      "max_grade": 1,
-      "rough_speed_multiplier": 0.75,
+      "max_grade": 0.5,
+      "rough_speed_multiplier": 0.6,
       "travel_kwh_km": 40.0,
       "road_damage_hp_m": 0.8,
-      "build_seconds": 960,
-      "build_kwh": 32,
+      "build_seconds": 4320.0,
+      "build_kwh": 500,
       "cost": {
-        "alloy": 10880.0,
-        "components": 1280.0,
-        "circuits": 640.0
+        "alloy": 7680.0,
+        "components": 1792.0,
+        "circuits": 640.0,
+        "batteries": 1280.0,
+        "ai_chips": 256.0,
+        "crystalline": 128.0,
+        "fusion_reactors": 1024.0
       }
     },
     {
@@ -254,16 +272,20 @@
       "speed_kmh": 7.0,
       "radius_meters": 7.5,
       "sensor_meters": 180,
-      "max_grade": 1,
-      "rough_speed_multiplier": 0.75,
+      "max_grade": 0.5,
+      "rough_speed_multiplier": 0.6,
       "travel_kwh_km": 160.0,
       "road_damage_hp_m": 1.6,
-      "build_seconds": 3840,
-      "build_kwh": 128,
+      "build_seconds": 12960.0,
+      "build_kwh": 2000,
       "cost": {
-        "alloy": 87040.0,
-        "components": 10240.0,
-        "circuits": 5120.0
+        "alloy": 56320.0,
+        "components": 15360.0,
+        "circuits": 5120.0,
+        "batteries": 10240.0,
+        "ai_chips": 3072.0,
+        "crystalline": 2048.0,
+        "fusion_reactors": 10240.0
       }
     },
     {
@@ -288,15 +310,16 @@
       "radius_meters": 1.1,
       "sensor_meters": 120,
       "max_grade": 0.7,
-      "rough_speed_multiplier": 0.85,
+      "rough_speed_multiplier": 0.75,
       "travel_kwh_km": 2,
       "road_damage_hp_m": 0,
-      "build_seconds": 60,
-      "build_kwh": 2,
+      "build_seconds": 840.0,
+      "build_kwh": 20,
       "cost": {
-        "alloy": 170.0,
-        "components": 20.0,
-        "circuits": 10.0
+        "alloy": 140.0,
+        "components": 30.0,
+        "circuits": 10.0,
+        "batteries": 20.0
       }
     },
     {
@@ -321,15 +344,17 @@
       "radius_meters": 2.1,
       "sensor_meters": 140,
       "max_grade": 0.7,
-      "rough_speed_multiplier": 0.85,
+      "rough_speed_multiplier": 0.75,
       "travel_kwh_km": 8,
       "road_damage_hp_m": 0,
-      "build_seconds": 240,
-      "build_kwh": 8,
+      "build_seconds": 2520.0,
+      "build_kwh": 100,
       "cost": {
-        "alloy": 1360.0,
-        "components": 160.0,
-        "circuits": 80.0
+        "alloy": 1088.0,
+        "components": 224.0,
+        "circuits": 96.0,
+        "batteries": 160.0,
+        "ai_chips": 32.0
       }
     },
     {
@@ -354,15 +379,19 @@
       "radius_meters": 4.1,
       "sensor_meters": 160,
       "max_grade": 0.7,
-      "rough_speed_multiplier": 0.85,
+      "rough_speed_multiplier": 0.75,
       "travel_kwh_km": 32,
       "road_damage_hp_m": 0,
-      "build_seconds": 960,
-      "build_kwh": 32,
+      "build_seconds": 5040.0,
+      "build_kwh": 500,
       "cost": {
-        "alloy": 10880.0,
-        "components": 1280.0,
-        "circuits": 640.0
+        "alloy": 7680.0,
+        "components": 1792.0,
+        "circuits": 640.0,
+        "batteries": 1280.0,
+        "ai_chips": 256.0,
+        "crystalline": 128.0,
+        "fusion_reactors": 1024.0
       }
     },
     {
@@ -387,15 +416,19 @@
       "radius_meters": 7.5,
       "sensor_meters": 180,
       "max_grade": 0.7,
-      "rough_speed_multiplier": 0.85,
+      "rough_speed_multiplier": 0.75,
       "travel_kwh_km": 128,
       "road_damage_hp_m": 0,
-      "build_seconds": 3840,
-      "build_kwh": 128,
+      "build_seconds": 15119.999999999998,
+      "build_kwh": 2000,
       "cost": {
-        "alloy": 87040.0,
-        "components": 10240.0,
-        "circuits": 5120.0
+        "alloy": 56320.0,
+        "components": 15360.0,
+        "circuits": 5120.0,
+        "batteries": 10240.0,
+        "ai_chips": 3072.0,
+        "crystalline": 2048.0,
+        "fusion_reactors": 10240.0
       }
     }
   ]

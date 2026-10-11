@@ -41,7 +41,7 @@ bool FSeigeCompanionFoodTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCompanionMovementTest,"Seige.Companions.WalkingInterpolationAndPersistence",Flags)
 bool FSeigeCompanionMovementTest::RunTest(const FString& Parameters)
 {
-    FSeigeSimulation S;if(!Prepare(S,*this))return false;auto& Dog=S.Companions.Dogs[0];Dog.Position=FVector2D(2000,2000);
+    FSeigeSimulation S;if(!Prepare(S,*this))return false;auto& Dog=S.Companions.Dogs[0];Dog.Position=FVector2D(600,600);
     S.Companions.SetControlled(Dog.Id);S.Companions.SetControlDirection(FVector2D(1,1));const FVector2D Before=Dog.Position;
     StepDog(S,10);const double Kmh=FVector2D::Distance(Dog.Position,Before)*S.MetersPerWorldUnit()/10*3.6;
     TestTrue(TEXT("Diagonal input stays at configured walking speed"),FMath::IsNearlyEqual(Kmh,S.Companions.WalkKmh,.0001));
@@ -53,10 +53,33 @@ bool FSeigeCompanionMovementTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Reload retains position"),Loaded.Dogs[0].Position.Equals(Dog.Position));
     TestEqual(TEXT("Reload clears transient possession"),Loaded.ControlledId,0);
     TestTrue(TEXT("Reload retains food accounting"),FMath::IsNearlyEqual(Loaded.Dogs[0].FoodConsumedKg,Dog.FoodConsumedKg));
-    const double Limit=S.WorldHalfSize*3;Dog.Position=FVector2D(Limit-S.Companions.BodyRadiusMeters/S.MetersPerWorldUnit()-1,2000);S.Companions.SetControlDirection(FVector2D(1,0));StepDog(S,10);
-    TestTrue(TEXT("Cannot walk outside all nine sectors"),Dog.Position.X<Limit);
+    const double Limit=S.Companions.TerritoryRadiusMeters/S.MetersPerWorldUnit();Dog.Position=FVector2D(Limit-1,0);S.Companions.SetControlDirection(FVector2D(1,0));StepDog(S,10);
+    TestTrue(TEXT("Cannot walk beyond 100 m of the shuttle"),Dog.Position.Size()<=Limit);
     const auto DogJson=State->GetObjectField(TEXT("companions"))->GetArrayField(TEXT("dogs"))[0]->AsObject();DogJson->SetNumberField(TEXT("food_consumed_kg"),-1);
     TestFalse(TEXT("Invalid saved food ledger rejected"),Loaded.Load(State,S,Error));
     S.LaunchShuttle();TestTrue(TEXT("Rex evacuates with the colony"),S.Companions.Dogs[0].Evacuated);return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCompanionShelterTest,"Seige.Companions.DamageTriggeredShelter",Flags)
+bool FSeigeCompanionShelterTest::RunTest(const FString& Parameters)
+{
+    FSeigeSimulation S;if(!Prepare(S,*this))return false;auto& Dog=S.Companions.Dogs[0];
+    Dog.Position=S.BuildingAccessPoint(S.Buildings[0])+FVector2D(400,0);Dog.RestUntil=1000;
+    FSeigeEnemy Enemy;Enemy.Id=999;Enemy.Position=Dog.Position;S.Enemies.Add(Enemy);
+    StepDog(S,1);TestFalse(TEXT("Nearby enemy alone never triggers shelter"),Dog.Retreating||Dog.Sheltered);
+    S.Companions.NotifyBuildingDamaged(S,S.Buildings[0].Position+FVector2D(101/S.MetersPerWorldUnit(),0));
+    TestFalse(TEXT("Damage outside the shuttle radius is ignored"),Dog.Retreating);
+    S.Companions.SetControlled(Dog.Id);S.Combat.DamageBuilding(S,S.Buildings[0].Id,1);
+    TestTrue(TEXT("Actual nearby building damage triggers retreat"),Dog.Retreating);
+    TestEqual(TEXT("Retreat releases possession"),S.Companions.ControlledId,0);
+    const auto Before=Dog.Position;StepDog(S,S.FixedStepSeconds());
+    TestTrue(TEXT("Rex travels physically instead of teleporting inside"),FVector2D::Distance(Before,Dog.Position)*S.MetersPerWorldUnit()<=S.Companions.RunKmh/3.6*S.FixedStepSeconds()+1.e-5);
+    StepDog(S,20);TestTrue(TEXT("Rex reaches the real shuttle hatch and shelters"),Dog.Sheltered);
+    TestTrue(TEXT("Shelter position is the hatch"),Dog.Position.Equals(S.Workers.HatchPoint(S),.001));
+    auto State=MakeShared<FJsonObject>();S.Companions.Save(State);FSeigeCompanionSystem Loaded;FString Error;
+    TestTrue(TEXT("Shelter rules initialize"),Loaded.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),S,Error));
+    TestTrue(TEXT("Shelter state persists"),Loaded.Load(State,S,Error)&&Loaded.Dogs[0].Sheltered);
+    StepDog(S,S.Companions.ShelterSeconds+30);TestFalse(TEXT("Rex returns outside after the quiet interval"),Dog.Sheltered||Dog.Retreating||Dog.ExitingShuttle);
+    TestTrue(TEXT("Unpossessed roaming remains inside territory"),FVector2D::Distance(Dog.Position,S.Buildings[0].Position)*S.MetersPerWorldUnit()<=100);
+    return true;
 }
 #endif

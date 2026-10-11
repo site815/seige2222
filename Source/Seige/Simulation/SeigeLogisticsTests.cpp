@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"
 #include "Dom/JsonObject.h"
+#include "AI/SeigeScenarioAI.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -100,6 +101,10 @@ bool FSeigeConstructionSourceTest::RunTest(const FString&)
     TestTrue(TEXT("A full load comes from later bulk storage instead of the older small repair buffer"),S.Couriers[0].SourceId==Port&&S.Couriers[0].TargetId==Site&&S.Couriers[0].ForConstruction&&FMath::IsNearlyEqual(S.Couriers[0].ReservedAmount,Expected,1.e-8));
     TestEqual(TEXT("The old sensor retains its working repair stock"),S.FindBuilding(Sensor)->Inventory.FindRef(Resource),Buffer);
     TestEqual(TEXT("A pickup claim never deducts or grants physical stock"),S.TotalStock(Resource),Before);
+    const double Available=S.ConstructionAvailable(Resource);
+    TestTrue(TEXT("Accepted construction and its pickup lower free stock below gross cargo"),Available<S.TotalStock(Resource));
+    for(double Threshold:{1.,Available,Available+1.})
+        TestEqual(TEXT("Threshold queries retain the full stock answer despite accepted bills, pickups and operating buffers"),S.ConstructionAvailable(Resource,Threshold)+1.e-8>=Threshold,Available+1.e-8>=Threshold);
     for(int32 I=0;I<20000&&S.Couriers.ContainsByPredicate([&](const auto& C){return C.Id==Task;});++I){const double Step=S.FixedStepSeconds();S.Time+=Step;S.Workers.Tick(S,Step);S.Calendar.Advance(Step);}
     TestFalse(TEXT("The same carrier physically finishes its full bulk delivery"),S.Couriers.ContainsByPredicate([&](const auto& C){return C.Id==Task;}));
     TestTrue(TEXT("The paid construction site receives the full load"),FMath::IsNearlyEqual(S.FindBuilding(Site)->ConstructionMaterials.FindRef(Resource),Expected,1.e-8));
@@ -165,6 +170,54 @@ bool FSeigeRawInputBufferTest::RunTest(const FString&)
     TestEqual(TEXT("Discrete cargo is excluded from raw bulk buffers"),Base.ProductionInputBuffer(*B,Recipe,Resource),15.);
     Base.Resources[Resource].Discrete=false;Base.Policy->SetNumberField(TEXT("delivery_raw_input_buffer_loads"),0);
     TestEqual(TEXT("An externally configured zero restores the original recipe-cycle target"),Base.ProductionInputBuffer(*B,Recipe,Resource),15.);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeDispatchEligibilityTest,"Seige.Workers.DispatchEligibilityAndSelfTransfer",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeDispatchEligibilityTest::RunTest(const FString&)
+{
+    FString Error;FSeigeSimulation S;FSeigeScenarioAI Brain;
+    if(!Brain.Initialize(S,FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),FPaths::Combine(FPaths::ProjectDir(),TEXT("AIFILES")),true,Error,false,false)){AddError(Error);return false;}
+    const int32 CoreId=S.Buildings[0].Id;
+    auto* Port=S.Buildings.FindByPredicate([&](const auto& B){return S.Definition(B)->Role==TEXT("trade");});
+    if(!TestNotNull(TEXT("Established scenario supplies a real trade destination"),Port))return false;
+    const int32 PortId=Port->Id;const FString Body=S.TextRule(TEXT("inactive_worker_resource"));
+    bool KeptCoreOperator=false;TMap<FString,FVector2D> Positions;
+    for(auto& W:S.Workers.Bodies)
+    {
+        Positions.Add(W.Id,W.Position);
+        if(W.State!=TEXT("active"))continue;
+        if(W.Activity==TEXT("idle"))W.Activity=TEXT("return");
+        if(W.BuildingId==CoreId&&W.Activity==TEXT("operate"))
+        {if(KeptCoreOperator)W.Activity=TEXT("to_job");else KeptCoreOperator=true;}
+    }
+    S.Workers.RefreshMetrics(S);
+    TestFalse(TEXT("Incoming replacements cannot be lent as arrived core operators"),S.Workers.HasDispatchWorker(S,TEXT("alloy")));
+    TestTrue(TEXT("An existing stored body may relocate when all ordinary haulers are busy"),S.Workers.HasDispatchWorker(S,Body));
+    FSeigeSimulation Closed=S;Closed.DeploymentHatchOpen=false;
+    TestFalse(TEXT("An unopened shuttle cannot dispatch ordinary freight"),Closed.Workers.HasDispatchWorker(Closed,TEXT("alloy")));
+    TestFalse(TEXT("An unopened shuttle cannot dispatch a stored worker either"),Closed.Workers.HasDispatchWorker(Closed,Body));
+    FSeigeSimulation Borrow=S;
+    auto* Incoming=Borrow.Workers.Bodies.FindByPredicate([&](const auto& W){return W.State==TEXT("active")&&W.BuildingId==CoreId&&W.Activity==TEXT("to_job");});
+    if(!TestNotNull(TEXT("Fixture retains the actual incoming core replacement"),Incoming))return false;
+    Incoming->Activity=TEXT("operate");
+    TestTrue(TEXT("A second arrived core operator becomes a legal hauler"),Borrow.Workers.HasDispatchWorker(Borrow,TEXT("alloy")));
+    TestTrue(TEXT("Ordinary dispatch can borrow that body"),Borrow.Workers.Dispatch(Borrow,CoreId,PortId,0,TEXT("alloy"),1,false));
+    TestFalse(TEXT("Dispatch cannot lend the final arrived core operator"),Borrow.Workers.HasDispatchWorker(Borrow,TEXT("alloy")));
+    const int32 Count=S.Workers.Bodies.Num(),Active=S.Population;const double Before=S.TotalStock(Body);
+    if(!S.SetPortWorkerTarget(PortId,1,Error)){AddError(Error);return false;}
+    S.StepLogistics(S.Number(TEXT("dispatch_interval")));
+    int32 PortTasks=0;TSet<FString> Assigned;
+    for(const auto& C:S.Couriers)
+    {
+        if(C.TargetId==PortId)++PortTasks;Assigned.Add(C.WorkerId);
+        TestTrue(TEXT("With no hauler, every permitted task relocates its own stored body"),C.SelfTransfer&&C.Resource==Body);
+    }
+    if(!TestEqual(TEXT("The finite trading target receives exactly one body claim"),PortTasks,1))return false;
+    TestEqual(TEXT("Every simultaneous relocation uses a different existing body"),Assigned.Num(),S.Couriers.Num());
+    TestEqual(TEXT("Self relocation creates no body"),S.Workers.Bodies.Num(),Count);
+    TestEqual(TEXT("Self relocation debits exactly its existing packed bodies"),S.TotalStock(Body),Before-S.Couriers.Num());
+    TestEqual(TEXT("Those same bodies become active during relocation"),S.Population,Active+S.Couriers.Num());
+    for(const auto& W:S.Workers.Bodies)TestTrue(TEXT("Eligibility and dispatch do not teleport any worker"),W.Position.Equals(Positions[W.Id],1.e-8));
     return true;
 }
 #endif

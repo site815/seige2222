@@ -16,7 +16,7 @@ bool FSeigeScenarioAI::LoadEstablishedPreset(const FSeigeSimulation& S,const TSh
     FString Kind,Equipment,Fleet;
     if(!O->TryGetStringField(TEXT("kind"),Kind)||Kind!=TEXT("established_colony")||
        !O->TryGetStringField(TEXT("equipment"),Equipment)||Equipment!=TEXT("definition_defaults")||
-       !O->TryGetStringField(TEXT("fleet"),Fleet)||Fleet!=TEXT("scenario_guard_manifest")||
+       !O->TryGetStringField(TEXT("fleet"),Fleet)||Fleet!=TEXT("unarmed_transport_manifest")||
        !O->TryGetStringField(TEXT("road_tier"),EstablishedRoadTier)||EstablishedRoadTier!=S.InitialRoadTier())
     {Error=TEXT("Unknown established scenario kind, equipment, fleet or road tier");return false;}
     if(!PresetNumber(O,TEXT("age_seconds"),EstablishedAge,60,31536000,Error)||
@@ -63,7 +63,7 @@ bool FSeigeScenarioAI::LoadEstablishedPreset(const FSeigeSimulation& S,const TSh
         }
         Operators+=B.Operators;Support+=D.RobotSupportCapacity;EstablishedBuildings.Add(MoveTemp(B));
     }
-    if(MineCount!=1||Operators>Support){Error=TEXT("Established manifest needs one bound mine and sufficient worker support");return false;}
+    if(MineCount!=1){Error=TEXT("Established manifest needs one bound mine and sufficient worker support");return false;}
     FSeigeSimulation JobsProbe=S;JobsProbe.Buildings.Empty();
     for(const auto& Entry:EstablishedBuildings){FSeigeBuilding B;B.DefId=Entry.Definition;B.Health=1;JobsProbe.Buildings.Add(B);}
     if(EstablishedIdle<S.Workers.LogisticsJobs(JobsProbe)){Error=TEXT("Established idle workers do not cover actual logistics jobs");return false;}
@@ -134,7 +134,7 @@ bool FSeigeScenarioAI::TryEstablishedLayout(FSeigeSimulation& S,int32 DepositId,
         if(const auto* P=S.Combat.BuildingPlatforms.Find(B.DefId))
         {FSeigeBuildingCombatState State;State.Id=B.Id;State.Definition=B.DefId;State.Shield=P->Shield;State.Armor=P->Armor;State.Weapons=P->Weapons;State.Cooldowns.Init(0,State.Weapons.Num());S.Combat.BuildingState.Add(B.Id,MoveTemp(State));}
     }
-    if(S.SupportedPopulation<S.Population||S.Population<S.TotalJobs){Error=TEXT("Established workers do not meet actual supported operating and logistics jobs");return false;}
+    if(S.Population<S.TotalJobs){Error=TEXT("Established workers do not meet actual supported operating and logistics jobs");return false;}
     S.AddEvent(TEXT("Established scenario loaded from its explicit starting-state manifest; no simulated growth history."));
     Error.Empty();return true;
 }

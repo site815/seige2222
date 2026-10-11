@@ -37,9 +37,12 @@ FVector AimBarrel(UStaticMeshComponent* Barrel,FVector Pivot,FVector End,double 
 }
 void ASeigeGameMode::ConfigureCombatTerrain()
 {
-    Sim.Combat.SetTerrainSampler([this](FVector2D P){return TerrainHeight(P);});
+    SimulationTerrainCache.Reset();
+    SimulationTerrainHeight(HomePosition());
+    Sim.Combat.SetTerrainSampler([this](FVector2D P){return SimulationTerrainHeight(P);});
+    Sim.Mobility.SetTerrainSampler([this](FVector2D P){return SimulationTerrainHeight(P);});
     Sim.Combat.SetSectorResolver([this](int32 Index)->const FSeigeSimulation*{if(Index==4)return &Sim;const auto* Sector=Neighbors.FindByPredicate([&](const auto& N){return N.Index==Index;});return Sector?&Sector->Sim:nullptr;});
-    for(auto& N:Neighbors){const FVector2D Offset=N.Offset;N.Sim.Combat.SetTerrainSampler([this,Offset](FVector2D P){return TerrainHeight(P+Offset);});}
+    for(auto& N:Neighbors){const FVector2D Offset=N.Offset;N.Sim.Combat.SetTerrainSampler([this,Offset](FVector2D P){return SimulationTerrainHeight(P+Offset);});N.Sim.Mobility.SetTerrainSampler([this,Offset](FVector2D P){return SimulationTerrainHeight(P+Offset);});}
 }
 void ASeigeGameMode::SyncCombatVisuals(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live)
 {
@@ -48,6 +51,24 @@ void ASeigeGameMode::SyncCombatVisuals(const FSeigeSimulation& Colony,FVector2D 
     auto Sector=[&](int32 Local){return Local==4?BaseSector:Local;};
     auto SectorOffset=[&](int32 Index){return FVector2D(Index%3-1,Index/3-1)*Sim.WorldHalfSize*2;};
     auto Actor=[&](const FString& Key){Live.Add(Key);auto* A=Visuals.FindRef(Key).Get();if(!A){A=GetWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(A);A->SetRootComponent(Root);Root->RegisterComponent();Visuals.Add(Key,A);}A->SetActorHiddenInGame(false);return A;};
+    for(const auto& V:Colony.TransportVehicles.Bodies)
+    {
+        if(V.Health<=0||V.Embarked||V.Evacuated||BaseSector!=DetailedSectorIndex())continue;
+        const FVector2D Position=(Snapshot?Snapshot->Transport(V,PresentationAlpha()):V.Position)+Offset;
+        if(!Observer&&!Offset.IsNearlyZero()&&!IsWorldVisible(Position))continue;
+        const FString Key=Prefix+FString::Printf(TEXT("transport_%d"),V.Id);const bool New=!Visuals.Contains(Key);auto* A=Actor(Key);
+        if(New)
+        {
+            const FVector Size=Colony.TransportVehicles.Definition().BodySizeMeters*100.;
+            Part(A,TEXT("Cube"),FVector(0,0,Size.Z*.35),FVector(Size.X/100,Size.Y/100,Size.Z*.30/100),Dark);
+            Part(A,TEXT("Cube"),FVector(-Size.X*.06,0,Size.Z*.67),FVector(Size.X*.8/100,Size.Y*.88/100,Size.Z*.6/100),Hull);
+            Part(A,TEXT("Cube"),FVector(Size.X*.42,0,Size.Z*.56),FVector(Size.X*.12/100,Size.Y*.84/100,Size.Z*.32/100),Panel);
+            for(int I=0;I<6;++I)Part(A,TEXT("Cube"),FVector((I/5.-.5)*Size.X*.7,0,Size.Z*.985),FVector(.025,Size.Y*.86/100,.025),Trim);
+            for(double Side:{-1.,1.})for(int Axle=0;Axle<3;++Axle){const FVector P((Axle-1)*Size.X*.32,Side*Size.Y*.48,Size.Z*.2);Part(A,TEXT("Cylinder"),P,FVector(Size.Z*.38/100,Size.Z*.38/100,.28),Dark,FRotator(0,0,90));Part(A,TEXT("Cylinder"),P+FVector(0,Side*16,0),FVector(Size.Z*.20/100,Size.Z*.20/100,.03),Trim,FRotator(0,0,90));}
+            Part(A,TEXT("Cube"),FVector(Size.X*.485,0,Size.Z*.57),FVector(.025,Size.Y*.55/100,.08),FLinearColor(.25,.8,.95));
+        }
+        A->SetActorLocation(RenderPosition(Position,3));A->SetActorRotation(FRotator(0,FMath::RadiansToDegrees(FMath::Atan2(V.Heading.Y,V.Heading.X)),0));
+    }
     for(const auto& V:C.Vehicles)
     {
         if(V.Health<=0||V.Embarked||V.Evacuated)continue;const auto* D=C.Chassis.Find(V.ChassisId);if(!D)continue;

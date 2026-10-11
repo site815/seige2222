@@ -17,10 +17,17 @@ bool CompanionJsonPoint(const TSharedPtr<FJsonObject>& O,const TCHAR* Key,FVecto
 }
 bool Number(const TSharedPtr<FJsonObject>& O,const TCHAR* Key,double& V,double Low,double High)
 {return O->HasTypedField<EJson::Number>(Key)&&O->TryGetNumberField(Key,V)&&FMath::IsFinite(V)&&V>=Low&&V<=High;}
-bool Clear(const FSeigeSimulation& Sim,FVector2D P,double Radius)
+bool Clear(const FSeigeSimulation& Sim,FVector2D P,double Radius,bool HatchConnector=false)
 {
     for(const auto& B:Sim.Buildings)if(B.Health>0)if(const auto* D=Sim.Definition(B))
+    {
+        if(HatchConnector&&D->Role==TEXT("core"))
+        {
+            const FVector2D Hatch=Sim.Workers.HatchPoint(Sim),Port=Sim.BuildingAccessPoint(B);
+            if(FMath::Abs(P.Y-Hatch.Y)<.001&&P.X>=Hatch.X-.001&&P.X<=Port.X+.001)continue;
+        }
         if(FMath::Abs(P.X-B.Position.X)<D->Footprint+Radius&&FMath::Abs(P.Y-B.Position.Y)<D->Footprint+Radius)return false;
+    }
     return true;
 }
 }
@@ -38,6 +45,8 @@ bool FSeigeCompanionSystem::Initialize(const FString& Directory,const FSeigeSimu
        !D->TryGetStringField(TEXT("mesh"),MeshPath)||!D->TryGetStringField(TEXT("walk_animation"),WalkAnimation)||!D->TryGetStringField(TEXT("idle_animation"),IdleAnimation)||
        !Number(D,TEXT("initial_count"),Count,0,1)||Count!=FMath::FloorToDouble(Count)||!Number(D,TEXT("seed"),Seed,0,MAX_int32)||Seed!=FMath::FloorToDouble(Seed)||
        !Number(D,TEXT("walk_kmh"),WalkKmh,.1,20)||!Number(D,TEXT("walk_cycle_meters"),WalkCycleMeters,.05,5)||!Number(D,TEXT("roam_radius_meters"),RoamRadiusMeters,1,1000)||
+       !Number(D,TEXT("territory_radius_meters"),TerritoryRadiusMeters,1,1000)||!Number(D,TEXT("damage_alert_radius_meters"),DamageAlertRadiusMeters,1,1000)||
+       !Number(D,TEXT("shelter_seconds"),ShelterSeconds,1,3600)||!Number(D,TEXT("run_kmh"),RunKmh,WalkKmh,40)||RoamRadiusMeters>TerritoryRadiusMeters||
        !Number(D,TEXT("food_per_meal_kg"),FoodPerMealKg,.001,100)||!Number(D,TEXT("meal_interval_seconds"),MealIntervalSeconds,1,86400)||
        !Number(D,TEXT("fed_duration_seconds"),FedDurationSeconds,1,172800)||!Number(D,TEXT("feed_radius_meters"),FeedRadiusMeters,1,1000)||
        !Number(D,TEXT("morale_bonus"),MoraleBonus,0,.5)||!Number(D,TEXT("morale_radius_meters"),MoraleRadiusMeters,1,1000)||
@@ -46,18 +55,28 @@ bool FSeigeCompanionSystem::Initialize(const FString& Directory,const FSeigeSimu
        !Number(D,TEXT("body_radius_meters"),BodyRadiusMeters,.05,1)||!Number(D,TEXT("maximum_slope_grade"),MaximumSlopeGrade,.1,2))
     {Error=TEXT("Invalid companion rule or missing organic food resource");return false;}
     MetresPerUnit=Sim.MetersPerWorldUnit();Dogs.Reset();ControlledId=0;ControlDirection=FVector2D::ZeroVector;Clock=0;Random.Initialize(int32(Seed));
-    const auto* Command=Sim.Buildings.FindByPredicate([&](const auto& B){return B.DefId==Sim.CoreDefinition;});
+    const auto* Command=Sim.Buildings.FindByPredicate([&](const auto& B){const auto* D=Sim.Definition(B);return D&&D->Role==TEXT("core");});
     if(Count>0&&Command)
     {
-        FSeigeCompanion Dog;Dog.Home=Sim.BuildingAccessPoint(*Command)+FVector2D(0,80);Dog.Position=Dog.Target=Dog.Home;Dogs.Add(Dog);
+        FSeigeCompanion Dog;Dog.Home=Command->Position;Dog.Position=Dog.Target=Sim.BuildingAccessPoint(*Command)+FVector2D(0,80);Dogs.Add(Dog);
     }
     Error.Empty();return true;
 }
 void FSeigeCompanionSystem::ShiftHome(FVector2D Delta)
 {for(auto& D:Dogs){D.Home+=Delta;D.Position+=Delta;D.Target+=Delta;for(auto& P:D.Route)P+=Delta;}}
+void FSeigeCompanionSystem::NotifyBuildingDamaged(const FSeigeSimulation& Sim,FVector2D Position)
+{
+    const auto* Core=Sim.Buildings.FindByPredicate([&](const auto& B){const auto* D=Sim.Definition(B);return D&&D->Role==TEXT("core");});if(!Core||FVector2D::Distance(Position,Core->Position)*Sim.MetersPerWorldUnit()>DamageAlertRadiusMeters)return;
+    for(auto& D:Dogs)if(!D.Evacuated)
+    {
+        D.ShelterUntil=Sim.Time+ShelterSeconds;
+        if(!D.Sheltered&&!D.Retreating){D.Retreating=true;D.ExitingShuttle=false;D.Route.Empty();D.NextWaypoint=0;}
+    }
+    ControlledId=0;ControlDirection=FVector2D::ZeroVector;
+}
 bool FSeigeCompanionSystem::SetControlled(int32 Id)
 {
-    if(Id>0&&(!Find(Id)||Find(Id)->Evacuated))return false;
+    if(Id>0&&(!Find(Id)||Find(Id)->Evacuated||Find(Id)->Retreating||Find(Id)->Sheltered||Find(Id)->ExitingShuttle))return false;
     ControlledId=Id;ControlDirection=FVector2D::ZeroVector;
     if(auto* D=Find(Id)){D->Route.Empty();D->NextWaypoint=0;D->Moving=false;}
     return true;
@@ -65,18 +84,33 @@ bool FSeigeCompanionSystem::SetControlled(int32 Id)
 double FSeigeCompanionSystem::EfficiencyAt(FVector2D P) const
 {
     // Morale is capped, so adding companions cannot stack an unlimited bonus.
-    for(const auto& D:Dogs)if(!D.Evacuated&&D.FedUntil>Clock&&FVector2D::Distance(P,D.Position)<=MoraleRadiusMeters/FMath::Max(MetresPerUnit,.000001))return 1+MoraleBonus;
+    for(const auto& D:Dogs)if(!D.Evacuated&&!D.Sheltered&&D.FedUntil>Clock&&FVector2D::Distance(P,D.Position)<=MoraleRadiusMeters/FMath::Max(MetresPerUnit,.000001))return 1+MoraleBonus;
     return 1;
 }
 void FSeigeCompanionSystem::Tick(FSeigeSimulation& Sim,double Seconds)
 {
     Clock=Sim.Time;const double Metres=Sim.MetersPerWorldUnit();if(Metres<=0)return;
-    const double Step=WalkKmh/3.6/Metres*Seconds;
     for(auto& D:Dogs)
     {
         D.Moving=false;
         if(Sim.Escaped||Sim.Failed){D.Evacuated=true;ControlledId=0;continue;}
         if(D.Evacuated)continue;
+        const auto* Core=Sim.Buildings.FindByPredicate([&](const auto& B){const auto* D=Sim.Definition(B);return D&&D->Role==TEXT("core");});if(!Core)continue;
+        D.Home=Core->Position;
+        const double Step=(D.Retreating?RunKmh:WalkKmh)/3.6/Metres*Seconds;
+        if(D.Sheltered)
+        {
+            if(Clock<D.ShelterUntil)continue;
+            D.Sheltered=false;D.ExitingShuttle=true;D.Route={Sim.BuildingAccessPoint(*Core)};D.NextWaypoint=0;
+        }
+        if(D.Retreating&&D.Route.IsEmpty())
+        {
+            const FVector2D Port=Sim.BuildingAccessPoint(*Core),Hatch=Sim.Workers.HatchPoint(Sim);
+            if(Clear(Sim,D.Position,BodyRadiusMeters/Metres)&&Sim.FindRoute(D.Position,Port,D.Route))
+            {D.Route.Add(Hatch);D.NextWaypoint=0;D.Target=Hatch;}
+            else if(FMath::Abs(D.Position.Y-Hatch.Y)<.001&&D.Position.X>=Hatch.X-.001&&D.Position.X<=Port.X+.001)
+            {D.Route={Hatch};D.NextWaypoint=0;D.Target=Hatch;}
+        }
         if(Clock>=D.NextMeal)
         {
             // A single actual local stock pays a meal. Remote/global inventory
@@ -90,7 +124,7 @@ void FSeigeCompanionSystem::Tick(FSeigeSimulation& Sim,double Seconds)
         if(ControlledId==D.Id)
         {
             const FVector2D Desired=D.Position+ControlDirection*Step;const double Radius=BodyRadiusMeters/Metres,Limit=Sim.WorldHalfSize*3-Radius;
-            auto Allowed=[&](FVector2D P){return FMath::Abs(P.X)<Limit&&FMath::Abs(P.Y)<Limit&&Clear(Sim,P,Radius);};
+            auto Allowed=[&](FVector2D P){return FVector2D::Distance(P,D.Home)*Metres<=TerritoryRadiusMeters&&FMath::Abs(P.X)<Limit&&FMath::Abs(P.Y)<Limit&&Clear(Sim,P,Radius);};
             if(Allowed(Desired))D.Position=Desired;
             else
             {
@@ -100,14 +134,18 @@ void FSeigeCompanionSystem::Tick(FSeigeSimulation& Sim,double Seconds)
         }
         else
         {
-            if(D.Route.IsEmpty()&&Clock>=D.RestUntil)
+            if(!D.Retreating&&!D.ExitingShuttle&&D.Route.IsEmpty()&&Clock>=D.RestUntil)
             {
                 for(int32 Attempt=0;Attempt<12;++Attempt)
                 {
                     const double Angle=Random.FRand()*2*PI,Radius=FMath::Sqrt(Random.FRand())*RoamRadiusMeters/Metres;
                     const FVector2D Target=D.Home+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Radius;
                     if(FMath::Abs(Target.X)>Sim.WorldHalfSize||FMath::Abs(Target.Y)>Sim.WorldHalfSize||!Clear(Sim,Target,BodyRadiusMeters/Metres))continue;
-                    if(Sim.FindRoute(D.Position,Target,D.Route)){D.Target=Target;D.NextWaypoint=0;break;}
+                    if(Sim.FindRoute(D.Position,Target,D.Route))
+                    {
+                        bool Inside=true;for(const auto& P:D.Route)Inside&=FVector2D::Distance(P,D.Home)*Metres<=TerritoryRadiusMeters;
+                        if(Inside){D.Target=Target;D.NextWaypoint=0;break;}D.Route.Empty();
+                    }
                 }
                 if(D.Route.IsEmpty())D.RestUntil=Clock+RestSeconds;
             }
@@ -116,11 +154,12 @@ void FSeigeCompanionSystem::Tick(FSeigeSimulation& Sim,double Seconds)
             {
                 const FVector2D Delta=D.Route[D.NextWaypoint]-D.Position;const double Distance=Delta.Size();
                 const FVector2D Next=Distance<=Remaining?D.Route[D.NextWaypoint]:D.Position+Delta/Distance*Remaining;
-                if(!Clear(Sim,Next,BodyRadiusMeters/Metres)){D.Route.Empty();D.NextWaypoint=0;D.RestUntil=Clock+RestSeconds;break;}
+                if(!Clear(Sim,Next,BodyRadiusMeters/Metres,D.Retreating||D.ExitingShuttle)||FVector2D::Distance(Next,D.Home)*Metres>TerritoryRadiusMeters){D.Route.Empty();D.NextWaypoint=0;D.RestUntil=Clock+RestSeconds;break;}
                 if(Distance<=Remaining){D.Position=Next;++D.NextWaypoint;Remaining-=Distance;}
                 else{D.Position=Next;Remaining=0;}
             }
-            if(!D.Route.IsEmpty()&&!D.Route.IsValidIndex(D.NextWaypoint)){D.Route.Empty();D.NextWaypoint=0;D.RestUntil=Clock+RestSeconds;}
+            if(!D.Route.IsEmpty()&&!D.Route.IsValidIndex(D.NextWaypoint))
+            {D.Route.Empty();D.NextWaypoint=0;D.RestUntil=Clock+RestSeconds;if(D.Retreating){D.Retreating=false;D.Sheltered=true;}D.ExitingShuttle=false;}
         }
         const FVector2D Delta=D.Position-Before;D.Moving=Delta.SizeSquared()>1.e-9;
         if(D.Moving){D.Heading=FMath::RadiansToDegrees(FMath::Atan2(Delta.Y,Delta.X));D.DistanceWalked+=Delta.Size()*Metres;}
@@ -135,6 +174,7 @@ bool FSeigeCompanionSystem::Save(const TSharedPtr<FJsonObject>& Object) const
         auto O=MakeShared<FJsonObject>();O->SetNumberField(TEXT("id"),D.Id);CompanionJsonPoint(O,TEXT("position"),D.Position);CompanionJsonPoint(O,TEXT("home"),D.Home);CompanionJsonPoint(O,TEXT("target"),D.Target);
         O->SetNumberField(TEXT("fed_until"),D.FedUntil);O->SetNumberField(TEXT("next_meal"),D.NextMeal);O->SetNumberField(TEXT("rest_until"),D.RestUntil);O->SetNumberField(TEXT("heading"),D.Heading);
         O->SetNumberField(TEXT("distance_walked_meters"),D.DistanceWalked);O->SetNumberField(TEXT("food_consumed_kg"),D.FoodConsumedKg);O->SetBoolField(TEXT("evacuated"),D.Evacuated);
+        O->SetNumberField(TEXT("shelter_until"),D.ShelterUntil);O->SetBoolField(TEXT("retreating"),D.Retreating);O->SetBoolField(TEXT("sheltered"),D.Sheltered);O->SetBoolField(TEXT("exiting_shuttle"),D.ExitingShuttle);
         O->SetNumberField(TEXT("next_waypoint"),D.NextWaypoint);TArray<TSharedPtr<FJsonValue>> Route;
         for(const auto& P:D.Route){auto V=MakeShared<FJsonObject>();CompanionJsonPoint(V,TEXT("p"),P);Route.Add(MakeShared<FJsonValueObject>(V));}O->SetArrayField(TEXT("route"),Route);
         List.Add(MakeShared<FJsonValueObject>(O));
@@ -155,6 +195,8 @@ bool FSeigeCompanionSystem::Load(const TSharedPtr<FJsonObject>& Object,const FSe
            !Number(O,TEXT("heading"),D.Heading,-180,180)||!Number(O,TEXT("distance_walked_meters"),D.DistanceWalked,0,1.e12)||!Number(O,TEXT("food_consumed_kg"),D.FoodConsumedKg,0,1.e12)||
            !O->HasTypedField<EJson::Boolean>(TEXT("evacuated"))||!O->TryGetBoolField(TEXT("evacuated"),D.Evacuated)||!O->TryGetArrayField(TEXT("route"),Route)||Route->Num()>4096||!Number(O,TEXT("next_waypoint"),Next,0,Route->Num())||Next!=FMath::FloorToDouble(Next))
         {Error=TEXT("Invalid saved dog companion");return false;}
+        if(!Number(O,TEXT("shelter_until"),D.ShelterUntil,0,Sim.Time+ShelterSeconds+1)||!O->TryGetBoolField(TEXT("retreating"),D.Retreating)||!O->TryGetBoolField(TEXT("sheltered"),D.Sheltered)||!O->TryGetBoolField(TEXT("exiting_shuttle"),D.ExitingShuttle)||int32(D.Retreating)+int32(D.Sheltered)+int32(D.ExitingShuttle)>1)
+        {Error=TEXT("Invalid saved companion shelter state");return false;}
         D.Id=int32(Id);D.NextWaypoint=int32(Next);
         for(const auto& Waypoint:*Route){FVector2D P;auto W=Waypoint->AsObject();if(!W||!CompanionJsonPoint(W,TEXT("p"),P,Sim.WorldHalfSize*3)){Error=TEXT("Invalid companion route");return false;}D.Route.Add(P);}
         New.Add(D);

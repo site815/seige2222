@@ -112,7 +112,7 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
     if(!(*Economy)->TryGetStringField(TEXT("export_policy"),SurplusExportPolicy)||(SurplusExportPolicy!=TEXT("surplus_shipment_value")&&SurplusExportPolicy!=TEXT("local_raw_only")))
     {Error=TEXT("Invalid AI export_policy");return false;}
     FString ReplicationPolicy;const TArray<TSharedPtr<FJsonValue>>* ReplicationRecipes=nullptr;
-    if(!(*Economy)->TryGetStringField(TEXT("core_replication_policy"),ReplicationPolicy)||ReplicationPolicy!=TEXT("funded_shortage_first")||!(*Economy)->TryGetArrayField(TEXT("core_replication_recipes"),ReplicationRecipes)||!ReplicationRecipes||ReplicationRecipes->IsEmpty())
+    if(!(*Economy)->TryGetStringField(TEXT("core_replication_policy"),ReplicationPolicy)||ReplicationPolicy!=TEXT("worker_only")||!(*Economy)->TryGetArrayField(TEXT("core_replication_recipes"),ReplicationRecipes)||!ReplicationRecipes||!ReplicationRecipes->IsEmpty())
     {Error=TEXT("Invalid AI core_replication_policy or core_replication_recipes");return false;}
     CoreReplicationRecipes.Empty();for(const auto& Value:*ReplicationRecipes)
     {

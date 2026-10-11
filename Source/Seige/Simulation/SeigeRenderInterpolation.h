@@ -8,6 +8,7 @@ struct FSeigeRenderSnapshot
     bool Valid = false;
     TMap<int32,FVector2D> Couriers, Enemies, Builders, RoadBuilders, Companions, Vehicles;
     TMap<int32,int32> VehicleSectors;
+    TMap<int32,FVector2D> TransportPositions;
     TMap<FString,FVector2D> WorkerPositions;
     TMap<int32,double> Construction;
     void Capture(const FSeigeSimulation& Sim)
@@ -20,6 +21,7 @@ struct FSeigeRenderSnapshot
         for(const auto& R:Sim.Roads)RoadBuilders.Add(R.Id,R.BuilderPosition);
         Companions.Reset();for(const auto& D:Sim.Companions.Dogs)Companions.Add(D.Id,D.Position);
         Vehicles.Reset();VehicleSectors.Reset();for(const auto& V:Sim.Combat.Vehicles){Vehicles.Add(V.Id,V.Position);VehicleSectors.Add(V.Id,V.SectorIndex);}
+        TransportPositions.Reset();for(const auto& V:Sim.TransportVehicles.Bodies)TransportPositions.Add(V.Id,V.Position);
     }
     double RenderTime(const FSeigeSimulation& Sim,double Alpha) const
     {return Valid&&Time<=Sim.Time?FMath::Lerp(Time,Sim.Time,FMath::Clamp(Alpha,0.,1.)):Sim.Time;}
@@ -43,6 +45,8 @@ struct FSeigeRenderSnapshot
     {const auto* P=Companions.Find(D.Id);return Valid&&P?FMath::Lerp(*P,D.Position,FMath::Clamp(Alpha,0.,1.)):D.Position;}
     FVector2D Vehicle(const FSeigeVehicle& V,double Alpha) const
     {const auto* P=Vehicles.Find(V.Id);return Valid&&P&&VehicleSectors.FindRef(V.Id)==V.SectorIndex?FMath::Lerp(*P,V.Position,FMath::Clamp(Alpha,0.,1.)):V.Position;}
+    FVector2D Transport(const FSeigeTransportVehicle& V,double Alpha) const
+    {const auto* P=TransportPositions.Find(V.Id);return Valid&&P?FMath::Lerp(*P,V.Position,FMath::Clamp(Alpha,0.,1.)):V.Position;}
     double Progress(const FSeigeBuilding& B,double Alpha) const
     {const auto* P=Construction.Find(B.Id);return Valid&&P&&B.IsConstructing?FMath::Lerp(*P,B.ConstructionProgress,FMath::Clamp(Alpha,0.,1.)):B.ConstructionProgress;}
 };

@@ -1,0 +1,3 @@
+Rules valid: prototype-10.0; 22 items, 14 recipes, 55 buildings.
+Renewable paths verified for 22 items; startup building/worker affordability verified.
+133 negative validation cases passed.

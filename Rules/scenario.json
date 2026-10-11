@@ -1,11 +1,11 @@
 {
-  "version": "prototype-9.3",
+  "version": "prototype-10.0",
   "scenario": {
     "title": "seige2222 - First Landing",
     "core_definition": "command_core",
     "world_half_size": 30000,
     "random_seed": 815,
-    "starting_population": 6,
+    "starting_population": 5,
     "starting_shuttle_cargo": {},
     "starting_inventory": {
       "alloy": 6000,
@@ -47,6 +47,6 @@
       "road_length_meters": 500,
       "extractor_count": 1
     },
-    "quantity_note": "Finite provisional 9,570 kg loose kit (3,869.5 L), plus six installed 80 kg workers, installed fleet and ship equipment. No starting credits. The 20 kg preloaded deployment consumables and unmodeled hull/reactor are separate from loose kit; no isotope-cell cargo."
+    "quantity_note": "Finite provisional 9,570 kg loose kit (3,869.5 L), plus five installed 80 kg general-purpose workers, one autonomous cargo transport and ship equipment. Zero credits. Charged worker batteries are explicitly part of the landed hardware; 20 kg deployment consumables are separate from loose kit."
   }
 }

@@ -219,16 +219,16 @@ for name, (color, rough, metal) in PALETTE.items():
             links.new(sm.outputs[0], nodes.get('Material Output').inputs['Surface'])
         elif name == 'Coat':
             coords = nodes.new('ShaderNodeTexCoord')
-            mapping = nodes.new('ShaderNodeMapping'); mapping.inputs['Scale'].default_value = (1 / 42, 1 / 42, 1 / 42)
+            mapping = nodes.new('ShaderNodeMapping'); mapping.inputs['Scale'].default_value = (1 / 9, 1 / 9, 1 / 9)
             links.new(coords.outputs['Object'], mapping.inputs['Vector'])
             det = nodes.new('ShaderNodeTexImage'); det.image = fur_detail; det.projection = 'BOX'; det.projection_blend = .35
             links.new(mapping.outputs['Vector'], det.inputs['Vector'])
-            mix = nodes.new('ShaderNodeMixRGB'); mix.blend_type = 'MULTIPLY'; mix.inputs[0].default_value = .75
+            mix = nodes.new('ShaderNodeMixRGB'); mix.blend_type = 'MULTIPLY'; mix.inputs[0].default_value = .18
             links.new(vc.outputs['Color'], mix.inputs[1]); links.new(det.outputs['Color'], mix.inputs[2])
             links.new(mix.outputs[0], p.inputs['Base Color'])
             nt = nodes.new('ShaderNodeTexImage'); nt.image = fur_normal; nt.projection = 'BOX'; nt.projection_blend = .35
             links.new(mapping.outputs['Vector'], nt.inputs['Vector'])
-            nm = nodes.new('ShaderNodeNormalMap'); nm.inputs['Strength'].default_value = .5
+            nm = nodes.new('ShaderNodeNormalMap'); nm.inputs['Strength'].default_value = .15
             links.new(nt.outputs['Color'], nm.inputs['Color']); links.new(nm.outputs['Normal'], p.inputs['Normal'])
             p.inputs['Subsurface Weight'].default_value = .18
             p.inputs['Subsurface Radius'].default_value = (1.2, .6, .3)
@@ -396,23 +396,23 @@ def mx(x):
 
 
 MUZZLE = [
-    (52.0, 73.0, 7.4, 4.4, 6.0, 2.3, 2.4),
-    (57.0, 73.4, 7.2, 4.8, 7.0, 2.5, 2.6),
-    (mx(61.0), 73.8, 6.8, 4.9, 7.6, 2.6, 2.8),
-    (mx(65.0), 73.8, 6.4, 4.8, 7.4, 2.6, 2.8),
-    (mx(68.5), 73.7, 6.0, 4.6, 6.8, 2.6, 2.7),
-    (mx(71.0), 73.6, 5.6, 4.4, 6.0, 2.5, 2.6),
-    (mx(72.8), 73.7, 5.0, 4.0, 5.0, 2.6, 2.6),
-    (mx(73.8), 73.9, 3.8, 3.2, 3.9, 2.4, 2.4),
+    (52.0, 73.0, 6.8, 4.4, 4.4, 2.3, 2.2),
+    (57.0, 73.4, 6.5, 4.5, 4.2, 2.3, 2.2),
+    (mx(61.0), 73.8, 6.1, 4.6, 4.0, 2.3, 2.2),
+    (mx(65.0), 73.8, 5.7, 4.5, 3.7, 2.3, 2.2),
+    (mx(68.5), 73.7, 5.4, 4.3, 3.5, 2.3, 2.2),
+    (mx(71.0), 73.6, 5.1, 4.1, 3.3, 2.3, 2.2),
+    (mx(72.8), 73.7, 4.5, 3.7, 3.0, 2.3, 2.2),
+    (mx(73.8), 73.9, 3.5, 3.0, 2.8, 2.2, 2.2),
     (mx(74.4), 74.1, 2.2, 1.9, 2.1, 2.0, 2.0),
 ]
 HEAD = MUZZLE
 profile_loft('Skull', SKULL, sides=36)
 profile_loft('Muzzle', MUZZLE, sides=32)
 for side in (-1, 1):
-    ellipsoid('Brow', (58.2, side * 4.3, 83.0), (2.8, 2.6, 1.7))
+    ellipsoid('Brow', (57.6, side * 5.7, 82.2), (2.6, 2.2, 1.1))
     ellipsoid('Cheek', (52.5, side * 9.8, 72.5), (5.5, 3.4, 5.0))
-    ellipsoid('Flew', (63.0, side * 6.2, 68.6), (6.0, 1.9, 3.4))
+    ellipsoid('Flew', (62.0, side * 6.1, 70.0), (4.8, 1.3, 2.3))
 for side in (-1, 1):
     y = side * LEG_Y; fx = FORE_X; hxx = HIND_X
     # Shoulder blade and upper arm merge into the ribcage.
@@ -431,7 +431,7 @@ for side in (-1, 1):
     for toe in (-2.6, -.9, .9, 2.6):
         ellipsoid('Hind toe', (hxx + 2.4, y + toe, 2.8), (2.7, 1.35, 2.4), segments=14, rings=10)
 TAIL = [(-40, 0, 49), (-53, -1, 47), (-68, -2, 40), (-84, -2.5, 30), (-98, -2, 25)]
-tube('Tail', TAIL, [(3.4, 3.2), (3.1, 3.0), (2.5, 2.4), (1.7, 1.6), (.5, .5)], sides=18)
+tube('Tail', TAIL, [(3.4, 4.2), (4.0, 6.4), (3.7, 7.0), (2.5, 4.7), (.5, .7)], sides=24)
 
 # Union into one skin, relax, then shape features before decimation.
 bpy.ops.object.select_all(action='DESELECT')
@@ -443,10 +443,10 @@ skin = bpy.context.object; skin.name = 'Skin'
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 remesh = skin.modifiers.new('Union', 'REMESH'); remesh.mode = 'VOXEL'; remesh.voxel_size = .70; remesh.use_smooth_shade = True
 bpy.ops.object.modifier_apply(modifier=remesh.name)
-relax = skin.modifiers.new('Relax', 'SMOOTH'); relax.factor = .5; relax.iterations = 1
+relax = skin.modifiers.new('Relax', 'SMOOTH'); relax.factor = .65; relax.iterations = 12
 bpy.ops.object.modifier_apply(modifier=relax.name)
 
-EYES = [(58.8, side * 4.0, 80.6) for side in (-1, 1)]
+EYES = [(58.2, side * 5.8, 79.9) for side in (-1, 1)]
 EYE_DIR = [Vector((.72, side * .46, .52)).normalized() for side in (-1, 1)]
 STOP_X, BRIDGE_TOP = 59.6, MUZZLE[3][1] + MUZZLE[3][3]
 
@@ -550,9 +550,12 @@ for side, label in ((-1, 'R'), (1, 'L')):
     s = side
     # Pendant ear: thick leaf hanging from an arc on the side of the skull.
     ear = tube('Ear ' + label, [(50.5, s * 9.0, 82.5), (49.0, s * 12.2, 78.5), (47.0, s * 13.4, 72.5), (45.5, s * 13.2, 66.5), (44.5, s * 12.2, 61.5)],
-               [(1.3, 4.0), (1.6, 8.4), (1.4, 9.2), (1.1, 7.2), (.3, 1.8)], sides=24, body=False, bone=f'ear_{label}')
+               [(1.1, 3.6), (1.4, 6.1), (1.2, 6.5), (.9, 4.8), (.3, 1.4)], sides=24, body=False, bone=f'ear_{label}')
     for v in ear.data.vertices:   # slightly cupped leaf that follows the cheek
         v.co.y += s * .8 * (1 - abs(v.co.z - 72.5) / 11) * (abs(v.co.x - 46.5) / 9)
+    active(ear)
+    rounded=ear.modifiers.new('Soft pendant ear contour','SUBSURF');rounded.levels=2
+    bpy.ops.object.modifier_apply(modifier=rounded.name)
     # Eye: dark almond eyeball with a glossy cornea, set into its socket.
     c = Vector(EYES[0 if side < 0 else 1]); n = EYE_DIR[0 if side < 0 else 1]
     eye = ellipsoid('Eye ' + label, c, (1, 1, 1), 'Eye', body=False, bone='head', segments=28, rings=18)
@@ -574,22 +577,24 @@ for side, label in ((-1, 'R'), (1, 'L')):
     finish(bpy.context.object, 'Eyelid ' + label, 'Nose', 'head')
 # Nose leather with nostrils, open panting mouth with lower jaw, tongue and canines.
 NX = NOSE_X + .2
-nose = ellipsoid('Nose', (NX, 0, 75.2), (1.4, 2.4, 2.0), 'Nose', body=False, bone='head', segments=32, rings=20)
+nose = ellipsoid('Nose', (NX, 0, 75.2), (1.9, 3.1, 2.3), 'Nose', body=False, bone='head', segments=32, rings=20)
 for v in nose.data.vertices:
-    v.co.y *= .78 + .22 * ((v.co.z - 75.2) / 2.0 + 1) * .5
-    v.co.x = NX + (v.co.x - NX) * (.5 if v.co.x > NX else 1.0)
+    # Ellipsoid vertices are LOCAL: subtracting the world-space nose height
+    # inverted and widened the old nose into a flat beak.
+    v.co.y *= .78 + .22 * (v.co.z / 2.3 + 1) * .5
+    if v.co.x > 0: v.co.x *= .72
 for side in (-1, 1):
     ellipsoid('Nostril', (NX + .7, side * 1.25, 74.9), (.45, .65, .6), 'Mouth', body=False, bone='head', segments=16, rings=10)
-JAW = [(53, 71.4, 7.8, 1.2, 2.8, 2.2, 2.4), (58, 70.0, 7.4, 1.4, 3.2, 2.3, 2.6), (62.5, 68.6, 6.8, 1.4, 3.2, 2.4, 2.7),
-       (66.5, 67.6, 6.0, 1.3, 2.8, 2.4, 2.6), (70.0, 67.3, 4.7, 1.2, 2.0, 2.2, 2.3), (72.2, 67.5, 2.6, .8, 1.1, 2, 2)]
+JAW = [(53, 69.4, 6.4, 1.1, 2.4, 2.2, 2.2), (58, 65.7, 6.0, 1.2, 2.5, 2.2, 2.3), (62.5, 62.8, 5.5, 1.2, 2.4, 2.2, 2.3),
+       (66.5, 61.2, 4.9, 1.1, 2.0, 2.2, 2.2), (70.0, 60.7, 4.1, 1.0, 1.6, 2.2, 2.2), (72.2, 61.2, 2.6, .8, 1.1, 2, 2)]
 profile_loft('Lower jaw', JAW, sides=24, body=False, bone='jaw')
-profile_loft('Mouth cavity', [(55, 69.6, 6.0, 1.2, 2.2, 2, 2), (61, 68.4, 5.8, 1.2, 2.6, 2, 2), (67, 67.4, 5.0, 1.0, 2.4, 2, 2), (72, 67.6, 2.8, .6, 1.2, 2, 2)],
+profile_loft('Mouth cavity', [(54, 69, 5.0, 2.0, 3, 2, 2), (58, 67.5, 4.8, 3.0, 3.2, 2, 2), (62, 66.5, 3.7, 2.3, 2.8, 2, 2), (64, 66, 2.8, 1.5, 1.5, 2, 2)],
              sides=20, mat='Mouth', body=False, bone='head')
-tongue = tube('Tongue', [(59, 0, 69.0), (63, .6, 68.8), (67, 1.2, 68.4), (70.5, 1.6, 67.7), (73.2, 1.8, 66.9)],
+tongue = tube('Tongue', [(59, 0, 65.0), (63, .2, 64.8), (67, .4, 64.4), (70.5, .5, 63.7), (73.2, .5, 62.9)],
               [(3.2, .7), (4.0, .7), (4.1, .65), (3.5, .6), (.5, .3)], sides=20, mat='Tongue', body=False, bone='jaw')
 for side in (-1, 1):
     tube('Canine', [(62.5, side * 5.7, 68.2), (62.9, side * 5.5, 66.9), (63.3, side * 5.2, 66.0)], [.8, .5, .08], sides=10, mat='Teeth', body=False, bone='head')
-    tube('Lower canine', [(64.6, side * 5.3, 68.3), (64.8, side * 5.2, 69.4)], [.55, .1], sides=10, mat='Teeth', body=False, bone='jaw')
+    tube('Lower canine', [(64.6, side * 4.7, 63.8), (64.8, side * 4.6, 65.0)], [.55, .1], sides=10, mat='Teeth', body=False, bone='jaw')
 # Collar: flat webbing band close to the neck, with a round tag.
 axis = Vector((.52, 0, .85)).normalized(); center = Vector((31.5, 0, 61.5)); sidev = Vector((0, 1, 0)); cross = axis.cross(sidev)
 
@@ -644,7 +649,7 @@ def coat_color(p, n):
     col = col * (1 - white) + WHITE * white
     ear = ease((ax - 9.5) / 2.5) * ease((x - 41) / 3) * ease((52 - x) / 3) * ease((z - 63) / 4) * ease((87 - z) / 3)
     col = col * (1 - ear) + GOLD_DARK * ear
-    v = 1 + .045 * math.sin(x * .9 + y * .6 + z * 1.3) + .03 * math.sin(x * .27 - z * .41 + y * .2)
+    v = 1 + .012 * math.sin(x * .9 + y * .6 + z * 1.3) + .008 * math.sin(x * .27 - z * .41 + y * .2)
     return tuple(float(max(0, min(1, c * v))) for c in col) + (1.0,)
 
 
@@ -962,7 +967,7 @@ report = {
     'uv_channels': {'0': 'rest-pose X/Y encoded as (x+120)/260,(y+60)/120 on skin; fur atlas on cards', '1': 'rest-pose Z/120 on skin; (0,1) marks cards'},
     'animations': {'A_DogIdle': {'duration_seconds': 3, 'fps': 30, 'loop': True}, 'A_DogWalk': likeness.walk_metadata(clips['A_DogWalk'])},
     'coat_vertex_attribute': 'CoatColor', 'max_bone_influences': 4, 'dog_name': 'Rex', 'name_on_tag': True,
-    'cosmetic_revision': 'Rex authored release fallback: lofted retriever anatomy, broad skull, defined stop, deep muzzle, pendant ears and chest; cream muzzle and brow, golden coat and teal collar. No generated mesh or photograph pixels. Opaque coat with procedural detail; card feathering is opt-in.',
+    'cosmetic_revision': 'Rex original likeness pass: corrected local-space nose geometry, broader eye spacing, narrower pendant ears, open panting mouth and tongue, feathered tail silhouette, pale muzzle and brow, golden coat and teal collar. Fine 9 cm rest-space coat detail replaces broad bands. Reviewed from front, three-quarter and profile; no generated mesh or photograph pixels.',
     'fur_cards': {'enabled': FUR_CARDS},
     'shell_fur': False,
     'exports': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in (ART / 'Exports').glob('*.fbx')} if not PREVIEW_ONLY else {},
