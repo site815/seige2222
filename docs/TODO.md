@@ -1,5 +1,13 @@
 # seige2222 — remaining work
 
+Updated **2026-10-11**: **v0.10.1 local build complete; 95 packaged checks passed at 10×**.
+
+- Detailed Rex and photo coat restored; lower-neck contours smoothed. The temporary licence exception is explicit in Credits/provenance. Remaining art work: fused inner-leg geometry, coat transition, and close-angle surface detail. Commercial/public asset clearance remains unresolved.
+- Completed: quiet UI/gameplay audio, integrated bottom-dock timer, brighter nights, asset import/rig validation and 95 packaged assertions. Five UI renders and two Rex views reviewed.
+- Completed: Shipping package, verified ZIP/checksum, updated launcher and [v0.10.1 evidence](verification/v0.10.1.json). GitHub's account-suspension restriction blocks remote delivery as last checked this session.
+
+## Previous v0.10.0 checkpoint
+
 Updated **2026-10-11**: **v0.10.0 integrated and locally packaged; focused checks passed**. The user requested focused testing for the next update. The old 117-stage route and broad benchmark loop are not current release requirements for this pass. Historical evidence below remains tied to its original source.
 
 ## Current v0.10.0 delivery

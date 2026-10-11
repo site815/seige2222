@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "version": "0.10.1",
+  "date": "2026-10-11",
+  "status": "focused_local_checks_passed",
+  "scope": "Presentation corrections only. Bounded 10x rendered check, two Rex asset captures, configuration and asset validation; not a full native-suite rerun or sustained gameplay/FPS certification.",
+  "editor_build": "passed",
+  "shipping_package": "passed",
+  "build_cook_run_seconds": 43.64,
+  "packaged_smoke": {
+    "passed": true,
+    "assertions": 95,
+    "failures": 0,
+    "completed_stages": 25,
+    "elapsed_seconds": 37.552335899323225,
+    "simulation_speed": 10,
+    "simulation_seconds_advanced": 302.45000000004944
+  },
+  "identity": {
+    "record": "v0.10.1/packaged-smoke.json",
+    "source_runtime_inputs": 541,
+    "inputs_unchanged": true,
+    "matching_staged_json": 25,
+    "package_files": [
+      {
+        "path": "Builds/v0.10.1/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+        "bytes": 167269888,
+        "sha256": "03B883BF07E22E9E09BFB68C4CFADE35A72A45E0EA743479AD5CE8A89CE9703A"
+      },
+      {
+        "path": "Builds/v0.10.1/Windows/seige2222/Content/Paks/global.ucas",
+        "bytes": 3205888,
+        "sha256": "656F9CC750D6B9EA0B7B6FC221B8BFDC8BE20E737E66D5A18AF7CD7C118012D3"
+      },
+      {
+        "path": "Builds/v0.10.1/Windows/seige2222/Content/Paks/global.utoc",
+        "bytes": 782,
+        "sha256": "D4F99BC37B29DC911C8B2F0549314F2E4D974CB5B6D9B68EE5E9C5023A70CB6D"
+      },
+      {
+        "path": "Builds/v0.10.1/Windows/seige2222/Content/Paks/seige2222-Windows.pak",
+        "bytes": 11244862,
+        "sha256": "226F6914172DE0D975DE52C905ADADD5C223F8C4BEBE05311699A47BFEF32A4A"
+      },
+      {
+        "path": "Builds/v0.10.1/Windows/seige2222/Content/Paks/seige2222-Windows.ucas",
+        "bytes": 645092064,
+        "sha256": "F8AFF7DD926CCE774B0D6140761F274866C2BD9D3C6DC9B04978669843D9180E"
+      },
+      {
+        "path": "Builds/v0.10.1/Windows/seige2222/Content/Paks/seige2222-Windows.utoc",
+        "bytes": 429912,
+        "sha256": "F15CA593278D6CDF029CFE99B678C62A86BA3B52D12FD9502A46C8FDF78BD4D8"
+      }
+    ]
+  },
+  "network_observation": {
+    "samples": 18,
+    "tcp_observed": 0,
+    "udp_observed": 0
+  },
+  "audio": {
+    "report": "v0.10.1/audio-validation.json",
+    "routine_clicks_silent": true,
+    "clipped_samples": 0,
+    "listening_review": false,
+    "real_time_voice_cap_per_second": 8
+  },
+  "rex": {
+    "restored_base_commit": "5aed6e9",
+    "triangles": 48000,
+    "bones": 24,
+    "lods": 3,
+    "photo_coat_restored": true,
+    "neck_vertices_smoothed": 959,
+    "leg_topology": "Original closed topology retained; destructive bridge-cut candidate rejected. Some fused inner-leg geometry remains visible at close angles.",
+    "licence": "Owner-authorized prototype exception; territorial restriction unresolved and noted in Credits/provenance.",
+    "runtime_review": "Detailed face and photographic coat present in both packaged views. Close views still expose generated mesh and coat limitations; no finished photorealism claim."
+  },
+  "captures": [
+    {
+      "path": "v0.10.1/01_worker_and_hud.png",
+      "sha256": "e075fcee7e5e08b9ba12e41ff27de5cea24cd22b1c77bf4a1e6bc1548540b799"
+    },
+    {
+      "path": "v0.10.1/02_map_chain.png",
+      "sha256": "7e3b1a57d0ec6db7694a86fb44bd7c21fc1c2f97c622ac9dce4f4ae817a9e8cc"
+    },
+    {
+      "path": "v0.10.1/03_equipment_bill.png",
+      "sha256": "c4ab4c95c41309e0feae4cfa36953ae11a1272a7e1c8c64d6e44a8da968bba76"
+    },
+    {
+      "path": "v0.10.1/04_night_trade.png",
+      "sha256": "b673fe3e014eb417834a5d089eb24b726dc5d4c28ed7a1cf712c4817844b58c3"
+    },
+    {
+      "path": "v0.10.1/05_credits.png",
+      "sha256": "949867251a70daf2355327dd7b7d944162a4db3c4f0037de4e0ac2be71a7f8a4"
+    },
+    {
+      "path": "v0.10.1/v0101-rex.png",
+      "sha256": "186bb10194c6cfe0389213562cb83afbc9958d336debc052b8428c4208e31824"
+    },
+    {
+      "path": "v0.10.1/v0101-rex-close.png",
+      "sha256": "1d3424604ccc735aed8df0e0f477b71131d18c501e1254aa7c6dd69baca9fa57"
+    }
+  ],
+  "archive": {
+    "path": "Builds/seige2222-v0.10.1-win64.zip",
+    "bytes": 745301854,
+    "sha256": "37D2B4FAF00A63F6F956075A2501D6727AFCA031602335E10A47F6B317ECA32F",
+    "crc_check": "passed",
+    "all_runtime_bytes_match": true
+  },
+  "save_compatibility": "Rules prototype-10.0 and format8 unchanged; Rules/AI fingerprint unchanged.",
+  "publication": "Local build only. GitHub push/API returned account-suspension403 earlier this session; not retried for this presentation correction."
+}

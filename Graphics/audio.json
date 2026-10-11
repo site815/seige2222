@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "master_volume": 0.65,
-  "maximum_voices_per_frame": 8,
+  "version": 2,
+  "master_volume": 0.5,
+  "maximum_voices_per_frame": 3,
   "cues": {
     "select": "/Game/Art/Audio/S_select.S_select",
     "confirm": "/Game/Art/Audio/S_confirm.S_confirm",
@@ -16,5 +16,100 @@
     "plasma": "/Game/Art/Audio/S_plasma.S_plasma",
     "rex": "/Game/Art/Audio/S_rex.S_rex",
     "energy": "/Game/Art/Audio/S_laser.S_laser"
+  },
+  "maximum_voices_per_second": 8,
+  "timing_note": "All cooldowns and voice limits use monotonic real seconds, independent of pause and 1x/5x/10x simulation speed. Muted cues never consume the voice budget. Dropped events are not queued.",
+  "categories": {
+    "ui": {
+      "volume": 0,
+      "cooldown_seconds": 0.15
+    },
+    "feedback": {
+      "volume": 0.4,
+      "cooldown_seconds": 0.6
+    },
+    "construction": {
+      "volume": 0.45,
+      "cooldown_seconds": 1.5
+    },
+    "combat": {
+      "volume": 0.6,
+      "cooldown_seconds": 0.2
+    },
+    "alert": {
+      "volume": 0.5,
+      "cooldown_seconds": 12
+    },
+    "companion": {
+      "volume": 0,
+      "cooldown_seconds": 15
+    }
+  },
+  "cue_mix": {
+    "select": {
+      "category": "ui",
+      "volume": 1,
+      "cooldown_seconds": 0.15
+    },
+    "confirm": {
+      "category": "ui",
+      "volume": 1,
+      "cooldown_seconds": 0.15
+    },
+    "cancel": {
+      "category": "ui",
+      "volume": 1,
+      "cooldown_seconds": 0.15
+    },
+    "error": {
+      "category": "feedback",
+      "volume": 0.7,
+      "cooldown_seconds": 1
+    },
+    "build": {
+      "category": "construction",
+      "volume": 0.55,
+      "cooldown_seconds": 2
+    },
+    "complete": {
+      "category": "construction",
+      "volume": 0.8,
+      "cooldown_seconds": 1.5
+    },
+    "alert": {
+      "category": "alert",
+      "volume": 0.65,
+      "cooldown_seconds": 12
+    },
+    "laser": {
+      "category": "combat",
+      "volume": 0.65,
+      "cooldown_seconds": 0.25
+    },
+    "energy": {
+      "category": "combat",
+      "volume": 0.65,
+      "cooldown_seconds": 0.25
+    },
+    "kinetic": {
+      "category": "combat",
+      "volume": 0.75,
+      "cooldown_seconds": 0.3
+    },
+    "missile": {
+      "category": "combat",
+      "volume": 0.65,
+      "cooldown_seconds": 0.4
+    },
+    "plasma": {
+      "category": "combat",
+      "volume": 0.7,
+      "cooldown_seconds": 0.35
+    },
+    "rex": {
+      "category": "companion",
+      "volume": 1,
+      "cooldown_seconds": 15
+    }
   }
 }

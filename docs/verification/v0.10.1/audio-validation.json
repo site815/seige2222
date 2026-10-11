@@ -1,0 +1,36 @@
+{
+  "clips": 12,
+  "clipped_samples": 0,
+  "routine_ui_silent": true,
+  "synthetic_rex_silent": true,
+  "mix_references_valid": true,
+  "sha256_verified": true,
+  "maximum_voices_per_second": 8,
+  "categories": {
+    "ui": {
+      "volume": 0,
+      "cooldown_seconds": 0.15
+    },
+    "feedback": {
+      "volume": 0.4,
+      "cooldown_seconds": 0.6
+    },
+    "construction": {
+      "volume": 0.45,
+      "cooldown_seconds": 1.5
+    },
+    "combat": {
+      "volume": 0.6,
+      "cooldown_seconds": 0.2
+    },
+    "alert": {
+      "volume": 0.5,
+      "cooldown_seconds": 12
+    },
+    "companion": {
+      "volume": 0,
+      "cooldown_seconds": 15
+    }
+  },
+  "limitation": "Waveform integrity and import checked; perceptual listening has not been performed."
+}

@@ -1,0 +1,1037 @@
+Configuration valid: prototype-10.0; 22 items, 14 recipes, 55 buildings.
+AI: 22 priorities, 24 established buildings, 43 active + 4 stored workers. Interface: 5 groups, 32 building/tool entries, 21 summary resources, 7 credits.
+Graphics: 10 nature roles resolve to Content assets; 6 rendered centimeters per simulation unit.
+Using bundled DotNet SDK version: 10.0 win-x64
+Running UnrealBuildTool: dotnet "..\..\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" SeigeEditor Win64 Development -Project=C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject -WaitMutex -NoHotReloadFromIDE -NoUBA
+Log file: C:\Users\g9800x3d\AppData\Local\UnrealBuildTool\Log.txt
+Determining max actions to execute in parallel (8 physical cores, 8 logical cores)
+  Executing up to 8 processes, one per physical core
+Using 'git status' to determine working set for adaptive non-unity build (C:\Users\g9800x3d\Desktop\SEIGE).
+UbaSessionServer - Disable remote execution (remote sessions will finish current processes)
+Available x64 toolchains (1):
+ * C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231
+    (Family=14.51.36231, FamilyRank=2, Version=14.51.36260, HostArchitecture=x64, ReleaseChannel=Latest, Architecture=x64)
+Visual Studio compiler version 14.51.36260 is newer than latest preferred version 14.50.35717. Please use caution as this compiler has not been heavily tested
+Target is up to date
+Using Unreal Build Accelerator local executor to run 0 action(s)
+Total time in Unreal Build Accelerator local executor: 0.05 seconds
+Output binary: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe
+
+Result: Succeeded
+Total execution time: 0.87 seconds
+Trace written to file C:\Users\g9800x3d\AppData\Local\UnrealBuildTool\Trace.uba with size 2.6kb
+Running AutomationTool...
+Using bundled DotNet SDK version: 10.0 win-x64
+Starting AutomationTool...
+Parsing command line: BuildCookRun -project=C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject -noP4 -platform=Win64 -clientconfig=Shipping -build -cook -stage -pak -iostore -package -archive -archivedirectory=C:\Users\g9800x3d\Desktop\SEIGE\Builds\v0.10.1 -map=/Game/Maps/Colony -unattended -utf8output -ubtargs=-NoUBA
+Initializing script modules...
+Total script module initialization time: 0.11 s.
+Using C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe
+Executing commands...
+Setting up ProjectParams for C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject
+********** BUILD COMMAND STARTED **********
+Running: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\DotNet\10.0\win-x64\dotnet.exe "C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" -Target="SeigeEditor Win64 Development -Project=C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject" -Target="Seige Win64 Shipping -Project=C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject  -remoteini=\"C:\Users\g9800x3d\Desktop\SEIGE\"  -NoUBA -skipdeploy " -log="C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\UBA-SeigeEditor-Win64-Development.txt"
+Log file: C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\UBA-SeigeEditor-Win64-Development.txt
+Determining max actions to execute in parallel (8 physical cores, 8 logical cores)
+  Executing up to 8 processes, one per physical core
+Using 'git status' to determine working set for adaptive non-unity build (C:\Users\g9800x3d\Desktop\SEIGE).
+UbaSessionServer - Disable remote execution (remote sessions will finish current processes)
+Invalidating makefile for Seige (DefaultGame.ini modified)
+Available x64 toolchains (1):
+ * C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231
+    (Family=14.51.36231, FamilyRank=2, Version=14.51.36260, HostArchitecture=x64, ReleaseChannel=Latest, Architecture=x64)
+Visual Studio compiler version 14.51.36260 is newer than latest preferred version 14.50.35717. Please use caution as this compiler has not been heavily tested
+Available x64 toolchains (1):
+ * C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231
+    (Family=14.51.36231, FamilyRank=2, Version=14.51.36260, HostArchitecture=x64, ReleaseChannel=Latest, Architecture=x64)
+Visual Studio compiler version 14.51.36260 is newer than latest preferred version 14.50.35717. Please use caution as this compiler has not been heavily tested
+UHT compiled-in object format Default
+Building SeigeEditor and Seige...
+===== Toolchain Information =====
+SeigeEditor Win64 Development:
+  Using ISPC compiler (C:\Program Files\Epic Games\UE_5.8\Engine\Source\ThirdParty\Intel\ISPC\bin\Windows\ispc.exe)
+    Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2)
+  Using Visual Studio 14.51.36260 toolchain (C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231) and Windows 10.0.28000.0 SDK (C:\Program Files (x86)\Windows Kits\10).
+  Warning: Visual Studio compiler 14.51.36260 is not a preferred version
+  [Adaptive Build] Excluded from Seige unity file: SeigeAudioSubsystem.cpp, SeigeHUD.cpp, SeigeNextUpdateSmoke.cpp, SeigeWeather.cpp
+Seige Win64 Shipping:
+  Using ISPC compiler (C:\Program Files\Epic Games\UE_5.8\Engine\Source\ThirdParty\Intel\ISPC\bin\Windows\ispc.exe)
+    Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2)
+  Using Visual Studio 14.51.36260 toolchain (C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231) and Windows 10.0.28000.0 SDK (C:\Program Files (x86)\Windows Kits\10).
+  Warning: Visual Studio compiler 14.51.36260 is not a preferred version
+  [Adaptive Build] Excluded from Seige unity file: SeigeAudioSubsystem.cpp, SeigeHUD.cpp, SeigeNextUpdateSmoke.cpp, SeigeWeather.cpp
+=================================
+Using Unreal Build Accelerator local executor to run 10 action(s)
+  CPU 8 physical cores, 8 logical cores
+  Memory 31.38 GB physical, 15.46 GB/33.38 GB committed
+  UBA Storage capacity 40 GB
+** For Seige-Win64-Shipping **
+[1/10] Copy ui.json [NoUba]
+[2/10] Copy weather.json [NoUba]
+[3/10] Copy audio.json [NoUba]
+[4/10] Compile [x64] SeigeNextUpdateSmoke.cpp [NoUba]
+[5/10] Compile [x64] SeigeWeather.cpp [NoUba]
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Engine\Classes\Engine\TextureCube.h(43,26): warning C4996: 'UObject::GetAssetRegistryTags': Implement the version that takes FAssetRegistryTagsContext instead. - Please update your code to the new API before upgrading to the next release, otherwise your project will no longer compile.
+	ENGINE_API virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+	                        ^
+[6/10] Compile [x64] Module.Seige.gen.cpp [NoUba]
+[7/10] Compile [x64] SeigeAudioSubsystem.cpp [NoUba]
+[8/10] Compile [x64] SeigeHUD.cpp [NoUba]
+[9/10] Link [x64] Seige-Win64-Shipping.exe [NoUba]
+[10/10] WriteMetadata Seige-Win64-Shipping.target [NoUba]
+
+Total time in Unreal Build Accelerator local executor: 13.79 seconds
+Output binary: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe
+Output binary: C:\Users\g9800x3d\Desktop\SEIGE\Binaries\Win64\Seige-Win64-Shipping.exe
+
+Result: Succeeded
+Total execution time: 15.81 seconds
+Trace written to file C:\Users\g9800x3d\AppData\Local\UnrealBuildTool\Trace.uba with size 5.7kb
+Took 15.97s to run dotnet.exe, ExitCode=0
+No build products were made
+Build command time: 15.98 s
+********** BUILD COMMAND COMPLETED **********
+********** COOK COMMAND STARTED **********
+HasMapsToCook /Game/Maps/Colony
+Params.HasMapsToCook /Game/Maps/Colony
+Running UnrealEditor Cook for project C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject
+Commandlet log file is C:\Program Files\Epic Games\UE_5.8\Engine\Programs\AutomationTool\Saved\Cook-2026.10.11-18.38.07.txt
+Running: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe "C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject" -run=Cook -Map=/Game/Maps/Colony -TargetPlatform=Windows  -unversioned -fileopenlog -abslog="C:\Program Files\Epic Games\UE_5.8\Engine\Programs\AutomationTool\Saved\Cook-2026.10.11-18.38.07.txt" -stdout -CrashForUAT -unattended -NoLogTimes
+LogInit: Display: Running engine for game: seige2222
+LogCore: Display: Requested channels: 'cpu,gpu,frame,log,bookmark,screenshot,region'
+LogTrace: Display: Control listening on port 1985
+LogCsvProfiler: Display: Metadata set : platform="Windows"
+LogCsvProfiler: Display: Metadata set : config="Development"
+LogCsvProfiler: Display: Metadata set : buildversion="++UE5+Release-5.8-CL-58210709"
+LogCsvProfiler: Display: Metadata set : engineversion="5.8.3-58210709+++UE5+Release-5.8"
+LogCsvProfiler: Display: Metadata set : enginereleaseversion="5.8.3"
+LogCsvProfiler: Display: Metadata set : os="Windows 11 (26H2) [10.0.26300.9457] "
+LogCsvProfiler: Display: Metadata set : cpu="AuthenticAMD|AMD Ryzen 7 9800X3D 8-Core Processor"
+LogCsvProfiler: Display: Metadata set : pgoenabled="0"
+LogCsvProfiler: Display: Metadata set : pgoprofilingenabled="0"
+LogCsvProfiler: Display: Metadata set : ltoenabled="0"
+LogCsvProfiler: Display: Metadata set : asan="0"
+LogCsvProfiler: Display: Metadata set : mergedmodules="0"
+LogCsvProfiler: Display: Metadata set : compacttset="0"
+LogCsvProfiler: Display: Metadata set : commandline="" C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject -run=Cook -Map=/Game/Maps/Colony -TargetPlatform=Windows -unversioned -fileopenlog -abslog="C:\Program Files\Epic Games\UE_5.8\Engine\Programs\AutomationTool\Saved\Cook-2026.10.11-18.38.07.txt" -stdout -CrashForUAT -unattended -NoLogTimes""
+LogCsvProfiler: Display: Metadata set : loginid="3907561b4a8d72b9751acb8c28c15eb6"
+LogCsvProfiler: Display: Metadata set : llm="0"
+LogCsvProfiler: Display: Metadata set : zenstreaming="0"
+LogCsvProfiler: Display: Metadata set : systemresolution.resx="1280"
+LogCsvProfiler: Display: Metadata set : systemresolution.resy="720"
+LogAudio: Display: Audio Device Manager not initializing due to all audio being disabled. If this is not intentional, please check command line arguments for "-nosound".
+LogAssetRegistry: Display: FindShardedCacheFiles: 1 via .ref, 0 via migration fallback, 1 total
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PreLoad): 1 .ref files found, 1 referenced binaries
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 1 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 0 orphans deleted, 0 orphans locked (kept)
+LogAssetRegistry: Display: LoadCacheFiles: loading 1 cache files, memory-mapping=enabled
+LogConfig: Display: Loading IOS ini files took 0.02 seconds
+LogConfig: Display: Loading Mac ini files took 0.03 seconds
+LogConfig: Display: Loading Android ini files took 0.03 seconds
+LogConfig: Display: Loading TVOS ini files took 0.03 seconds
+Running UnrealBuildTool: dotnet "..\..\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" -Mode=ValidatePlatforms -OutputSDKs  -AllPlatforms  -project="C:/Users/g9800x3d/Desktop/SEIGE/seige2222.uproject" -log="C:/Users/g9800x3d/Desktop/SEIGE/Saved/Logs/AutoSDKInfo.txt" -verbose -timestamps
+LogConfig: Display: Loading Linux ini files took 0.04 seconds
+LogConfig: Display: Loading VulkanPC ini files took 0.02 seconds
+LogConfig: Display: Loading Unix ini files took 0.02 seconds
+LogConfig: Display: Loading Windows ini files took 0.03 seconds
+LogConfig: Display: Loading VisionOS ini files took 0.02 seconds
+LogAssetRegistry: Display: Asset registry cache read as 118.8 MiB from ../../../../../../Users/g9800x3d/Desktop/SEIGE/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_3EBFCD1F44557D98FD241E8E315FB7C0.bin (memory-mapped=yes)
+RenderDocPlugin: Display: RenderDoc plugin will not be loaded. Use '-AttachRenderDoc' on the cmd line or enable 'renderdoc.AutoAttach' in the plugin settings.
+Log file: C:\Users\g9800x3d\Desktop\SEIGE\Saved\Logs\AutoSDKInfo.txt
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Log is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.CSV is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Horde is disabled for this application
+LogAsyncCompilation: Display: MemorySharingInfo: UsedMemory=313MiB, MaxMemoryAvailable=34181MiB
+LogStreaming: Display: AsyncLoading2 - Created: Async Loading Thread: false, Async Post Load: false, Multithreaded: false
+LogHAL: Display: Platform has ~ 32 GB [33694314496 / 34359738368 / 32], which maps to Largest [LargestMinGB=32, LargerMinGB=12, DefaultMinGB=8, SmallerMinGB=6, SmallestMinGB=0)
+LogCsvProfiler: Display: Metadata set : extradevelopmentmemorymb="0"
+LogObj: Display: Attempting to load config data for Default__DownlinkBandwidthManagerConfig before the Class has been constructed/registered/linked (likely during module loading or early startup). This will result in the load silently failing and should be fixed.
+##PlatformValidate: Win64 VALID 10.0.22621.0
+##PlatformValidate: Mac INVALID 26.1.1
+##PlatformValidate: IOS INVALID 26.1.1
+##PlatformValidate: Android INVALID r27c
+##PlatformValidate: Linux INVALID v26_clang-20.1.8-rockylinux8
+##PlatformValidate: LinuxArm64 INVALID <UNKNOWN>
+##PlatformValidate: TVOS INVALID 26.1.1
+##PlatformValidate: VisionOS INVALID <UNKNOWN>
+Unable to find required SDK version 'MainVersion' for platform LinuxArm64. Check your SDK.json files
+Unable to find required SDK version 'MainVersion' for platform VisionOS. Check your SDK.json files
+Trace written to file C:\Users\g9800x3d\AppData\Local\UnrealBuildTool\Trace.uba with size 309b
+LogTextureFormatASTC: Display: ASTCEnc version 5.0.1 library loaded
+LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatASTC
+LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatDXT
+LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatETC2
+LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatIntelISPCTexComp
+LogTextureFormatOodle: Display: Oodle Texture TFO init; latest sdk version = 2.9.16
+LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.16.dll
+LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatOodle
+LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatUncompressed
+LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'Android'
+LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'IOS'
+LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'Linux'
+LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'Mac'
+LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'TVOS'
+LogTargetPlatformManager: Display: Loaded TargetPlatform 'Windows'
+LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsEditor'
+LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsServer'
+LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsClient'
+LogTargetPlatformManager: Display: Building Assets For Windows
+LogAudioDebug: Display: Lib vorbis DLL was dynamically loaded.
+LogObj: Display: Attempting to load config data for Default__SlateThemeManager before the Class has been constructed/registered/linked (likely during module loading or early startup). This will result in the load silently failing and should be fixed.
+LogCsvProfiler: Display: Metadata set : verbatimrhiname="Null"
+LogCsvProfiler: Display: Metadata set : rhiname="Null"
+LogCsvProfiler: Display: Metadata set : rhifeaturelevel="SM6"
+LogCsvProfiler: Display: Metadata set : shaderplatform="PCD3D_SM6"
+LogCsvProfiler: Display: Metadata set : gpu=""
+LogCsvProfiler: Display: Metadata set : gpudriver=""
+LogDerivedDataCache: Display: ../../../Engine/DerivedDataCache/Compressed.ddp: Opened pak cache for reading. (1670 MiB)
+LogZenServiceInstance: Display: Launching zen utility 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/zen.exe service status'.
+LogZenServiceInstance: Display: Writing plugin version info to 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugin_versions.json'
+LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/5.8/Saved/Zen/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+LogZenServiceInstance: Display: Installed service at 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe' is up to date
+LogZenServiceInstance: Display: Launching executable 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe', working dir 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install', data dir 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Data', args '--port 8558 --data-dir C:\Users\g9800x3d\AppData\Local\UnrealEngine\Common\Zen\Data --http asio --gc-cache-duration-seconds 1209600 --gc-interval-seconds 21600 --gc-low-diskspace-threshold 2147483648 --cache-bucket-limit-overwrites --quiet --restrict-content-types --allow-external-oidctoken-exe=false --plugins-config "C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugins_v1.json" --no-sentry --security-config-path "C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/security-config.json" --owner-pid 27948  --child-id Zen_27948_Startup'
+LogZenServiceInstance: Display: Unreal Zen Storage Server HTTP service at http://[::1]:8558 status: OK!.
+LogDerivedDataCache: Display: ZenLocal: Using ZenServer HTTP service at [::1] with namespace ue.ddc. Status: OK!.
+LogDerivedDataCache: Display: C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/DerivedDataCache: Performance: Latency=0.02ms. RandomReadSpeed=1116.34MBs, RandomWriteSpeed=182.76MBs. Assigned SpeedClass 'Local'
+LogUbaHorde: Display: UBA/Horde Configuration [Uba.Provider.Horde]: Not Enabled
+LogShaderCompilers: Display: No distributed shader compiler controller found
+LogShaderCompilers: Display: Using 5 local workers for shader compilation
+LogShaderCompilers: Display: Compiling shader autogen file: ../../../../../../Users/g9800x3d/Desktop/SEIGE/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush
+LogShaderCompilers: Display: Autogen file is unchanged, skipping write.
+LogEditorDomain: Display: EditorDomain is Disabled
+LogAssetRegistry: Display: AssetDataGatherer spent 0.000s loading caches from ../../../../../../Users/g9800x3d/Desktop/SEIGE/Intermediate/CachedAssetRegistry.
+LogDeviceProfileManager: Display: Deviceprofile LinuxArm64Editor not found.
+LogDeviceProfileManager: Display: Deviceprofile LinuxArm64 not found.
+LogCsvProfiler: Display: Metadata set : deviceprofile="WindowsEditor"
+LogStreaming: Display: FlushAsyncLoading(1): 1 QueuedPackages, 0 AsyncPackages
+LogTextureEncodingSettings: Display: Texture Encode Speed: Final (cook).
+LogTextureEncodingSettings: Display: Oodle Texture Encode Speed settings: Fast: RDO Off Lambda=0, Effort=Normal Final: RDO Off Lambda=0, Effort=Normal
+LogTextureEncodingSettings: Display: Shared linear texture encoding: Disabled
+LogMeshReduction: Display: Using QuadricMeshReduction for automatic static mesh reduction
+LogMeshReduction: Display: Using SkeletalMeshReduction for automatic skeletal mesh reduction
+LogMeshReduction: Display: Using ProxyLODMeshReduction for automatic mesh merging
+LogMeshReduction: Display: No distributed automatic mesh merging module available
+LogShaderCompilers: Display: Compiling shader autogen file: ../../../../../../Users/g9800x3d/Desktop/SEIGE/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush
+LogShaderCompilers: Display: Autogen file is unchanged, skipping write.
+LogVirtualization: Display: VirtualizationSystem name found in ini file: None
+LogVirtualization: Display: FNullVirtualizationSystem mounted, virtualization will be disabled
+LogWorldPartition: Display: FWorldPartitionClassDescRegistry::Initialize started...
+LogWorldPartition: Display: FWorldPartitionClassDescRegistry::Initialize took 1.359 ms
+LogMetaSound: Display: MetaSound Page Target Initialized to 'Default'
+LogAudio: Display: Registering Engine Module Parameter Interfaces...
+LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.
+LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.
+LogCsvProfiler: Display: Metadata set : largeworldcoordinates="1"
+LogCsvProfiler: Display: Metadata set : raytracing="0"
+LogCook: Display: CookProcessCount=1. CookMultiprocess is disabled and the cooker is running as a single process.
+LogCook: Display: CookSettings for Memory:
+	MemoryMaxUsedVirtual 0MiB
+	MemoryMaxUsedPhysical 0MiB
+	MemoryMinFreeVirtual 2048MiB
+	MemoryMinFreePhysical 2048MiB
+	MemoryTriggerGCAtPressureLevel None
+	SoftGCMemoryUseTrigger disabled
+	SoftGCTimeBudgetTrigger enabled (0.05 budget, 30s min period)
+LogCook: Display: SkipOnlyEditorOnly is enabled, unsolicited packages will not be cooked unless they are referenced from the cooked version of the instigator package.
+LogCook: Display: ---- Pre Content Initialisation: End ----
+LogCook: Display: ---- Post Content Initialisation: Start ----
+LogEditorDomain: Display: Cycle detected in parents of class /Script/RigVMDeveloper.RigVMUnitNode. Allow flags for editordomain and incremental cooking will be invalid.
+LogZenStore: Display: Establishing oplog 'seige2222.38d972b7/EditorDomain'
+LogZenStore: Display: Zen project 'seige2222.38d972b7' already exists
+LogZenStore: Display: Zen oplog 'seige2222.38d972b7/EditorDomain' already exists
+LogCook: Display: Waiting for Asset Registry
+LogAssetRegistry: Display: Starting OnFilesLoaded.Broadcast
+LogAssetRegistry: Display: Completed OnFilesLoaded.Broadcast: 0.011s
+LogAssetRegistry: Display: Asset registry cache written as 118.8 MiB to ../../../../../../Users/g9800x3d/Desktop/SEIGE/Intermediate/CachedAssetRegistry/CachedAssetRegistry_*.ref
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PostWrite): 1 .ref files found, 1 referenced binaries
+LogAssetRegistry: Display:   CachedAssetRegistry_0_3EBFCD1F44557D98FD241E8E315FB7C0.bin: deleted (orphaned, unreferenced by any .ref)
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 2 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 1 orphans deleted, 0 orphans locked (kept)
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PostWrite): 1 .ref files found, 1 referenced binaries
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 1 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 0 orphans deleted, 0 orphans locked (kept)
+LogCook: Display: INCREMENTAL COOK DEPENDENCIES: Enabled. Incremental Cook Dependencies are enabled in Editor.ini:[CookSettings]:LegacyIterative=false.
+LogZenStore: Display: Establishing oplog 'seige2222.38d972b7/Windows'
+LogZenStore: Display: Zen project 'seige2222.38d972b7' already exists
+LogStorageServerPlatformFile: Display: Found 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/ue.projectstore'
+LogStorageServerPlatformFile: Display: Using connection settings from ue.projectstore: HostAddrs='[::1]+192.168.33.146' and HostPort='8558'
+LogStorageServerPlatformFile: Display: Found 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/ue.projectstore'
+LogStorageServerPlatformFile: Display: Using password authentication from ue.projectstore
+LogStorageServerPlatformFile: Display: Using settings from ue.projectstore: ServerProject='seige2222.38d972b7' and ServerPlatform='Windows'
+LogStorageServerConnection: Display: Creating zen store connection to [::1]:8558 ("::1").
+LogStorageServerConnection: Display: Zen store connection established to [::1]:8558.
+LogCook: Display: CalculateGlobalDependenciesHash(Windows):
+LogCook: Display: 	FGuid CookIncrementalVersion = ffa12fdc-c822-1fe2-7757-627a12f1d3a7
+LogCook: Display: 	[Editor]:CookSettings.ProjectCookIncrementalVersion = 00000000-0000-0000-0000-000000000000
+LogCook: Display: 	[Engine]:Core.System.CanStripEditorOnlyExportsAndImports = True
+LogCook: Display: 	[Engine]:Core.System.CanSkipEditorReferencedPackagesWhenCooking = False
+LogCook: Display: 	CanUseUnversionedPropertySerialization = True
+LogCook: Display: 	[Editor]:CookSettings.AutomaticOptionalInclusionAssetType = /Script/Niagara.NiagaraScript, /Script/Niagara.NiagaraEmitter, /Script/Niagara.NiagaraSystem, /Script/NiagaraEditor.NiagaraParameterDefinitions, /Script/Niagara.NiagaraEffectType, /Script/Niagara.NiagaraValidationRuleSet, /Script/OptimusCore.OptimusDeformer
+LogCook: Display: 	IsCookFlagSet(ECookInitializationFlags::Unversioned) = True
+LogCook: Display: 	FCoreRedirects::AppendHashOfGlobalRedirects = 02c9fd35aac3c00095df0219fc925d7070b41f449d3b97578d818a4016ee6805
+LogCook: Display: 	GlobalDependenciesHash(Windows) = 2de5b37f143f8e25d634acd39f60ca4c07ed1761ed763f60105e89ce30e27192
+LogCook: Display: FULL COOK: Incremental Cooks are disabled by default in Editor.ini:[CookSettings]:CookIncrementalDefaultIncremental=false, and commandline did not specify -forcerecook=false. Deleting previously cooked packages for platform Windows and recooking all packages discovered in the current cook.
+LogZenStore: Display: Deleting oplog 'seige2222.38d972b7/Windows' if it exists
+LogZenStoreWriter: Display: Deleting C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/...
+LogZenStore: Display: Zen oplog 'seige2222.38d972b7/Windows' created
+LogCook: Display: Sandbox cleanup took 0.051 seconds for platforms Windows
+LogCook: Display: Compiling global changed shaders for platform 'Windows'
+LogShaderLibrary: Display:
+LogShaderLibrary: Display: Shader Library 'Global' (PCD3D_SM6-PCD3D_SM6) Stats:
+LogShaderLibrary: Display: =================
+LogShaderLibrary: Display: Assets: 1, Unique Shadermaps: 475 (47500.00%)
+LogShaderLibrary: Display: Total Shaders: 8907, Unique Shaders: 8905 (99.98%)
+LogShaderLibrary: Display: Total Shader Size: 106.51mb, Unique Shaders Size: 106.51mb (100.00%)
+LogShaderLibrary: Display: === Extended info:
+LogShaderLibrary: Display: Minimum number of shaders in shadermap: 1
+LogShaderLibrary: Display: Median number of shaders in shadermap: 3
+LogShaderLibrary: Display: Maximum number of shaders in shadermap: 530
+LogShaderLibrary: Display: Number of shadermaps referencing top 10 most shared shaders:
+LogShaderLibrary: Display:     2, 2, 1, 1, 1, 1, 1, 1, 1, 1
+LogShaderLibrary: Display: Unique shaders itemization (sorted by compressed size):
+LogShaderLibrary: Display: SF_Compute: 6698 shaders (75.22%), compressed size: 83.71 MB (12.80 KB avg per shader), uncompressed size: 110.41 MB (16.88 KB avg per shader)
+LogShaderLibrary: Display: SF_Pixel: 2059 shaders (23.12%), compressed size: 22.40 MB (11.14 KB avg per shader), uncompressed size: 29.43 MB (14.63 KB avg per shader)
+LogShaderLibrary: Display: SF_Vertex: 144 shaders (1.62%), compressed size: 0.38 MB (2.73 KB avg per shader), uncompressed size: 0.48 MB (3.39 KB avg per shader)
+LogShaderLibrary: Display: SF_Geometry: 3 shaders (0.03%), compressed size: 0.01 MB (2.15 KB avg per shader), uncompressed size: 0.01 MB (3.31 KB avg per shader)
+LogShaderLibrary: Display: SF_WorkGraphComputeNode: 1 shaders (0.01%), compressed size: 0.00 MB (2.75 KB avg per shader), uncompressed size: 0.00 MB (3.35 KB avg per shader)
+LogShaderLibrary: Display: Textual dump saved to '../../../../../../Users/g9800x3d/Desktop/SEIGE/Saved/Shaders/PCD3D_SM6-PCD3D_SM6/ShaderDebug-Global-PCD3D_SM6-PCD3D_SM6/Dump.txt'
+LogShaderLibrary: Display: =================
+LogShaderLibrary: Display:
+LogShaderLibrary: Display: Shader Library 'Global' (PCD3D_SM5-PCD3D_SM5) Stats:
+LogShaderLibrary: Display: =================
+LogShaderLibrary: Display: Assets: 1, Unique Shadermaps: 358 (35800.00%)
+LogShaderLibrary: Display: Total Shaders: 4337, Unique Shaders: 4322 (99.65%)
+LogShaderLibrary: Display: Total Shader Size: 12.73mb, Unique Shaders Size: 12.72mb (99.96%)
+LogShaderLibrary: Display: === Extended info:
+LogShaderLibrary: Display: Minimum number of shaders in shadermap: 1
+LogShaderLibrary: Display: Median number of shaders in shadermap: 3
+LogShaderLibrary: Display: Maximum number of shaders in shadermap: 309
+LogShaderLibrary: Display: Number of shadermaps referencing top 10 most shared shaders:
+LogShaderLibrary: Display:     3, 3, 3, 2, 2, 2, 2, 2, 2, 2
+LogShaderLibrary: Display: Unique shaders itemization (sorted by compressed size):
+LogShaderLibrary: Display: SF_Pixel: 1769 shaders (40.93%), compressed size: 6.71 MB (3.88 KB avg per shader), uncompressed size: 31.76 MB (18.39 KB avg per shader)
+LogShaderLibrary: Display: SF_Compute: 2432 shaders (56.27%), compressed size: 5.94 MB (2.50 KB avg per shader), uncompressed size: 22.96 MB (9.67 KB avg per shader)
+LogShaderLibrary: Display: SF_Vertex: 119 shaders (2.75%), compressed size: 0.07 MB (0.61 KB avg per shader), uncompressed size: 0.15 MB (1.32 KB avg per shader)
+LogShaderLibrary: Display: SF_Geometry: 2 shaders (0.05%), compressed size: 0.00 MB (0.49 KB avg per shader), uncompressed size: 0.00 MB (1.55 KB avg per shader)
+LogShaderLibrary: Display: Textual dump saved to '../../../../../../Users/g9800x3d/Desktop/SEIGE/Saved/Shaders/PCD3D_SM5-PCD3D_SM5/ShaderDebug-Global-PCD3D_SM5-PCD3D_SM5/Dump.txt'
+LogShaderLibrary: Display: =================
+LogCook: Display: Discovering localized assets for cultures: en
+LogCook: Display: Found 0 localized assets
+LogCook: Display: ---- Post Content Initialisation: End ----
+LogCook: Display: Cooked packages 0 Packages Remain 853 Total 853
+LogCook: Display: Cook Diagnostics: OpenFileHandles=274, VirtualMemory=1564MiB, VirtualMemoryAvailable=18393MiB
+LogCook: Display: Garbage collection triggered (Soft). Triggered by conditions:
+  CookSettings.SoftGCTimeTrigger: Periodic triggering of SoftGC: No duration data.
+LogCookCommandlet: Display: GarbageCollection... (Periodic GC)
+LogMaterial: Display: Missing cached shadermap for /Game/Art/CompanionDog/M_Coat.M_Coat in PCD3D_SM6, Default, SM6, Game (DDC key hash: e03156df16fbd4c117666b9992fe4c22d94efee9), compiling.
+LogMaterial: Display: Missing cached shadermap for /Game/Art/NatureV07/M_TerrainV07.M_TerrainV07 in PCD3D_SM5, Default, SM5, Game (DDC key hash: 6af8ca664019d573dbd6757b064f1b72a508b04e), compiling.
+LogMaterial: Display: Missing cached shadermap for /Game/Art/M_Terrain.M_Terrain in PCD3D_SM5, Default, SM5, Game (DDC key hash: 8dcc582e621323e810b2c590fcb2e621f8351589), compiling.
+LogMaterial: Display: Missing cached shadermap for /Game/Art/NatureV08/M_TerrainV08.M_TerrainV08 in PCD3D_SM5, Default, SM5, Game (DDC key hash: 66327c560665d4be85cee0758b33245b5fa0521e), compiling.
+LogMaterial: Display: Missing cached shadermap for /Game/Art/CompanionDog/M_Coat.M_Coat in PCD3D_SM5, Default, SM5, Game (DDC key hash: 50999c14e341b66511f6da3e6b8bff50e273d96d), compiling.
+LogCook: Display: Cooked packages 397 Packages Remain 513 Total 910
+LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.8.dll
+LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.11.dll
+LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.12.dll
+LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.15.dll
+LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.13.dll
+LogCook: Display: Cooked packages 907 Packages Remain 3 Total 910
+LogShaderCompilers: Warning: Failed to compile Material /Game/Art/NatureV08/M_TerrainV08.M_TerrainV08 for platform PCD3D_SM5, Default Material will be used in game.
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFCachedVolumeIndirectLightingPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(102,14-41): Shader TBasePassPSFCachedVolumeIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(102,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFNoLightMapPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(87,14-41): Shader TBasePassPSFNoLightMapPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(87,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFCachedPointIndirectLightingPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(99,14-41): Shader TBasePassPSFCachedPointIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(99,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(97,14-41): Shader TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(97,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+
+LogShaderCompilers: Warning: Failed to compile Material /Game/Art/M_Terrain.M_Terrain for platform PCD3D_SM5, Default Material will be used in game.
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_Terrain_2cac2a46ce291801\Default\FLocalVertexFactory\TBasePassPSFCachedVolumeIndirectLightingPolicy\0_1e6e60164d6300f0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(102,14-41): Shader TBasePassPSFCachedVolumeIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(102,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+
+LogShaderCompilers: Warning: Failed to compile Material /Game/Art/NatureV07/M_TerrainV07.M_TerrainV07 for platform PCD3D_SM5, Default Material will be used in game.
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFCachedPointIndirectLightingPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(99,14-41): Shader TBasePassPSFCachedPointIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(99,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFNoLightMapPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(87,14-41): Shader TBasePassPSFNoLightMapPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(87,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFCachedVolumeIndirectLightingPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(102,14-41): Shader TBasePassPSFCachedVolumeIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(102,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(97,14-41): Shader TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(97,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+
+LogMaterial: Warning: Cooking a material resource (in M_TerrainV08 hierarchy) that doesn't have a valid ShaderMap! Shadermap pointer is null.
+LogMaterial: Warning: Cooking a material resource (in M_TerrainV07 hierarchy) that doesn't have a valid ShaderMap! Shadermap pointer is null.
+LogMaterial: Warning: Cooking a material resource (in M_Terrain hierarchy) that doesn't have a valid ShaderMap! Shadermap pointer is null.
+LogCook: Display: Cooked packages 910 Packages Remain 0 Total 910
+LogCook: Display: Cook Diagnostics: OpenFileHandles=5811, VirtualMemory=3030MiB, VirtualMemoryAvailable=16544MiB
+LogCook: Display: ---- Finalisation: Start ----
+LogShaderCompilers: Display: ================================================
+LogShaderCompilers: Display: === FShaderJobCache stats ===
+LogShaderCompilers: Display: Total job queries 67, among them cache hits 5 (7.46%), DDC hits 28 (41.79%), Duplicates 16 (23.88%)
+LogShaderCompilers: Display: Tracking 37 distinct input hashes that result in 19 distinct outputs (51.35%)
+LogShaderCompilers: Display: RAM used: 172.99 KiB of 1.60 GiB budget. Usage: 0.01%
+LogShaderCompilers: Display: === Shader Compilation stats ===
+LogShaderCompilers: Display: Shaders Compiled: 18
+LogShaderCompilers: Display: Jobs assigned 18, completed 18 (100%)
+LogShaderCompilers: Display: Average time worker was idle: 1.65 s
+LogShaderCompilers: Display: Time job spent in pending queue: average 0.04 s, longest 0.07 s
+LogShaderCompilers: Display: Job execution time: average 3.11 s, max 3.28 s
+LogShaderCompilers: Display: Job life time (pending + execution): average 3.15 s, max 3.35
+LogShaderCompilers: Display: Time at least one job was in flight (either pending or executed): 6.32 s
+LogShaderCompilers: Display: Jobs were issued in 6 batches (only local compilation was used), average 3.00 jobs/batch
+LogShaderCompilers: Display: Average processing rate: 2.85 jobs/sec
+LogShaderCompilers: Display: Total thread time: 17.854 s
+LogShaderCompilers: Display: Total thread preprocess time: 0.627 s
+LogShaderCompilers: Display: Percentage time preprocessing: 3.51%
+LogShaderCompilers: Display: Effective parallelization: 2.82 (times faster than compiling all shaders on one thread). Compare with number of workers: 4 - 0.705755
+LogShaderCompilers: Display: Top 5 most expensive shader types by average time:
+LogShaderCompilers: Display:                TBasePassPSFCachedPointIndirectLightingPolicy (compiled    4 times, average 1.05 sec, max 1.29 sec, min 0.94 sec)
+LogShaderCompilers: Display:      TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy (compiled    4 times, average 1.02 sec, max 1.24 sec, min 0.94 sec)
+LogShaderCompilers: Display:               TBasePassPSFCachedVolumeIndirectLightingPolicy (compiled    6 times, average 1.00 sec, max 1.29 sec, min 0.90 sec)
+LogShaderCompilers: Display:                                 TBasePassPSFNoLightMapPolicy (compiled    4 times, average 0.90 sec, max 0.94 sec, min 0.88 sec)
+LogShaderCompilers: Display:                                 TBasePassVSFNoLightMapPolicy (compiled    0 times, average 0.00 sec, max 0.00 sec, min 0.00 sec)
+LogShaderCompilers: Display: Top 5 shader types by total compile time:
+LogShaderCompilers: Display:               TBasePassPSFCachedVolumeIndirectLightingPolicy - 33.53% of total time (compiled    6 times, average 1.00 sec, max 1.29 sec, min 0.90 sec)
+LogShaderCompilers: Display:                TBasePassPSFCachedPointIndirectLightingPolicy - 23.42% of total time (compiled    4 times, average 1.05 sec, max 1.29 sec, min 0.94 sec)
+LogShaderCompilers: Display:      TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy - 22.94% of total time (compiled    4 times, average 1.02 sec, max 1.24 sec, min 0.94 sec)
+LogShaderCompilers: Display:                                 TBasePassPSFNoLightMapPolicy - 20.11% of total time (compiled    4 times, average 0.90 sec, max 0.94 sec, min 0.88 sec)
+LogShaderCompilers: Display:                                 TBasePassVSFNoLightMapPolicy - 0.00% of total time (compiled    0 times, average 0.00 sec, max 0.00 sec, min 0.00 sec)
+LogShaderCompilers: Display: === Material stats ===
+LogShaderCompilers: Display: Materials Cooked:        233
+LogShaderCompilers: Display: Materials Translated:    5
+LogShaderCompilers: Display: Material Total Translate Time: 0.00 s
+LogShaderCompilers: Display: Material Translation Only: 0.00 s (72%)
+LogShaderCompilers: Display: Material DDC Serialization Only: 0.00 s (0%)
+LogShaderCompilers: Display: Material Cache Hits: 0 (0%)
+LogShaderCompilers: Display: ================================================
+LogCook: Display: CookArtifact 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/seige2222/Metadata/ValidationCookArtifact.json' saved.
+LogAssetRegistryGenerator: Display: Saving asset registry v24.
+LogAssetRegistryGenerator: Display: Generated development asset registry C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/seige2222/Metadata/DevelopmentAssetRegistry.bin num assets 913, size is 753.87kb, XxHash64[LE] = 0xBEBAE04324F97216, waited on hash 0.00 seconds
+LogAssetRegistryGenerator: Display: Generated asset registry num assets 906, size is 286.71kb
+LogShaderLibrary: Display:
+LogShaderLibrary: Display: Shader Library 'seige2222' (PCD3D_SM6-PCD3D_SM6) Stats:
+LogShaderLibrary: Display: =================
+LogShaderLibrary: Display: Assets: 152, Unique Shadermaps: 135 (88.82%)
+LogShaderLibrary: Display: Total Shaders: 3422, Unique Shaders: 2485 (72.62%)
+LogShaderLibrary: Display: Total Shader Size: 30.86mb, Unique Shaders Size: 25.05mb (81.17%)
+LogShaderLibrary: Display: === Extended info:
+LogShaderLibrary: Display: Minimum number of shaders in shadermap: 1
+LogShaderLibrary: Display: Median number of shaders in shadermap: 13
+LogShaderLibrary: Display: Maximum number of shaders in shadermap: 980
+LogShaderLibrary: Display: Number of shadermaps referencing top 10 most shared shaders:
+LogShaderLibrary: Display:     35, 26, 26, 25, 24, 22, 17, 17, 16, 16
+LogShaderLibrary: Display: Unique shaders itemization (sorted by compressed size):
+LogShaderLibrary: Display: SF_Compute: 580 shaders (23.34%), compressed size: 9.95 MB (17.57 KB avg per shader), uncompressed size: 13.29 MB (23.46 KB avg per shader)
+LogShaderLibrary: Display: SF_Pixel: 1180 shaders (47.48%), compressed size: 9.71 MB (8.42 KB avg per shader), uncompressed size: 12.78 MB (11.09 KB avg per shader)
+LogShaderLibrary: Display: SF_Vertex: 602 shaders (24.23%), compressed size: 4.24 MB (7.22 KB avg per shader), uncompressed size: 5.61 MB (9.54 KB avg per shader)
+LogShaderLibrary: Display: SF_Mesh: 121 shaders (4.87%), compressed size: 1.14 MB (9.64 KB avg per shader), uncompressed size: 1.38 MB (11.66 KB avg per shader)
+LogShaderLibrary: Display: SF_Geometry: 2 shaders (0.08%), compressed size: 0.01 MB (5.53 KB avg per shader), uncompressed size: 0.02 MB (7.81 KB avg per shader)
+LogShaderLibrary: Display: Textual dump saved to '../../../../../../Users/g9800x3d/Desktop/SEIGE/Saved/Shaders/PCD3D_SM6-PCD3D_SM6/ShaderDebug-seige2222-PCD3D_SM6-PCD3D_SM6/Dump.txt'
+LogShaderLibrary: Display: =================
+LogShaderLibrary: Display:
+LogShaderLibrary: Display: Shader Library 'seige2222' (PCD3D_SM5-PCD3D_SM5) Stats:
+LogShaderLibrary: Display: =================
+LogShaderLibrary: Display: Assets: 149, Unique Shadermaps: 131 (87.92%)
+LogShaderLibrary: Display: Total Shaders: 2255, Unique Shaders: 1507 (66.83%)
+LogShaderLibrary: Display: Total Shader Size: 6.43mb, Unique Shaders Size: 4.80mb (74.61%)
+LogShaderLibrary: Display: === Extended info:
+LogShaderLibrary: Display: Minimum number of shaders in shadermap: 1
+LogShaderLibrary: Display: Median number of shaders in shadermap: 9
+LogShaderLibrary: Display: Maximum number of shaders in shadermap: 476
+LogShaderLibrary: Display: Number of shadermaps referencing top 10 most shared shaders:
+LogShaderLibrary: Display:     25, 25, 25, 24, 21, 16, 16, 15, 15, 14
+LogShaderLibrary: Display: Unique shaders itemization (sorted by compressed size):
+LogShaderLibrary: Display: SF_Pixel: 891 shaders (59.12%), compressed size: 2.70 MB (3.10 KB avg per shader), uncompressed size: 9.56 MB (10.98 KB avg per shader)
+LogShaderLibrary: Display: SF_Vertex: 500 shaders (33.18%), compressed size: 1.27 MB (2.59 KB avg per shader), uncompressed size: 3.83 MB (7.83 KB avg per shader)
+LogShaderLibrary: Display: SF_Compute: 114 shaders (7.56%), compressed size: 0.83 MB (7.46 KB avg per shader), uncompressed size: 3.66 MB (32.87 KB avg per shader)
+LogShaderLibrary: Display: SF_Geometry: 2 shaders (0.13%), compressed size: 0.00 MB (1.75 KB avg per shader), uncompressed size: 0.01 MB (5.60 KB avg per shader)
+LogShaderLibrary: Display: Textual dump saved to '../../../../../../Users/g9800x3d/Desktop/SEIGE/Saved/Shaders/PCD3D_SM5-PCD3D_SM5/ShaderDebug-seige2222-PCD3D_SM5-PCD3D_SM5/Dump.txt'
+LogShaderLibrary: Display: =================
+LogCook: Display: Dependent plugin "SteamShared" referenced by "EOS Shared" wasn't found in enabled plugins list when creating cook metadata file... skipping
+LogCook: Display: Dependent plugin "UAF" referenced by "IK Rig" wasn't found in enabled plugins list when creating cook metadata file... skipping
+LogCook: Display: Dependent plugin "UAFAnimGraph" referenced by "IK Rig" wasn't found in enabled plugins list when creating cook metadata file... skipping
+LogCook: Display: Finalize package store(s)...
+LogZenStoreWriter: Display: Flushing...
+LogZenStoreWriter: Display: Saving Zen filesystem manifest 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/seige2222/Metadata/zenfs.manifest'
+LogZenStoreWriter: Display: Output:	48666 Public runtime script objects
+LogCook: Display: Cook by the book total time in tick 9.853083s total time 12.715885
+LogCook: Display: Peak Used virtual 3181 MiB Peak Used physical 3290 MiB
+LogCook: Display: Packages Cooked: 903, Packages Incrementally Skipped: 0, Packages Skipped by Platform: 7, Total Packages: 910
+LogCookStats: Display: Hierarchy Timer Information:
+LogCookStats: Display:   Root: 0.000s (0)
+LogCookStats: Display:     CleanSandbox: 0.051s (1)
+LogCookStats: Display:     CollectFilesToCook: 0.007s (1)
+LogCookStats: Display:       CookModificationDelegate: 0.000s (1)
+LogCookStats: Display:     GenerateLongPackageName: 0.001s (1)
+LogCookStats: Display:     TickMainCookLoop: 9.853s (2)
+LogCookStats: Display:       PumpPollables: 0.001s (3)
+LogCookStats: Display:       PumpRequests: 0.014s (29)
+LogCookStats: Display:       LoadPackageForCooking: 0.743s (4090)
+LogCookStats: Display:       ValidateSourcePackage: 0.000s (910)
+LogCookStats: Display:       SavingPackages: 5.337s (469)
+LogCookStats: Display:         PollPendingCookedPlatformDatas: 3.089s (6642)
+LogCookStats: Display:         PrepareSave: 0.348s (5830)
+LogCookStats: Display:         PrecachePlatformDataForNextPackage: 0.522s (909)
+LogCookStats: Display:           PrepareSave: 0.521s (1125)
+LogCookStats: Display:         SaveCookedPackage: 1.351s (910)
+LogCookStats: Display:           GEditorSavePackage: 1.221s (910)
+LogCookStats: Display:             VerifyCanCookPackage: 0.002s (903)
+LogCookStats: Display:           TargetDomainDependencies: 0.082s (910)
+LogCookStats: Display:         ClearAllCachedCookedPlatformData: 0.019s (910)
+LogCookStats: Display:       PostLoadPackageFixup: 0.000s (2)
+LogCookStats: Display:       WaitForAsync: 3.577s (224015)
+LogCookStats: Display:     CookByTheBookFinished: 0.256s (1)
+LogCookStats: Display:       SavingCurrentIniSettings: 0.021s (1)
+LogCookStats: Display:         ProcessingAccessedStrings: 0.002s (1)
+LogCookStats: Display:       ChunkGeneration: 0.007s (1)
+LogCookStats: Display:       FinishPopulateShaderLibrary: 0.000s (1)
+LogCookStats: Display:       CalculateReferencedSet: 0.000s (1)
+LogCookStats: Display:       CookArtifacts.UpdateOplogPackages: 0.002s (1)
+LogCookStats: Display:       PruneShaderLibrary: 0.001s (1)
+LogCookStats: Display:       GeneratorPreSave: 0.000s (1)
+LogCookStats: Display:       BuildChunkManifest: 0.008s (1)
+LogCookStats: Display:         FixupPackageDependenciesForChunks: 0.004s (1)
+LogCookStats: Display:       SaveManifests: 0.000s (1)
+LogCookStats: Display:       SaveAssetRegistry: 0.025s (1)
+LogCookStats: Display:       WriteCookerOpenOrder: 0.002s (1)
+LogCookStats: Display:       WriteCookMetadata: 0.001s (1)
+LogCookStats: Display:       WriteReferencedSet: 0.001s (1)
+LogCookStats: Display:       FinalizePackageStore: 0.101s (1)
+LogCookStats: Display: Misc Cook Stats
+LogCookStats: Display: ===============
+LogCookStats: Display: Validation
+LogCookStats: Display:     Stats=[]
+LogCookStats: Display: Niagara
+LogCookStats: Display:     NiagaraScriptTranslationCount=0
+LogCookStats: Display:     NiagaraCpuScriptCompileCount=0
+LogCookStats: Display:     NiagaraCpuScriptDdcCacheHitCount=0
+LogCookStats: Display:     NiagaraCpuScriptDdcCacheMissCount=0
+LogCookStats: Display:     NiagaraGpuScriptCompileCount=0
+LogCookStats: Display:     NiagaraGpuScriptDdcCacheHitCount=0
+LogCookStats: Display:     NiagaraGpuScriptDdcCacheMissCount=0
+LogCookStats: Display:     NiagaraSystemWaitForCompilationCompleteTime=0.000000
+LogCookStats: Display: ComputeKernelShader.Misc
+LogCookStats: Display:     ShadersCompiled=0
+LogCookStats: Display: NiagaraShader.Misc
+LogCookStats: Display:     ShadersCompiled=0
+LogCookStats: Display: ShaderCompiler
+LogCookStats: Display:     BlockingTimeSec=2.996219
+LogCookStats: Display:     AsyncCompileTimeSec=18.652525
+LogCookStats: Display:     GlobalBeginCompileShaderTimeSec=0.002588
+LogCookStats: Display:     GlobalBeginCompileShaderCalls=58
+LogCookStats: Display:     ProcessAsyncResultsTimeSec=3.003177
+LogCookStats: Display: GlobalShader.Misc
+LogCookStats: Display:     ShadersCompiled=0
+LogCookStats: Display: Material
+LogCookStats: Display:     FinishCacheShadersSec=0.232195
+LogCookStats: Display: Cook.Profile.Params
+LogCookStats: Display:     CookProject=seige2222
+LogCookStats: Display:     CookCultures=
+LogCookStats: Display:     CookLabel=
+LogCookStats: Display:     TargetPlatforms=Windows
+LogCookStats: Display:     IsCookAll=false
+LogCookStats: Display:     IsCookOnTheFly=false
+LogCookStats: Display:     IsIncrementalCook=false
+LogCookStats: Display:     IsIterativeCook=false
+LogCookStats: Display:     IsFastCook=false
+LogCookStats: Display:     IsUnversioned=true
+LogCookStats: Display: CookOnTheFlyServer.Package.Load
+LogCookStats: Display:     NumRequestedLoads=3506
+LogCookStats: Display:     NumPackagesLoaded=3723
+LogCookStats: Display:     NumInlineLoads=217
+LogCookStats: Display: CookOnTheFlyServer.Package.Save
+LogCookStats: Display:     NumPackagesIncrementallySkipped=0
+LogCookStats: Display: CookOnTheFlyServer.QueueSize
+LogCookStats: Display:     PeakRequest=909
+LogCookStats: Display:     PeakLoad=64
+LogCookStats: Display:     PeakSave=136
+LogCookStats: Display: Package.Load
+LogCookStats: Display:     LoadPackageTimeSec=0.852105
+LogCookStats: Display: Package.Save
+LogCookStats: Display:     NumPackagesSaved=910
+LogCookStats: Display:     SavePackageTimeSec=1.208053
+LogCookStats: Display:     TagPackageExportsPresaveTimeSec=0.000000
+LogCookStats: Display:     TagPackageExportsTimeSec=0.000000
+LogCookStats: Display:     FullyLoadLoadersTimeSec=0.000000
+LogCookStats: Display:     ResetLoadersTimeSec=0.000000
+LogCookStats: Display:     TagPackageExportsGetObjectsWithOuter=0.000000
+LogCookStats: Display:     TagPackageExportsGetObjectsWithMarks=0.000000
+LogCookStats: Display:     SerializeImportsTimeSec=0.000000
+LogCookStats: Display:     SortExportsSeekfreeInnerTimeSec=0.000000
+LogCookStats: Display:     SerializeExportsTimeSec=0.000000
+LogCookStats: Display:     SerializeBulkDataTimeSec=0.004434
+LogCookStats: Display:     AsyncWriteTimeSec=0.000000
+LogCookStats: Display:     MBWritten=0.000000
+LogCookStats: Display: Package.DifferentPackagesSizeMBPerAsset
+LogCookStats: Display: Package.NumberOfDifferencesInPackagesPerAsset
+LogCookStats: Display: Package.PackageDifferencesSizeMBPerAsset
+LogCookStats: Display: Package.DiffTotal
+LogCookStats: Display:     NumberOfDifferentPackages=0
+LogCookStats: Display:     DifferentPackagesSizeMB=0.000000
+LogCookStats: Display:     NumberOfDifferencesInPackages=0
+LogCookStats: Display:     PackageDifferencesSizeMB=0.000000
+LogCookStats: Display: UnversionedProperties
+LogCookStats: Display:     SavedStructs=0
+LogCookStats: Display:     SavedMB=0
+LogCookStats: Display:     EquivalentTaggedMB=0
+LogCookStats: Display:     CompressionRatio=-nan(ind)
+LogCookStats: Display:     BitfieldWasteKB=0
+LogCookStats: Display:
+LogCookStats: Display: Cook Profile
+LogCookStats: Display: ============
+LogCookStats: Display:  0.CookWallTimeSec=18.224532
+LogCookStats: Display:  0. 0.StartupWallTimeSec=5.422494
+LogCookStats: Display:  0. 1.CookProcessingTime=12.802039
+LogCookStats: Display:  0. 1. 1.StartCookByTheBookTimeSec=2.676773
+LogCookStats: Display:  0. 1. 1. 0.BlockOnAssetRegistryTimeSec=0.896514
+LogCookStats: Display:  0. 1. 1. 1.GameCookModificationDelegateTimeSec=0.000059
+LogCookStats: Display:  0. 1. 2.TickCookOnTheSideTimeSec=0.164707
+LogCookStats: Display:  0. 1. 2. 0.TickCookOnTheSideLoadPackagesTimeSec=0.743169
+LogCookStats: Display:  0. 1. 2. 1.TickCookOnTheSideSaveCookedPackageTimeSec=1.351477
+LogCookStats: Display:  0. 1. 2. 1. 0.TickCookOnTheSideResolveRedirectorsTimeSec=0.000000
+LogCookStats: Display:  0. 1. 2. 2.TickCookOnTheSidePrepareSaveTimeSec=0.869257
+LogCookStats: Display:  0. 1. 3.TickLoopGCTimeSec=0.012019
+LogCookStats: Display:  0. 1. 4.TickLoopRecompileShaderRequestsTimeSec=0.000000
+LogCookStats: Display:  0. 1. 5.TickLoopShaderProcessAsyncResultsTimeSec=0.000006
+LogCookStats: Display:  0. 1. 6.TickLoopProcessDeferredCommandsTimeSec=0.000002
+LogCookStats: Display:  0. 1. 7.TickLoopTickCommandletStatsTimeSec=0.000001
+LogCookStats: Display:  0. 1. 8.TickLoopFlushRenderingCommandsTimeSec=0.001403
+LogCookStats: Display:  0. 1. 9.ShaderFlushTimeSec=0.000000
+LogCookStats: Display:  0. 1. 10.ValidationTimeSec=0.000109
+LogCookStats: Display:
+LogCookStats: Display: DDC Summary Stats
+LogCookStats: Display: =================
+LogCookStats: Display: BackEnd         = Installed
+LogCookStats: Display: HasLocalCache   =      true
+LogCookStats: Display: HasSharedCache  =     false
+LogCookStats: Display: HasCloudCache   =     false
+LogCookStats: Display: HasZenCache     =      true
+LogCookStats: Display: TotalGetHits    =      6148
+LogCookStats: Display: TotalGetMisses  =        41
+LogCookStats: Display: TotalGets       =      6189
+LogCookStats: Display: TotalGetHitPct  =  0.993375
+LogCookStats: Display: GetMissPct      =  0.006625
+LogCookStats: Display: TotalPutHits    =        20
+LogCookStats: Display: TotalPutMisses  =         0
+LogCookStats: Display: TotalPuts       =        20
+LogCookStats: Display: TotalPutHitPct  =  1.000000
+LogCookStats: Display: PutMissPct      =  0.000000
+LogCookStats: Display: LocalGetHits    =      4823
+LogCookStats: Display: LocalGetMisses  =        41
+LogCookStats: Display: LocalGetTotal   =      4864
+LogCookStats: Display: LocalGetHitPct  =  0.991571
+LogCookStats: Display: SharedGetHits   =         0
+LogCookStats: Display: SharedGetTotal  =         0
+LogCookStats: Display: SharedGetHitPct =  0.000000
+LogCookStats: Display: ZenLocalGetHits =      4823
+LogCookStats: Display: ZenLocalGetTotal=      4864
+LogCookStats: Display: ZenLocalGetHitPct=  0.991571
+LogCookStats: Display: ZenRemoteGetHits=         0
+LogCookStats: Display: ZenRemoteGetTotal=         0
+LogCookStats: Display: ZenRemoteGetHitPct=  0.000000
+LogCookStats: Display: ZenRemoteReadSpeed=  0.000000
+LogCookStats: Display: ZenRemoteWriteSpeed=  0.000000
+LogCookStats: Display: ZenRemoteLatency=  0.000000
+LogCookStats: Display: CloudGetHits    =         0
+LogCookStats: Display: CloudGetTotal   =         0
+LogCookStats: Display: CloudGetHitPct  =  0.000000
+LogCookStats: Display: LocalLatency    =  0.193348
+LogCookStats: Display: LocalReadSpeed  =587.269626
+LogCookStats: Display: LocalWriteSpeed =  0.812006
+LogCookStats: Display: SharedLatency   =  0.000000
+LogCookStats: Display: SharedReadSpeed =  0.000000
+LogCookStats: Display: SharedWriteSpeed=  0.000000
+LogCookStats: Display: CloudLatency    =  0.000000
+LogCookStats: Display: CloudReadSpeed  =  0.000000
+LogCookStats: Display: CloudWriteSpeed =  0.000000
+LogCookStats: Display:
+LogCookStats: Display: DDC Resource Stats
+LogCookStats: Display: =======================================================================================================
+LogCookStats: Display: Asset Type                          Total Time (Sec)  GameThread Time (Sec)  Assets Built  MB Processed
+LogCookStats: Display: ----------------------------------  ----------------  ---------------------  ------------  ------------
+LogCookStats: Display: BulkDataList                                    0.82                   0.00            17          0.59
+LogCookStats: Display: MaterialShader                                  0.58                   0.36             2         41.94
+LogCookStats: Display: Texture                                         0.39                   0.00             0        213.40
+LogCookStats: Display: GlobalShader                                    0.27                   0.10             0        119.48
+LogCookStats: Display: Shader                                          0.17                   0.00             0          0.17
+LogCookStats: Display: NavCollision                                    0.06                   0.00             0          0.06
+LogCookStats: Display: StaticMesh                                      0.05                   0.00             0        274.56
+LogCookStats: Display: DistanceField                                   0.04                   0.00             0         30.44
+LogCookStats: Display: CardRepresentation                              0.03                   0.00             0          0.05
+LogCookStats: Display: BodySetup                                       0.03                   0.00             0         27.19
+LogCookStats: Display: STREAMEDAUDIO                                   0.01                   0.00             0          0.12
+LogCookStats: Display: Audio                                           0.00                   0.00             0          0.11
+LogCookStats: Display: SkeletalMesh                                    0.00                   0.00             0          5.15
+LogCookStats: Display: MaterialTranslation                             0.00                   0.00             1          0.00
+LogCookStats: Display: AnimationSequence                               0.00                   0.00             0          0.01
+LogCookStats: Display: CKERSM                                          0.00                   0.00             0          0.16
+LogCookStats: Display:
+LogCookStats: Display: Accumulated DDC Resource Stats Per Asset Type
+LogCookStats: Display: =======================================================================================================
+LogCookStats: Display: AnimationSequence                               0.00                   0.00             0          0.01
+LogCookStats: Display: Audio                                           0.00                   0.00             0          0.11
+LogCookStats: Display: CardRepresentation                              0.03                   0.00             0          0.05
+LogCookStats: Display: DistanceField                                   0.04                   0.00             0         30.44
+LogCookStats: Display: MaterialShader                                  0.58                   0.36             2         41.94
+LogCookStats: Display: MaterialTranslation                             0.00                   0.00             1          0.00
+LogCookStats: Display: NiagaraScript                                   0.00                   0.00             0          0.00
+LogCookStats: Display: SkeletalMesh                                    0.00                   0.00             0          5.15
+LogCookStats: Display: StaticMesh                                      0.05                   0.00             0        274.56
+LogCookStats: Display: Texture                                         0.39                   0.00             0        213.40
+LogCookStats: Display: Other                                           1.36                   0.10            17        147.79
+LogPackageBuildDependencyTracker: Display: Package Accesses (425 referencing packages with a total of 3686 unique accesses)
+LogConfigBuildDependencyTracker: Display: Config Accesses (614 referencing packages with a total of 1268 unique accesses). 1916 unique accesses that were not associated with a package.
+LogCook: Display: ---- Finalisation: End ----
+LogCook: Display: Done!
+LogSavePackage: Display: Took 0.000500s to verify the EDL loading graph.
+LogInit: Display:
+LogInit: Display: Warning/Error Summary (Unique only)
+LogInit: Display: -----------------------------------
+LogInit: Display: LogShaderCompilers: Warning: Failed to compile Material /Game/Art/NatureV08/M_TerrainV08.M_TerrainV08 for platform PCD3D_SM5, Default Material will be used in game.
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFCachedVolumeIndirectLightingPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(102,14-41): Shader TBasePassPSFCachedVolumeIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(102,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFNoLightMapPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(87,14-41): Shader TBasePassPSFNoLightMapPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(87,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFCachedPointIndirectLightingPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(99,14-41): Shader TBasePassPSFCachedPointIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(99,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV08_b070624cfb2a5ce\Default\FLocalVertexFactory\TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy\0_852abf0e4b4bd739"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(97,14-41): Shader TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(97,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+
+LogInit: Display: LogShaderCompilers: Warning: Failed to compile Material /Game/Art/M_Terrain.M_Terrain for platform PCD3D_SM5, Default Material will be used in game.
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_Terrain_2cac2a46ce291801\Default\FLocalVertexFactory\TBasePassPSFCachedVolumeIndirectLightingPolicy\0_1e6e60164d6300f0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(102,14-41): Shader TBasePassPSFCachedVolumeIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(102,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+
+LogInit: Display: LogShaderCompilers: Warning: Failed to compile Material /Game/Art/NatureV07/M_TerrainV07.M_TerrainV07 for platform PCD3D_SM5, Default Material will be used in game.
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFCachedPointIndirectLightingPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(99,14-41): Shader TBasePassPSFCachedPointIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(99,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFNoLightMapPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(87,14-41): Shader TBasePassPSFNoLightMapPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(87,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFCachedVolumeIndirectLightingPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(102,14-41): Shader TBasePassPSFCachedVolumeIndirectLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(102,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+Shader debug info dumped to: "C:\Users\g9800x3d\Desktop\SEIGE\Saved\ShaderDebugInfo\PCD3D_SM5\M_TerrainV07_f1488458d2e42cde\Default\FLocalVertexFactory\TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy\0_73e3724740cc43c0"
+
+C:\Program Files\Epic Games\UE_5.8\Engine\Shaders\Private\BasePassPixelShader.intermediate.usf(97,14-41): Shader TBasePassPSFPrecomputedVolumetricLightmapLightingPolicy, Permutation 0, VF FLocalVertexFactory:
+	/Engine/Private/BasePassPixelShader.intermediate.usf(97,14-41):  error X4510: maximum ps_5_0 sampler register index (16) exceeded
+
+LogInit: Display: LogMaterial: Warning: Cooking a material resource (in M_TerrainV08 hierarchy) that doesn't have a valid ShaderMap! Shadermap pointer is null.
+LogInit: Display: LogMaterial: Warning: Cooking a material resource (in M_TerrainV07 hierarchy) that doesn't have a valid ShaderMap! Shadermap pointer is null.
+LogInit: Display: LogMaterial: Warning: Cooking a material resource (in M_Terrain hierarchy) that doesn't have a valid ShaderMap! Shadermap pointer is null.
+LogInit: Display:
+LogInit: Display: Success - 0 error(s), 6 warning(s)
+LogInit: Display:
+
+Execution of commandlet took:  12.80 seconds, PeakPhysMemoryMB=3290 MB, PeakVirtMemoryMB=3181 MB
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PostWrite): 1 .ref files found, 1 referenced binaries
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 1 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 0 orphans deleted, 0 orphans locked (kept)
+LogStreaming: Display: ============ Loader Stats ============
+LogStreaming: Display: Unique Partial Flushes: 0
+LogStreaming: Display: ============ Loader Stats End ============
+LogShaderCompilers: Display: Exiting ShaderCompilingThread
+Took 19.33s to run UnrealEditor-Cmd.exe, ExitCode=0
+Cook command time: 19.37 s
+********** COOK COMMAND COMPLETED **********
+********** STAGE COMMAND STARTED **********
+Creating Staging Manifest...
+Patching bootstrap executable; C:\Users\g9800x3d\Desktop\SEIGE\Intermediate\Staging\Seige.exe
+Begin update resource 'C:\Users\g9800x3d\Desktop\SEIGE\Intermediate\Staging\Seige.exe' (0)
+Add resource 101, length 104 (True)
+Add resource 1, length 1996 (True)
+Add resource 2, length 2447 (True)
+Add resource 3, length 2535 (True)
+Add resource 4, length 3037 (True)
+Add resource 5, length 3244 (True)
+Add resource 6, length 3531 (True)
+Add resource 7, length 6931 (True)
+Add resource 201, length 100 (True)
+Add resource 202, length 20 (True)
+Add resource 205, length 2 (True)
+End update resource (True/0)
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\PortableObjectExport.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\Category.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\Editor.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\Engine.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\Keywords.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseEditor.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseEditorKeyBindings.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseEditorPerProjectUserSettings.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\PortableObjectImport.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\PropertyNames.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\RepairData.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseEditorSettings.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\ToolTips.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseSourceControlSettings.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseLightmass.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Localization\WordCount.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\WindowsEditorPerProjectUserSettings.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseUnrealInsightsSettings.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BasePakFileRules.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\WindowsEditorSettings.ini
+Excluding config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\ConsoleVariables.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Layouts\DefaultLayout.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\PluginBase.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\ConfigRedirects.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\BaseWindowsInput.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\BaseWindowsGame.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\BaseWindowsEngine.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\VulkanPC\DataDrivenPlatformInfo.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseInput.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseHardware.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseGameUserSettings.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseGame.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseEngine.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseScalability.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseRuntimeOptions.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseMaterialExpressions.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseInstallBundle.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\WindowsInput.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\WindowsGame.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Windows\DataDrivenPlatformInfo.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseDeviceProfiles.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\BaseCompat.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Base.ini
+Including config file C:\Program Files\Epic Games\UE_5.8\Engine\Config\Layouts\UE4ClassicLayout.ini
+Excluding config file C:\Users\g9800x3d\Desktop\SEIGE\Config\DefaultEditor.ini
+Excluding config file C:\Users\g9800x3d\Desktop\SEIGE\Config\DefaultEditorSettings.ini
+Including config file C:\Users\g9800x3d\Desktop\SEIGE\Config\DefaultGameUserSettings.ini
+Including config file C:\Users\g9800x3d\Desktop\SEIGE\Config\DefaultEngine.ini
+Including config file C:\Users\g9800x3d\Desktop\SEIGE\Config\DefaultInput.ini
+Including config file C:\Users\g9800x3d\Desktop\SEIGE\Config\DefaultGame.ini
+Reading oplog from Zen...
+Reading oplog from http://[::1]:8558/prj/seige2222.38d972b7/oplog/Windows/entries?trim_by_referencedset=true
+Parsed 905 package entries from oplog.
+Cleaning Stage Directory: C:\Users\g9800x3d\Desktop\SEIGE\Saved\StagedBuilds\Windows
+Creating pak using staging manifest.
+DumpManifest: C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\PrePak_Windows_NonUFSFiles.txt, NumItems: 45
+DumpManifest: C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\PrePak_Windows_NonUFSFilesDebug.txt, NumItems: 3
+DumpManifest: C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\PrePak_Windows_UFSFiles.txt, NumItems: 2937
+No matching platform for PakFileRules for Section ExcludeContentForMobile : Windows
+Using 0 pak order files:
+Running UnrealPak with arguments: "C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject"  -cryptokeys="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\seige2222\Metadata\Crypto.json" -unattended -patchpaddingalign=2048 -compressionformats=Oodle -compresslevel=4 -compressmethod=Kraken  -ProjectStore="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\ue.projectstore" -platform=Windows  -CreateMultiple="C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\PakCommands.txt"
+Running: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealPak.exe "C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject"  -cryptokeys="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\seige2222\Metadata\Crypto.json" -unattended -patchpaddingalign=2048 -compressionformats=Oodle -compresslevel=4 -compressmethod=Kraken  -ProjectStore="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\ue.projectstore" -platform=Windows  -CreateMultiple="C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\PakCommands.txt"
+OodleDataCompression: Display: Oodle v2.9.16 format for pak/iostore with method=Kraken, level=4=Normal
+LogStreaming: Display: AsyncLoading2 - Created: Async Loading Thread: false, Async Post Load: false, Multithreaded: false
+LogPakFile: Display: ProjectDir: ../../../../../../Users/g9800x3d/Desktop/SEIGE/
+LogPakFile: Display: Parsing crypto keys from a crypto key cache file
+LogPakFile: Display: CompressionFormats in priority order: Oodle, Zlib
+LogZenServiceInstance: Display: Launching zen utility 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/zen.exe service status'.
+LogZenServiceInstance: Display: Writing plugin version info to 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugin_versions.json'
+LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/5.8/Saved/Zen/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+LogZenServiceInstance: Display: Installed service at 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe' is up to date
+LogZenServiceInstance: Warning: Failed attach as sponsor process to executable 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe' on port 8558, too many sponsored processes attached already or zenserver is unresponsive
+LogZenServiceInstance: Display: Launching executable 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe', working dir 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install', data dir 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Data', args '--port 8558 --data-dir C:\Users\g9800x3d\AppData\Local\UnrealEngine\Common\Zen\Data --http asio --gc-cache-duration-seconds 1209600 --gc-interval-seconds 21600 --gc-low-diskspace-threshold 2147483648 --cache-bucket-limit-overwrites --quiet --restrict-content-types --allow-external-oidctoken-exe=false --plugins-config "C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugins_v1.json" --no-sentry --security-config-path "C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/security-config.json" --owner-pid 21824  --child-id Zen_21824_Startup'
+LogZenServiceInstance: Display: Unreal Zen Storage Server HTTP service at http://[::1]:8558 status: OK!.
+LogZenStore: Display: Opening oplog seige2222.38d972b7 / Windows
+LogIoStore: Display: Fetched 906 oplog items from Zen in 3.32 seconds
+LogIoStore: Display: Parsed 906 oplog items 0.00 seconds, 4072 chunks
+LogIoStore: Display: Loaded 1205 chunk hashes from Zen in 0.01 seconds, 1205 hashes updated in 0.00 seconds
+LogPakFile: Display: Oodle enabled on 'NoPluginCompression' files
+LogPakFile: Display: Loading response file C:\Program Files\Epic Games\UE_5.8\Engine\Programs\AutomationTool\Saved\ResponseFiles\PakList_seige2222-Windows.txt
+LogPakFile: Display: Added 1728 entries to add to pak file.
+LogPakFile: Display: Collecting files to add to pak file...
+LogPakFile: Display: Collected 1728 files in 0.00s.
+LogPakFile: Display: Creating pak C:/Users/g9800x3d/Desktop/SEIGE/Saved/StagedBuilds/Windows/seige2222/Content/Paks/seige2222-Windows.pak.
+LogPakFile: Display: Created pak file: C:/Users/g9800x3d/Desktop/SEIGE/Saved/StagedBuilds/Windows/seige2222/Content/Paks/seige2222-Windows.pak
+LogPakFile: Display: CompressionFormat 0 [Oodle] : 401 files, 28186817 -> 9798987 bytes
+LogPakFile: Display: CompressionFormat 2 [None] : 1327 files, 778958 -> 778958 bytes
+LogPakFile: Display: Added 1728 files, 11244862 bytes total
+LogPakFile: Display: PrimaryIndex size: 24086 bytes
+LogPakFile: Display: PathHashIndex size: 53498 bytes
+LogPakFile: Display: FullDirectoryIndex size: 56866 bytes
+LogPakFile: Display: Compression summary: 34.76% of original size. Compressed Size 9798987 bytes, Original Size 28186817 bytes.
+LogPakFile: Display: Encryption - DISABLED
+LogPakFile: Display:
+LogPakFile: Display: Writer and Compression Threads exited.
+LogPakFile: Display: UnrealPak executed in 3.428222 seconds
+Took 3.61s to run UnrealPak.exe, ExitCode=0
+Running UnrealPak with arguments: "C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject" C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject -CreateGlobalContainer="C:\Users\g9800x3d\Desktop\SEIGE\Saved\StagedBuilds\Windows\seige2222\Content\Paks\global.utoc" -ProjectStore="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\ue.projectstore" -CookedDirectory="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows" -Commands="C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\IoStoreCommands.txt" -patchpaddingalign=2048 -compressionformats=Oodle -compresslevel=4 -compressmethod=Kraken   -cryptokeys="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\seige2222\Metadata\Crypto.json" -compressionMinBytesSaved=1024 -compressionMinPercentSaved=5 -WriteBackMetadataToAssetRegistry=Disabled -platform=Windows  -unattended
+Running: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealPak.exe "C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject" C:\Users\g9800x3d\Desktop\SEIGE\seige2222.uproject -CreateGlobalContainer="C:\Users\g9800x3d\Desktop\SEIGE\Saved\StagedBuilds\Windows\seige2222\Content\Paks\global.utoc" -ProjectStore="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\ue.projectstore" -CookedDirectory="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows" -Commands="C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\IoStoreCommands.txt" -patchpaddingalign=2048 -compressionformats=Oodle -compresslevel=4 -compressmethod=Kraken   -cryptokeys="C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\seige2222\Metadata\Crypto.json" -compressionMinBytesSaved=1024 -compressionMinPercentSaved=5 -WriteBackMetadataToAssetRegistry=Disabled -platform=Windows  -unattended
+OodleDataCompression: Display: Oodle v2.9.16 format for pak/iostore with method=Kraken, level=4=Normal
+LogStreaming: Display: AsyncLoading2 - Created: Async Loading Thread: false, Async Post Load: false, Multithreaded: false
+LogPakFile: Display: ProjectDir: ../../../../../../Users/g9800x3d/Desktop/SEIGE/
+LogIoStore: Display: ==================== IoStore Utils ====================
+LogIoStore: Display: Parsing crypto keys from a crypto key cache file 'C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows\seige2222\Metadata\Crypto.json'
+LogIoStore: Display: Container signing - DISABLED
+LogIoStore: Display: Directory index - ENABLED
+LogIoStore: Display: Using compression format 'Oodle'
+LogConfig: Display: Read in platform Windows ini files took 0.02 seconds
+LogIoStore: Display: Using memory mapping alignment '16384'
+LogIoStore: Display: Using compression block size '65536'
+LogIoStore: Display: Using compression block alignment '2048'
+LogIoStore: Display: Using compression min bytes saved '1024'
+LogIoStore: Display: Using compression min percent saved '5'
+LogIoStore: Display: Using max partition size '0'
+LogIoStore: Display: Not using DDC for compression
+LogIoStore: Display: Container metadata disabled
+LogIoStore: Display: Using command list file: 'C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\IoStoreCommands.txt'
+LogIoStore: Display: Selected Oodle level 4 (Normal) from command line for shaders
+LogZenServiceInstance: Display: Launching zen utility 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/zen.exe service status'.
+LogZenServiceInstance: Display: Writing plugin version info to 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugin_versions.json'
+LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/5.8/Saved/Zen/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+LogZenServiceInstance: Display: Installed service at 'C:/Users/g9800x3d/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe' is up to date
+LogZenServiceInstance: Display: Unreal Zen Storage Server HTTP service at http://[::1]:8558 status: OK!.
+LogZenStore: Display: Opening oplog seige2222.38d972b7 / Windows
+LogIoStore: Display: Fetched 906 oplog items from Zen in 0.73 seconds
+LogIoStore: Display: Parsed 906 oplog items 0.00 seconds, 4072 chunks
+LogIoStore: Display: Loaded 1205 chunk hashes from Zen in 0.01 seconds, 1205 hashes updated in 0.00 seconds
+LogIoStore: Display: Searching for cooked assets in folder 'C:\Users\g9800x3d\Desktop\SEIGE\Saved\Cooked\Windows'
+LogIoStore: Display: Found '8' files
+LogIoStore: Display: Creating container targets...
+LogIoStore: Display: Processing shader libraries, compressing with Oodle Mermaid, level 4 (Normal)
+LogIoStore: Display: Shader library chunk override is disabled
+LogShaderLibrary: Display: Created IoStoreShaderArchive header: shaders grouped in 212 groups (88 of them didn't need new indices), average uncompressed size 84341 bytes, min 502 bytes, max 969411 bytes (r.ShaderCodeLibrary.MaxShaderGroupSize=1048576)
+LogIoStore: Display: seige2222-PCD3D_SM5(PCD3D_SM5): Recompressed 1507 shaders as 212 groups. Library size changed from 4910 KB (3.56 : 1 ratio) to 2075 KB (8.41 : 1 ratio), 42.27% of previous.
+LogIoStore: Display: Save IoStoreShaderCodeArchive 'seige2222-PCD3D_SM5-PCD3D_SM5' with ChunkId 'c962cf281db1d18100000008' for target file 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/seige2222/Content/ShaderArchive-seige2222-PCD3D_SM5-PCD3D_SM5.ushaderbytecode'
+LogShaderLibrary: Display: Created IoStoreShaderArchive header: shaders grouped in 248 groups (77 of them didn't need new indices), average uncompressed size 139809 bytes, min 2378 bytes, max 1020949 bytes (r.ShaderCodeLibrary.MaxShaderGroupSize=1048576)
+LogIoStore: Display: seige2222-PCD3D_SM6(PCD3D_SM6): Recompressed 2485 shaders as 248 groups. Library size changed from 25651 KB (1.32 : 1 ratio) to 16320 KB (2.07 : 1 ratio), 63.62% of previous.
+LogIoStore: Display: Save IoStoreShaderCodeArchive 'seige2222-PCD3D_SM6-PCD3D_SM6' with ChunkId '02700b8cf46eaeb700000008' for target file 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/seige2222/Content/ShaderArchive-seige2222-PCD3D_SM6-PCD3D_SM6.ushaderbytecode'
+LogShaderLibrary: Display: Created IoStoreShaderArchive header: shaders grouped in 577 groups (184 of them didn't need new indices), average uncompressed size 255013 bytes, min 1249 bytes, max 1036717 bytes (r.ShaderCodeLibrary.MaxShaderGroupSize=1048576)
+LogIoStore: Display: Global-PCD3D_SM6(PCD3D_SM6): Recompressed 8905 shaders as 577 groups. Library size changed from 109065 KB (1.32 : 1 ratio) to 64189 KB (2.24 : 1 ratio), 58.85% of previous.
+LogIoStore: Display: Save IoStoreShaderCodeArchive 'Global-PCD3D_SM6-PCD3D_SM6' with ChunkId '1680bae1ae38d5b900000008' for target file 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/seige2222/Content/ShaderArchive-Global-PCD3D_SM6-PCD3D_SM6.ushaderbytecode'
+LogShaderLibrary: Display: Created IoStoreShaderArchive header: shaders grouped in 398 groups (162 of them didn't need new indices), average uncompressed size 144579 bytes, min 249 bytes, max 1042761 bytes (r.ShaderCodeLibrary.MaxShaderGroupSize=1048576)
+LogIoStore: Display: Global-PCD3D_SM5(PCD3D_SM5): Recompressed 4322 shaders as 398 groups. Library size changed from 13026 KB (4.31 : 1 ratio) to 5413 KB (10.38 : 1 ratio), 41.56% of previous.
+LogIoStore: Display: Save IoStoreShaderCodeArchive 'Global-PCD3D_SM5-PCD3D_SM5' with ChunkId 'c3fad98e7ca0cc3100000008' for target file 'C:/Users/g9800x3d/Desktop/SEIGE/Saved/Cooked/Windows/seige2222/Content/ShaderArchive-Global-PCD3D_SM5-PCD3D_SM5.ushaderbytecode'
+LogIoStore: Display: Shaders processed in 0.40 seconds
+LogIoStore: Display: Initialized WriteRequestManager with MaxConcurrentSourceReads=4 (8 cores), MaxSourceBufferMemory=3072MiB
+LogIoStore: Display: Processing redirects...
+LogIoStore: Display: Creating disk layout...
+LogIoStore: Display: Ordered 903 packages using fallback bundle order
+LogIoStore: Display: Disabled WriteRequestManager memory throttling, MaxConcurrentSourceReads=4 (8 cores)
+LogIoStore: Display: Writing container(s)...
+LogIoStore: Display: Writing and compressing took 1.56 seconds, writes to disk took 0.27 seconds for 648,297,952 bytes @ 2,371,750,912 bytes per second.
+LogIoStore: Display: global: Found perfect hashmap for 1 items.
+LogIoStore: Display: seige2222-Windows: Found perfect hashmap for 2645 items.
+LogIoStore: Display: Finalize took 0.0 seconds for 2 writers to write 430,694 bytes, 64,173,485 bytes per second
+LogIoStore: Display: Writing tocs... [Physical: 1174 MiB, Virtual: 3582 MiB]
+LogIoStore: Display: 1,205 / 2,646 hashes were loaded from the hash database, by type:
+LogIoStore: Display:     ExportBundleData           903
+LogIoStore: Display:     BulkData                   301
+LogIoStore: Display:     OptionalBulkData           1
+LogIoStore: Display: 1,205 / 2,646 chunks attempted to compress, by type:
+LogIoStore: Display:     ExportBundleData           903 / 903
+LogIoStore: Display:     BulkData                   301 / 301
+LogIoStore: Display:     OptionalBulkData           1 / 1
+LogIoStore: Display:     ScriptObjects              0 / 1
+LogIoStore: Display:     ContainerHeader            0 / 1
+LogIoStore: Display:     ShaderCodeLibrary          0 / 4
+LogIoStore: Display:     ShaderCode                 0 / 1,435
+LogIoStore: Display: Source bytes read:
+LogIoStore: Display:     Zen:                      1,121,725,558
+LogIoStore: Display:         ExportBundleData        512,390,540 bytes over 903 reads
+LogIoStore: Display:         BulkData                608,024,298 bytes over 301 reads
+LogIoStore: Display:         OptionalBulkData          1,310,720 bytes over 1 reads
+LogIoStore: Display:     Loose File:                           0
+LogIoStore: Display:     Memory:                     181,170,526
+LogIoStore: Display:         ShaderCodeLibrary           950,840 bytes over 8 reads
+LogIoStore: Display:         ShaderCode              180,219,686 bytes over 2,870 reads
+LogIoStore: Display: Calculating stats...
+LogIoStore: Display:
+LogIoStore: Display: Container Summary
+LogIoStore: Display: ==================
+LogIoStore: Display:
+LogIoStore: Display:            Container      Flags      Chunk(s) #       TOC (KiB)       Raw Size (MiB)           Size (MiB)
+LogIoStore: Display: ---------------------------------------------------------------------------------------------------------
+LogIoStore: Display:               global  -/-/-/-/-               1            0.76                 3.06                 3.06 -
+LogIoStore: Display:    seige2222-Windows  C/-/-/I/-            2645          419.84              1158.17               615.21 (46.88% Oodle)
+LogIoStore: Display: ---------------------------------------------------------------------------------------------------------
+LogIoStore: Display:                Total                       2646          420.60              1161.23               618.27
+LogIoStore: Display:
+LogIoStore: Display: ** Flags: (C)ompressed / (E)ncrypted / (S)igned) / (I)ndexed) / (O)nDemand **
+LogIoStore: Display:
+LogIoStore: Display: Compression block padding:     1.99 MiB
+LogIoStore: Display:
+LogIoStore: Display: Container Directory Index
+LogIoStore: Display: ==========================
+LogIoStore: Display:
+LogIoStore: Display:            Container      Size (KiB)
+LogIoStore: Display: ------------------------------------
+LogIoStore: Display:               global            0.00
+LogIoStore: Display:    seige2222-Windows           54.96
+LogIoStore: Display:
+LogIoStore: Display: Container Patch Report
+LogIoStore: Display: ========================
+LogIoStore: Display:
+LogIoStore: Display:            Container          Total #       Modified #          Added #   Modified (MiB)      Added (MiB)
+LogIoStore: Display: ---------------------------------------------------------------------------------------------------------
+LogIoStore: Display:               global                1                0                0             0.00             0.00
+LogIoStore: Display:    seige2222-Windows             2645                0             2645             0.00           613.22
+LogIoStore: Display: ---------------------------------------------------------------------------------------------------------
+LogIoStore: Display:
+LogIoStore: Display: PackageStore
+LogIoStore: Display: =============
+LogIoStore: Display:
+LogIoStore: Display:            Container      Size (KiB)      Packages #     Localized #
+LogIoStore: Display: --------------------------------------------------------------------
+LogIoStore: Display:    seige2222-Windows              28             903               0
+LogIoStore: Display: --------------------------------------------------------------------
+LogIoStore: Display:                Total              28             903               0
+LogIoStore: Display:
+LogIoStore: Display:
+LogIoStore: Display: Input:       903 Packages
+LogIoStore: Display: Input:         0   B UExp
+LogIoStore: Display: Input:    488.65 MiB UAsset
+LogIoStore: Display: Input:    581.11 MiB UBulk
+LogIoStore: Display: Input:     67.97 MiB for 975 Global shaders
+LogIoStore: Display: Input:      1.84 MiB for 201 Shared shaders
+LogIoStore: Display: Input:         0   B for 0 Unique shaders
+LogIoStore: Display: Input:     16.13 MiB for 259 Inline shaders
+LogIoStore: Display:
+LogIoStore: Display: Output:     1422 Imported package entries
+LogIoStore: Display: Output:      522 Packages without imports
+LogIoStore: Display: Output:        0 Public runtime script objects
+LogIoStore: Display: Output:     3.06 MiB InitialLoadData
+LogIoStore: Display:
+LogIoStore: Display: Success
+LogPakFile: Display: UnrealPak executed in 2.797300 seconds
+Took 3.01s to run UnrealPak.exe, ExitCode=0
+DumpManifest: C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\FinalCopyWin64_UFSFiles.txt, NumItems: 2938
+DumpManifest: C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\FinalCopyWin64_NonUFSFiles.txt, NumItems: 45
+DumpManifest: C:\Users\g9800x3d\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_5.8\FinalCopyWin64_NonUFSFilesDebug.txt, NumItems: 3
+Copying NonUFSFiles to staging directory: C:\Users\g9800x3d\Desktop\SEIGE\Saved\StagedBuilds\Windows
+Copying DebugFiles to staging directory: C:\Users\g9800x3d\Desktop\SEIGE\Saved\StagedBuilds\Windows
+Stage command time: 7.30 s
+********** STAGE COMMAND COMPLETED **********
+********** PACKAGE COMMAND STARTED **********
+Package command time: 0.00 s
+********** PACKAGE COMMAND COMPLETED **********
+********** ARCHIVE COMMAND STARTED **********
+Archiving to C:\Users\g9800x3d\Desktop\SEIGE\Builds\v0.10.1
+Archive command time: 0.31 s
+********** ARCHIVE COMMAND COMPLETED **********
+BuildCookRun time: 43.64 s
+BUILD SUCCESSFUL
+AutomationTool executed for 0h 0m 44s
+AutomationTool exiting with ExitCode=0 (Success)

@@ -1,25 +1,26 @@
 {
   "asset": "SK_CompanionDog",
-  "revision": 5,
-  "source": "Original procedural geometry, rig, animation and textures; the owner's reference photographs guided proportions and coat zoning by eye and were not read, copied or sampled",
+  "revision": 6,
+  "source": "Base mesh generated from the owner's photograph with a hosted image-to-3D model (Tencent Hunyuan3D shape generation), aligned, pose-normalised and decimated here; coat albedo baked from the same photograph projected onto the mesh and blended with authored zoning; rig, clips and fur cards authored procedurally",
+  "generated_mesh": "hy21shape_generation_0.glb",
   "forward_axis": "+X",
   "up_axis": "+Z",
   "units": "centimeters",
   "root_motion": false,
   "reference_pose_bounds_cm": {
     "min": [
-      -97.58114624023438,
-      -20.299875259399414,
-      0.24408677220344543
+      -63.061893463134766,
+      -13.991018295288086,
+      0.0
     ],
     "max": [
-      74.0679931640625,
-      20.287540435791016,
-      86.76895904541016
+      62.39590072631836,
+      15.843887329101562,
+      76.24874114990234
     ]
   },
-  "triangles": 52682,
-  "vertices": 26637,
+  "triangles": 48000,
+  "vertices": 24000,
   "bones": [
     "root",
     "pelvis",
@@ -56,118 +57,32 @@
       ],
       "roughness": 0.62,
       "metallic": 0
-    },
-    "DM_Eye": {
-      "color": [
-        0.03,
-        0.014,
-        0.006,
-        1
-      ],
-      "roughness": 0.18,
-      "metallic": 0
-    },
-    "DM_Nose": {
-      "color": [
-        0.012,
-        0.01,
-        0.009,
-        1
-      ],
-      "roughness": 0.38,
-      "metallic": 0
-    },
-    "DM_Iris": {
-      "color": [
-        0.09,
-        0.038,
-        0.012,
-        1
-      ],
-      "roughness": 0.25,
-      "metallic": 0
-    },
-    "DM_Mouth": {
-      "color": [
-        0.03,
-        0.011,
-        0.012,
-        1
-      ],
-      "roughness": 0.55,
-      "metallic": 0
-    },
-    "DM_Tongue": {
-      "color": [
-        0.46,
-        0.13,
-        0.15,
-        1
-      ],
-      "roughness": 0.42,
-      "metallic": 0
-    },
-    "DM_Teeth": {
-      "color": [
-        0.78,
-        0.74,
-        0.62,
-        1
-      ],
-      "roughness": 0.3,
-      "metallic": 0
-    },
-    "DM_Collar": {
-      "color": [
-        0.03,
-        0.3,
-        0.32,
-        1
-      ],
-      "roughness": 0.72,
-      "metallic": 0
-    },
-    "DM_CollarEdge": {
-      "color": [
-        0.012,
-        0.022,
-        0.028,
-        1
-      ],
-      "roughness": 0.67,
-      "metallic": 0
-    },
-    "DM_Metal": {
-      "color": [
-        0.56,
-        0.6,
-        0.58,
-        1
-      ],
-      "roughness": 0.26,
-      "metallic": 0.85
     }
   },
   "used_materials": [
-    "DM_Coat",
-    "DM_Collar",
-    "DM_CollarEdge",
-    "DM_Eye",
-    "DM_Iris",
-    "DM_Metal",
-    "DM_Mouth",
-    "DM_Nose",
-    "DM_Teeth",
-    "DM_Tongue"
+    "DM_Coat"
   ],
   "textures": {
-    "T_Dog_FurAtlas": "procedural strand atlas, 4x2 cells, alpha coverage",
+    "T_Dog_Albedo": "baked 2048 sRGB albedo (photo projection + zoning) on UV0",
+    "T_Dog_FurAtlas": "procedural lock atlas, 4x2 cells",
     "T_Dog_FurDetail": "procedural streak brightness",
     "T_Dog_FurNormal": "derived from the streak height"
   },
   "uv_channels": {
-    "0": "rest-pose X/Y encoded as (x+120)/260,(y+60)/120 on skin; fur atlas on cards",
+    "0": "baked albedo islands on skin; fur atlas on cards",
     "1": "rest-pose Z/120 on skin; (0,1) marks cards"
+  },
+  "skeleton_fit_cm": {
+    "fore_x": 30.57245231129324,
+    "hind_x": -14.71469177124354,
+    "fore_y": 8.0,
+    "hind_y": 8.086841819387665,
+    "back_height": 60.52263259747997,
+    "nose": [
+      62.395899961840314,
+      1.326416015625,
+      67.63048934796825
+    ]
   },
   "animations": {
     "A_DogIdle": {
@@ -184,23 +99,35 @@
       "reference_speed_cm_s": 138.88888888888889,
       "stance_fraction": 0.6,
       "phase_source": "distance_walked_meters / stride_meters",
-      "max_ik_target_error_cm": 1.5553957395839777e-05
+      "max_ik_target_error_cm": 1.2100770512055893e-05
     }
   },
   "coat_vertex_attribute": "CoatColor",
   "max_bone_influences": 4,
   "dog_name": "Rex",
-  "name_on_tag": true,
-  "cosmetic_revision": "Rex original likeness pass: corrected local-space nose geometry, broader eye spacing, narrower pendant ears, open panting mouth and tongue, feathered tail silhouette, pale muzzle and brow, golden coat and teal collar. Fine 9 cm rest-space coat detail replaces broad bands. Reviewed from front, three-quarter and profile; no generated mesh or photograph pixels.",
+  "name_on_tag": false,
   "fur_cards": {
-    "enabled": false
+    "enabled": false,
+    "length_scale": 0.72,
+    "density_scale": 0.6
   },
-  "shell_fur": false,
   "exports": {
-    "A_DogIdle.fbx": "c6c569ac9d8249831a05fb269f6db81db43234ccd159e70cf615be86a5c37ee8",
-    "A_DogWalk.fbx": "f3298c3f787c27c672525c55961b4d0ab7e40feaeaeea52b7f3f4567a100d92f",
-    "SK_CompanionDog.fbx": "537e82ac5db9adf282c7ef9249edfa9010779c2bd3c660854fce088da556b96b"
+    "A_DogIdle.fbx": "e061e945ae26b2bca48b8fddf698385deae47e7592220d28750eed0220129612",
+    "A_DogWalk.fbx": "7592b11c6c749df9fb2faffa1019e6a6c688324e1d245cb15397b30b796384d3",
+    "SK_CompanionDog.fbx": "409fbcdb53aff5af7ecbad331edaf11ee2cc3bfa744a57917d4a6f3997a43de1"
   },
   "unreal_import_pending": false,
-  "runtime_review_pending": true
+  "runtime_review_pending": false,
+  "cosmetic_revision": "Detailed revision 7 restored; lower-neck contours softened; original closed leg topology, photo coat, facial anatomy, UVs, rig and clips retained.",
+  "cleanup": {
+    "generator": "Tools/clean_rex_mesh.py",
+    "removed_bridge_triangles": 0,
+    "smoothed_neck_vertices": 959,
+    "facial_vertices_unchanged": true,
+    "photo_texture_unchanged": true
+  },
+  "unreal_import_report": "import_report.json",
+  "restoration_source_commit": "5aed6e9",
+  "prototype_license_exception": "Owner-directed temporary use; Hunyuan3D-2.1 output territory restriction unresolved; attribution is not clearance.",
+  "runtime_review": "v0.10.1 packaged captures at docs/verification/v0.10.1/v0101-rex.png and v0101-rex-close.png. Detailed face/coat restored; original close-angle leg/coat limitations remain."
 }

@@ -599,16 +599,16 @@ bool ASeigeHUD::DrawFrontend(ASeigeGameMode& G,float W,float H)
     }
     else if(G.Screen==TEXT("credits"))
     {
-        // Two balanced columns leave room for the complete creator/license
-        // notices without running text into the fixed navigation button.
-        const float PW=1160,CW=534,X=W/2-PW/2,Y=H/2-365;
+        // Wider balanced columns retain 15px body text and room for all seven
+        // creator/license notices above the fixed navigation button.
+        const float PW=1380,CW=644,X=W/2-PW/2,Y=H/2-365;
         Frame(X,Y,PW,730);Label(TEXT("CREDITS / THE PEOPLE AND TOOLS BEHIND THE COLONY"),X+28,Y+28,24,Gold);
         Box(X+PW/2,Y+90,1,520,FLinearColor(.16f,.26f,.29f,.7f));
         float Columns[2]={Y+94,Y+94};
         if(Ui.Credits.IsEmpty())Wrapped(InterfaceError,X+28,Columns[0],CW,16,Red);
         for(const auto& Credit:Ui.Credits)
         {
-            const int32 Column=Columns[0]<=Columns[1]?0:1;const float CX=X+28+Column*570;
+            const int32 Column=Columns[0]<=Columns[1]?0:1;const float CX=X+28+Column*680;
             Wrapped(Credit.Heading,CX,Columns[Column],CW,18,Gold);Columns[Column]+=10;
             Wrapped(Credit.Text,CX,Columns[Column],CW,15,Text);Columns[Column]+=25;
         }
@@ -897,7 +897,10 @@ void ASeigeHUD::DrawHUD()
         Label(Value,GX+12,Y+23,Size,Color);
     }
     const float StripW=900,StripX=(W-StripW)*.5f;
-    const float DockW=800,DockX=(W-DockW)*.5f,DockY=H-68;
+    // Time belongs to the same command dock as pause/speed. Keep its two
+    // readout lines inside the shared casing, rather than floating over it.
+    // HUD coordinates already scale to a minimum 1600-wide logical viewport.
+    const float DockW=FMath::Min(1340.f,W-48.f),DockX=(W-DockW)*.5f,DockY=H-68;
     Frame(DockX,DockY,DockW,54);
     auto DockButton=[&](const FString& Name,const FString& A,const FString& Visual,float X,float Width,bool Active)
     {
@@ -909,15 +912,19 @@ void ASeigeHUD::DrawHUD()
     Button(TEXT("Objectives"),TEXT("summary:objective"),DockX+347,DockY+5,115,44,false,TEXT("First landing milestones and current colony status."));
     Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+468,DockY+5,95,44,G->Paused);
     Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+569,DockY+5,100,44,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
-    Button(TEXT("Menu"),TEXT("game-menu"),DockX+675,DockY+5,119,44,false,TEXT("Esc / F10 opens the game menu."));
+    const float ClockX=DockX+675,ClockW=DockW-800;
+    Button(TEXT("Menu"),TEXT("game-menu"),DockX+DockW-125,DockY+5,119,44,false,TEXT("Esc / F10 opens the game menu."));
     const int64 Age=FMath::Max<int64>(0,int64(Local.Time));
     const FString AgeText=FString::Printf(TEXT("Colony %lldh %02lldm"),Age/3600,(Age/60)%60);
-    const FString Pulse=Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Pulse %d in %.0fs"),Local.Wave+1,FMath::Max(0.,Local.NextWaveTime-Local.Time)):TEXT("Periodic attacks off");
-    const FString Clock=Pulse+TEXT("   |   ")+G->CalendarLabel()+TEXT("   |   ")+AgeText;
-    const float ClockW=FMath::Min(W-48.f,FMath::Max(760.f,float(MeasureLabel(Clock,12).X)+32));
-    const float ClockX=(W-ClockW)*.5f;
-    Box(ClockX,DockY-32,ClockW,27,Panel);Label(Clock,ClockX+16,DockY-25,12,Text);
-    Region(TEXT("summary:threats"),ClockX,DockY-32,ClockW,27);
+    const int64 PulseSeconds=FMath::Max<int64>(0,FMath::CeilToInt64(Local.NextWaveTime-Local.Time));
+    const FString Pulse=Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Pulse %d in %lld:%02lld"),Local.Wave+1,PulseSeconds/60,PulseSeconds%60):TEXT("Periodic attacks off");
+    const FString Calendar=G->CalendarLabel(),ClockDetail=AgeText+TEXT("   |   ")+Pulse;
+    const float CalendarSize=FMath::Min(13.f,13.f*(ClockW-28)/FMath::Max(1.f,float(MeasureLabel(Calendar,13).X)));
+    const float DetailSize=FMath::Min(12.f,12.f*(ClockW-28)/FMath::Max(1.f,float(MeasureLabel(ClockDetail,12).X)));
+    Box(ClockX,DockY+11,1,32,FLinearColor(.24f,.43f,.49f,.65f));
+    Label(Calendar,ClockX+14,DockY+8,CalendarSize,Text);
+    Label(ClockDetail,ClockX+14,DockY+30,DetailSize,Muted);
+    Region(TEXT("summary:threats"),ClockX,DockY+5,ClockW,44,TEXT("Calendar, colony age and the next invasion. All timers follow simulation speed."));
     if(!G->RegionViewHistory.IsEmpty()&&!RegionMap)Button(TEXT("Back to previous view"),TEXT("region-back"),W-225,81,201,32,false,TEXT("Restore the camera before selecting this region. Esc also returns."));
     if(!G->Ready)
     {

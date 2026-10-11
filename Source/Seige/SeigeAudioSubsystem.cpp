@@ -13,6 +13,7 @@
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
+#include "HAL/PlatformTime.h"
 
 namespace SeigeAudio
 {
@@ -29,6 +30,25 @@ void USeigeAudioSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     {
         double Value=0;if(Doc->TryGetNumberField(TEXT("master_volume"),Value))MasterVolume=FMath::Clamp(float(Value),0.f,1.f);
         if(Doc->TryGetNumberField(TEXT("maximum_voices_per_frame"),Value))MaximumVoices=FMath::Clamp(int32(Value),1,16);
+        if(Doc->TryGetNumberField(TEXT("maximum_voices_per_second"),Value))MaximumVoicesPerSecond=FMath::Clamp(int32(Value),1,32);
+        const TSharedPtr<FJsonObject>* Groups=nullptr;
+        if(Doc->TryGetObjectField(TEXT("categories"),Groups))for(const auto& Pair:(*Groups)->Values)
+        {
+            const TSharedPtr<FJsonObject>* Group=nullptr;if(!Pair.Value->TryGetObject(Group))continue;
+            FAudioCategory Mix;
+            if((*Group)->TryGetNumberField(TEXT("volume"),Value))Mix.Volume=FMath::Clamp(float(Value),0.f,1.f);
+            if((*Group)->TryGetNumberField(TEXT("cooldown_seconds"),Value))Mix.Cooldown=FMath::Clamp(Value,0.,60.);
+            Categories.Add(FName(*Pair.Key),Mix);
+        }
+        const TSharedPtr<FJsonObject>* Mixes=nullptr;
+        if(Doc->TryGetObjectField(TEXT("cue_mix"),Mixes))for(const auto& Pair:(*Mixes)->Values)
+        {
+            const TSharedPtr<FJsonObject>* Entry=nullptr;if(!Pair.Value->TryGetObject(Entry))continue;
+            FCueMix Mix;FString Category;if((*Entry)->TryGetStringField(TEXT("category"),Category))Mix.Category=FName(*Category);
+            if((*Entry)->TryGetNumberField(TEXT("volume"),Value))Mix.Volume=FMath::Clamp(float(Value),0.f,1.f);
+            if((*Entry)->TryGetNumberField(TEXT("cooldown_seconds"),Value))Mix.Cooldown=FMath::Clamp(Value,0.,60.);
+            CueMix.Add(FName(*Pair.Key),Mix);
+        }
         const TSharedPtr<FJsonObject>* Cues=nullptr;
         if(Doc->TryGetObjectField(TEXT("cues"),Cues))for(const auto& Pair:(*Cues)->Values)
         {FString Asset;if(Pair.Value->TryGetString(Asset)&&Asset.StartsWith(TEXT("/Game/Art/Audio/")))if(auto* Sound=LoadObject<USoundBase>(nullptr,*Asset))Sounds.Add(FName(*Pair.Key),Sound);}
@@ -51,18 +71,29 @@ void USeigeAudioSubsystem::Deinitialize()
 }
 void USeigeAudioSubsystem::Play(FName Cue,FVector Position,bool Spatial)
 {
+    const auto* Mix=CueMix.Find(Cue);if(!Mix)return;
+    const auto* Category=Categories.Find(Mix->Category);if(!Category)return;
+    const float Volume=MasterVolume*Category->Volume*Mix->Volume;if(Volume<=KINDA_SMALL_NUMBER)return;
     if(VoicesThisFrame>=MaximumVoices)return;
-    const auto* Found=Sounds.Find(Cue);if(!Found||!Found->Get())return;++VoicesThisFrame;
-    if(Spatial)UGameplayStatics::PlaySoundAtLocation(GetWorld(),Found->Get(),Position,MasterVolume,1,0,Attenuation);
-    else UGameplayStatics::PlaySound2D(GetWorld(),Found->Get(),MasterVolume);
+    const auto* Found=Sounds.Find(Cue);if(!Found||!Found->Get())return;
+    // Wall-clock limits remain the same at pause, 1x, 5x and 10x. Dropped sounds are
+    // never queued up to burst later, and muted clicks consume no audible budget.
+    const double Now=FPlatformTime::Seconds();
+    if(const double* Previous=LastCuePlay.Find(Cue))if(Now-*Previous<Mix->Cooldown)return;
+    if(const double* Previous=LastCategoryPlay.Find(Mix->Category))if(Now-*Previous<Category->Cooldown)return;
+    VoiceTimes.RemoveAll([Now](double Time){return Now-Time>=1.;});
+    if(VoiceTimes.Num()>=MaximumVoicesPerSecond)return;
+    VoiceTimes.Add(Now);LastCuePlay.Add(Cue,Now);LastCategoryPlay.Add(Mix->Category,Now);++VoicesThisFrame;
+    if(Spatial)UGameplayStatics::PlaySoundAtLocation(GetWorld(),Found->Get(),Position,Volume,1,0,Attenuation);
+    else UGameplayStatics::PlaySound2D(GetWorld(),Found->Get(),Volume);
 }
 void USeigeAudioSubsystem::PlayUi(FName Cue)
 {
-    if(Clock-LastUi<.06)return;LastUi=Clock;Play(Cue,FVector::ZeroVector,false);
+    Play(Cue,FVector::ZeroVector,false);
 }
 void USeigeAudioSubsystem::Tick(float DeltaSeconds)
 {
-    Clock+=DeltaSeconds;VoicesThisFrame=0;
+    Clock=FPlatformTime::Seconds();VoicesThisFrame=0;
     auto* Game=Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode());if(!Game||!Game->Ready)return;
     UpdateLights(*Game,DeltaSeconds);
     auto& Sim=Game->Sim;
@@ -94,8 +125,8 @@ void USeigeAudioSubsystem::Tick(float DeltaSeconds)
         if(const auto* Defense=Sim.Combat.BuildingState.Find(B.Id))
         {
             const double* Previous=BuildingDamage.Find(B.Id);
-            if(!Reset&&Previous&&Defense->LastDamageTime>*Previous&&Clock-LastAlarm>2)
-            {Play(TEXT("alert"),Game->RenderPosition(B.Position),true);LastAlarm=Clock;}
+            if(!Reset&&Previous&&Defense->LastDamageTime>*Previous)
+                Play(TEXT("alert"),Game->RenderPosition(B.Position),true);
             BuildingDamage.Add(B.Id,Defense->LastDamageTime);
         }
     }

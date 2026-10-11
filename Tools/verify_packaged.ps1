@@ -86,7 +86,7 @@ $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $recordPath -Encodi
 if(-not $inputsUnchanged){throw 'Source, cooked assets, executable or runtime JSON changed during verification'}
 if($launch.ExitCode -ne 0){throw "Packaged game exited with code $($launch.ExitCode)"}
 if($Mode -eq 'NextUpdateSmoke'){
-  if(-not $result.passed -or $result.failures -ne 0 -or $result.completed_stages -ne 23){throw 'Bounded packaged check assertions failed'}
+  if(-not $result.passed -or $result.failures -ne 0 -or $result.completed_stages -ne 25){throw 'Bounded packaged check assertions failed'}
 }elseif(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 117))){throw 'Packaged smoke assertions failed'}
 if($samples.Count -eq 0){throw 'No live process observed'}
 if(@($samples | Where-Object {$_.tcp -gt 0 -or $_.udp -gt 0}).Count -gt 0){throw 'Game opened a network endpoint'}

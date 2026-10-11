@@ -107,8 +107,8 @@ void ASeigeGameMode::UpdateWeather(float DeltaSeconds)
         PresentationCalendar.Advance(FMath::RoundToDouble(FMath::Clamp(Accumulator,0.,Sim.FixedStepSeconds())*1000000.)/1000000.);
     const auto Date=PresentationCalendar.Sample();
     const double Light=FMath::SmoothStep(0.,double(SunriseSoftness),Date.SolarFactor);
-    // Preserve daytime exposure; night gets only a small authored lift. Nearby
-    // powered buildings and mobile units carry real, budgeted local lamps.
+    // Keep terrain and units legible throughout night with authored sky fill
+    // and exposure. Powered buildings and units add bounded local lighting.
     if(Camera)Camera->GetCameraComponent()->PostProcessSettings.AutoExposureBias=ExposureBias+NightExposureOffsetEV*float(1-Light);
     if(WeatherSun)
     {
@@ -124,7 +124,7 @@ void ASeigeGameMode::UpdateWeather(float DeltaSeconds)
     if(WeatherSky)
     {
         WeatherSky->SetIntensity(SkyIntensity*FMath::Lerp(NightSkyFraction,1.f,float(Light)));
-        WeatherSky->SetLightColor(FMath::Lerp(FLinearColor(.55f,.66f,1),FLinearColor::White,float(Light)));
+        WeatherSky->SetLightColor(FMath::Lerp(FLinearColor(.68f,.76f,.96f),FLinearColor::White,float(Light)));
     }
     if(!WeatherCollection)WeatherCollection=LoadObject<UMaterialParameterCollection>(nullptr,*SnowCollectionPath,nullptr,LOAD_NoWarn);
     const float Coverage=float(SnowCoverage());

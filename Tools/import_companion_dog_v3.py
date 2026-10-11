@@ -1,11 +1,14 @@
 """Import the revision-6 Rex mesh (generated base, baked photo albedo), clips and card-fur materials.
 
+Restored for the owner-authorized local prototype, 2026-10-11. The retained
+Hunyuan3D-derived base has an unresolved territorial license restriction.
+Attribution does not resolve it; see Art/CompanionDog/TEXTURE_PROVENANCE.md.
+This offline script makes no hosted generation request.
+
 Run in the Unreal Editor commandlet:
     UnrealEditor-Cmd.exe <project> -run=pythonscript -script=Tools/import_companion_dog_v3.py
 Reads Art/CompanionDog/dog_manifest.json written by Tools/build_rex_from_generated.py.
 """
-raise SystemExit('Retired generated-mesh importer: use Tools/import_companion_dog_v2.py for the original authored release asset.')
-
 from pathlib import Path
 import json
 import unreal as u

@@ -29,7 +29,11 @@
     },
     {
       "heading": "Asset provenance",
-      "text": "Downloaded models and photographic or procedural PBR maps are CC0 and permit commercial use. Creator credits, source links, licenses and file hashes are retained with the project. Editable Blender derivatives and generation scripts are included. All game assets are local; no runtime downloads."
+      "text": "Nature models and their PBR maps are CC0 and permit commercial use. Rex is the separate provisional exception described below. Creator credits, source links, licenses and file hashes are retained with the project. All game assets are local; no runtime downloads."
+    },
+    {
+      "heading": "Rex / provisional asset — licence unresolved",
+      "text": "Based on the owner's Rex photographs. Base geometry generated with Tencent Hunyuan3D-2.1; Blender rig, animation and photo coat prepared for seige2222. Restored for the owner's prototype review. Its licence excludes use of outputs in the EU, UK and South Korea. Attribution does not resolve this restriction; distribution clearance remains outstanding. Source: huggingface.co/tencent/Hunyuan3D-2.1/blob/main/LICENSE."
     },
     {
       "heading": "Original audio / CC0 1.0",

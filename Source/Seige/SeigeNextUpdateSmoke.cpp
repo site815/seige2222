@@ -41,7 +41,7 @@ void ASeigeGameMode::RunNextUpdateSmoke()
         for(const auto& Image:Images)Check(IFileManager::Get().FileSize(*FPaths::Combine(Folder,Image+TEXT(".png")))>0,TEXT("Capture exists: ")+Image);
         auto Report=MakeShared<FJsonObject>();
         Report->SetStringField(TEXT("scope"),TEXT("Bounded UI playcheck at 10x using the established-colony preset, one review-only factory, and a visual-only night phase. No save files, full acceptance suite, balance proof or graphics parity claim."));
-        Report->SetBoolField(TEXT("passed"),Failures.IsEmpty()&&Stage==23);
+        Report->SetBoolField(TEXT("passed"),Failures.IsEmpty()&&Stage==25);
         Report->SetNumberField(TEXT("assertions"),Assertions);Report->SetNumberField(TEXT("failures"),Failures.Num());
         Report->SetNumberField(TEXT("completed_stages"),Stage);Report->SetNumberField(TEXT("elapsed_seconds"),FPlatformTime::Seconds()-Started);
         Report->SetNumberField(TEXT("observed_frames"),ObservedTicks);Report->SetNumberField(TEXT("longest_frame_gap_seconds"),LongestTickGap);
@@ -58,12 +58,12 @@ void ASeigeGameMode::RunNextUpdateSmoke()
         Report->SetArrayField(TEXT("assertion_failures"),F);Report->SetArrayField(TEXT("screenshots"),I);
         FString Json;FJsonSerializer::Serialize(Report,TJsonWriterFactory<TCHAR,TPrettyJsonPrintPolicy<TCHAR>>::Create(&Json));
         const bool Written=FFileHelper::SaveStringToFile(Json,*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("NextUpdateSmoke.json")));
-        const bool Passed=Written&&Failures.IsEmpty()&&Stage==23;Stage=-1;
+        const bool Passed=Written&&Failures.IsEmpty()&&Stage==25;Stage=-1;
         UE_LOG(LogTemp,Display,TEXT("NEXT_UPDATE_SMOKE_COMPLETE passed=%d assertions=%d failures=%d"),Passed?1:0,Assertions,Failures.Num());
         FPlatformMisc::RequestExitWithStatus(false,Passed?0:1);
     };
     if(Now-Started>55){Check(false,TEXT("55-second wall-clock watchdog expired"));Finish();return;}
-    const double Delay=Stage==1?3.:Stage==22?2.5:1.;
+    const double Delay=Stage==1?3.:Stage==24?2.5:1.;
     if(Now-Since<Delay||FScreenshotRequest::IsScreenshotRequested())return;
     if(!Check(Hud&&PC,TEXT("Controller and rendered HUD are available"))){Finish();return;}
     Hud->SmokeLabelCapture=true;
@@ -116,9 +116,15 @@ void ASeigeGameMode::RunNextUpdateSmoke()
         if(PointAtWorker()){float X=0,Y=0;PC->GetMousePosition(X,Y);PC->HandlePrimaryClick(X,Y);}PC->SetMouseLocation(2,2);break;
     }
     case 4:
+    {
         Check(Label(TEXT("WORKER / ")+WorkerId)&&Label(TEXT("Selected / Esc")),TEXT("Click pins the same physical worker inspector"));
         for(const auto* Heading:{TEXT("Credits"),TEXT("Energy"),TEXT("Workers"),TEXT("Raw"),TEXT("Basic"),TEXT("Advanced")})Check(Hud->SmokeLabels.Contains(Heading),FString(TEXT("Thin HUD heading: "))+Heading);
+        const auto* SpeedControl=Hud->Ui.HitRegions.FindByPredicate([](const auto& V){return V.Action==TEXT("speed");});
+        const auto* Timer=Hud->Ui.HitRegions.FindByPredicate([](const auto& V){return V.Action==TEXT("summary:threats");});
+        Check(SpeedControl&&Timer&&FMath::IsNearlyEqual(SpeedControl->Position.Y,Timer->Position.Y)&&Timer->Position.X>=SpeedControl->Position.X+SpeedControl->Size.X,
+            TEXT("Whole timer shares the bottom dock immediately after speed controls"));
         Capture(TEXT("01_worker_and_hud"));break;
+    }
     case 5:
     {
         Hud->ProcessShortcut(EKeys::Escape,*this);
@@ -172,9 +178,13 @@ void ASeigeGameMode::RunNextUpdateSmoke()
     }
     case 21:
         Check(Speed==10&&!Paused&&Sim.Time>InitialTime,TEXT("Normal 10x simulation advances throughout the UI check"));
-        Check(Images.Num()==4,TEXT("Four representative captures were requested"));break;
-    case 22: break; // bounded capture flush, no workload loop
-    case 23: Finish();return;
+        Check(Images.Num()==4,TEXT("Four gameplay captures were requested"));Click(TEXT("game-menu"));break;
+    case 22: Click(TEXT("screen:credits"));break;
+    case 23:
+        Check(Screen==TEXT("credits")&&Label(TEXT("licence unresolved")),TEXT("Credits visibly record the provisional Rex asset exception"));
+        Capture(TEXT("05_credits"));Check(Images.Num()==5,TEXT("Five representative captures were requested"));break;
+    case 24: break; // bounded capture flush, no workload loop
+    case 25: Finish();return;
     }
     const double Done=FPlatformTime::Seconds();
     auto Timing=MakeShared<FJsonObject>();Timing->SetNumberField(TEXT("stage"),Stage);Timing->SetNumberField(TEXT("start_seconds"),Now-Started);Timing->SetNumberField(TEXT("wait_seconds"),Now-Since);Timing->SetNumberField(TEXT("execution_seconds"),Done-Now);Timing->SetNumberField(TEXT("simulation_seconds"),Sim.Time-InitialTime);

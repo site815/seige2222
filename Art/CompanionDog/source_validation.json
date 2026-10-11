@@ -6,23 +6,14 @@
   "max_influences": 4,
   "vertex_colors": 1,
   "used_materials": [
-    "DM_Coat",
-    "DM_Collar",
-    "DM_CollarEdge",
-    "DM_Eye",
-    "DM_Iris",
-    "DM_Metal",
-    "DM_Mouth",
-    "DM_Nose",
-    "DM_Teeth",
-    "DM_Tongue"
+    "DM_Coat"
   ],
   "export_hashes_match": true,
   "clip_files_present": true,
   "animations": {
     "A_DogIdle": {
       "duration_seconds": 3.0,
-      "loop_matrix_max_error": 0.00330352783203125,
+      "loop_matrix_max_error": 0.002986907958984375,
       "bones": 24
     },
     "A_DogWalk": {
@@ -31,8 +22,8 @@
       "bones": 24
     }
   },
-  "walk_authored_ik_max_error_cm": 1.5553957395839777e-05,
-  "source_triangles": 52682,
-  "source_cosmetic_revision": "Rex original likeness pass: corrected local-space nose geometry, broader eye spacing, narrower pendant ears, open panting mouth and tongue, feathered tail silhouette, pale muzzle and brow, golden coat and teal collar. Fine 9 cm rest-space coat detail replaces broad bands. Reviewed from front, three-quarter and profile; no generated mesh or photograph pixels.",
+  "walk_authored_ik_max_error_cm": 1.2100770512055893e-05,
+  "source_triangles": 48000,
+  "source_cosmetic_revision": "Detailed revision 7 restored; lower-neck contours softened; original closed leg topology, photo coat, facial anatomy, UVs, rig and clips retained.",
   "unreal_import_verified": false
 }

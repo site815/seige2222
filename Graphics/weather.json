@@ -1,8 +1,8 @@
 {
   "version": 1,
   "ambient_cubemap": "/Game/Art/WeatherV09/T_AmbientDaylight.T_AmbientDaylight",
-  "night_sky_intensity_fraction": 0.16,
-  "night_exposure_offset_ev": 0.25,
+  "night_sky_intensity_fraction": 0.65,
+  "night_exposure_offset_ev": 1.05,
   "sunrise_sunset_softness": 0.12,
   "winter_accumulation_fraction": 0.08,
   "winter_melt_fraction": 0.12,
@@ -17,7 +17,7 @@
   "sun_direction_update_degrees": 0.01,
   "sun_shadow_update_seconds": 0.05,
   "maximum_local_lights": 20,
-  "building_lamp_lumens": 1800,
-  "worker_lamp_lumens": 85,
-  "vehicle_lamp_lumens": 650
+  "building_lamp_lumens": 3200,
+  "worker_lamp_lumens": 200,
+  "vehicle_lamp_lumens": 1100
 }

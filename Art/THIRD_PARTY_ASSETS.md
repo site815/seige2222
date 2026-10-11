@@ -1,5 +1,9 @@
 # SEIGE — Third-party Asset Attribution
 
+## Rex prototype exception (2026-10-11)
+
+At the owner's explicit request, the detailed Rex asset and photograph-derived coat are restored for prototype review. The base geometry was generated with Tencent Hunyuan3D-2.1; rigging, animation and photo projection were prepared for this project. This asset is **not CC0**. Its unresolved territorial licence restriction is recorded in the game's Credits and [Rex provenance](CompanionDog/TEXTURE_PROVENANCE.md). Attribution does not remove that restriction. The nature assets below retain their separate CC0 status.
+
 The project's downloaded nature models and photographic surfaces come from Poly Haven; v0.4 also adds a procedural grass PBR surface from ambientCG. Their asset licenses were checked on **2026-10-05**: these assets are **CC0 1.0**, permitting modification, redistribution, and commercial use. Attribution is voluntary and is retained here for provenance. No paid assets are used. The license applies to the asset files; website branding and example renders are not included.
 
 [Poly Haven asset license](https://polyhaven.com/license) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)

@@ -1,5 +1,10 @@
 """Rex revision 6: a generated base mesh, photo-projected coat, the existing rig and card fur.
 
+Restored for the owner-authorized local prototype, 2026-10-11. The retained
+Hunyuan3D-derived base has an unresolved territorial license restriction.
+Attribution does not resolve it; see Art/CompanionDog/TEXTURE_PROVENANCE.md.
+This offline script makes no hosted generation request.
+
     blender -b -P Tools/build_rex_from_generated.py [-- --preview-only] [-- --mesh=<glb>]
 
 Inputs (not tracked in Git):
@@ -10,8 +15,6 @@ Outputs: the usual Exports/*.fbx, Textures/*.png, dog_manifest.json, Source/Comp
 and Previews/*.png. Rig, bone names, clip names, asset paths and the walk stride stay as in
 revision 4 so runtime code and save fingerprints are untouched.
 """
-raise SystemExit('Retired generated-mesh pipeline: its output licence does not meet this release. Use Tools/create_companion_dog_v2.py for original local geometry.')
-
 from pathlib import Path
 import sys, math, json, hashlib
 import bpy, bmesh

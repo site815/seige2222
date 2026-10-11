@@ -2,6 +2,8 @@
 
 # SEIGE — Original Prototype Asset Register
 
+**Current Rex exception:** The paragraphs below describe retired original revisions. The current prototype restores the detailed revision-7 model and photo coat at the owner's explicit request, with an unresolved licence notice in Credits. See the current [Rex record](CompanionDog/README.md) and [provenance](CompanionDog/TEXTURE_PROVENANCE.md); the current asset is not covered by the original-art claims below.
+
 The v0.8 Rex companion is an original authored interpretation guided by the user's private photographs: Blender mesh, rig, animation and procedural surface work, plus an original generated coat-detail bitmap. No photograph pixels are copied into the coat map. The photographs are not repository assets and must not be embedded or redistributed. See the [Rex asset record](CompanionDog/README.md) for provenance and the [companion design](../docs/game-design/COMPANIONS_AND_REX.md) for behavior and pending likeness/runtime acceptance. These original assets follow the project's licensing decisions; the private references are not assigned a public license.
 
 The refined Rex revision-4 source has **118,331 triangles and 24 bones**, matching the current [source validation](CompanionDog/source_validation.json) and import report. Current FBX round-trip checks pass, and [Unreal reimport](CompanionDog/import_report.json) verifies three skeletal LODs, both animation clips and ten material slots including the brown iris material. **Runtime appearance and animation review remain pending**.

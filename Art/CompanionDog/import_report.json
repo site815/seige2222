@@ -13,12 +13,12 @@
       "root_motion": false
     }
   },
-  "revision": 5,
+  "revision": 6,
   "lod_count": 3,
   "lod_vertices": [
-    31637,
-    9066,
-    5006
+    30500,
+    10915,
+    5918
   ],
   "material_slots": [
     "DM_Coat",
@@ -36,7 +36,7 @@
   ],
   "vertex_colors": true,
   "vertex_color_encoding": "FBX sRGB decoded by material",
-  "source_triangles": 52682,
+  "source_triangles": 48000,
   "source_bones": [
     "root",
     "pelvis",
@@ -65,20 +65,20 @@
   ],
   "source_reference_bounds_cm": {
     "min": [
-      -97.58114624023438,
-      -20.299875259399414,
-      0.24408677220344543
+      -63.061893463134766,
+      -13.991018295288086,
+      0.0
     ],
     "max": [
-      74.0679931640625,
-      20.287540435791016,
-      86.76895904541016
+      62.39590072631836,
+      15.843887329101562,
+      76.24874114990234
     ]
   },
   "imported_dimensions_cm": [
-    171.64913940429688,
-    40.58741569519043,
-    86.52487227320671
+    125.45779418945312,
+    29.514158248901367,
+    76.24874114990234
   ],
   "verified_bones": [
     "ear_L",

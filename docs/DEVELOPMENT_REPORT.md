@@ -2,6 +2,16 @@
 
 Updated: **2026-10-11** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
 
+## v0.10.1 — requested presentation corrections
+
+The detailed earlier Rex model/photo coat has been restored under the owner's explicit temporary prototype exception. Its licence restriction remains recorded in Credits and provenance; credit is not distribution clearance. Existing rig paths, companion behaviour and controls are retained. Lower-neck contours were smoothed while preserving the detailed face and coat. A bridge-cut candidate was rejected because it damaged the paws; the original closed leg geometry remains, including some close-angle imperfections.
+
+Routine UI select/confirm/cancel cues are now silent. Replacement effects use softer frequency content, conservative category volumes, cue/category cooldowns and a real-time rolling voice limit; 10× simulation cannot accelerate audio repetition. The artificial Rex bark is disabled. All twelve WAVs imported successfully and waveform/hash/configuration checks passed; no subjective listening claim is made.
+
+The timer is integrated into the bottom command dock immediately after speed. Credits use wider columns to fit the prototype exception. Night sky fill rises from 0.16 to 0.65 of daytime, exposure lift from 0.25 to 1.05 EV; sky colour is less saturated blue and local lamp intensities increase without adding lights.
+
+The corrected Editor build passed. Its 10× rendered route passed **95 assertions / 25 stages**, and actual captures confirm the shared bottom dock, readable night terrain/buildings and Credits without overlap. The final Shipping build completed successfully (BuildCookRun 43.64 seconds). Its packaged route passed **95 assertions / 25 stages in 37.55 seconds**, advancing 302.45 simulation seconds before the paused Credits phase. All 541 source/runtime inputs stayed unchanged, 25 staged JSON files matched, and 18 process samples observed zero TCP/UDP endpoints. Five UI captures and two actual Rex views were reviewed. The ZIP is 745,301,854 bytes; CRC and runtime file hashes match. See [v0.10.1 evidence](verification/v0.10.1.json). Close-angle Rex mesh/coat polishing is still needed; this restores the earlier detailed asset, not finished photorealism. This presentation update does not change `prototype-10.0` rules, save format 8 or Rules/AI fingerprints.
+
 ## v0.10.0 — focused checks and local release complete
 
 The user requested the next gameplay/UI update with reduced testing, superseding the previous extended release-audit loop. Source integration, the focused checks and local Shipping release are complete; see the [content-bound verification record](verification/v0.10.0.json). The old v0.9.3 hashes, native passes and performance samples below belong only to their named historical source.

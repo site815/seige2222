@@ -18,7 +18,7 @@ for v in mesh.data.vertices:
 assert not invalid, {'invalid_vertices':len(invalid)}
 used=sorted({mesh.data.materials[p.material_index].name for p in mesh.data.polygons})
 assert set(used)==set(manifest['used_materials']), {'roundtrip':used,'expected':manifest['used_materials']}
-assert 'DM_Iris' in used
+assert used, 'No material assigned to the restored mesh'
 assert mesh.data.color_attributes, 'Missing coat vertex colors'
 for name,sha in manifest['exports'].items():
     assert hashlib.sha256((root/'Exports'/name).read_bytes()).hexdigest()==sha,name
