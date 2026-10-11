@@ -6,9 +6,10 @@
   "scope": "User-requested reduced verification. Not the old full release gate, long balance soak, crowded-neighbor benchmark or minimum-FPS certification.",
   "source_identity": {
     "base_commit": "c2c5f317fc55f6996cdb20f194b7682b5a6ac9e8",
-    "identity": "Exact source/runtime input SHA-256 manifest in packaged-smoke.json; integrated commit recorded after commit creation.",
+    "identity": "Exact source/runtime input SHA-256 manifest in packaged-smoke.json. The integrated commit contains that code/assets; subsequent delivery-status documentation does not change the tested build.",
     "input_count": 540,
-    "unchanged_during_check": true
+    "unchanged_during_check": true,
+    "integrated_commit": "31f8a844aeb6cbd70110f3fb428539794abc6752"
   },
   "editor_build": "passed",
   "shipping_package": "passed",
@@ -120,10 +121,14 @@
     "new_colony_required": true
   },
   "publication": {
-    "git_push": "pending",
+    "git_push": "blocked",
+    "push_attempt": "git push origin main",
+    "git_error": "HTTP 403: Your account is suspended.",
     "hosted_release": "blocked",
     "github_api_check": "HTTP 403: Sorry. Your account was suspended",
-    "ci": "unconfirmed"
+    "ci": "unconfirmed",
+    "local_tag": "v0.10.0",
+    "retry_after_account_restored": "Push main and tag v0.10.0, then publish the existing verified ZIP and checksum."
   },
   "limits": [
     "No rerun of the old 117-stage route or complete native suite.",

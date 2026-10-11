@@ -6,7 +6,7 @@ Updated **2026-10-11**: **v0.10.0 integrated and locally packaged; focused check
 
 - Completed: editor/Shipping builds, configuration/rule validation, seven focused native tests, all 86 packaged smoke assertions at 10×, and review of four actual UI/night captures.
 - Completed: content-bound [verification record](verification/v0.10.0.json), tested launcher and CRC/SHA-256-verified Windows ZIP. Save format 8 requires a new colony; legacy saves remain untouched.
-- Delivery: attempt the authorized Git push. Hosted release upload is blocked by a fresh GitHub API HTTP 403 reporting account suspension; CI is unconfirmed. Preserve the local ZIP and checksum for delivery.
+- Delivery blocked externally: both `git push origin main` and the release API returned account-suspension HTTP 403. Code/assets are saved as local commit `31f8a84`, with the local `v0.10.0` tag, ZIP and checksum. Once GitHub restores access, push main and the tag and upload the existing archive. CI is unconfirmed.
 
 ## Ongoing design and quality work
 

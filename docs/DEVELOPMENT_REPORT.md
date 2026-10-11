@@ -23,7 +23,9 @@ The user requested the next gameplay/UI update with reduced testing, superseding
 | Bounded rendered UI playcheck | 86 assertions, 23 stages passed at 10× in 35.53 seconds; 337.3 simulation seconds |
 | Render/endpoint review | Four actual renders reviewed; 17 game process samples showed zero TCP/UDP endpoints |
 | Current package/archive identity | 540 input hashes and 25 matching JSON files; 744,334,858-byte ZIP with verified CRC/runtime hashes |
-| Git push / hosted release / CI | Push pending; fresh API request reports account suspension; CI unconfirmed |
+| Git push / hosted release / CI | Git push and release API both returned account-suspension HTTP 403; CI unconfirmed |
+
+Integrated source/assets are committed locally as `31f8a844aeb6cbd70110f3fb428539794abc6752`; the local `v0.10.0` tag includes the final delivery record. `git push origin main` failed with HTTP 403 and “Your account is suspended.” The release API returned the same restriction. No successful new remote push or hosted release is claimed.
 
 The new opt-in smoke runs a documented established-colony fixture at 10x, uses a review-only factory, and tests real hover/click/menu actions, rendered worker/bill/price labels, map restoration and active night lighting. It requests four captures, writes Saved/NextUpdateSmoke.json and fails after a 55-second wall-clock watchdog. It never loads or writes player saves. Its night phase is an explicit presentation fixture; it is not a day-long gameplay soak. The older 117-stage route is unchanged and is not being rerun as part of the reduced-testing request.
 
