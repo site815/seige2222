@@ -133,7 +133,8 @@ void ASeigeHUD::DrawCommandInfo(ASeigeGameMode& G,float W,float H)
 void ASeigeHUD::DrawWallPlan(ASeigeGameMode& G,float W,float H)
 {
     if(!G.WallPlacementActive||G.Screen!=TEXT("playing")||G.IsRegionMap())return;
-    const float PW=520,X=(W-PW)*.5f,Y=H-290;Frame(X,Y,PW,195);
+    // Clear the two-row command dock (108 high, 14 bottom margin) by 12 px.
+    const float PW=520,X=(W-PW)*.5f,Y=H-329;Frame(X,Y,PW,195);
     FSeigeWallPlan Plan;FString Reason;const bool Valid=G.Sim.Walls.Plan(G.Sim,G.WallJoints,G.WallInsideLeft,Plan,Reason);
     Label(TEXT("WALL PLAN"),X+18,Y+15,17,Gold);
     Label(FString::Printf(TEXT("%d joints / %.1f m / %d sections / inside %s"),G.WallJoints.Num(),Plan.LengthMeters,Plan.Segments.Num(),G.WallInsideLeft?TEXT("left"):TEXT("right")),X+18,Y+45,13,Text);

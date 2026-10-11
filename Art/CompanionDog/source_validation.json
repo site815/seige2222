@@ -4,9 +4,15 @@
   "bone_names_match": true,
   "unweighted_or_invalid_vertices": 0,
   "max_influences": 4,
-  "vertex_colors": 1,
+  "exports": {
+    "A_DogIdle.fbx": "e061e945ae26b2bca48b8fddf698385deae47e7592220d28750eed0220129612",
+    "A_DogWalk.fbx": "7592b11c6c749df9fb2faffa1019e6a6c688324e1d245cb15397b30b796384d3",
+    "SK_CompanionDog.fbx": "c712e92f8bf61b02fc0327d0f6ac7536973052673752e1a88883ecfe35cadc14"
+  },
+  "vertex_colors": 3,
   "used_materials": [
-    "DM_Coat"
+    "DM_Coat",
+    "DM_Nose"
   ],
   "export_hashes_match": true,
   "clip_files_present": true,
@@ -23,7 +29,21 @@
     }
   },
   "walk_authored_ik_max_error_cm": 1.2100770512055893e-05,
-  "source_triangles": 48000,
-  "source_cosmetic_revision": "Detailed revision 7 restored; lower-neck contours softened; original closed leg topology, photo coat, facial anatomy, UVs, rig and clips retained.",
-  "unreal_import_verified": false
+  "source_triangles": 93124,
+  "source_cosmetic_revision": "Revision 8: repaired anatomy, front likeness, photographic coat and continuous limb/tail attachments.",
+  "unreal_import_verified": true,
+  "unreal_import_report": "import_report.json",
+  "runtime_review_pending": false,
+  "runtime_review": {
+    "version": "0.10.2",
+    "date": "2026-10-11",
+    "views": [
+      "front",
+      "side",
+      "rear",
+      "three-quarter"
+    ],
+    "evidence": "docs/verification/v0.10.2/rex/",
+    "scope": "Shipping captures at 10x, diagnostic close camera; repaired face/limbs and photographic coat reviewed. Simplified silhouette and surface fur remain; not finished photoreal character art."
+  }
 }

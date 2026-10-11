@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "version": "0.10.2",
+  "date": "2026-10-11",
+  "status": "focused_local_checks_passed",
+  "scope": "Presentation corrections. Two native tests, bounded 10x packaged UI routes at two resolutions, asset checks and multi-angle rendered review; not a full native-suite rerun, long-session performance acceptance or finished-photorealism certification.",
+  "editor_build": "passed",
+  "shipping_package": "passed",
+  "native_tests": {
+    "succeeded": 2,
+    "failures": 0,
+    "warnings": 0,
+    "report": "v0.10.2/focused-native.json"
+  },
+  "packaged_checks": [
+    {
+      "resolution": [
+        1600,
+        900
+      ],
+      "report": "v0.10.2/packaged-1600x900.json",
+      "assertions": 106,
+      "stages": 25,
+      "failures": 0,
+      "elapsed_seconds": 37.566660299897194,
+      "simulation_speed": 10,
+      "socket_samples": 18,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 545,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    },
+    {
+      "resolution": [
+        3840,
+        1600
+      ],
+      "report": "v0.10.2/packaged-3840x1600.json",
+      "assertions": 106,
+      "stages": 25,
+      "failures": 0,
+      "elapsed_seconds": 37.705603901296854,
+      "simulation_speed": 10,
+      "socket_samples": 18,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 545,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    }
+  ],
+  "package_files": [
+    {
+      "path": "Builds/v0.10.2/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+      "bytes": 167277056,
+      "sha256": "6F5A63697EBB2B1491F43B0097765F5BCBB306A54F888A97C9221017E48FE000"
+    },
+    {
+      "path": "Builds/v0.10.2/Windows/seige2222/Content/Paks/global.ucas",
+      "bytes": 3205888,
+      "sha256": "656F9CC750D6B9EA0B7B6FC221B8BFDC8BE20E737E66D5A18AF7CD7C118012D3"
+    },
+    {
+      "path": "Builds/v0.10.2/Windows/seige2222/Content/Paks/global.utoc",
+      "bytes": 782,
+      "sha256": "D4F99BC37B29DC911C8B2F0549314F2E4D974CB5B6D9B68EE5E9C5023A70CB6D"
+    },
+    {
+      "path": "Builds/v0.10.2/Windows/seige2222/Content/Paks/seige2222-Windows.pak",
+      "bytes": 11244862,
+      "sha256": "3DF340D56DFE0524D29E5C2C99126CB7F25FE49DBC183544F2E2CE1D08280766"
+    },
+    {
+      "path": "Builds/v0.10.2/Windows/seige2222/Content/Paks/seige2222-Windows.ucas",
+      "bytes": 659061552,
+      "sha256": "0D72F36F3B56D4E8C0DDCEEFC983FB21FA9C878E9C108F55575442F7D546756B"
+    },
+    {
+      "path": "Builds/v0.10.2/Windows/seige2222/Content/Paks/seige2222-Windows.utoc",
+      "bytes": 436069,
+      "sha256": "B567D426CFBC74C9842750B95CBE100B1B1C912CBC8293314238AC86F029FCDC"
+    }
+  ],
+  "captures": [
+    {
+      "path": "v0.10.2/rex/front.png",
+      "sha256": "c7eb3c4d3e5f4835837c4b4e6d09ddd17d0509f606e50a141842b1cf809fa325"
+    },
+    {
+      "path": "v0.10.2/rex/rear.png",
+      "sha256": "ddaa61b34e3f14c8e0232945fd432df1c0c23a1c0d5f6c24eda602af4b3afa4c"
+    },
+    {
+      "path": "v0.10.2/rex/side.png",
+      "sha256": "5e026c9ac3f88729b02362100520e5d25c1bc48b9c7c9e3379bc1225f468373f"
+    },
+    {
+      "path": "v0.10.2/rex/three-quarter.png",
+      "sha256": "49787faa775297f3f485e2931769260b0b88d53a4d319752fc9c570d140680dd"
+    },
+    {
+      "path": "v0.10.2/ui-1600x900/01_worker_and_hud.png",
+      "sha256": "fa5d4631895165ade4ae46b0ddf3699a29474089d7e0576afdaa5a0fdbee847f"
+    },
+    {
+      "path": "v0.10.2/ui-1600x900/02_map_chain.png",
+      "sha256": "1a11aa6a4585f00335558ffd0a810590d618e2cd6d0e253910315e58b8c71d62"
+    },
+    {
+      "path": "v0.10.2/ui-1600x900/03_equipment_bill.png",
+      "sha256": "c6affb0d1696b4c62d764809eb2d22017aa9becbf6b607a3e78c1ddd9aa945fb"
+    },
+    {
+      "path": "v0.10.2/ui-1600x900/04_night_trade.png",
+      "sha256": "970dfb15f5a62bac75eba574b85bbe6c982f3d1df13102cb76f0f127699e45c9"
+    },
+    {
+      "path": "v0.10.2/ui-1600x900/05_credits.png",
+      "sha256": "4663f08793ef33c4babc6f70da91b31e7455ee0e3b49907040141c77164fe3e4"
+    },
+    {
+      "path": "v0.10.2/ui-3840x1600/01_worker_and_hud.png",
+      "sha256": "25957ba0215fcf1a9889ba050f1f2a1afea889585472d7779b30956dada1041e"
+    },
+    {
+      "path": "v0.10.2/ui-3840x1600/02_map_chain.png",
+      "sha256": "753628742524ef142ce0bfc866f047adca15befd6883b8c522e7c6c024dfad9b"
+    },
+    {
+      "path": "v0.10.2/ui-3840x1600/03_equipment_bill.png",
+      "sha256": "15b0c0ae3a88c92a1be60307d3b8f8ced5cac788f57b67d2294e656887e26684"
+    },
+    {
+      "path": "v0.10.2/ui-3840x1600/04_night_trade.png",
+      "sha256": "6ea31fa015fa745d3b73798d356d00eae614a6087802149806b7ebea5990ca20"
+    },
+    {
+      "path": "v0.10.2/ui-3840x1600/05_credits.png",
+      "sha256": "3271cace9573c9117a17d21ab0528eefc707104512483aaed3342bbc7d2133c7"
+    }
+  ],
+  "archive": {
+    "path": "Builds/seige2222-v0.10.2-win64.zip",
+    "bytes": 758997455,
+    "sha256": "3F58A2EA8CF69801B036750F13FAE7315331DEB892B7282C450455AEB3F84C7E",
+    "crc_check": "passed",
+    "all_runtime_bytes_match": true
+  },
+  "hud": {
+    "width_policy": "half physical viewport height",
+    "verified_widths_px": {
+      "1600x900": 450,
+      "3840x1600": 800
+    }
+  },
+  "wind": {
+    "materials": 7,
+    "shader_errors": 0,
+    "clock": "calendar plus substep remainder, continuous across speed changes and frozen on pause",
+    "cost_comparison": "Short Editor A/B at 3840x1600 with the user's older game concurrently running; non-isolated and not a release FPS result. Details retained in editor-wind-on/off.json."
+  },
+  "rex": {
+    "source_report": "v0.10.2/rex-source-validation.json",
+    "import_report": "v0.10.2/rex-import.json",
+    "deformation_report": "v0.10.2/rex-deformation.json",
+    "coat_report": "v0.10.2/rex-coat-polish.json",
+    "expected_unused_slot_import_warnings": 10,
+    "review": "Front, side, rear and three-quarter packaged captures retained, alongside source animation review. Corrected mesh and photographic mapping; remaining generated-base, fur and mouth limitations are documented in asset provenance.",
+    "licence": "Owner-authorized prototype exception retained in Credits; territorial restriction unresolved."
+  },
+  "save_compatibility": "Rules prototype-10.0, format8 and Rules/AI fingerprints unchanged.",
+  "publication": "Local release. GitHub push blocked by account-suspension HTTP403 as last checked; no successful hosted release or CI claim."
+}

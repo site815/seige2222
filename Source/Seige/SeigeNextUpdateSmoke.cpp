@@ -119,6 +119,19 @@ void ASeigeGameMode::RunNextUpdateSmoke()
     {
         Check(Label(TEXT("WORKER / ")+WorkerId)&&Label(TEXT("Selected / Esc")),TEXT("Click pins the same physical worker inspector"));
         for(const auto* Heading:{TEXT("Credits"),TEXT("Energy"),TEXT("Workers"),TEXT("Raw"),TEXT("Basic"),TEXT("Advanced")})Check(Hud->SmokeLabels.Contains(Heading),FString(TEXT("Thin HUD heading: "))+Heading);
+        const float ExpectedWidth=Hud->Ui.ViewportHeight*.5f,UiScale=Hud->Ui.Scale;
+        auto Casing=[&](bool Bottom){return Hud->Ui.HitRegions.FindByPredicate([&](const FSeigeButton& R){return R.Action==TEXT("panel")&&FMath::Abs(R.Size.X*UiScale-ExpectedWidth)<.1f&&(R.Position.Y*UiScale>Hud->Ui.ViewportHeight*.5f)==Bottom;});};
+        const auto* Top=Casing(false);const auto* Dock=Casing(true);
+        Check(Top&&Dock,TEXT("Both rendered HUD casings are exactly half the physical screen height in width"));
+        if(Top&&Dock)
+        {
+            Check(FMath::Abs(Top->Position.X-Dock->Position.X)<.1f,TEXT("Upper resource HUD and bottom dock share the same horizontal alignment"));
+            for(const auto* Action:{TEXT("build-menu"),TEXT("region-map"),TEXT("progression"),TEXT("summary:objective"),TEXT("game-menu"),TEXT("pause"),TEXT("speed"),TEXT("summary:threats")})
+            {
+                const auto* Control=Hud->Ui.HitRegions.FindByPredicate([&](const FSeigeButton& R){return R.Action==Action;});
+                Check(Control&&Control->Position.X>=Dock->Position.X&&Control->Position.Y>=Dock->Position.Y&&Control->Position.X+Control->Size.X<=Dock->Position.X+Dock->Size.X+.1f&&Control->Position.Y+Control->Size.Y<=Dock->Position.Y+Dock->Size.Y+.1f,FString(TEXT("Action is retained inside compact dock: "))+Action);
+            }
+        }
         const auto* SpeedControl=Hud->Ui.HitRegions.FindByPredicate([](const auto& V){return V.Action==TEXT("speed");});
         const auto* Timer=Hud->Ui.HitRegions.FindByPredicate([](const auto& V){return V.Action==TEXT("summary:threats");});
         Check(SpeedControl&&Timer&&FMath::IsNearlyEqual(SpeedControl->Position.Y,Timer->Position.Y)&&Timer->Position.X>=SpeedControl->Position.X+SpeedControl->Size.X,
@@ -133,6 +146,13 @@ void ASeigeGameMode::RunNextUpdateSmoke()
     }
     case 6:
     {
+        const auto* Card=Hud->Ui.HitRegions.FindByPredicate([](const auto& V){return V.Action==TEXT("summary:group:raw");});
+        if(Card)
+        {
+            const auto Bridge=FVector2D(Card->Position.X+Card->Size.X*.5,Card->Position.Y+Card->Size.Y+4)*Hud->Ui.Scale;
+            Hud->Ui.UpdateHoverPanel(Bridge.X,Bridge.Y,true);
+            Check(Hud->Ui.HoverPanel==TEXT("group:raw"),TEXT("Pointer crosses the top casing padding into its resource ledger without closing it"));
+        }
         const auto* R=Hud->Ui.HitRegions.FindByPredicate([](const auto& V){return V.Action==TEXT("resource-detail:water");});
         if(Check(R!=nullptr,TEXT("Nested individual material entry exists"))){const auto P=(R->Position+R->Size*.5)*Hud->Ui.Scale;PC->SetMouseLocation(FMath::RoundToInt(P.X),FMath::RoundToInt(P.Y));}break;
     }

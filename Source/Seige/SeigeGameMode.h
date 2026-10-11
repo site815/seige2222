@@ -65,6 +65,10 @@ public:
     float NightSkyFraction=.5f,NightExposureOffsetEV=2.f,SunriseSoftness=.12f,WinterAccumulationFraction=.08f,WinterMeltFraction=.12f,MaximumSnowCoverage=.92f;
     float SnowRadiusMeters=32,SnowHeightMeters=24,SnowFallMetersPerSecond=1.4f,SnowflakeSizeCentimeters=2.2f;
     float SunDirectionUpdateDegrees=.15f,SunShadowUpdateSeconds=.5f;
+    float WindCycleSeconds=10,TreeWindSwayCm=18,LeafWindRustleCm=4,GrassWindSwayCm=5,TreeWindDistanceMeters=260,WindFadeStartFraction=.6f;
+    float PreviousWindPhase=0;
+    double PreviousWindSeconds=-1;
+    bool HasWindPhase=false;
     double LastWeatherSunUpdate=-1;
     bool HasWeatherSunDirection=false;
     int32 SnowflakeCount=384;

@@ -1,0 +1,59 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "M9800X3D",
+			"instance": "39AF104F4BBB10CA40FFF2AECA13C25F",
+			"instanceName": "M9800X3D-6012",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.11-10.11.16",
+	"succeeded": 2,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.33675697445869446,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ResourceGroupsAndHoverControls",
+			"fullTestPath": "Seige.Interaction.ResourceGroupsAndHoverControls",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39AF104F4BBB10CA40FFF2AECA13C25F"
+			],
+			"duration": 0.328482985496521,
+			"dateTime": "2026.10.11-10.11.16",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WindClock",
+			"fullTestPath": "Seige.Presentation.WindClock",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39AF104F4BBB10CA40FFF2AECA13C25F"
+			],
+			"duration": 0.0082740001380443573,
+			"dateTime": "2026.10.11-10.11.16",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

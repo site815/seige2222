@@ -1,6 +1,19 @@
 # seige2222 — remaining work
 
-Updated **2026-10-11**: **v0.10.1 local build complete; 95 packaged checks passed at 10×**.
+Updated **2026-10-11**: **v0.10.2 final Shipping build and focused checks passed; actual Shipping Rex views reviewed**.
+
+- Completed: matching half-screen-height HUD casings, six compact resource cards, two-row bottom dock with the full timer, consistent spacing and the hover-padding fix. Width is 450 px at 1600×900 and 800 px at 3840×1600. Actual packaged HUD renders at both resolutions were reviewed.
+- Completed: clock-driven GPU foliage motion at 1×/5×/10×, pause freeze, previous-frame displacement and distance fades. Trunks and cached shadows remain stable. Seven foliage materials compiled with zero errors or warnings.
+- Completed final checks: Editor and Shipping compilation/cooking, two focused native tests with zero failures or warnings, configuration regressions, and **106 assertions / 25 stages in each packaged 10× route**, at 1600×900 and 3840×1600. Both exited 0 with all 545 source inputs unchanged and 25 matching staged JSON files; 36 total process samples observed zero TCP/UDP endpoints.
+- Rex revision 8's repaired anatomy, photographic atlas and continuous weights passed deformation/export validation and Unreal import. The body-coat correction restores photographic variation and a UV-matched detail normal; Editor front/side captures were reviewed before final cooking. Final Shipping front, side, rear and three-quarter Rex captures were reviewed and accepted for this correction. Retain the documented limits of textured fur, simplified joints/feathering and the prototype licence exception; photographic likeness is not yet finished character art.
+- Completed: the 758,997,455-byte Windows ZIP passed CRC and every-runtime-file SHA-256 comparison. Final package/source hashes and archive identity are recorded in [v0.10.2 evidence](verification/v0.10.2.json). Preserve version-specific evidence; do not relabel earlier runs as passes for changed assets.
+- Worker assembly documentation now states the full 80 kg bill plus 4 kWh and the nominal 600 simulation seconds. Physical staffing, deliveries, power and support determine actual duration; no balance values changed.
+- No current FPS-improvement claim: the short Editor wind comparison shared the GPU with the user's old game. Crowded-neighbor performance and sustained frame rates remain open.
+- Remote delivery remains blocked by GitHub's account-suspension HTTP 403 as last checked. Preserve the locally verified package and commit when the update is ready.
+
+## Previous v0.10.1 checkpoint
+
+**v0.10.1 local build complete; 95 packaged checks passed at 10×**.
 
 - Detailed Rex and photo coat restored; lower-neck contours smoothed. The temporary licence exception is explicit in Credits/provenance. Remaining art work: fused inner-leg geometry, coat transition, and close-angle surface detail. Commercial/public asset clearance remains unresolved.
 - Completed: quiet UI/gameplay audio, integrated bottom-dock timer, brighter nights, asset import/rig validation and 95 packaged assertions. Five UI renders and two Rex views reviewed.
@@ -22,7 +35,7 @@ Updated **2026-10-11**: **v0.10.0 integrated and locally packaged; focused check
 - Autonomous transport needs varied routes, unloading/charging queues, destruction, evacuation and longer-session economy coverage beyond the focused regression. Keep one cargo ledger and reciprocal body/handler claims.
 - The core is now worker-only. Review specialist production dependencies, the finite five-worker/9.57-tonne player start, fusion-plant operation and high-tier factories over sustained gameplay. Existing 14 recipe balances do not prove the revised economy is fun or self-sustaining.
 - Current-source crowded-neighbor performance has not been measured. Retain the eight-developed-neighbor failure as a diagnostic target; do not reuse older frame-rate gains as evidence for v0.10.0.
-- Rex's original asset remains stylized despite refinement. Continue reference-based face, coat and gait work. Terrain repetition, close-up ground quality, foliage transitions and sector-crossing stalls remain open; no Manor Lords parity claim.
+- Rex's detailed photograph-derived asset was restored in v0.10.1 under the user's prototype exception; the current multi-angle face, coat and gait repair remains unfinished. Terrain repetition, close-up ground quality, foliage transitions and sector-crossing stalls remain open; no Manor Lords parity claim.
 - Persistent multiplayer, general inter-colony trade, remote extraction and full relocation/scavenging remain future work.
 
 ## Historical v0.9.3 checkpoint and retained backlog

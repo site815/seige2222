@@ -1,0 +1,12 @@
+{
+  "geometry_uv_weights_sha256": "4e1fee79843ad2710ca68a4859dfc949d906ab41f946163efcbb7c53f29cf9ed",
+  "anatomy_unchanged": true,
+  "pipeline": [
+    "Tools/prepare_rex_coat_tiles.py",
+    "Tools/polish_rex_coat.py",
+    "Tools/promote_rex_coat.py"
+  ],
+  "normal_strength": 0.65,
+  "fur_flow": "Downward chest/legs; along flanks, blended non-mirrored photographic samples",
+  "preview_uses_runtime_baked_normal": true
+}

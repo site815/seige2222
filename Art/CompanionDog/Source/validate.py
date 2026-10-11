@@ -25,7 +25,7 @@ for name,sha in manifest['exports'].items():
 mesh.data.calc_loop_triangles()
 report={'fbx_roundtrip_mesh':mesh.name,'bones':len(actual),'bone_names_match':True,
     'unweighted_or_invalid_vertices':len(invalid),'max_influences':max(len(v.groups) for v in mesh.data.vertices),
-    'vertex_colors':len(mesh.data.color_attributes),'used_materials':used,'export_hashes_match':True,
+    'exports':manifest['exports'], 'vertex_colors':len(mesh.data.color_attributes),'used_materials':used,'export_hashes_match':True,
     'clip_files_present':True,'animations':{}}
 for name,definition in manifest['animations'].items():
     previous=set(bpy.data.objects);bpy.context.scene.render.fps=30

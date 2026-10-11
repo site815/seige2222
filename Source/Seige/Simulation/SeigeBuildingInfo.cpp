@@ -88,10 +88,10 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
         Add(TEXT("Production"),TEXT("Inputs per cycle"),Amounts(Inputs));
         Add(TEXT("Production"),TEXT("Batch electricity"),N(Recipe->EnergyKWh*D.RecipeEnergyMultiplier)+TEXT(" kWh reserved before production"));
         Add(TEXT("Production"),TEXT("Outputs per cycle"),Recipe->WorkerOutput>0?FString::FromInt(Recipe->WorkerOutput)+TEXT(" stored worker(s)"):Amounts(Recipe->Outputs));
-        Add(TEXT("Production"),TEXT("Base cycle time"),N(Duration)+TEXT(" simulation s"));
+        Add(TEXT("Production"),TEXT("Base cycle time"),N(Duration)+TEXT(" simulation s (")+N(Duration/60)+TEXT(" real min at 1x, full efficiency)"));
         Add(TEXT("Production"),TEXT("Operating cycle time"),Fraction>0?N(Duration/Fraction)+TEXT(" s; requires local inputs and output space"):TEXT("Paused until operational"));
         if(B)Add(TEXT("Production"),TEXT("Cycle progress"),N(B->Progress*100)+TEXT("%"));
-        if(CoreBuilding)Add(TEXT("Production"),TEXT("Assembly policy"),TEXT("Automatic vacancy cover when no worker factory operates; selected paid batch finishes first"));
+        if(CoreBuilding)Add(TEXT("Production"),TEXT("Assembly policy"),TEXT("Command-center manufacture covers vacant jobs and worker stock targets; each completed body pays the full material and energy bill"));
         TMap<FString,double> Rates;for(const auto& Pair:Inputs)Rates.Add(Pair.Key,Pair.Value/Duration);
         Add(TEXT("Production"),TEXT("Nominal input rates"),Amounts(Rates)+TEXT(" / s"));
         Rates.Empty();for(const auto& Pair:Recipe->Outputs)Rates.Add(Pair.Key,Pair.Value/Duration);

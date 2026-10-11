@@ -24,6 +24,8 @@
 namespace {
 const FLinearColor Ink(.012f,.025f,.037f,.96f),Panel(.022f,.043f,.058f,.96f),Raised(.060f,.114f,.140f,.99f);
 const FLinearColor Gold(.91f,.72f,.39f),Green(.35f,.85f,.78f),Text(.91f,.95f,.96f),Muted(.58f,.71f,.76f),Red(1.f,.40f,.32f);
+constexpr float HudPanelPadding=8.f,HudPanelGap=4.f,HudCellHeight=44.f,HudTop=27.f;
+float HudPanelWidth(float LogicalHeight){return LogicalHeight*.5f;}
 bool Contains(const FSeigeButton& R,float X,float Y) {return X>=R.Position.X&&X<=R.Position.X+R.Size.X&&Y>=R.Position.Y&&Y<=R.Position.Y+R.Size.Y;}
 bool OutcomeModal(const ASeigeGameMode& G) {return !G.Ready||(!G.Observer&&(G.Sim.Escaped||G.Sim.Failed||(G.Sim.Won&&!G.WinAcknowledged)));}
 bool CanIssueCoreCommands(const ASeigeGameMode& G)
@@ -70,10 +72,11 @@ void FSeigeUiState::UpdateHoverPanel(float X,float Y,bool Enabled)
 }
 TArray<FBox2D> FSeigeUiState::ResourceCardBounds(float LogicalWidth) const
 {
-    const float Width=FMath::Min(1600.f,LogicalWidth-48.f),Gap=4;
-    const float Weights[]={.12f,.20f,.23f,.15f,.15f,.15f};float Left=(LogicalWidth-Width)*.5f;
+    const float Width=HudPanelWidth(ViewportHeight/FMath::Max(Scale,.1f));
+    const float CardWidth=(Width-HudPanelPadding*2-HudPanelGap*5)/6;
+    const float Left=(LogicalWidth-Width)*.5f+HudPanelPadding,Top=HudTop+HudPanelPadding;
     TArray<FBox2D> Bounds;
-    for(float Weight:Weights){const float W=(Width-5*Gap)*Weight;Bounds.Emplace(FVector2D(Left,27),FVector2D(Left+W,73));Left+=W+Gap;}
+    for(int32 I=0;I<6;++I){const float X=Left+I*(CardWidth+HudPanelGap);Bounds.Emplace(FVector2D(X,Top),FVector2D(X+CardWidth,Top+HudCellHeight));}
     return Bounds;
 }
 bool ASeigeHUD::LoadInterface(const FString& Directory,FString& Error)
@@ -661,7 +664,7 @@ void ASeigeHUD::DrawRegionMap(ASeigeGameMode& G,float W,float H)
     // A survey representation uses the same world coordinates, heights and woodland
     // distribution as detailed terrain. No enemy positions are exposed here.
     Box(0,0,W,H,FLinearColor(.065f,.080f,.082f,1));Region(TEXT("region-surface"),0,0,W,H);
-    const float Size=FMath::Min(H-230,W-500),X=(W-Size)*.5f,Y=118,Cell=Size/3;
+    const float Size=FMath::Min(H-264,W-500),X=(W-Size)*.5f,Y=118,Cell=Size/3;
     Frame(X-9,Y-9,Size+18,Size+18);Ui.HitRegions.Last().Action=TEXT("region-surface");Box(X,Y,Size,Size,FLinearColor(.63f,.62f,.54f,1));
     const double Edge=G.Sim.WorldHalfSize*3;
     auto Map=[&](FVector2D P){return FVector2D(X+(P.X+Edge)/(Edge*2)*Size,Y+(P.Y+Edge)/(Edge*2)*Size);};
@@ -734,7 +737,7 @@ void ASeigeHUD::DrawHUD()
     Scale=FMath::Max(.1f,FMath::Min(Canvas->SizeX/1600.f,Canvas->SizeY/900.f));Ui.Scale=Scale;Ui.ViewportWidth=Canvas->SizeX;Ui.ViewportHeight=Canvas->SizeY;
     const float W=Ui.ViewportWidth/Scale,H=Ui.ViewportHeight/Scale;float MX=-1,MY=-1;if(PC)PC->GetMousePosition(MX,MY);
     const FString PreviousHover=Ui.HitTest(MX,MY);const bool WasOverUi=!PreviousHover.IsEmpty();
-    Ui.ContentTop=G->Screen==TEXT("playing")?86.f:102.f;
+    Ui.ContentTop=G->Screen==TEXT("playing")?HudTop+HudPanelPadding*2+HudCellHeight+13.f:102.f;
     Ui.UpdateHoverPanel(MX,MY,G->Screen==TEXT("playing")&&!G->CompanionView&&!Ui.BuildOpen&&G->ViewedSimulation()&&(G->Observer||G->DetailedSectorIndex()==4));Ui.HitRegions.Reset();
     if(!InterfaceAttempted)
     {
@@ -754,7 +757,7 @@ void ASeigeHUD::DrawHUD()
         Frame(W*.5f-265,H-82,530,60);Label(TEXT("REX  /  FIRST PERSON  /  1x"),W*.5f-245,H-67,16,Gold);
         Label(G->Paused?TEXT("Paused - Space resumes. Esc returns to colony."):TEXT("WASD walk / Mouse look / P chain / Esc return / F10 menu"),W*.5f-245,H-42,12,Text);if(ProgressionOpen)DrawProgression(*G,W,H);return;
     }
-    const float TopHeight=Ui.ContentTop-22;
+    const float TopHeight=G->Screen==TEXT("playing")?Ui.ContentTop-13:Ui.ContentTop-22;
     const bool RegionMap=G->IsRegionMap();const auto* Viewed=G->ViewedSimulation();const bool Readable=Viewed&&(G->Observer||G->DetailedSectorIndex()==4);const FSeigeSimulation& Local=Readable?*Viewed:G->Sim;const FVector2D SectorOffset=G->DetailedSectorOffset();
     if(RegionMap){Ui.BuildOpen=false;Ui.GroupFocused=false;G->SelectedBuild.Empty();}
     const float MapAlpha=G->RegionMapAlpha();
@@ -865,66 +868,72 @@ void ASeigeHUD::DrawHUD()
         // Weapon beams are rendered once by the actual 3D hardpoint actors.
         if(!NeighborhoodOverview)DrawDeposits(false,{});
     }
-    // One compact resource ribbon. Quantities remain precise in nested ledgers.
+    // Both instrument casings are exactly half the viewport HEIGHT in width.
+    // A shared cell height, padding and gap keep the narrow layouts coherent.
+    // Resource headlines stay compact; exact quantities remain in hover ledgers.
     Label(FString::Printf(TEXT("seige2222 / v%s / %.0f FPS"),*Version,SmoothedFps),24,7,12,Muted);
+    const float HudW=HudPanelWidth(H),HudX=(W-HudW)*.5f;
+    Frame(HudX,HudTop,HudW,HudPanelPadding*2+HudCellHeight);
     const auto ResourceCards=Ui.ResourceCardBounds(W);
-    const auto CompactAmount=[](double Amount){return Amount>=1000000?FString::Printf(TEXT("%.2fM"),Amount/1000000):Amount>=1000?FString::Printf(TEXT("%.2fk"),Amount/1000):FString::Printf(TEXT("%.2f"),Amount);};
+    const auto CompactAmount=[](double Amount){return Amount>=1000000?FString::Printf(TEXT("%.2fM"),Amount/1000000):Amount>=1000?FString::Printf(TEXT("%.2fk"),Amount/1000):Amount>=10?FString::Printf(TEXT("%.0f"),Amount):FString::Printf(TEXT("%.2f"),Amount);};
     const auto ColonyEnergy=Readable?Local.Energy.Info(Local):FSeigeEnergyInfo();
-    int32 Vehicles=0;
-    for(const auto& V:Local.Combat.Vehicles)if(V.Health>0&&!V.Evacuated)++Vehicles;
-    for(const auto& V:Local.TransportVehicles.Bodies)if(V.Health>0&&!V.Evacuated)++Vehicles;
     for(int32 GI=0;GI<Ui.ResourceGroups.Num()&&ResourceCards.IsValidIndex(GI);++GI)
     {
         const auto& Group=Ui.ResourceGroups[GI];const auto& Bounds=ResourceCards[GI];
         const float GW=Bounds.GetSize().X,GX=Bounds.Min.X,Y=Bounds.Min.Y;
-        Box(GX,Y,GW,46,Panel);Box(GX,Y+44,GW,2,FLinearColor(.12f,.23f,.27f,.8f));
-        Label(Group.Label,GX+12,Y+6,11,Muted);
+        const bool Hover=PreviousHover==TEXT("summary:")+(Group.Id==TEXT("workers")?TEXT("workforce"):GI<2?Group.Id:TEXT("group:")+Group.Id);
+        Box(GX+1,Y+1,GW-2,HudCellHeight-2,Hover?Raised:Ink);
+        Box(GX+1,Y+HudCellHeight-2,GW-2,1,Hover?Green:FLinearColor(.13f,.27f,.32f,.65f));
+        Label(Group.Label,GX+6,Y+5,11,Muted);
         const FString SummaryId=Group.Id==TEXT("workers")?TEXT("workforce"):GI<2?Group.Id:TEXT("group:")+Group.Id;
-        Region(TEXT("summary:")+SummaryId,GX,Y,GW,46);
-        if(!Readable){Label(TEXT("Unavailable"),GX+12,Y+23,13,Muted);continue;}
+        Region(TEXT("summary:")+SummaryId,GX,Y,GW,HudCellHeight);
+        if(!Readable){Label(TEXT("—"),GX+6,Y+23,13,Muted);continue;}
         FString Value;FLinearColor Color=Text;
-        if(Group.Id==TEXT("credits")){Value=CreditText(Local.Credits)+TEXT(" Cr");Color=Gold;}
+        if(Group.Id==TEXT("credits")){Value=Local.Credits>=1000?CompactAmount(Local.Credits):CreditText(Local.Credits);Color=Gold;}
         else if(Group.Id==TEXT("energy"))
-        {Value=FString::Printf(TEXT("%s / %s kWh  %+.2f kW"),*CompactAmount(ColonyEnergy.StoredKWh),*CompactAmount(ColonyEnergy.CapacityKWh),ColonyEnergy.GenerationKW-ColonyEnergy.DemandKW);Color=ColonyEnergy.PowerFraction<.999?Gold:Green;}
+        {Value=CompactAmount(ColonyEnergy.StoredKWh)+TEXT(" kWh");Color=ColonyEnergy.PowerFraction<.999?Gold:Green;}
         else if(Group.Id==TEXT("workers"))
-        {Value=FString::Printf(TEXT("%d owned  /  %d vehicles"),Local.Workers.OwnedCount(),Vehicles);Color=Local.TotalJobs>Local.Employed?Gold:Text;}
+        {Value=FString::FromInt(Local.Workers.OwnedCount());Color=Local.TotalJobs>Local.Employed?Gold:Text;}
         else
         {
             double Mass=0;for(const auto& Item:Group.Entries)if(const auto* R=Local.Resources.Find(Item.Resource))Mass+=Local.TotalStock(Item.Resource)*R->UnitMassKg;
             Value=CompactAmount(Mass)+TEXT(" kg");
         }
-        const float Size=FMath::Min(14.f,14.f*(GW-24)/FMath::Max(1.f,float(MeasureLabel(Value,14).X)));
-        Label(Value,GX+12,Y+23,Size,Color);
+        const float Size=FMath::Min(13.f,13.f*(GW-12)/FMath::Max(1.f,float(MeasureLabel(Value,13).X)));
+        Label(Value,GX+6,Y+23,Size,Color);
     }
-    const float StripW=900,StripX=(W-StripW)*.5f;
-    // Time belongs to the same command dock as pause/speed. Keep its two
-    // readout lines inside the shared casing, rather than floating over it.
-    // HUD coordinates already scale to a minimum 1600-wide logical viewport.
-    const float DockW=FMath::Min(1340.f,W-48.f),DockX=(W-DockW)*.5f,DockY=H-68;
-    Frame(DockX,DockY,DockW,54);
-    auto DockButton=[&](const FString& Name,const FString& A,const FString& Visual,float X,float Width,bool Active)
+    const float StripX=HudX,DockW=HudW,DockX=HudX;
+    const float DockH=HudPanelPadding*2+HudCellHeight*2+HudPanelGap,DockY=H-14-DockH;
+    const float InnerW=DockW-HudPanelPadding*2,ActionW=(InnerW-HudPanelGap*4)/5;
+    const float ActionY=DockY+HudPanelPadding,TimeY=ActionY+HudCellHeight+HudPanelGap;
+    Frame(DockX,DockY,DockW,DockH);
+    auto DockButton=[&](const FString& Name,const FString& Hint,const FString& A,int32 Index,bool Active,const FString& Tip)
     {
-        Button(TEXT(""),A,X,DockY+5,Width,44,Active);Icon(Visual,X+8,DockY+15,22,Active?Gold:Text);Label(Name,X+37,DockY+20,12,Active?Gold:Text);
+        const float X=DockX+HudPanelPadding+Index*(ActionW+HudPanelGap);
+        Button(TEXT(""),A,X,ActionY,ActionW,HudCellHeight,Active,Tip);
+        Label(Name,X+(ActionW-MeasureLabel(Name,12).X)*.5f,ActionY+5,12,Active?Green:Text);
+        Label(Hint,X+(ActionW-MeasureLabel(Hint,10).X)*.5f,ActionY+25,10,Muted);
     };
-    DockButton(G->Observer||G->DetailedSectorIndex()!=4?TEXT("Observe"):RegionMap?TEXT("Map"):TEXT("Build [B]"),G->Observer||G->DetailedSectorIndex()!=4||RegionMap?TEXT("observer"):TEXT("build-menu"),TEXT("factory"),DockX+6,110,Ui.BuildOpen);
-    DockButton(RegionMap?TEXT("Back"):TEXT("Regions"),TEXT("region-map"),TEXT("sensor"),DockX+120,105,RegionMap);
-    DockButton(TEXT("Chain [P]"),TEXT("progression"),TEXT("extractor"),DockX+229,112,ProgressionOpen);
-    Button(TEXT("Objectives"),TEXT("summary:objective"),DockX+347,DockY+5,115,44,false,TEXT("First landing milestones and current colony status."));
-    Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),DockX+468,DockY+5,95,44,G->Paused);
-    Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),DockX+569,DockY+5,100,44,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
-    const float ClockX=DockX+675,ClockW=DockW-800;
-    Button(TEXT("Menu"),TEXT("game-menu"),DockX+DockW-125,DockY+5,119,44,false,TEXT("Esc / F10 opens the game menu."));
+    DockButton(G->Observer||G->DetailedSectorIndex()!=4?TEXT("Observe"):RegionMap?TEXT("Map"):TEXT("Build"),TEXT("B"),G->Observer||G->DetailedSectorIndex()!=4||RegionMap?TEXT("observer"):TEXT("build-menu"),0,Ui.BuildOpen,TEXT("B opens the construction palette."));
+    DockButton(RegionMap?TEXT("Back"):TEXT("Regions"),TEXT("Survey"),TEXT("region-map"),1,RegionMap,TEXT("Switch between your colony and the regional survey."));
+    DockButton(TEXT("Chain"),TEXT("P"),TEXT("progression"),2,ProgressionOpen,TEXT("P opens the production dependency chain."));
+    DockButton(TEXT("Objectives"),TEXT("Status"),TEXT("summary:objective"),3,false,TEXT("First landing milestones and current colony status."));
+    DockButton(TEXT("Menu"),TEXT("Esc / F10"),TEXT("game-menu"),4,false,TEXT("Esc / F10 opens the game menu."));
+    const float TimeButtonW=(InnerW-HudPanelGap*5)/6,PauseX=DockX+HudPanelPadding,SpeedX=PauseX+TimeButtonW+HudPanelGap;
+    Button(G->Paused?TEXT("Resume"):TEXT("Pause"),TEXT("pause"),PauseX,TimeY,TimeButtonW,HudCellHeight,G->Paused,TEXT("Space pauses or resumes the previous running speed."));
+    Button(G->Paused?TEXT("Paused"):FString::Printf(TEXT("%.0fx"),G->Speed),TEXT("speed"),SpeedX,TimeY,TimeButtonW,HudCellHeight,G->Paused||G->Speed>1,TEXT("+ / - cycles Paused, 1x, 5x, 10x. Space resumes the previous running speed."));
+    const float ClockX=SpeedX+TimeButtonW+HudPanelGap,ClockW=DockX+DockW-HudPanelPadding-ClockX;
     const int64 Age=FMath::Max<int64>(0,int64(Local.Time));
     const FString AgeText=FString::Printf(TEXT("Colony %lldh %02lldm"),Age/3600,(Age/60)%60);
     const int64 PulseSeconds=FMath::Max<int64>(0,FMath::CeilToInt64(Local.NextWaveTime-Local.Time));
     const FString Pulse=Local.PeriodicAttacksEnabled?FString::Printf(TEXT("Pulse %d in %lld:%02lld"),Local.Wave+1,PulseSeconds/60,PulseSeconds%60):TEXT("Periodic attacks off");
     const FString Calendar=G->CalendarLabel(),ClockDetail=AgeText+TEXT("   |   ")+Pulse;
-    const float CalendarSize=FMath::Min(13.f,13.f*(ClockW-28)/FMath::Max(1.f,float(MeasureLabel(Calendar,13).X)));
-    const float DetailSize=FMath::Min(12.f,12.f*(ClockW-28)/FMath::Max(1.f,float(MeasureLabel(ClockDetail,12).X)));
-    Box(ClockX,DockY+11,1,32,FLinearColor(.24f,.43f,.49f,.65f));
-    Label(Calendar,ClockX+14,DockY+8,CalendarSize,Text);
-    Label(ClockDetail,ClockX+14,DockY+30,DetailSize,Muted);
-    Region(TEXT("summary:threats"),ClockX,DockY+5,ClockW,44,TEXT("Calendar, colony age and the next invasion. All timers follow simulation speed."));
+    const float CalendarSize=FMath::Min(13.f,13.f*(ClockW-16)/FMath::Max(1.f,float(MeasureLabel(Calendar,13).X)));
+    const float DetailSize=FMath::Min(12.f,12.f*(ClockW-16)/FMath::Max(1.f,float(MeasureLabel(ClockDetail,12).X)));
+    Box(ClockX,TimeY+6,1,32,FLinearColor(.24f,.43f,.49f,.65f));
+    Label(Calendar,ClockX+8,TimeY+3,CalendarSize,Text);
+    Label(ClockDetail,ClockX+8,TimeY+25,DetailSize,Muted);
+    Region(TEXT("summary:threats"),ClockX,TimeY,ClockW,HudCellHeight,TEXT("Calendar, colony age and the next invasion. All timers follow simulation speed."));
     if(!G->RegionViewHistory.IsEmpty()&&!RegionMap)Button(TEXT("Back to previous view"),TEXT("region-back"),W-225,81,201,32,false,TEXT("Restore the camera before selecting this region. Esc also returns."));
     if(!G->Ready)
     {
@@ -1000,7 +1009,10 @@ void ASeigeHUD::DrawHUD()
         const float X=FMath::Clamp(Anchor?float(Anchor->Position.X):StripX,20.f,W-PW-20);
         // Bottom controls open upward; the ribbon's cards remain directly reachable.
         const float Y=Anchor&&Anchor->Position.Y>H*.5f?FMath::Max(Ui.ContentTop,float(Anchor->Position.Y)-PH-8):Ui.ContentTop;
-        Frame(X,Y,PW,PH);Region(TEXT("hover-panel:")+Ui.HoverPanel,X,Y-13,PW,PH+26);float TY=Y+18;
+        // Top cards end above the casing's padding. Keep the invisible bridge
+        // continuous through that padding so slow pointer travel retains detail.
+        const float Bridge=Anchor&&Anchor->Position.Y<=H*.5f?13+HudPanelPadding:13;
+        Frame(X,Y,PW,PH);Region(TEXT("hover-panel:")+Ui.HoverPanel,X,Y-Bridge,PW,PH+Bridge+13);float TY=Y+18;
         auto Detail=[&](const FString& Value,FLinearColor Color=Text){Wrapped(Value,X+18,TY,PW-36,13,Color);TY+=9;};
         if(Ui.HoverPanel==TEXT("credits"))
         {
@@ -1273,7 +1285,10 @@ void ASeigeHUD::DrawProgression(ASeigeGameMode& G,float W,float H)
     if(ChainGraphBuildings!=S.BuildingDefs.Num()||ChainGraphCore!=S.CoreDefinition){ChainGraph.Build(S);ChainGraphBuildings=S.BuildingDefs.Num();ChainGraphCore=S.CoreDefinition;}
     const FSeigeDependencyGraph& Graph=ChainGraph;
     const FLinearColor Amber(.95f,.72f,.35f),Blue(.52f,.70f,1.f),Dim(.30f,.40f,.44f);
-    const float PW=FMath::Min(1440.f,W-40),PH=FMath::Min(640.f,H-190),X=(W-PW)*.5f,Y=FMath::Max(96.f,H-75-PH-12);
+    const bool OverColony=G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.CompanionView;
+    const float BottomLimit=H-(OverColony?HudPanelPadding*2+HudCellHeight*2+HudPanelGap+26:87);
+    const float TopLimit=OverColony?FMath::Max(96.f,Ui.ContentTop):96.f;
+    const float PW=FMath::Min(1440.f,W-40),PH=FMath::Min(640.f,BottomLimit-TopLimit),X=(W-PW)*.5f,Y=BottomLimit-PH;
     Frame(X,Y,PW,PH);Label(TEXT("PRODUCTION CHAIN"),X+20,Y+18,17,Gold);Button(TEXT("Close"),TEXT("chain-close"),X+PW-87,Y+9,69,31);
     // Live state
     TMap<FString,int32> Built,Constructing,FamilyLevel,Deposits,Mined;TMap<int32,FString> NodeResource;

@@ -107,7 +107,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeResourceHudTest,"Seige.Interaction.Resour
 bool FSeigeResourceHudTest::RunTest(const FString& Parameters)
 {
     FInteractionWorld W;if(!W.Prepare(*this))return false;auto& H=*W.Hud;auto& G=*W.Game;
-    TestEqual(TEXT("Five resource groups load from external UI data"),H.Ui.ResourceGroups.Num(),5);
+    TestEqual(TEXT("Six resource groups load from external UI data"),H.Ui.ResourceGroups.Num(),6);
     TSet<FString> Shown;
     for(const auto& Group:H.Ui.ResourceGroups)for(const auto& Entry:Group.Entries)
     {
@@ -117,10 +117,12 @@ bool FSeigeResourceHudTest::RunTest(const FString& Parameters)
     }
     for(const auto& Resource:G.Sim.Resources)if(Resource.Key!=TEXT("stored_workers"))TestTrue(TEXT("Every raw material and manufactured product is visible"),Shown.Contains(Resource.Key));
     TestFalse(TEXT("Stored workers remain in workforce controls"),Shown.Contains(TEXT("stored_workers")));
-    for(const FVector2D View:{FVector2D(1280,720),FVector2D(1600,900),FVector2D(3840,1600)})
+    for(const FVector2D View:{FVector2D(1280,720),FVector2D(1600,900),FVector2D(1920,1200),FVector2D(3840,1600)})
     {
-        H.Ui.Scale=FMath::Min(View.X/1600.,View.Y/900.);const auto Cards=H.Ui.ResourceCardBounds(View.X/H.Ui.Scale);
-        TestEqual(TEXT("All display sizes retain five separate cards"),Cards.Num(),5);H.Ui.HitRegions.Reset();
+        H.Ui.Scale=FMath::Min(View.X/1600.,View.Y/900.);H.Ui.ViewportWidth=View.X;H.Ui.ViewportHeight=View.Y;
+        const auto Cards=H.Ui.ResourceCardBounds(View.X/H.Ui.Scale);
+        TestEqual(TEXT("All display sizes retain six separate cards"),Cards.Num(),6);H.Ui.HitRegions.Reset();
+        TestTrue(TEXT("Resource casing width is half the physical screen height"),FMath::IsNearlyEqual((Cards.Last().Max.X-Cards[0].Min.X+16)*H.Ui.Scale,View.Y*.5,0.1));
         for(int32 I=0;I<Cards.Num();++I)
         {
             const auto& B=Cards[I];TestTrue(TEXT("Resource card stays inside the visible viewport"),B.Min.X*H.Ui.Scale>=0&&B.Max.X*H.Ui.Scale<=View.X&&B.Max.Y*H.Ui.Scale<View.Y);

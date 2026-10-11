@@ -1,4 +1,4 @@
-"""Import the revision-6 Rex mesh (generated base, baked photo albedo), clips and card-fur materials.
+"""Import the repaired Rex mesh, photographic coat, nose and compatible clips.
 
 Restored for the owner-authorized local prototype, 2026-10-11. The retained
 Hunyuan3D-derived base has an unresolved territorial license restriction.
@@ -10,13 +10,13 @@ Run in the Unreal Editor commandlet:
 Reads Art/CompanionDog/dog_manifest.json written by Tools/build_rex_from_generated.py.
 """
 from pathlib import Path
-import json
+import json, hashlib
 import unreal as u
 
 ROOT = Path(__file__).resolve().parents[1]; ART = ROOT / 'Art/CompanionDog'; DEST = '/Game/Art/CompanionDog'
 DATA = json.loads((ART / 'dog_manifest.json').read_text())
-if DATA.get('revision') != 6:
-    raise RuntimeError('dog_manifest.json is not the revision-6 export')
+if DATA.get('revision') not in (6, 8):
+    raise RuntimeError('dog_manifest.json has an unsupported revision')
 ED = u.EditorAssetLibrary; AT = u.AssetToolsHelpers.get_asset_tools(); ME = u.MaterialEditingLibrary
 SME = u.get_editor_subsystem(u.SkeletalMeshEditorSubsystem) or u.get_default_object(u.SkeletalMeshEditorSubsystem)
 ED.make_directory(DEST); ED.make_directory(DEST + '/Textures')
@@ -57,7 +57,7 @@ def scalar(m, name, value):
 
 # ------------------------------------------------------------------ textures
 textures = {}
-for name, kind in [('T_Dog_Albedo', 'color'), ('T_Dog_FurAtlas', 'atlas'), ('T_Dog_FurDetail', 'mask'), ('T_Dog_FurNormal', 'normal')]:
+for name, kind in [('T_Dog_CoatNormal', 'normal'), ('T_Dog_Nose', 'color'), ('T_Dog_Albedo', 'color'), ('T_Dog_FurAtlas', 'atlas'), ('T_Dog_FurDetail', 'mask'), ('T_Dog_FurNormal', 'normal')]:
     task = u.AssetImportTask(); task.filename = str(ART / 'Textures' / (name + '.png')); task.destination_path = DEST + '/Textures'
     task.destination_name = name; task.automated = True; task.replace_existing = True; task.save = True
     AT.import_asset_tasks([task])
@@ -65,12 +65,17 @@ for name, kind in [('T_Dog_Albedo', 'color'), ('T_Dog_FurAtlas', 'atlas'), ('T_D
     if not isinstance(tex, u.Texture2D):
         raise RuntimeError('Missing dog texture ' + name)
     tex.set_editor_property('srgb', kind == 'color')
+    if name in ('T_Dog_Albedo', 'T_Dog_CoatNormal', 'T_Dog_Nose'):
+        tex.set_editor_property('lod_bias', 0)
+        tex.set_editor_property('never_stream', True)
+    if name == 'T_Dog_CoatNormal':
+        tex.set_editor_property('flip_green_channel', True)
     if kind == 'normal':
         tex.set_editor_property('compression_settings', u.TextureCompressionSettings.TC_NORMALMAP)
     elif kind == 'mask':
         tex.set_editor_property('compression_settings', u.TextureCompressionSettings.TC_MASKS)
     else:
-        tex.set_editor_property('compression_settings', u.TextureCompressionSettings.TC_DEFAULT)
+        tex.set_editor_property('compression_settings', u.TextureCompressionSettings.TC_BC7 if name == 'T_Dog_Albedo' else u.TextureCompressionSettings.TC_DEFAULT)
         tex.set_editor_property('do_scale_mips_for_alpha_coverage', True)
         tex.set_editor_property('alpha_coverage_thresholds', u.Vector4(0, 0, 0, .4))
     ED.save_loaded_asset(tex, False); textures[name] = tex
@@ -89,56 +94,29 @@ for slot, settings in DATA['materials'].items():
         albedo = node(m, u.MaterialExpressionTextureSampleParameter2D, parameter_name='Albedo', texture=textures['T_Dog_Albedo'],
                       sampler_type=u.MaterialSamplerType.SAMPLERTYPE_COLOR)
         link(uv0, albedo, 'UVs')
-        # Fur flow: the streak mask is box-projected in the mesh's local space so
-        # strands run nose-to-tail along the flanks and back instead of following
-        # the arbitrary orientation of each smart-unwrapped albedo island.
-        wpos = node(m, u.MaterialExpressionWorldPosition)
-        lpos = node(m, u.MaterialExpressionTransformPosition, transform_source_type=u.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_WORLD,
-                    transform_type=u.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_LOCAL)
-        link(wpos, lpos, '')
-        scaled = node(m, u.MaterialExpressionDivide, const_b=9.0); link(lpos, scaled, 'A')
-        side_uv = node(m, u.MaterialExpressionComponentMask, r=True, g=False, b=True, a=False); link(scaled, side_uv, '')
-        top_uv = node(m, u.MaterialExpressionComponentMask, r=True, g=True, b=False, a=False); link(scaled, top_uv, '')
-        detail_side = node(m, u.MaterialExpressionTextureSampleParameter2D, parameter_name='FurDetailSide', texture=textures['T_Dog_FurDetail'],
-                           sampler_type=u.MaterialSamplerType.SAMPLERTYPE_MASKS)
-        detail_top = node(m, u.MaterialExpressionTextureSampleParameter2D, parameter_name='FurDetailTop', texture=textures['T_Dog_FurDetail'],
-                          sampler_type=u.MaterialSamplerType.SAMPLERTYPE_MASKS)
-        link(side_uv, detail_side, 'UVs'); link(top_uv, detail_top, 'UVs')
-        wnorm = node(m, u.MaterialExpressionVertexNormalWS)
-        lnorm = node(m, u.MaterialExpressionTransform, transform_source_type=u.MaterialVectorCoordTransformSource.TRANSFORMSOURCE_WORLD,
-                     transform_type=u.MaterialVectorCoordTransform.TRANSFORM_LOCAL)
-        link(wnorm, lnorm, '')
-        up = node(m, u.MaterialExpressionComponentMask, r=False, g=False, b=True, a=False); link(lnorm, up, '')
-        up_abs = node(m, u.MaterialExpressionAbs); link(up, up_abs, '')
-        up_w = node(m, u.MaterialExpressionMultiply); link(up_abs, up_w, 'A'); link(up_abs, up_w, 'B')
-        detail = node(m, u.MaterialExpressionLinearInterpolate); link(detail_side, detail, 'A', 'R'); link(detail_top, detail, 'B', 'R'); link(up_w, detail, 'Alpha')
-        # Fine strand variation around unity: the baked photo albedo must keep
-        # its brightness, so the detail mask neither darkens nor tints the coat.
-        strength = node(m, u.MaterialExpressionLinearInterpolate, const_a=.84, const_b=1.12); link(detail, strength, 'Alpha')
-        base = node(m, u.MaterialExpressionMultiply); link(albedo, base, 'A', 'RGB'); link(strength, base, 'B')
-        # The photo was taken in shade; under the colony sun (9 lux-equivalent,
-        # +0.4 EV) the same albedo clips to white on the face and pushes the
-        # tan body to orange through the tonemapper. Darken and desaturate the
-        # bake so the rendered coat lands near the photograph's pale gold.
-        toned = node(m, u.MaterialExpressionMultiply); link(base, toned, 'A'); link(scalar(m, 'CoatBrightness', .7), toned, 'B')
-        desat = node(m, u.MaterialExpressionDesaturation); link(toned, desat, ''); link(scalar(m, 'CoatDesaturation', .22), desat, 'Fraction')
-        # Grazing-angle lift stands in for light scattering through the guard
-        # hairs at the silhouette, which is most of what reads as fur at 200 px.
-        fres = node(m, u.MaterialExpressionFresnel, exponent=3.0, base_reflect_fraction=0.0)
-        rim = node(m, u.MaterialExpressionLinearInterpolate, const_a=1.0, const_b=1.14); link(fres, rim, 'Alpha')
-        lifted = node(m, u.MaterialExpressionMultiply); link(desat, lifted, 'A'); link(rim, lifted, 'B')
-        output(lifted, u.MaterialProperty.MP_BASE_COLOR)
-        tiled = node(m, u.MaterialExpressionTextureCoordinate, coordinate_index=0, u_tiling=6, v_tiling=6)
-        normal = node(m, u.MaterialExpressionTextureSampleParameter2D, parameter_name='FurNormal', texture=textures['T_Dog_FurNormal'],
+        # Revision 8 bakes directional photo fur into UV0. Keep it attached to
+        # the deforming skin; posed world-position detail swims over moving legs.
+        toned = node(m, u.MaterialExpressionMultiply); link(albedo, toned, 'A', 'RGB')
+        link(scalar(m, 'CoatBrightness', .9), toned, 'B')
+        desat = node(m, u.MaterialExpressionDesaturation); link(toned, desat, '')
+        link(scalar(m, 'CoatDesaturation', .06), desat, 'Fraction')
+        output(desat, u.MaterialProperty.MP_BASE_COLOR)
+        tiled = node(m, u.MaterialExpressionTextureCoordinate, coordinate_index=0, u_tiling=1, v_tiling=1)
+        normal = node(m, u.MaterialExpressionTextureSampleParameter2D, parameter_name='FurNormal', texture=textures['T_Dog_CoatNormal'],
                       sampler_type=u.MaterialSamplerType.SAMPLERTYPE_NORMAL)
         link(tiled, normal, 'UVs')
         flat = node(m, u.MaterialExpressionConstant3Vector, constant=u.LinearColor(0, 0, 1, 1))
-        nmix = node(m, u.MaterialExpressionLinearInterpolate); link(flat, nmix, 'A'); link(normal, nmix, 'B', 'RGB'); link(scalar(m, 'DetailNormalStrength', .4), nmix, 'Alpha')
-        output(nmix, u.MaterialProperty.MP_NORMAL)
+        nmix = node(m, u.MaterialExpressionLinearInterpolate); link(flat, nmix, 'A'); link(normal, nmix, 'B', 'RGB')
+        link(scalar(m, 'DetailNormalStrength', .65), nmix, 'Alpha'); output(nmix, u.MaterialProperty.MP_NORMAL)
         output(scalar(m, 'Roughness', .8), u.MaterialProperty.MP_ROUGHNESS)
         output(scalar(m, 'Specular', .2), u.MaterialProperty.MP_SPECULAR)
-        # Default lit: revision 6 showed the subsurface model saturating the
-        # whole coat orange under the colony sun and blowing out the pale face.
+    elif slot == 'DM_Nose':
+        uv0 = node(m, u.MaterialExpressionTextureCoordinate, coordinate_index=0)
+        photo = node(m, u.MaterialExpressionTextureSampleParameter2D, parameter_name='NosePhoto', texture=textures['T_Dog_Nose'],
+                     sampler_type=u.MaterialSamplerType.SAMPLERTYPE_COLOR)
+        link(uv0, photo, 'UVs'); output(photo, u.MaterialProperty.MP_BASE_COLOR, 'RGB')
+        output(scalar(m, 'Roughness', .46), u.MaterialProperty.MP_ROUGHNESS)
+        output(scalar(m, 'Specular', .3), u.MaterialProperty.MP_SPECULAR)
     elif slot == 'DM_FurCard':
         # Plain two-sided lit cards: the foliage model's transmission darkened
         # every card in the body's shadow in revision 6. The atlas is only a
@@ -212,12 +190,12 @@ if not mesh.has_vertex_colors():
 skeleton = mesh.get_editor_property('skeleton')
 if not isinstance(skeleton, u.Skeleton):
     raise RuntimeError('Dog skeleton missing')
-slots = list(mesh.get_editor_property('materials')); seen = []
+slots = list(mesh.get_editor_property('materials')); seen = []; stale_slots = []
 for slot in slots:
     name = str(slot.get_editor_property('imported_material_slot_name'))
     if name not in materials:
         # Re-import keeps slots of earlier revisions; they reference no sections now.
-        u.log_warning('Stale dog material slot kept from an earlier revision: ' + name)
+        u.log_warning('Stale dog material slot kept from an earlier revision: ' + name); stale_slots.append(name)
         slot.set_editor_property('material_interface', materials['DM_Coat']); seen.append(name); continue
     slot.set_editor_property('material_interface', materials[name]); seen.append(name)
 required = set(DATA.get('used_materials', materials))
@@ -268,11 +246,26 @@ for name, definition in DATA['animations'].items():
     clip.set_editor_property('enable_root_motion', False); ED.save_loaded_asset(clip, False)
     animations[name] = {'path': clip.get_path_name(), 'seconds': length, 'root_motion': False}
 
-report = {'mesh': mesh.get_path_name(), 'skeleton': skeleton.get_path_name(), 'animations': animations, 'revision': 6,
+report = {'mesh': mesh.get_path_name(), 'skeleton': skeleton.get_path_name(), 'animations': animations, 'revision': DATA['revision'],
           'lod_count': SME.get_lod_count(mesh), 'lod_vertices': [SME.get_num_verts(mesh, i) for i in range(SME.get_lod_count(mesh))],
           'material_slots': seen, 'vertex_colors': mesh.has_vertex_colors(), 'vertex_color_encoding': 'FBX sRGB decoded by material',
           'source_triangles': DATA['triangles'], 'source_bones': DATA['bones'], 'source_reference_bounds_cm': DATA['reference_pose_bounds_cm'],
           'imported_dimensions_cm': dimensions, 'verified_bones': sorted(found), 'fur_card_shadow_casting': False,
-          'runtime_review_pending': True, 'reference_photographs_imported': False}
+          'runtime_review_pending': True, 'reference_photographs_imported': False,
+          'retained_unused_material_slots': stale_slots, 'expected_stale_slot_warning_count': len(stale_slots),
+          'coat_normal': 'UV0 tangent-space photographic bake; DirectX green channel flipped on import'}
 (ART / 'import_report.json').write_text(json.dumps(report, indent=2) + '\n')
+validation_path = ART / 'source_validation.json'
+if validation_path.exists():
+    validation = json.loads(validation_path.read_text())
+    hashes_match = all(hashlib.sha256((ART / 'Exports' / name).read_bytes()).hexdigest() == sha for name, sha in DATA['exports'].items())
+    if hashes_match and validation.get('exports') == DATA['exports'] and validation.get('source_triangles') == DATA['triangles'] and validation.get('source_cosmetic_revision') == DATA['cosmetic_revision']:
+        validation['unreal_import_verified'] = True
+        validation['unreal_import_report'] = 'import_report.json'
+        validation['runtime_review_pending'] = True
+        validation_path.write_text(json.dumps(validation, indent=2) + '\n')
+DATA['unreal_import_pending'] = False
+DATA['runtime_review_pending'] = True
+DATA['unreal_import_report'] = 'import_report.json'
+(ART / 'dog_manifest.json').write_text(json.dumps(DATA, indent=2) + '\n')
 u.log('SEIGE_COMPANION_DOG_IMPORTED ' + json.dumps(report))

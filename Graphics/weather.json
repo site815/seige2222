@@ -19,5 +19,11 @@
   "maximum_local_lights": 20,
   "building_lamp_lumens": 3200,
   "worker_lamp_lumens": 200,
-  "vehicle_lamp_lumens": 1100
+  "vehicle_lamp_lumens": 1100,
+  "wind_cycle_seconds": 10,
+  "tree_wind_sway_centimeters": 18,
+  "leaf_wind_rustle_centimeters": 4,
+  "grass_wind_sway_centimeters": 5,
+  "tree_wind_distance_meters": 260,
+  "wind_fade_start_fraction": 0.6
 }

@@ -2,6 +2,33 @@
 
 Updated: **2026-10-11** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
 
+## v0.10.2 — final Shipping build and focused checks passed
+
+The first candidate's actual Rex views exposed an overly flat, smooth body coat. A targeted photographic texture/material pass restored body variation and added a UV-matched detail normal; actual Editor front/side captures were reviewed before final cooking. The results below are fresh checks of the rebuilt final package. Earlier candidate checks remain separate evidence.
+
+The two centered HUD casings now have a physical width equal to **half the viewport height**, as clarified by the user: **450 px at 1600×900** and **800 px at 3840×1600**. The upper row contains six evenly spaced resource cards. The bottom casing contains five command actions and a second row for pause, speed and the complete calendar/daylight/colony-age/pulse timer. Shared cell heights, gaps and padding govern both casings. A hover-retention bridge across the upper casing's lower padding prevents the material panel from disappearing while the pointer crosses that gap. Production, map and wall-planning panels clear the taller bottom dock.
+
+Foliage animation now uses a continuous GPU phase derived from the authoritative scenario calendar and substep remainder. It freezes while paused and advances at the selected 1×/5×/10× rate, without resetting when speed changes. Previous-frame displacement supports temporal rendering; clock discontinuities reset that history. Leaf and grass movement fade with distance. Trunks remain rigid, and the existing cached foliage shadows remain stable. Weather configuration owns the motion parameters. Seven foliage materials compiled for D3D12/SM6 with zero errors or warnings; the import retained their surface, opacity and snow behavior.
+
+**Worker assembly is unchanged, now explained explicitly:** a core consumes 60 kg robotic parts, 12 kg construction alloy, 4 kg control circuits and 4 kg battery modules, plus 4 kWh. Its recipe takes 600 simulation seconds at full operating efficiency: 10 real minutes at 1×, 2 minutes at 5×, or 1 minute at 10×. Operators must physically work in the core; one of five operators gives approximately 50 minutes at 1× before other modifiers. Local material delivery, power and support can delay production further. The accelerated calendar's hours are a separate presentation scale. Five initial workers are installed starting assets, not produced from the loose starter kit.
+
+| Completed check on the working revision | Result |
+| --- | --- |
+| Configuration regressions | UI, environment and wind validation passed; wind validation includes six negative cases |
+| Editor/Shipping compilation and cooking | Passed; final Shipping BuildCookRun completed in 26.33 seconds |
+| Focused native checks | `Seige.Presentation.WindClock` and `Seige.Interaction.ResourceGroupsAndHoverControls` passed, zero failures or warnings |
+| Editor rendered UI route | 106 assertions / 25 stages passed at 10× and 1600×900; actual compact-HUD capture reviewed |
+| Packaged route, 1600×900 | 106 assertions / 25 stages, zero failures, exit 0; 37.567 seconds at 10× |
+| Packaged route, 3840×1600 | 106 assertions / 25 stages, zero failures, exit 0; 37.706 seconds at 10× |
+| Input and endpoint checks | All 545 source inputs and packaged inputs unchanged; 25 staged JSON files match; 18 process samples per run observed zero TCP/UDP endpoints |
+| HUD render review | Five actual captures at each resolution reviewed; casings, controls, hover ledgers and panels remain readable and contained |
+
+Rex revision 8 repairs fused limbs/paws, rounds the tail, reconstructs the occluded face from the sound side, rebakes a 4096-square photographic atlas and uses continuous limb/tail weights. Blender deformation/export checks and Unreal import passed. The final coat pass restores photographic body variation and a UV-matched detail normal without changing the repaired anatomy. Final Shipping front, side, rear and three-quarter Rex captures were reviewed and accepted for this correction. Rejected intermediate renders are not release assets. Fur remains a textured surface with simplified feathering and joints; finished photorealism is not claimed. The explicit prototype licence exception and territorial restriction remain in Credits and provenance.
+
+The final Windows ZIP is 758,997,455 bytes; archive CRC and every runtime file's SHA-256 comparison passed. The bounded final-package routes use an authored established-colony fixture, a review-only factory and an explicit night phase. They advanced 302.45 and 296.55 simulation seconds respectively before the paused final menu phase. These are focused UI/presentation checks, not a full gameplay suite, day-long soak, economy proof or packet capture. The local release uses `Play-seige2222.cmd` and `Builds/seige2222-v0.10.2-win64.zip`; the [v0.10.2 verification record](verification/v0.10.2.json) owns the final package and archive identities.
+
+A short Editor wind-on/off comparison was made while the user's older game was also running. It is not an isolated performance measurement and establishes neither an FPS improvement nor a minimum frame rate. Crowded-colony and long-session performance remain unverified on current source. These presentation changes retain `prototype-10.0`, save format 8 and Rules/AI fingerprints. GitHub account suspension returned HTTP 403 on the latest access check; no new successful push, hosted release or CI result is claimed. See the [v0.10.2 release notes](releases/v0.10.2.md).
+
 ## v0.10.1 — requested presentation corrections
 
 The detailed earlier Rex model/photo coat has been restored under the owner's explicit temporary prototype exception. Its licence restriction remains recorded in Credits and provenance; credit is not distribution clearance. Existing rig paths, companion behaviour and controls are retained. Lower-neck contours were smoothed while preserving the detailed face and coat. A bridge-cut candidate was rejected because it damaged the paws; the original closed leg geometry remains, including some close-angle imperfections.

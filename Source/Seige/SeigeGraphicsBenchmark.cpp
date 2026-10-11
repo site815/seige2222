@@ -127,6 +127,13 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     }
     auto ApplySwardDiagnostic=[&]()
     {
+        // Opt-in A/B comparison: same geometry, shaders, lighting and camera,
+        // but skip vegetation vertex deformation. Never used by normal play.
+        if(GroundCover&&FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNoWind")))
+        {
+            TArray<UInstancedStaticMeshComponent*> Components;GroundCover->GetComponents(Components);
+            for(auto* Component:Components)Component->SetEvaluateWorldPositionOffset(false);
+        }
         const bool Hide=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkHideSward"));
         const bool Opaque=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkOpaqueSward"));
         const bool OnlyA=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkSwardOnlyA"));
@@ -188,6 +195,10 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         const auto& Dog=Sim.Companions.Dogs[0];
         const auto* Snapshot=PresentationSnapshot(Sim);
         CameraCenter=FVector(Snapshot?Snapshot->Companion(Dog,PresentationAlpha()):Dog.Position,0);
+        // Likeness review can hold a true front/side/rear angle even while Rex
+        // turns during the walk. Aim yaw 180 is front, 90 side, 0 rear.
+        float RelativeYaw=0;
+        if(FParse::Value(FCommandLine::Get(),TEXT("BenchmarkRexRelativeYaw="),RelativeYaw))CameraYaw=Dog.Heading+RelativeYaw;
     };
     auto BeginView=[&]()
     {
@@ -587,6 +598,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetStringField(TEXT("thread_timing_method"),TEXT("Latest completed RenderTimer counters exclude idle; GPU uses RHIGetGPUFrameCycles(0). Counters can lag camera samples, and repeated GPU readback values are not de-duplicated. Zero counters are omitted and availability/sample counts reported. These distributions are bottleneck evidence, not synchronized CPU/GPU frame traces."));
     Report->SetNumberField(TEXT("grass_shadow_distance_m"),GrassShadowDistanceMeters);
     Report->SetNumberField(TEXT("grass_wind_distance_m"),GrassWindDistanceMeters);
+    Report->SetNumberField(TEXT("tree_wind_distance_m"),TreeWindDistanceMeters);
+    Report->SetBoolField(TEXT("diagnostic_wind_disabled"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNoWind")));
     Report->SetNumberField(TEXT("grass_programmable_distance_m"),GrassProgrammableDistanceMeters);
     Report->SetNumberField(TEXT("configured_nanite_max_pixels_per_edge"),NaniteMaxPixelsPerEdge);
     Report->SetBoolField(TEXT("diagnostic_nanite_baseline"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNaniteBaseline")));

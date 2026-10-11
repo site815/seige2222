@@ -1,0 +1,80 @@
+{
+  "materials": [
+    {
+      "material": "/Game/Art/NatureV091/M_GrassCardV091",
+      "kind": "grass_cards",
+      "shader_errors": [],
+      "surface_inputs_preserved": true,
+      "uses_engine_time": false,
+      "previous_frame_phase": true,
+      "bounded_offset_cm": 16,
+      "vertex_instructions": 226
+    },
+    {
+      "material": "/Game/Art/NatureV04/M_V04Foliage",
+      "kind": "tree",
+      "shader_errors": [],
+      "surface_inputs_preserved": true,
+      "uses_engine_time": false,
+      "previous_frame_phase": true,
+      "bounded_offset_cm": 48,
+      "vertex_instructions": 221
+    },
+    {
+      "material": "/Game/Art/Nature/M_NatureFoliage",
+      "kind": "tree",
+      "shader_errors": [],
+      "surface_inputs_preserved": true,
+      "uses_engine_time": false,
+      "previous_frame_phase": true,
+      "bounded_offset_cm": 48,
+      "vertex_instructions": 221
+    },
+    {
+      "material": "/Game/Art/NatureV08/M_BroadleafSpraysV08",
+      "kind": "tree",
+      "shader_errors": [],
+      "surface_inputs_preserved": true,
+      "uses_engine_time": false,
+      "previous_frame_phase": true,
+      "bounded_offset_cm": 48,
+      "vertex_instructions": 226
+    },
+    {
+      "material": "/Game/Art/NatureV08/M_ConiferSpraysV08",
+      "kind": "tree",
+      "shader_errors": [],
+      "surface_inputs_preserved": true,
+      "uses_engine_time": false,
+      "previous_frame_phase": true,
+      "bounded_offset_cm": 48,
+      "vertex_instructions": 226
+    },
+    {
+      "material": "/Game/Art/NatureV04/M_V04Wildflowers",
+      "kind": "grass",
+      "shader_errors": [],
+      "surface_inputs_preserved": true,
+      "uses_engine_time": false,
+      "previous_frame_phase": true,
+      "bounded_offset_cm": 16,
+      "vertex_instructions": 216
+    },
+    {
+      "material": "/Game/Art/NatureV08/M_GrassProxyV08",
+      "kind": "grass",
+      "shader_errors": [],
+      "surface_inputs_preserved": true,
+      "uses_engine_time": false,
+      "previous_frame_phase": true,
+      "bounded_offset_cm": 16,
+      "vertex_instructions": 216
+    }
+  ],
+  "collection": "/Game/Art/WeatherV09/MPC_Weather.MPC_Weather",
+  "gpu_only": true,
+  "trunks": "unchanged rigid bark materials",
+  "shadow_cache": "rigid; does not follow individual leaf rustle",
+  "timing": "authoritative calendar plus substep remainder, bounded cyclic phase and previous-frame phase",
+  "license": "Original material code; retained asset and texture licenses unchanged."
+}

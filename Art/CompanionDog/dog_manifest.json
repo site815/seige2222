@@ -1,7 +1,7 @@
 {
   "asset": "SK_CompanionDog",
-  "revision": 6,
-  "source": "Base mesh generated from the owner's photograph with a hosted image-to-3D model (Tencent Hunyuan3D shape generation), aligned, pose-normalised and decimated here; coat albedo baked from the same photograph projected onto the mesh and blended with authored zoning; rig, clips and fur cards authored procedurally",
+  "revision": 8,
+  "source": "Offline repair of the retained owner-photo Hunyuan-derived base: closed rebuilt limbs/paws/tail, bilateral face reconstruction, multi-photo coat and front-face reprojection, continuous local skin weights. No new hosted generation.",
   "generated_mesh": "hy21shape_generation_0.glb",
   "forward_axis": "+X",
   "up_axis": "+Z",
@@ -9,18 +9,18 @@
   "root_motion": false,
   "reference_pose_bounds_cm": {
     "min": [
-      -63.061893463134766,
-      -13.991018295288086,
-      0.0
+      -63.69565200805664,
+      -13.943782806396484,
+      0.40044426918029785
     ],
     "max": [
-      62.39590072631836,
-      15.843887329101562,
-      76.24874114990234
+      62.849998474121094,
+      16.342920303344727,
+      76.24628448486328
     ]
   },
-  "triangles": 48000,
-  "vertices": 24000,
+  "triangles": 93124,
+  "vertices": 46566,
   "bones": [
     "root",
     "pelvis",
@@ -55,22 +55,35 @@
         0.14,
         1
       ],
-      "roughness": 0.62,
+      "roughness": 0.8,
+      "metallic": 0
+    },
+    "DM_Nose": {
+      "color": [
+        0.02,
+        0.019,
+        0.018,
+        1
+      ],
+      "roughness": 0.46,
       "metallic": 0
     }
   },
   "used_materials": [
-    "DM_Coat"
+    "DM_Coat",
+    "DM_Nose"
   ],
   "textures": {
-    "T_Dog_Albedo": "baked 2048 sRGB albedo (photo projection + zoning) on UV0",
+    "T_Dog_Albedo": "4096 sRGB photo coat; retained facial mapping plus directional multi-scale photographic body/leg/chest fur",
     "T_Dog_FurAtlas": "procedural lock atlas, 4x2 cells",
     "T_Dog_FurDetail": "procedural streak brightness",
-    "T_Dog_FurNormal": "derived from the streak height"
+    "T_Dog_FurNormal": "derived from the streak height",
+    "T_Dog_Nose": "512 sRGB cropped and lighting-normalized owner photograph",
+    "T_Dog_CoatNormal": "2048 tangent-space normal baked from matching photographic fur on UV0; OpenGL source, green flipped in Unreal"
   },
   "uv_channels": {
-    "0": "baked albedo islands on skin; fur atlas on cards",
-    "1": "rest-pose Z/120 on skin; (0,1) marks cards"
+    "0": "Photographic coat atlas; local nose photo projection",
+    "1": "Rest-pose Z/120"
   },
   "skeleton_fit_cm": {
     "fore_x": 30.57245231129324,
@@ -114,20 +127,50 @@
   "exports": {
     "A_DogIdle.fbx": "e061e945ae26b2bca48b8fddf698385deae47e7592220d28750eed0220129612",
     "A_DogWalk.fbx": "7592b11c6c749df9fb2faffa1019e6a6c688324e1d245cb15397b30b796384d3",
-    "SK_CompanionDog.fbx": "409fbcdb53aff5af7ecbad331edaf11ee2cc3bfa744a57917d4a6f3997a43de1"
+    "SK_CompanionDog.fbx": "c712e92f8bf61b02fc0327d0f6ac7536973052673752e1a88883ecfe35cadc14"
   },
   "unreal_import_pending": false,
   "runtime_review_pending": false,
-  "cosmetic_revision": "Detailed revision 7 restored; lower-neck contours softened; original closed leg topology, photo coat, facial anatomy, UVs, rig and clips retained.",
+  "cosmetic_revision": "Revision 8: repaired anatomy, front likeness, photographic coat and continuous limb/tail attachments.",
   "cleanup": {
-    "generator": "Tools/clean_rex_mesh.py",
-    "removed_bridge_triangles": 0,
-    "smoothed_neck_vertices": 959,
-    "facial_vertices_unchanged": true,
-    "photo_texture_unchanged": true
+    "pipeline": [
+      "Tools/rebuild_rex_anatomy.py",
+      "Tools/bake_rex_photos.py",
+      "Tools/reweight_rex.py",
+      "Tools/export_rex_repair.py"
+    ],
+    "closed_rebuilt_limbs_and_paws": true,
+    "closed_tail": true,
+    "bilateral_face_reconstruction": true,
+    "photo_texture_rebaked": true,
+    "continuous_limb_and_tail_weights": true,
+    "limitations": "Smooth surface fur and simplified joint/feathering geometry remain; this is a prototype likeness correction."
   },
   "unreal_import_report": "import_report.json",
   "restoration_source_commit": "5aed6e9",
   "prototype_license_exception": "Owner-directed temporary use; Hunyuan3D-2.1 output territory restriction unresolved; attribution is not clearance.",
-  "runtime_review": "v0.10.1 packaged captures at docs/verification/v0.10.1/v0101-rex.png and v0101-rex-close.png. Detailed face/coat restored; original close-angle leg/coat limitations remain."
+  "coat_polish": {
+    "geometry_uv_weights_sha256": "4e1fee79843ad2710ca68a4859dfc949d906ab41f946163efcbb7c53f29cf9ed",
+    "anatomy_unchanged": true,
+    "pipeline": [
+      "Tools/prepare_rex_coat_tiles.py",
+      "Tools/polish_rex_coat.py",
+      "Tools/promote_rex_coat.py"
+    ],
+    "normal_strength": 0.65,
+    "fur_flow": "Downward chest/legs; along flanks, blended non-mirrored photographic samples",
+    "preview_uses_runtime_baked_normal": true
+  },
+  "runtime_review": {
+    "version": "0.10.2",
+    "date": "2026-10-11",
+    "views": [
+      "front",
+      "side",
+      "rear",
+      "three-quarter"
+    ],
+    "evidence": "docs/verification/v0.10.2/rex/",
+    "scope": "Shipping captures at 10x, diagnostic close camera; repaired face/limbs and photographic coat reviewed. Simplified silhouette and surface fur remain; not finished photoreal character art."
+  }
 }

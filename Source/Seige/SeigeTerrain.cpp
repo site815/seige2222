@@ -939,14 +939,13 @@ UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root
     const float FadeStart=FadeStartDistance>0&&FadeStartDistance<MaxDistance?FadeStartDistance:MaxDistance;
     Set->InstanceMinDrawDistance=FMath::RoundToInt(MinDistance);
     Set->SetCullDistances(FMath::RoundToInt(FadeStart),FMath::RoundToInt(MaxDistance));
-    // Nanite assets here have no wind/deformation. Rigid still invalidates when a
-    // foundation moves instances; Static would incorrectly suppress that update.
-    // Card grass animates in the material; its cached shadow stays rigid, which is
-    // invisible for ankle-high motion and avoids per-frame shadow page redraws.
-    // Wind sway (and the velocity pass and shadow-page churn it costs) is only
-    // visible near the camera; beyond the configured distance cards are static.
-    Set->SetEvaluateWorldPositionOffset(Cards&&Sward&&WindDistanceMeters>0);
-    if(Cards&&Sward)Set->WorldPositionOffsetDisableDistance=FMath::RoundToInt(WindDistanceMeters*100);
+    const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
+    // Only leaves/grass have WPO; bark remains rigid. The material smoothly
+    // reaches zero before this per-instance cutoff, including proxy canopies.
+    // Cached shadows stay rigid: subtle rustle does not redraw forest VSM pages.
+    const bool Wind=(Tree||Sward)&&WindDistanceMeters>0;
+    Set->SetEvaluateWorldPositionOffset(Wind);
+    if(Wind)Set->WorldPositionOffsetDisableDistance=FMath::RoundToInt(WindDistanceMeters*100+Mesh->GetBounds().SphereRadius);
     Set->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
     // One float per instance carries the terrain's coherent meadow vigor so the
     // card tint follows the ground colour beneath it (see M_GrassCardV091).
@@ -956,7 +955,6 @@ UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root
     // Nanite rasterizes alpha-masked leaf cards as solid quads with the fast
     // fixed-function path; the 1.8M-triangle near Jacaranda is otherwise the
     // largest remaining programmable-raster cost. Wildflowers stay masked.
-    const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
     if(Kind==TEXT("Grass")||Kind==TEXT("GrassB")||Tree)
         Set->NanitePixelProgrammableDistance=GrassProgrammableDistanceMeters*100.f;
     if(Sward)
@@ -1104,7 +1102,7 @@ void ASeigeGameMode::CommitForestSets(AActor* Ground,FSeigeForestBuild& Build,in
         // never an invisible band. Configuration validation normally catches it.
         const bool HasProxy=KindProxy[KindIndex]!=nullptr;
         const double Cut=(ForestDetailDistanceMeters+ForestLodTransitionMeters*(Band+.5)/SceneryLodBands)*100.;
-        auto* Set=VegetationSet(Ground,Root,Mesh,SeigeTreeKinds[KindIndex],false,Proxy?0.f:ForestProgrammableDistanceMeters,Proxy?Cut:0,Proxy?FarDistance:HasProxy?Cut:FarDistance);
+        auto* Set=VegetationSet(Ground,Root,Mesh,SeigeTreeKinds[KindIndex],false,Proxy?0.f:ForestProgrammableDistanceMeters,Proxy?Cut:0,Proxy?FarDistance:HasProxy?Cut:FarDistance,0,TreeWindDistanceMeters);
         if(!Set)continue;
         Set->ComponentTags.Add(SectorTag);Set->ComponentTags.Add(SetTag);
         if(Proxy)

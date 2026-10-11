@@ -1,48 +1,56 @@
 # Rex companion asset
 
-**Current prototype restoration (2026-10-11):** The owner explicitly requested restoration of the earlier detailed Rex despite the unresolved asset-license issue. The revision-7 source, photographic coat and Unreal runtime assets are restored from commit `5aed6e9`; the matching FBX exports are retained locally. This restores the earlier appearance without making another generation request or uploading any photograph. Gameplay code, the 100 m territory, damage-triggered retreat, first-person controls and stable skeleton/asset paths are unchanged.
+The current **revision 8** repairs the retained detailed Rex model using the owner's five reference photographs. It replaces fused lower limbs and malformed paws with closed anatomical geometry, rounds the split tail, reconstructs the occluded face from the sound side, and rebakes the coat with frontal face projection and normalized photographic fur patches. Continuous limb and tail attachment weights replace the discontinuous weights that folded the chest and rump during walking.
 
-**Unresolved license exception:** The Hunyuan3D-2.1-derived base is included under the owner's explicit prototype instruction. Its official license section 5(c) expressly restricts outputs as well as model materials outside the defined territory (EU, UK and South Korea are excluded). Crediting the source does **not** remove that restriction. The asset is not classified as CC0 or unrestricted commercial content; distribution/commercial clearance remains unresolved. See [provenance](TEXTURE_PROVENANCE.md).
+This is a prototype likeness correction. The close silhouette, fur feathering and joint shapes remain simplified; the coat uses textured surfaces, not individual strands. It should not be described as finished photoreal character art.
 
-A game asset of the owner's golden retriever, built from the owner's own photographs at the owner's request (likeness revision 6/7, 2026-10-08). It replaces the procedurally modelled revisions 1–5, whose silhouette never read as a retriever in the engine.
+## Unresolved prototype license exception
 
-## How it is made
+The owner explicitly requested temporary use of the earlier detailed Hunyuan3D-2.1-derived base despite the unresolved territorial restriction. The official license section 5(c) covers outputs as well as model materials; the EU, UK and South Korea are outside the defined territory. Attribution does **not** resolve that issue. No commercial or distribution clearance is asserted. See [provenance](TEXTURE_PROVENANCE.md). This repair runs offline and performs no new generation request or photograph upload.
 
-1. **Base mesh.** The standing three-quarter photograph (background removed with `rembg`, kept untracked in `Saved/rex_photos/`) is sent to Tencent's hosted Hunyuan3D-2.1 image-to-3D model (`/shape_generation` endpoint of the public Hugging Face Space, called with `gradio_client` by a historical hosted-generation client retained only in the ignored local archive). The returned shape-only GLB (`Source/generated/hy21shape_generation_0.glb`, 278,534 triangles, ordinary Git binary) is a real retriever: skull, hanging ears, open mouth, chest, legs and a hanging tail. Hunyuan3D-2.0's shape endpoint produced a comparable mesh; the textured endpoint of either model needs a paid GPU tier and was not used.
-2. **Alignment and pose normalisation** ([`Tools/build_rex_from_generated.py`](../../Tools/build_rex_from_generated.py)). The GLB is rotated nose-forward (+X), grounded, scaled to a **59 cm** back height at the mid-trunk, centred on the spine and decimated to **48,000 triangles**. Legs are measured from a 10–14 cm slice and slid into a symmetric stance (fore ±8 cm, hind ±8.1 cm); the head is turned to face +X and pitched to carry the nose 8° above level; the tail, which the generator reproduced hanging and curled to the photographed side, is rotated to a level carriage with a lifted tip so it clears the grass sward.
-3. **Coat albedo.** Before the warps, every vertex is projected orthographically onto the photograph from the camera side (the far side mirrored), weighted by how directly the surface faces the camera; the tail and any off-face sample darker than linear luminance 0.16 (shadowed chest, ground between the legs) are rejected. The sampled colour is blended with authored zoning (gold back, cream chest, legs and belly, pale muzzle and brow) and baked in Cycles into **`Textures/T_Dog_Albedo.png`** (2048², sRGB) on a smart-unwrapped UV0. That texture therefore contains pixels derived from the owner's photograph; the photograph itself is not committed.
-4. **Rig, skinning and clips.** The existing 24-bone skeleton (root, pelvis, spine, neck, head, jaw, three bones per leg, ears, tail_1–4) is fitted from the measurements; distance-based weights with at most four influences. The idle loop is authored in the build script; the walk is the planted-foot cycle from [`Source/likeness.py`](Source/likeness.py) (`author_walk`, 0.6018518518518519 m stride over 13/30 s at 5 km/h).
-5. **Feathering cards** are still generated on request (`--cards`, with `--card-length=` and `--card-density=` scales) but are **off by default**: in the engine they read as dark straw at every zoom a player can reach.
-6. **Unreal import** ([`Tools/import_companion_dog_v3.py`](../../Tools/import_companion_dog_v3.py)) targets `/Game/Art/CompanionDog/SK_CompanionDog`, `A_DogIdle` and `A_DogWalk` (paths unchanged, so `Rules/companions.json` and the save fingerprint are untouched), builds three LODs and creates the materials. `M_Coat` is default-lit: the baked albedo �- a box-projected fur-flow mask in mesh space (strands run nose-to-tail), darkened to 0.7 and desaturated by 0.22 so that under the colony sun it lands on the photograph's pale gold instead of clipping to white on the face and saturating to orange on the body (the subsurface model of revision 6 did exactly that), with a mild grazing-angle lift standing in for guard-hair scatter. Stale material slots from earlier revisions are kept bound to `M_Coat` with a warning.
+## Current source and runtime contract
 
-## Files
+- `Source/CompanionDog.blend`: reviewed repaired mesh, two materials, rig and the existing idle/walk actions; **93,124 triangles and 24 bones**.
+- `Source/RepairDonor.blend`: immutable revision-7 input, retained before repair. Its geometry and UVs must be paired with `Source/PhotoPatches/ReferenceCoat.png`, never the new atlas.
+- `Source/PhotoPatches/`: cropped face/nose samples and lighting-normalized fur tiles derived from the owner's references. The original full photographs are not repository assets.
+- `Textures/T_Dog_Albedo.png`: 4096-square sRGB atlas. Selected-to-active emission ray transfer preserves valid original facial details without crossing source UV islands; a local front-photo projection corrects the forehead/mouth, and photo fur patches cover rebuilt anatomy.
+- `Textures/T_Dog_CoatNormal.png`: 2048-square tangent-space map baked from the same photographic fur clumps on UV0; Unreal flips its green channel to DirectX convention. The facial region remains neutral.
+- `Textures/T_Dog_Nose.png`: 512-square photo-derived nose map on separately modeled nostril geometry.
+- Runtime paths remain `/Game/Art/CompanionDog/SK_CompanionDog`, `A_DogIdle` and `A_DogWalk`. Coordinates are centimeters, +X forward, +Z up, actor scale 1, with no root motion.
+- Idle remains 3 seconds; walking remains 13/30 seconds and 0.6018518518518519 meters per cycle at 5 km/h. Rex gameplay, saves and first-person controls are unchanged.
+- `M_Coat` samples the UV-baked photographic fur; it no longer projects fur from the moving world position. The matched tangent normal follows the final fur direction, with reduced strength. BC7 color compression preserves coat variation; these small character maps remain resident with zero texture LOD bias. The nose has its own photographic material.
 
-| File | Purpose |
-| --- | --- |
-| [CompanionDog.blend](Source/CompanionDog.blend) | Review scene: skinned mesh, rig, both actions, bake materials (ordinary Git binary) |
-| [Source/generated/](Source/generated/) | Hunyuan3D shape output used as the base mesh (ordinary Git binary) |
-| [likeness.py](Source/likeness.py) | Walk authoring and stride metadata (shared with earlier revisions) |
-| [render_v5.py](Source/render_v5.py) | Cycles preview renders of the saved scene (`--quick`, `--views=`) |
-| [dog_manifest.json](dog_manifest.json) | Dimensions, bones, materials, timing, stride, skeleton fit and FBX hashes (revision 6 format) |
-| [Generator](../../Tools/build_rex_from_generated.py) | Blender 4.5 build from the generated GLB (`--mesh=`, `--tris=`, `--preview-only`, `--cards`) |
-| [Unreal importer](../../Tools/import_companion_dog_v3.py) | Skeletal import, three LODs, materials, runtime checks |
+## Reproducible offline workflow
 
-Exports (`Exports/*.fbx`) are regenerated by the build script and are not committed. Coordinates are **centimeters, +X forward, +Z up**, ground-level root, no root motion; import at actor scale 1.
+Use Python with Pillow/numpy and Blender 4.5 in the repository root, in this order:
 
-## Current restoration polish
+```text
+python Tools/prepare_rex_coat_tiles.py
+blender -b -P Tools/rebuild_rex_anatomy.py
+blender -b -P Tools/bake_rex_photos.py
+blender -b -P Tools/reweight_rex.py
+blender -b -P Tools/validate_rex_deformation.py
+blender -b -P Tools/export_rex_repair.py
+blender -b -P Tools/export_rex_clips.py
+blender -b -P Tools/polish_rex_coat.py
+blender -b -P Tools/promote_rex_coat.py
+blender -b -P Art/CompanionDog/Source/validate.py
+```
 
-[Tools/clean_rex_mesh.py](../../Tools/clean_rex_mesh.py) applies bounded smoothing to 959 lower-neck vertices in the restored mesh, then exports the same 24-bone skeletal mesh. It preserves all 48,000 triangles, existing photo UVs, facial vertices, closed leg topology and original animation clips. No new photograph projection is performed. A candidate that cut the generated bridge between the legs exposed incomplete inner paws and was rejected; those source-model imperfections remain. Run this polish script after rebuilding the revision-7 base and before the v3 Unreal importer.
+The anatomy steps write candidates and previews under `Saved/rex-repair-v011`. The final coat stage writes `Saved/rex-coat-polish`; review it before `promote_rex_coat.py`. All source inputs are retained under `Source/`, so Saved contains reproducible intermediates rather than unique required inputs. Inspect the front, both sides, rear and three walking poses before running the exporter. The exporter promotes the reviewed mesh/textures/previews and regenerates its ignored FBX. Existing animation FBX files can be regenerated from the final source with `Tools/export_rex_clips.py`. Import with `Tools/import_companion_dog_v3.py` in an Unreal Python commandlet; it checks bones, dimensions, materials, animation lengths and three skeletal LODs.
 
-## Historical state in the engine (revision 7f)
+`build_rex_from_generated.py` and `clean_rex_mesh.py` are historical base/restoration tools. They are not the current repair pipeline and overwrite the repaired asset if invoked directly.
 
-Reviewed with the opt-in benchmark camera (`-GraphicsBenchmark -BenchmarkView=rex`, optional `-BenchmarkZoom=`, `-BenchmarkYaw=`, `-BenchmarkPitch=`; screenshots under `Saved/Screenshots/Benchmark/rex-*`). At the closest zoom a player can reach (`minimum_zoom` 120) Rex is about 200 px wide and reads as a pale golden retriever with a white face and a level tail. The rex view runs at 101–121 FPS on the development PC. Known limits, in order of visibility: the coat is smooth (no strand fur; the fur-flow mask is subtle), the head-to-body colour transition is harsher than in the photographs, the far side of the body carries the mirrored near-side photo, and the eyes and nose come only from the bake. Strand-based fur (UE Groom) was not attempted: at 200 px it would cost far more than the grass system for a blob.
+## Verification
 
-## Privacy and provenance
+`coat_polish_validation.json` records an exact geometry/UV/weight hash proving that the final coat pass did not change anatomy. The color bake retains real photographic fur clumps, blends non-mirrored samples to limit repetition, and follows downward chest/leg fur flow. Its preview uses the actual baked normal, not an unexported procedural bump.
 
-The owner supplied the photographs and asked for the likeness. During the historical revision-7 workflow, the photographs were uploaded to the public Hunyuan3D Space to obtain the shape and are otherwise kept out of the repository; the committed `T_Dog_Albedo.png` and the generated GLB are derived from them and remain derived assets subject to the unresolved license exception above. This restoration itself performs no network request. `T_Dog_CoatDetail.png`, `FurNormal`, `FurDetail`, `FurAtlas` and `FurAlpha` are procedural or text-generated as recorded in [TEXTURE_PROVENANCE.md](TEXTURE_PROVENANCE.md).
+`deformation_validation.json` checks every frame of the 13-frame walk plus its repeat frame: closed/manifold surfaces, finite evaluated bounds, normalized weights with at most four influences, no opposite-side lower-leg weights, and no leg influence on the tail. `source_validation.json` independently checks the exported FBX round trip, all 24 bones, both materials, export hashes and loop endpoints. `import_report.json` records actual Unreal import results. Runtime acceptance is recorded separately in `dog_manifest.json`; Blender previews alone do not establish in-game appearance.
 
-![Three-quarter Blender preview](Previews/dog_three_quarter.png)
-
-![Close Blender preview](Previews/dog_face.png)
-
-![Side-profile Blender preview](Previews/dog_profile.png)
+![Front](Previews/dog_front.png)
+![Left side](Previews/dog_profile.png)
+![Right side](Previews/dog_right.png)
+![Rear](Previews/dog_rear.png)
+![Walk, frame 4](Previews/dog_walk_4.png)
+![Walk, frame 7](Previews/dog_walk_7.png)
+![Walk, frame 10](Previews/dog_walk_10.png)

@@ -77,7 +77,7 @@ export function validateConfiguration(data) {
     if (new Set(speeds).size !== 3 || !speeds.every(value => [1, 5, 10].includes(value))) fail('UI simulation_speeds must contain 1, 5 and 10 once each');
   }
   const weather=object(data.weather,'Graphics/weather.json');version(weather,'Graphics/weather.json');
-  const weatherBounds={night_exposure_offset_ev:[0,4],sun_direction_update_degrees:[.01,2],sun_shadow_update_seconds:[.05,10],night_sky_intensity_fraction:[.05,1],sunrise_sunset_softness:[.01,.5],winter_accumulation_fraction:[.001,.49],winter_melt_fraction:[.001,.49],maximum_snow_coverage:[0,1],snowflake_count:[0,2048,true],snow_radius_meters:[5,100],snow_height_meters:[5,100],snow_fall_meters_per_second:[.1,10],snowflake_size_centimeters:[.1,10]};
+  const weatherBounds={wind_cycle_seconds:[2,120],tree_wind_sway_centimeters:[0,30],leaf_wind_rustle_centimeters:[0,8],grass_wind_sway_centimeters:[0,10],tree_wind_distance_meters:[10,400],wind_fade_start_fraction:[.2,.9],night_exposure_offset_ev:[0,4],sun_direction_update_degrees:[.01,2],sun_shadow_update_seconds:[.05,10],night_sky_intensity_fraction:[.05,1],sunrise_sunset_softness:[.01,.5],winter_accumulation_fraction:[.001,.49],winter_melt_fraction:[.001,.49],maximum_snow_coverage:[0,1],snowflake_count:[0,2048,true],snow_radius_meters:[5,100],snow_height_meters:[5,100],snow_fall_meters_per_second:[.1,10],snowflake_size_centimeters:[.1,10]};
   for(const [key,[min,max,integer]]of Object.entries(weatherBounds))number(weather[key],`Weather ${key}`,min,max,!!integer);
   // Optional building art overrides: every key must be a building definition and every kind an imported mesh.
   if (data.buildingVisuals !== null && data.buildingVisuals !== undefined) {

@@ -1,0 +1,15 @@
+# Calendar-driven foliage wind
+
+The v0.10.2 foliage pass uses the GPU materials already assigned to the retained trees, canopy proxies, meadow cards and wildflowers. It changes no source mesh, photographic texture, color, normal, opacity mask or seasonal snow connection. Bark/trunks remain rigid; the visible canopy rustles through leaf-material world-position offset.
+
+`SeigeWeather.cpp` publishes one bounded wind phase and its previous-frame value through `MPC_Weather` each rendered frame. The phase is derived from the authoritative scenario calendar plus the fixed-step remainder. It follows 1×, 5× and 10× speed, preserves its pose on speed changes, and stops during pause. The remainder is retained during pause so clicking pause does not snap back to the previous simulation step. Shader oscillations use integer phase harmonics, so the wrap after each cycle is continuous even after a long-running persistent session. `PreviousFrameSwitch` supplies the preceding pose for temporal motion vectors.
+
+Editable controls are in `Graphics/weather.json`: cycle duration, canopy sway, fine leaf rustle, grass sway, tree range and distance-fade start fraction. The existing `Graphics/scene.json` grass wind range remains authoritative. Defaults are a 10-second base cycle, 18 cm canopy sway, 4 cm rustle and 5 cm grass sway. Tree animation fades between 156 and 260 m; grass between 36 and 60 m. Instanced components disable WPO at the end of these ranges. Distant foliage remains present and static rather than disappearing.
+
+The highest allowed settings fit within each material's declared maximum WPO displacement: 48 cm for foliage and 16 cm for grass. Unreal extends culling bounds accordingly. Whole tree transforms are never ticked. Shadows retain the existing rigid cache policy; individual leaves do not force forest shadow pages to redraw every frame. This deliberately omits tiny leaf-shadow animation for performance.
+
+Run `Tools/import_foliage_wind.py` after rebuilding source scenery/grass materials. It modifies only the targeted material masters and adds parameters to the existing weather collection, validates every graph link and unchanged surface input, checks shader compile errors, and writes `wind_import_report.json`. Use a D3D12 commandlet with `-AllowCommandletRendering -RenderOffscreen`, then verify the actual built game. A NullRHI import alone does not establish shader correctness or visual performance.
+
+The native `Seige.Presentation.WindClock` test checks speed slopes, retained pause phase, changes of speed, wrap continuity and long-session precision. It does not substitute for a rendered scene and performance check.
+
+Implementation references: [Epic's WPO displacement/bounds documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-material-properties), [Nanite foliage guidance](https://dev.epicgames.com/documentation/en-us/unreal-engine/nanite-foliage), and [PreviousFrameSwitch](https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/class/MaterialExpressionPreviousFrameSwitch?application_version=5.7).

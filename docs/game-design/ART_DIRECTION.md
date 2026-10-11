@@ -2,6 +2,8 @@
 
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
+**Confirmed v0.10.2 corrections:** Rex must retain the supplied dog's photographic likeness from multiple angles; repairing warped legs, paws and neck geometry and their animation weights accompanies the photo-mapping pass. A favorable side view alone is insufficient acceptance. Trees should visibly rustle with simulation speed (1×/5×/10×) and freeze with pause, using smooth continuous motion and bounded rendering cost. This update does not change the established landscape or night-lighting direction.
+
 Visual direction for the robotic colony, landscape, and alien threat. The user's latest direction supersedes the earlier bright Pandora landscape and cute-building direction wherever they conflict. The production assets and lighting still require development and visual review.
 
 ## Current graphics priority

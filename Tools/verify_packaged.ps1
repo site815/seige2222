@@ -1,4 +1,8 @@
-param([ValidateSet('UiSmoke','PrototypeSmoke','NextUpdateSmoke')][string]$Mode='UiSmoke')
+param(
+  [ValidateSet('UiSmoke','PrototypeSmoke','NextUpdateSmoke')][string]$Mode='UiSmoke',
+  [ValidateRange(800,7680)][int]$Width=1600,
+  [ValidateRange(600,4320)][int]$Height=900
+)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $versionLine=Get-Content (Join-Path $projectRoot 'Config/DefaultGame.ini') | Where-Object {$_ -match '^ProjectVersion='} | Select-Object -First 1
@@ -52,7 +56,7 @@ $reportName=if($Mode -eq 'UiSmoke'){'PresentationSmoke.json'}elseif($Mode -eq 'N
 $timeoutSeconds=if($Mode -eq 'NextUpdateSmoke'){120}else{3600}
 $audioArgument=if($Mode -eq 'NextUpdateSmoke'){''}else{'-NoSound'}
 $started=Get-Date
-$launch=Start-Process -FilePath $gameExe -ArgumentList "-$Mode -RenderOffscreen -windowed -ForceRes -ResX=1600 -ResY=900 -unattended -nosplash -NoSaveDisplay $audioArgument" -WindowStyle Hidden -PassThru
+$launch=Start-Process -FilePath $gameExe -ArgumentList "-$Mode -RenderOffscreen -windowed -ForceRes -ResX=$Width -ResY=$Height -unattended -nosplash -NoSaveDisplay $audioArgument" -WindowStyle Hidden -PassThru
 $samples=[System.Collections.Generic.List[object]]::new()
 do {
   Start-Sleep -Seconds 2
@@ -78,8 +82,9 @@ $runtimeAfter=@(Get-RuntimeFiles)
 $inputsUnchanged=($sourceInputs | ConvertTo-Json -Depth 6 -Compress) -ceq ($sourceAfter | ConvertTo-Json -Depth 6 -Compress)
 $inputsUnchanged=$inputsUnchanged -and (($packagedInputs | ConvertTo-Json -Depth 6 -Compress) -ceq ($packageAfter | ConvertTo-Json -Depth 6 -Compress))
 $inputsUnchanged=$inputsUnchanged -and (($runtimeFiles | ConvertTo-Json -Depth 6 -Compress) -ceq ($runtimeAfter | ConvertTo-Json -Depth 6 -Compress))
-$record=[pscustomobject]@{schema_version=2;version=$version;mode=$Mode;started=$started.ToString('o');exit_code=$launch.ExitCode;report=$result;socket_samples=$samples;inputs_unchanged=$inputsUnchanged;packaged_inputs=$packagedInputs;source_inputs=$sourceInputs;runtime_files=$runtimeFiles}
-$recordPath=Join-Path $projectRoot "Saved/packaged-v$version-$Mode-verification.json"
+$record=[pscustomobject]@{schema_version=2;version=$version;mode=$Mode;resolution=@($Width,$Height);started=$started.ToString('o');exit_code=$launch.ExitCode;report=$result;socket_samples=$samples;inputs_unchanged=$inputsUnchanged;packaged_inputs=$packagedInputs;source_inputs=$sourceInputs;runtime_files=$runtimeFiles}
+$resolutionSuffix=if($Width -eq 1600 -and $Height -eq 900){''}else{"-${Width}x${Height}"}
+$recordPath=Join-Path $projectRoot "Saved/packaged-v$version-$Mode$resolutionSuffix-verification.json"
 $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $recordPath -Encoding UTF8
 # Keep console logs small; the complete observations and hashes live in recordPath.
 [pscustomobject]@{record=$recordPath;exit_code=$launch.ExitCode;report=$result;socket_samples=$samples.Count;source_files=$sourceInputs.Count;runtime_files=$runtimeFiles.Count;inputs_unchanged=$inputsUnchanged} | ConvertTo-Json -Depth 5

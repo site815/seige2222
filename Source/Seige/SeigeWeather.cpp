@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeWindPresentation.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DirectionalLightComponent.h"
@@ -24,6 +25,7 @@ bool ASeigeGameMode::LoadWeatherSettings()
     if(!Doc->TryGetNumberField(TEXT("version"),Version)||Version!=1){Error=TEXT("Unsupported weather configuration version");return false;}
     auto Number=[&](const TCHAR* Key,double Min,double Max,float& Out){double Value=0;if(!Doc->TryGetNumberField(Key,Value)||!FMath::IsFinite(Value)||Value<Min||Value>Max){Error=FString::Printf(TEXT("weather.%s must be in [%g,%g]"),Key,Min,Max);return false;}Out=float(Value);return true;};
     if(!Number(TEXT("sun_direction_update_degrees"),.01,2,SunDirectionUpdateDegrees)||!Number(TEXT("sun_shadow_update_seconds"),.05,10,SunShadowUpdateSeconds)||!Number(TEXT("night_sky_intensity_fraction"),.05,1,NightSkyFraction)||!Number(TEXT("night_exposure_offset_ev"),0,4,NightExposureOffsetEV)||!Number(TEXT("sunrise_sunset_softness"),.01,.5,SunriseSoftness)||
+       !Number(TEXT("wind_cycle_seconds"),2,120,WindCycleSeconds)||!Number(TEXT("tree_wind_sway_centimeters"),0,30,TreeWindSwayCm)||!Number(TEXT("leaf_wind_rustle_centimeters"),0,8,LeafWindRustleCm)||!Number(TEXT("grass_wind_sway_centimeters"),0,10,GrassWindSwayCm)||!Number(TEXT("tree_wind_distance_meters"),10,400,TreeWindDistanceMeters)||!Number(TEXT("wind_fade_start_fraction"),.2,.9,WindFadeStartFraction)||
        !Number(TEXT("winter_accumulation_fraction"),.001,.49,WinterAccumulationFraction)||!Number(TEXT("winter_melt_fraction"),.001,.49,WinterMeltFraction)||
        !Number(TEXT("maximum_snow_coverage"),0,1,MaximumSnowCoverage)||!Number(TEXT("snow_radius_meters"),5,100,SnowRadiusMeters)||
        !Number(TEXT("snow_height_meters"),5,100,SnowHeightMeters)||!Number(TEXT("snow_fall_meters_per_second"),.1,10,SnowFallMetersPerSecond)||
@@ -134,6 +136,18 @@ void ASeigeGameMode::UpdateWeather(float DeltaSeconds)
         // Industry surfaces light their windows and brighten their lamps with
         // the same deterministic dark phase as the exposure lift above.
         Instance->SetScalarParameterValue(TEXT("Night"),float(1-Light));
+        const float Phase=SeigeWindPresentation::Phase(ScenarioCalendar.ElapsedMicroseconds(),Accumulator,Sim.FixedStepSeconds(),WindCycleSeconds);
+        const double WindSeconds=ScenarioCalendar.ElapsedMicroseconds()/1000000.+FMath::Clamp(Accumulator,0.,Sim.FixedStepSeconds());
+        const bool Continuous=HasWindPhase&&WindSeconds>=PreviousWindSeconds&&WindSeconds-PreviousWindSeconds<=2.500001;
+        Instance->SetScalarParameterValue(TEXT("WindPhase"),Phase);
+        Instance->SetScalarParameterValue(TEXT("WindPreviousPhase"),Continuous?PreviousWindPhase:Phase);
+        Instance->SetScalarParameterValue(TEXT("WindTreeSwayCm"),TreeWindSwayCm);
+        Instance->SetScalarParameterValue(TEXT("WindLeafRustleCm"),LeafWindRustleCm);
+        Instance->SetScalarParameterValue(TEXT("WindGrassSwayCm"),GrassWindSwayCm);
+        Instance->SetScalarParameterValue(TEXT("WindTreeDistanceCm"),TreeWindDistanceMeters*100);
+        Instance->SetScalarParameterValue(TEXT("WindGrassDistanceCm"),GrassWindDistanceMeters*100);
+        Instance->SetScalarParameterValue(TEXT("WindFadeStartFraction"),WindFadeStartFraction);
+        PreviousWindPhase=Phase;PreviousWindSeconds=WindSeconds;HasWindPhase=true;
     }
     if(Coverage<=.001f||!Camera||SnowflakeCount<=0)
     {if(Snowflakes)Snowflakes->SetVisibility(false);return;}

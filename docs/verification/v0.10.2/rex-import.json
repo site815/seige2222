@@ -1,0 +1,138 @@
+{
+  "mesh": "/Game/Art/CompanionDog/SK_CompanionDog.SK_CompanionDog",
+  "skeleton": "/Game/Art/CompanionDog/SK_CompanionDog_Skeleton.SK_CompanionDog_Skeleton",
+  "animations": {
+    "A_DogIdle": {
+      "path": "/Game/Art/CompanionDog/A_DogIdle.A_DogIdle",
+      "seconds": 3.0,
+      "root_motion": false
+    },
+    "A_DogWalk": {
+      "path": "/Game/Art/CompanionDog/A_DogWalk.A_DogWalk",
+      "seconds": 0.4333333373069763,
+      "root_motion": false
+    }
+  },
+  "revision": 8,
+  "lod_count": 3,
+  "lod_vertices": [
+    52515,
+    16714,
+    9259
+  ],
+  "material_slots": [
+    "DM_Coat",
+    "DM_Mouth",
+    "DM_Tongue",
+    "DM_Nose",
+    "DM_Eye",
+    "DM_Collar",
+    "DM_CollarEdge",
+    "DM_Metal",
+    "DM_Iris",
+    "DM_Teeth",
+    "DM_FurCard",
+    "DM_Shell"
+  ],
+  "vertex_colors": true,
+  "vertex_color_encoding": "FBX sRGB decoded by material",
+  "source_triangles": 93124,
+  "source_bones": [
+    "root",
+    "pelvis",
+    "spine",
+    "neck",
+    "head",
+    "jaw",
+    "fore_upper_R",
+    "fore_lower_R",
+    "fore_paw_R",
+    "hind_upper_R",
+    "hind_lower_R",
+    "hind_paw_R",
+    "ear_R",
+    "fore_upper_L",
+    "fore_lower_L",
+    "fore_paw_L",
+    "hind_upper_L",
+    "hind_lower_L",
+    "hind_paw_L",
+    "ear_L",
+    "tail_1",
+    "tail_2",
+    "tail_3",
+    "tail_4"
+  ],
+  "source_reference_bounds_cm": {
+    "min": [
+      -63.69565200805664,
+      -13.943782806396484,
+      0.40044426918029785
+    ],
+    "max": [
+      62.849998474121094,
+      16.342920303344727,
+      76.24628448486328
+    ]
+  },
+  "imported_dimensions_cm": [
+    126.54565048217773,
+    30.286704063415527,
+    75.84584021568298
+  ],
+  "verified_bones": [
+    "ear_L",
+    "ear_R",
+    "fore_lower_L",
+    "fore_lower_R",
+    "fore_paw_L",
+    "fore_paw_R",
+    "fore_upper_L",
+    "fore_upper_R",
+    "head",
+    "hind_lower_L",
+    "hind_lower_R",
+    "hind_paw_L",
+    "hind_paw_R",
+    "hind_upper_L",
+    "hind_upper_R",
+    "jaw",
+    "neck",
+    "pelvis",
+    "root",
+    "spine",
+    "tail_1",
+    "tail_2",
+    "tail_3",
+    "tail_4"
+  ],
+  "fur_card_shadow_casting": false,
+  "runtime_review_pending": false,
+  "reference_photographs_imported": false,
+  "retained_unused_material_slots": [
+    "DM_Mouth",
+    "DM_Tongue",
+    "DM_Eye",
+    "DM_Collar",
+    "DM_CollarEdge",
+    "DM_Metal",
+    "DM_Iris",
+    "DM_Teeth",
+    "DM_FurCard",
+    "DM_Shell"
+  ],
+  "expected_stale_slot_warning_count": 10,
+  "coat_normal": "UV0 tangent-space photographic bake; DirectX green channel flipped on import",
+  "runtime_review": {
+    "version": "0.10.2",
+    "date": "2026-10-11",
+    "views": [
+      "front",
+      "side",
+      "rear",
+      "three-quarter"
+    ],
+    "evidence": "docs/verification/v0.10.2/rex/",
+    "scope": "Shipping captures at 10x, diagnostic close camera; repaired face/limbs and photographic coat reviewed. Simplified silhouette and surface fur remain; not finished photoreal character art."
+  }
+}

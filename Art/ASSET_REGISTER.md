@@ -2,13 +2,9 @@
 
 # SEIGE — Original Prototype Asset Register
 
-**Current Rex exception:** The paragraphs below describe retired original revisions. The current prototype restores the detailed revision-7 model and photo coat at the owner's explicit request, with an unresolved licence notice in Credits. See the current [Rex record](CompanionDog/README.md) and [provenance](CompanionDog/TEXTURE_PROVENANCE.md); the current asset is not covered by the original-art claims below.
+**Current Rex revision 8:** The owner's detailed photo-derived model has been repaired with closed limbs/paws, a rounded tail, frontal photo mapping and continuous skin weights. It has 93,124 source triangles and 24 bones; the current verification reports are linked in the [Rex record](CompanionDog/README.md). The Hunyuan3D-derived base remains under the owner-authorized prototype exception with an unresolved territorial license issue in Credits. See [provenance](CompanionDog/TEXTURE_PROVENANCE.md).
 
-The v0.8 Rex companion is an original authored interpretation guided by the user's private photographs: Blender mesh, rig, animation and procedural surface work, plus an original generated coat-detail bitmap. No photograph pixels are copied into the coat map. The photographs are not repository assets and must not be embedded or redistributed. See the [Rex asset record](CompanionDog/README.md) for provenance and the [companion design](../docs/game-design/COMPANIONS_AND_REX.md) for behavior and pending likeness/runtime acceptance. These original assets follow the project's licensing decisions; the private references are not assigned a public license.
-
-The refined Rex revision-4 source has **118,331 triangles and 24 bones**, matching the current [source validation](CompanionDog/source_validation.json) and import report. Current FBX round-trip checks pass, and [Unreal reimport](CompanionDog/import_report.json) verifies three skeletal LODs, both animation clips and ten material slots including the brown iris material. **Runtime appearance and animation review remain pending**.
-
-The v0.5 original shuttle, automated robot-service facility, and construction materials are documented in [Construction/README.md](Construction/README.md).
+**Historical Rex revisions 1-5:** The earlier procedural interpretation used original authored geometry and procedural surfaces, plus a generated coat-detail bitmap; those retired versions did not copy reference photograph pixels. Those historical claims do not describe the current photo-derived asset. The original full photographs remain private and are not repository assets; cropped/processed likeness derivatives are retained for the current authorized workflow.
 
 The v0.4 background assets are documented separately in [EnvironmentV04/ATTRIBUTION.md](EnvironmentV04/ATTRIBUTION.md): a licensed full-size mature tree, photographic grass clump, and meadow/forest PBR material. This original prototype register remains historical provenance.
 
