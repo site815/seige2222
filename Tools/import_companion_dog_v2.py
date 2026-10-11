@@ -119,21 +119,19 @@ return float3(nm.xy, 1.0);
                               'Scale': (scale, ''), 'Strength': (strength, '')}.items():
             link(n, tri, key, pin)
         base = node(m, u.MaterialExpressionMultiply); link(decoded, base, 'A'); link(tri, base, 'B', 'DetailOut')
-        output(base, u.MaterialProperty.MP_BASE_COLOR)
+        toned = node(m, u.MaterialExpressionMultiply); link(base, toned, 'A'); link(scalar(m, 'CoatBrightness', .85), toned, 'B')
+        desat = node(m, u.MaterialExpressionDesaturation); link(toned, desat, ''); link(scalar(m, 'CoatDesaturation', .18), desat, 'Fraction')
+        output(desat, u.MaterialProperty.MP_BASE_COLOR)
         # Tangent-space detail normal is only approximate under the planar UVs; keep it mild.
         nstrength = node(m, u.MaterialExpressionLinearInterpolate, const_a=0, const_alpha=.35)
         flat = node(m, u.MaterialExpressionConstant3Vector, constant=u.LinearColor(0, 0, 1, 1))
         nmix = node(m, u.MaterialExpressionLinearInterpolate); link(flat, nmix, 'A'); link(tri, nmix, 'B'); link(scalar(m, 'DetailNormalStrength', .35), nmix, 'Alpha')
         output(nmix, u.MaterialProperty.MP_NORMAL)
-        output(scalar(m, 'Roughness', .62), u.MaterialProperty.MP_ROUGHNESS)
-        output(scalar(m, 'Specular', .32), u.MaterialProperty.MP_SPECULAR)
-        m.set_editor_property('shading_model', u.MaterialShadingModel.MSM_SUBSURFACE)
-        sss = node(m, u.MaterialExpressionMultiply); link(decoded, sss, 'A'); link(node(m, u.MaterialExpressionConstant3Vector, constant=u.LinearColor(.9, .55, .35, 1)), sss, 'B')
-        output(sss, u.MaterialProperty.MP_SUBSURFACE_COLOR)
-        output(scalar(m, 'SubsurfaceOpacity', .85), u.MaterialProperty.MP_OPACITY)
+        output(scalar(m, 'Roughness', .8), u.MaterialProperty.MP_ROUGHNESS)
+        output(scalar(m, 'Specular', .2), u.MaterialProperty.MP_SPECULAR)
     elif slot == 'DM_FurCard':
         for prop, value in [('two_sided', True), ('blend_mode', u.BlendMode.BLEND_MASKED), ('opacity_mask_clip_value', .36),
-                            ('shading_model', u.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE), ('dithered_lod_transition', False)]:
+                            ('shading_model', u.MaterialShadingModel.MSM_DEFAULT_LIT), ('dithered_lod_transition', False)]:
             m.set_editor_property(prop, value)
         vc = node(m, u.MaterialExpressionVertexColor)
         decoded = custom(m, DECODE, 'Decode FBX sRGB coat colours', {'Color': (vc, '')})
@@ -145,8 +143,6 @@ return float3(nm.xy, 1.0);
         tinted = node(m, u.MaterialExpressionMultiply); link(base, tinted, 'A'); link(tint, tinted, 'B')
         output(tinted, u.MaterialProperty.MP_BASE_COLOR)
         output(atlas, u.MaterialProperty.MP_OPACITY_MASK, 'A')
-        sss = node(m, u.MaterialExpressionMultiply); link(tinted, sss, 'A'); link(scalar(m, 'Transmission', .55), sss, 'B')
-        output(sss, u.MaterialProperty.MP_SUBSURFACE_COLOR)
         output(scalar(m, 'Roughness', .58), u.MaterialProperty.MP_ROUGHNESS)
         output(scalar(m, 'Specular', .25), u.MaterialProperty.MP_SPECULAR)
     else:
@@ -206,7 +202,12 @@ slots = list(mesh.get_editor_property('materials')); seen = []
 for slot in slots:
     name = str(slot.get_editor_property('imported_material_slot_name'))
     if name not in materials:
-        raise RuntimeError('Unknown dog material slot ' + name)
+        # Unreal retains unused slots when replacing an earlier mesh. Do not
+        # keep stale shell or generated-photo material dependencies alive.
+        if name in DATA.get('used_materials', []):
+            raise RuntimeError('Unknown used dog material slot ' + name)
+        materials[name] = materials['DM_Coat']
+        u.log_warning('Retired unused dog slot bound to original coat: ' + name)
     slot.set_editor_property('material_interface', materials[name]); seen.append(name)
 required = set(DATA.get('used_materials', materials))
 if required - set(seen):
@@ -263,4 +264,6 @@ report = {'mesh': mesh.get_path_name(), 'skeleton': skeleton.get_path_name(), 'a
           'imported_dimensions_cm': dimensions, 'verified_bones': sorted(found), 'fur_card_shadow_casting': False,
           'runtime_review_pending': True, 'reference_photographs_imported': False}
 (ART / 'import_report.json').write_text(json.dumps(report, indent=2) + '\n')
+DATA['unreal_import_pending'] = False
+(ART / 'dog_manifest.json').write_text(json.dumps(DATA, indent=2) + '\n')
 u.log('SEIGE_COMPANION_DOG_IMPORTED ' + json.dumps(report))

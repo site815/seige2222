@@ -148,9 +148,10 @@ float facing = lerp(1.0, 0.33, saturate(Up.z));
 float3 cell = floor(Local / float3(260.0, 260.0, 300.0));
 float room = step(0.45, frac(sin(dot(cell + Seed.x * 31.0, float3(12.9898, 78.233, 37.719))) * 43758.5453));
 float3 windows = float3(1.0, 0.72, 0.42) * WindowGlow * saturate(Night) * lit * facing * room;
-return lamp + windows;
-""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Tint","Emission","LampDayScale","Night","WindowGlow","Seed","Up","Local"])
-    for pin,source in (("Tint",tint),("Emission",emission),("LampDayScale",params["LampDayScale"]),("Night",night),("WindowGlow",params["WindowGlow"]),("Seed",seed),("Up",up),("Local",above)):wire(source,glow,pin)
+// Scorched, destroyed structures have no functioning lamps or occupied rooms.
+return (lamp + windows) * (1.0 - saturate(Damage));
+""",unreal.CustomMaterialOutputType.CMOT_FLOAT3,["Tint","Emission","LampDayScale","Night","WindowGlow","Seed","Up","Local","Damage"])
+    for pin,source in (("Tint",tint),("Emission",emission),("LampDayScale",params["LampDayScale"]),("Night",night),("WindowGlow",params["WindowGlow"]),("Seed",seed),("Up",up),("Local",above),("Damage",damage)):wire(source,glow,pin)
     output(glow,unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     ME.layout_material_expressions(master);ME.recompile_material(master);ED.save_loaded_asset(master,only_if_is_dirty=False)
     instances={}

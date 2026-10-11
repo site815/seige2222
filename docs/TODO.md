@@ -1,48 +1,47 @@
-# seige2222 — recommended to-do list
+# seige2222 — remaining work
 
-Compiled 2026-10-08 from a review of the source, rules, art pipeline, tests and design documents; revised 2026-10-10 after v0.9.2 passed the full local gate four more times (jobs 48–51), the building kit was completed and the sector-crossing work. Open items are ordered by expected value to a player, then by cost. Each says what is wrong today and what "done" looks like; none of it is scheduled or promised.
+Updated **2026-10-11** for the v0.9.3 integration candidate. This list separates the current release gate from later development. Historical measurements identify their build; no previous pass certifies the candidate.
 
-## Closed on 2026-10-09
+## 1. Complete the v0.9.3 release gate
 
-- **Release gate.** v0.9.2 is `locally_verified` ([record](verification/v0.9.2.json), job 48, source 56b9036): both validators, the full `Seige` native suite **154 / 154**, the Shipping package and the packaged 117-stage route with **0** failures. `Play-seige2222.cmd` opens `Builds/v0.9.2`. The two native failures of the previous record are fixed:
-  - `Seige.Simulation.FirstPlayableSolvable`: the AI plan (`AIFILES/colony_ai.json`) now builds the robotic-parts works right after the first tower, before the mine, port and generator. `Diagnostics.FirstPlayableTimeline` (outside the gate) shows the scenario won at t = 18,770 s with 12 / 12 robotic parts.
-  - `Seige.AI.WorkerSupportRecovery`: equal-coverage plots prefer the shortest new road, so the recovered service bay gets power.
-- **Save compatibility.** Rules prototype-9.3 fingerprint the parsed JSON content, so whitespace, line endings and number spelling no longer invalidate a save; values, keys and key order still do. Breaking saves on a rules change remains the owner's accepted policy.
-- **Rules hygiene.** `category` is gone from `Rules/buildings.json`; the cumulative level-2/3 `cost` is checked against the previous level's bill plus `upgrade_cost` both natively and in `Tools/validate_rules.mjs`, so the two can no longer drift silently.
-- **Progression legibility.** The production-chain panel collapses the most common inputs into ports, prints a "Next:" line (the first unmet input of the first unbuilt capability) and supports the arrow keys and Enter. The build palette wraps into as many rows as a category needs.
-- **Building art.** Every blueprint except the command core uses an original kit mesh (the core's levels 2–3 followed in job 51) ([kit README](../Art/BuildingKitV092/README.md)): towers, trading ports, solar arrays and vehicle factories grow by level; the five clean-industry works and the biofuel refinery no longer share a hall; the service bay, sensor mast and extraction rig were replaced; walls are kit sections at three levels instead of four cubes; the service bay draws its real stored worker bodies on its berths (`SyncServiceVisuals`). The industry material adds per-building tint variation, soil grime on the lowest 1.6 m, seasonal snow on upward faces and lit windows at night.
-- **AI.** The colony AI upgrades solar arrays, trading ports and laser towers when it can afford the bill above its reserves and no enemy is within 180 m of the core (`defense_quiet_radius` 3000 units), one upgrade at a time, and builds the AI-chip works as an optional late target.
+- Compile and validate the integrated source through Claude commit `33ac182` plus the Codex integration fixes. The expected native suite is **156 tests**, including adjacent foundations and sector-readiness lifecycle; a count is not a pass until the complete report is read.
+- Build Shipping, run the **117-stage** route with no assertions, verify display/offline behavior and inspect rendered terrain, campus, damage and Rex views. Measure static and moving-camera performance independently of build/import activity.
+- Record the actual executable/package identity, test reports and source/assets in `docs/verification/v0.9.3.json`; promote `Play-seige2222.cmd` only after acceptance, then commit and push. Job-51 meshes, matching portraits and material dependencies previously existed only on the PC; the integration release must deliver the complete set in Git.
+- The last retained full gate is v0.9.2, source `90bff58` (job 51): **154 / 154** native and **117 / 0** packaged stages/failures. It is historical evidence only.
 
-## 1. Verification of the latest source
+## 2. Verify the integrated presentation changes
 
-- Source 90bff58 (staggered chunk upload, command campus meshes, exposure-driven tower bearings, wall tree clearance) passed the full gate in job 51: 154 / 154 native, route 117 / 0, record `locally_verified` with the source commit. The next commit — battle damage, staggered forest, level pads for adjacent plots, spike attribution — is in job 52. Done: the record of the final source says `locally_verified`.
-- 28 of the 51 kit meshes that `Graphics/building_visuals.json` names (the biofuel refinery, the five works, vehicle-factory and tower levels 2–3, the three wall sections, service bay, sensor mast, extraction rig and command campus), with their portraits and the regenerated material assets, exist on the PC but not in Git, so a fresh clone fails `validate_configuration.mjs` and draws primitive fallbacks. Done: the assets of the next verified job are committed.
+- **Sector transitions:** terrain uploads and both forests are spread across frames. Readiness now includes the entire geometry pipeline before screenshot settling; benchmark coverage cannot accept the old sector's finished ground cover. Review rapid crossings, reversals and map-to-world returns for gaps, pop-in or stalls.
+- **Foundations:** adjacent plots on slopes retain their own level interiors instead of averaging overlapping pads. Check the new native regression and rendered edges; narrow gaps and terrain interpolation still need visual review.
+- **Battle damage:** health drives scorch, smoke, fire and collapsed ruins. Damage also extinguishes lamps/windows; review daylight and night views after regenerating materials.
+- **Kit delivery:** level-2/3 command campuses retain the original upright shuttle. All mapped meshes and rendered portraits must resolve in a fresh checkout. Native readiness fixes and the restored original Rex mesh must be included in the same final build.
 
-## 2. Performance
+## 3. Performance and scene quality
 
-- **Sector crossing.** The longest frame when the camera crosses into a neighbouring sector fell from 417 ms (v0.9.2 baseline) to 236 ms (parallel preparation) to 117 ms (job 49) to 86 ms in Shipping (job 50, five frames) to **43 ms** (job 51, the 64-chunk upload split into four frames of about 11 ms behind a coarse stand-in); boundary p99 is 28.5 ms. What remains is game-thread time. Job 52 commits the forest 16 instance sets per frame and records, for every frame over 30 ms, the presentation steps before it and whether garbage collection ran. Next option: precompute heights and chunks on a worker thread before the camera reaches the boundary (18 + 15 ms in the editor).
-- **GPU at native 3840×1600.** Meadow and ground views run at about 51 FPS (19 ms GPU), spread across base pass, shadow depths, Nanite visibility, shadow projection and lighting; eight render-setting variants changed nothing beyond session drift ([report](game-design/GRAPHICS_PERFORMANCE_0_9_2.md)). Hiding the meadow grass recovers only 2.2–2.5 ms (job 49), so a grass LOD would buy about 1 ms; the rest is terrain, trees, shadows, lighting and post at 6.1 megapixels. The large lever is the existing 50–100% render-resolution setting; content levers are the 1.8 M-triangle masked near tree and shadow-casting density.
+- The retained job-51 Shipping boundary crossing peaked at **43.3 ms**, down from **416.8 ms** in the early v0.9.2 baseline; boundary p99 was **28.5 ms**. New forest batching and spike attribution require fresh measurements before claiming another gain.
+- Historical native **3840×1600, Medium, 100%** meadow/ground views ran near 51 FPS. The GPU cost is spread across trees, terrain, shadows, lighting and post. Compare content changes against controlled runs; keep the single Medium profile and render-resolution option. Sustained 60 FPS and crowded-colony performance remain unproven.
+- Residual terrain patterns, bare grass strips on slopes, repeated grass silhouettes, a single near-tree species and close-up surface wear remain quality limits. Manor Lords parity has not been reached.
+- Wall clearance follows whole segments. Nearby tree crowns can still overlap the wall in angled views; review readability before widening the cleared strip.
 
-## 3. Scene and building art
+## 4. Rex likeness
 
-- Residual terrain patterns, bare grass strips on slopes and the single near tree species remain the largest scene-quality limits.
-- Terrain clipping at plot edges: adjacent plots on a slope used to average their level zones, burying one building's edge; in job 52 the deepest plot owns each height (`Seige.Camera.AdjacentFoundationsLevel`). Done: the test passes and captures of neighbouring plots on slopes show no buried edges.
-- Wall sections clear trees along their whole length (job 51), but the k51 outside-face capture still shows crowns of trees standing just outside the cleared strip falling across the wall at the 40° camera. A wider strip would read as an empty band; left as is unless play shows the wall is hard to read.
-- Close-ups still lack decals, edge wear and ambient occlusion on the kit; at the player zoom the gain from further surface work is small.
+- The Hunyuan3D-derived revision 7 is retired from the current asset/release tree because its licence did not meet the project's commercial-use requirement. The original, locally authored procedural revision-5 fallback preserves gameplay and animation. See [provenance](../Art/CompanionDog/TEXTURE_PROVENANCE.md); earlier Git history is unchanged.
+- The fallback is visibly a prototype. Improve Rex's face, ear attachment, leg contours, coat and movement against the supplied photographs using compatible original assets. Do not mark the requested likeness complete.
+- Grass interaction and grounded visual contact remain later polish work.
 
-## 4. Rex
+## 5. AI, economy and sustained play
 
-- Smooth coat (no strand fur), a harsher face-to-body transition than the photographs, mirrored far side, eyes and nose only in the bake. Cheapest visible gains: a hand-painted mask that limits the pale face to the muzzle and brow, and a second photograph projected from the other side instead of mirroring.
-- The companion walks through the sward; grass is not flattened and the dog gets no shadowed contact. Low priority at the player zoom.
-- Licence: the base mesh came from Hunyuan3D-2.1, whose Community License excludes South Korea from its territory; the owner must decide whether to keep it or regenerate with an MIT-licensed model (TripoSG, TRELLIS) locally. Recorded in `Art/CompanionDog/TEXTURE_PROVENANCE.md`.
+- Authored Developed-AI scenarios are the accepted loading model. Player and Starting AI retain the finite 9.57-tonne kit and six workers; ordinary paid simulation continues after all starts. Do not restore hours of simulated growth as a loading requirement.
+- The retained first-playable test passed after the robotic-parts works moved earlier in the AI plan and support recovery favored short grid connections. Job 51's diagnostic won at **19,420 simulation seconds**. That win precedes towers 2–4; it does not prove a complete long-term defensive layout.
+- Extend the timeline past victory and across seeds to check exposure-driven tower bearings, service recovery, power shortages, economic reserves and late upgrades. The past-win diagnostic is separate from release acceptance.
+- Material gates, construction times, production rates and prices remain provisional. Keep tuning in external rule files and verify finite-stock bootstrap and dependency consistency.
 
-## 5. AI and balance
+## 6. Later systems and tooling
 
-- **Perimeter coverage.** Towers stay at `defense_distance` from the core, but each armed plot now takes the ring bearing that reaches the most building approaches no fixed gun (finished or under construction) can hit with a clear line, counting the unoccupied export deposit as a future building; ties keep the authored spread (`FSeigeScenarioAI::DefenseBearing`, regression in `Seige.AI.CoveredCivilianPlacement`). This targets the earlier loss (single roamers destroying the bay and generator north and west of the core, where the core's lasers cannot shoot through its own buildings). `Seige.Simulation.FirstPlayableSolvable` still passes (job 51; timeline won at t = 19,420 s, first turret at 67.5°), but the scenario is won before turrets 2–4 exist, so the test does not exercise the change. Job 52 runs the timeline past the win (`-SeigeTimelinePastWin`). Done: a past-win timeline without building losses to roamers on uncovered approaches.
-- **Gates.** The rules 9.2 material gates (22 of 28 blueprints affordable on day one; AI chips for every level-3 upgrade) are provisional and untested by play.
+- Persistent multiplayer, player extraction across regions, general inter-colony trade and full relocation/scavenging remain future work. Existing privateering does not complete those systems.
+- Keep build/test artifacts local and versioned. Verify the fresh-checkout asset manifest and actual staged files, not only the current workstation's Content folder. Git history size and any future LFS migration are separate maintenance tasks.
+- The verification recorder must reject empty/partial native reports, failed or unrecognized validator output, missing package files and incomplete asset provenance. Its record should identify the tested source and final package without truncating changed dependencies.
 
-## 6. Tooling
+## Retained completed design and earlier fixes
 
-- Cloud sessions can reach github.com but not GitHub's LFS object store, so every binary since commit 5aed6e9 (kit meshes, portraits, textures, material instances) is a plain Git object. Either accept the history growth or push LFS objects from the PC with a credential helper installed.
-- The PC job runner is a double-clicked batch file; a persistent runner was rejected by policy. Keep jobs small and logged under `Saved/claude-jobs`.
-- `Tools/record_verification.py` writes `docs/verification/v<version>.json` from the run artefacts; its exit code is the release gate (`locally_verified` only when every part passes). Since 4258df9 it also stores the source commit and the tracked files that differed from it (the job's regenerated assets).
+The earlier v0.9.2 passes established canonical-JSON save fingerprints, cumulative upgrade-bill checks, the production-chain panel, paid AI upgrades, stored-worker service berths, family-specific industry meshes and distinct tower/port/solar/factory levels. These remain in the integration candidate and are rerun where covered by the release suite. This list records completed scope, not a substitute for the new release evidence.

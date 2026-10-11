@@ -22,7 +22,7 @@
   "animations": {
     "A_DogIdle": {
       "duration_seconds": 3.0,
-      "loop_matrix_max_error": 0.00345577385451179,
+      "loop_matrix_max_error": 0.00330352783203125,
       "bones": 24
     },
     "A_DogWalk": {
@@ -31,8 +31,9 @@
       "bones": 24
     }
   },
-  "walk_authored_ik_max_error_cm": 1.3248867024850658e-05,
-  "source_triangles": 118331,
-  "source_cosmetic_revision": "Rex likeness revision4: broader shorter cream muzzle, smaller recessed almond eyes with fitted lids, fuller panting jowls and chin, leaner chest, shaped toes and redistributed chest/ear/leg feathering; original geometry and retained planted-foot walk",
-  "unreal_import_verified": false
+  "walk_authored_ik_max_error_cm": 1.5553957395839777e-05,
+  "source_triangles": 45442,
+  "source_cosmetic_revision": "Rex authored release fallback: lofted retriever anatomy, broad skull, defined stop, deep muzzle, pendant ears and chest; cream muzzle and brow, golden coat and teal collar. No generated mesh or photograph pixels. Opaque coat with procedural detail; card feathering is opt-in.",
+  "unreal_import_verified": true,
+  "unreal_import_report": "import_report.json"
 }

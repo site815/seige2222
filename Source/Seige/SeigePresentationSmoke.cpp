@@ -233,11 +233,12 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 11:
     {
         Require(Sim.Buildings.Num()==2,TEXT("Constructed building disappeared before capture"));
+        if(!Require(!Sim.Buildings.IsEmpty(),TEXT("Command-shuttle selection requires a surviving building record")))break;
         SelectedBuild.Empty();CameraYaw=35;CameraPitch=25;Zoom=1700;UpdateCamera();
         if(Controller&&Controller->PlayerCameraManager)Controller->PlayerCameraManager->UpdateCamera(0);
-        FVector BodyCenter=RenderPosition(HomePosition()),BodyExtent;const auto* CoreVisual=Visuals.FindRef(FString::Printf(TEXT("home_building_%d"),Sim.Buildings[0].Id)).Get();
+        FVector BodyCenter=RenderPosition(HomePosition()),BodyExtent=FVector::ZeroVector;const auto* CoreVisual=Visuals.FindRef(FString::Printf(TEXT("home_building_%d"),Sim.Buildings[0].Id)).Get();
         if(CoreVisual)CoreVisual->GetActorBounds(false,BodyCenter,BodyExtent);
-        FVector2D RoofPixel;
+        FVector2D RoofPixel=FVector2D::ZeroVector;
         if(Require(CoreVisual&&Controller&&Controller->ProjectWorldLocationToScreen(BodyCenter,RoofPixel),TEXT("Could not project the actual parked command-shuttle body")))
         {
             // The landed hull stands on legs, so the bounds centre can fall in

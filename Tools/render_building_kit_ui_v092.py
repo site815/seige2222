@@ -18,6 +18,11 @@ PREVIEW = '--preview' in ARGS
 bpy.ops.wm.open_mainfile(filepath=str(KIT / 'Source/BuildingKitV092.blend'))
 manifest = json.loads((KIT / 'kit_manifest.json').read_text(encoding='utf-8'))
 assets = {o.name: o for o in bpy.data.objects if o.type == 'MESH' and o.name in manifest['meshes']}
+if ONLY:
+    ONLY = {name.casefold() for name in ONLY}
+    unknown = ONLY - {name.removeprefix('SM_').casefold() for name in assets}
+    if unknown:
+        raise ValueError('Unknown portrait names: ' + ', '.join(sorted(unknown)))
 for o in assets.values(): o.hide_render = True
 scene = bpy.context.scene; scene.render.engine = 'CYCLES'; scene.cycles.device = 'CPU'; scene.cycles.samples = 20; scene.cycles.use_denoising = True
 scene.render.film_transparent = True; scene.render.image_settings.file_format = 'PNG'; scene.render.image_settings.color_mode = 'RGBA'
@@ -64,7 +69,7 @@ def shuttle_parts():
 
 for name, obj in assets.items():
     key_name = name.removeprefix('SM_')
-    if ONLY and key_name[0].lower() + key_name[1:] not in ONLY:
+    if ONLY and key_name.casefold() not in ONLY:
         continue
     obj.hide_render = False; saved = obj.location.copy(); obj.location = (0, 0, 0)
     extras = shuttle_parts() if key_name.startswith('CommandCampus') else []

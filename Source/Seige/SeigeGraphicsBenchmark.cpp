@@ -174,7 +174,9 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     {
         // Null state reports zero counters, so zero is meaningful only after
         // CreateGroundCover has initialized its residency/scheduling state.
-        if(!SceneryStream.IsValid())return;
+        // The outgoing sector's completed cover is not coverage of the newly
+        // focused sector while its terrain/forest replacement is queued.
+        if(!SceneryStream.IsValid()||!IsSectorGeometryReady())return;
         const int32 Visible=PendingVisibleSceneryCells(),Near=PendingNearSceneryCells();
         if(InitialPendingVisible<0){InitialPendingVisible=Visible;InitialPendingNear=Near;}
         if(Visible==0&&InitialVisibleReadySeconds<0)InitialVisibleReadySeconds=CurrentTime-ViewSetupStarted;

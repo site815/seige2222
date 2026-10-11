@@ -136,5 +136,173 @@
     "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
     "texture": "/Game/Art/Interface/T_Building_WorkerFactory",
     "size": 384
+  },
+  "BiofuelRefinery": {
+    "source_mesh": "SM_BiofuelRefinery",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_BiofuelRefinery",
+    "size": 384
+  },
+  "CommandCampus2": {
+    "source_mesh": "SM_CommandCampus2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_CommandCampus2",
+    "size": 384
+  },
+  "CommandCampus3": {
+    "source_mesh": "SM_CommandCampus3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_CommandCampus3",
+    "size": 384
+  },
+  "ExtractionRig": {
+    "source_mesh": "SM_ExtractionRig",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_ExtractionRig",
+    "size": 384
+  },
+  "Hangar2": {
+    "source_mesh": "SM_Hangar2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Hangar2",
+    "size": 384
+  },
+  "Hangar3": {
+    "source_mesh": "SM_Hangar3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Hangar3",
+    "size": 384
+  },
+  "HangarMech2": {
+    "source_mesh": "SM_HangarMech2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_HangarMech2",
+    "size": 384
+  },
+  "HangarMech3": {
+    "source_mesh": "SM_HangarMech3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_HangarMech3",
+    "size": 384
+  },
+  "HangarTracked2": {
+    "source_mesh": "SM_HangarTracked2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_HangarTracked2",
+    "size": 384
+  },
+  "HangarTracked3": {
+    "source_mesh": "SM_HangarTracked3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_HangarTracked3",
+    "size": 384
+  },
+  "SensorMast": {
+    "source_mesh": "SM_SensorMast",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_SensorMast",
+    "size": 384
+  },
+  "ServiceBay": {
+    "source_mesh": "SM_ServiceBay",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_ServiceBay",
+    "size": 384
+  },
+  "TowerKinetic2": {
+    "source_mesh": "SM_TowerKinetic2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerKinetic2",
+    "size": 384
+  },
+  "TowerKinetic3": {
+    "source_mesh": "SM_TowerKinetic3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerKinetic3",
+    "size": 384
+  },
+  "TowerLaser2": {
+    "source_mesh": "SM_TowerLaser2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerLaser2",
+    "size": 384
+  },
+  "TowerLaser3": {
+    "source_mesh": "SM_TowerLaser3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerLaser3",
+    "size": 384
+  },
+  "TowerMissile2": {
+    "source_mesh": "SM_TowerMissile2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerMissile2",
+    "size": 384
+  },
+  "TowerMissile3": {
+    "source_mesh": "SM_TowerMissile3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerMissile3",
+    "size": 384
+  },
+  "TowerPlasma2": {
+    "source_mesh": "SM_TowerPlasma2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerPlasma2",
+    "size": 384
+  },
+  "TowerPlasma3": {
+    "source_mesh": "SM_TowerPlasma3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_TowerPlasma3",
+    "size": 384
+  },
+  "Wall": {
+    "source_mesh": "SM_Wall",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Wall",
+    "size": 384
+  },
+  "Wall2": {
+    "source_mesh": "SM_Wall2",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Wall2",
+    "size": 384
+  },
+  "Wall3": {
+    "source_mesh": "SM_Wall3",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_Wall3",
+    "size": 384
+  },
+  "WorksBattery": {
+    "source_mesh": "SM_WorksBattery",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_WorksBattery",
+    "size": 384
+  },
+  "WorksCircuit": {
+    "source_mesh": "SM_WorksCircuit",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_WorksCircuit",
+    "size": 384
+  },
+  "WorksConductor": {
+    "source_mesh": "SM_WorksConductor",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_WorksConductor",
+    "size": 384
+  },
+  "WorksGlass": {
+    "source_mesh": "SM_WorksGlass",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_WorksGlass",
+    "size": 384
+  },
+  "WorksParts": {
+    "source_mesh": "SM_WorksParts",
+    "source_blend": "Art/BuildingKitV092/Source/BuildingKitV092.blend",
+    "texture": "/Game/Art/Interface/T_Building_WorksParts",
+    "size": 384
   }
 }

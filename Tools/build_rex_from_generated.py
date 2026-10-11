@@ -10,6 +10,8 @@ Outputs: the usual Exports/*.fbx, Textures/*.png, dog_manifest.json, Source/Comp
 and Previews/*.png. Rig, bone names, clip names, asset paths and the walk stride stay as in
 revision 4 so runtime code and save fingerprints are untouched.
 """
+raise SystemExit('Retired generated-mesh pipeline: its output licence does not meet this release. Use Tools/create_companion_dog_v2.py for original local geometry.')
+
 from pathlib import Path
 import sys, math, json, hashlib
 import bpy, bmesh

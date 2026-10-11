@@ -14,4 +14,9 @@ jobs:
       - run: node Tools/validate_configuration.mjs
       - run: node Tools/test_ai_configuration.mjs
       - run: node Tools/test_combat_configuration.mjs
+      - run: node Tools/test_environment_configuration.mjs
       - run: node Tools/test_ui_configuration.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s Tools -p test_record_verification.py

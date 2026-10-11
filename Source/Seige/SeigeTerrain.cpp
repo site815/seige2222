@@ -11,6 +11,26 @@
 #include "Misc/App.h"
 #include "HAL/PlatformTime.h"
 #include "Async/ParallelFor.h"
+#if WITH_DEV_AUTOMATION_TESTS
+#include "Misc/AutomationTest.h"
+#include "Tests/AutomationCommon.h"
+#endif
+
+namespace
+{
+constexpr int32 SceneryLodBands=8;
+}
+
+// Complete before ContinueDeferredSectorWork reads the pending sector. The
+// public header only needs a forward declaration for its shared pointer.
+struct FSeigeForestBuild
+{
+    static constexpr int32 Sets=2*4*SceneryLodBands;
+    int32 Sector=INDEX_NONE;bool Replace=false,FinishCover=false;
+    TArray<FTransform> Batches[Sets];
+    int32 NextSet=0,Trees=0;double Seconds=0;
+    TSet<const UInstancedStaticMeshComponent*> Created;
+};
 
 struct FSeigeTerrainChunkData
 {
@@ -811,7 +831,6 @@ namespace
 {
 constexpr double GroundTileSize=900;
 constexpr int32 GroundReferenceCells=81;
-constexpr int32 SceneryLodBands=8;
 struct FSceneryClearance
 {
     FVector2D Position;
@@ -949,14 +968,6 @@ void UpdateGroundCoverShadows(const ASeigeGameMode& G,AActor* Actor)
 // for each tree kind and LOD band, filled in candidate order. A crossing commits
 // them a few sets per frame, each replacing the set it supersedes, so trees never
 // vanish and no single frame rebuilds the whole sector.
-struct FSeigeForestBuild
-{
-    static constexpr int32 Sets=2*4*SceneryLodBands;   // index = (kind * bands + band) * 2 + proxy
-    int32 Sector=INDEX_NONE;bool Replace=false,FinishCover=false;
-    TArray<FTransform> Batches[Sets];
-    int32 NextSet=0,Trees=0;double Seconds=0;
-    TSet<const UInstancedStaticMeshComponent*> Created;
-};
 namespace
 {
     const TCHAR* const SeigeTreeKinds[4]={TEXT("OakA"),TEXT("OakB"),TEXT("PineA"),TEXT("PineB")};
@@ -1468,9 +1479,18 @@ void ASeigeGameMode::CreateGroundCover()
     }
     UpdateGroundCoverShadows(*this,GroundCover);
 }
+bool ASeigeGameMode::IsSectorGeometryReady() const
+{
+    return RenderedSector==DetailedSectorIndex()&&!PendingTerrainUpload&&!PendingForest&&
+        DeferredFoliageFrom==INDEX_NONE&&DeferredTerrainTile==INDEX_NONE&&DeferredForestSector==INDEX_NONE;
+}
 bool ASeigeGameMode::IsSceneryStreamingReady() const
 {
-    return !FApp::CanEverRender()||RegionMapAlpha()>=1||(SceneryStream&&SceneryStream->Remaining==0&&SceneryStream->PendingIndex==MIN_int32&&SceneryStream->Retiring.IsEmpty());
+    // The old sector's cover can already be complete while a crossing still
+    // has terrain and forest uploads queued. Hidden map/headless views need no
+    // geometry; visible views wait for the entire pipeline before settling.
+    return !FApp::CanEverRender()||RegionMapAlpha()>=1||(IsSectorGeometryReady()&&SceneryStream&&
+        SceneryStream->Remaining==0&&SceneryStream->PendingIndex==MIN_int32&&SceneryStream->Retiring.IsEmpty());
 }
 int32 ASeigeGameMode::PendingSceneryCells() const
 {
@@ -1480,6 +1500,48 @@ int32 ASeigeGameMode::PendingVisibleSceneryCells() const
 {return SceneryStream?SceneryStream->RemainingVisible:0;}
 int32 ASeigeGameMode::PendingNearSceneryCells() const
 {return SceneryStream?SceneryStream->RemainingNear:0;}
+
+#if WITH_DEV_AUTOMATION_TESTS
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeSectorReadinessTest,"Seige.Camera.SectorReadinessLifecycle",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeSectorReadinessTest::RunTest(const FString& Parameters)
+{
+    // No viewport or asset generation: exercise the real cancellation/flush
+    // lifecycle after a view is replaced, which must not strand readiness.
+    FTestWorldWrapper World;
+    if(!World.CreateTestWorld(EWorldType::Game)){World.ForwardErrorMessages(this);return false;}
+    auto* G=World.GetTestWorld()->SpawnActor<ASeigeGameMode>();
+    if(!TestNotNull(TEXT("Readiness fixture game mode"),G))return false;
+    G->RenderedSector=G->DetailedSectorIndex();
+    TestTrue(TEXT("An installed sector with no deferred geometry is ready"),G->IsSectorGeometryReady());
+    G->CameraCenter.X=G->Sim.WorldHalfSize*2;
+    TestFalse(TEXT("Moving focus cannot reuse the outgoing sector's ready cover"),G->IsSectorGeometryReady());
+    G->CameraCenter=FVector::ZeroVector;
+
+    G->DeferredTerrainTile=0;
+    TestFalse(TEXT("A queued coarse terrain replacement keeps geometry pending"),G->IsSectorGeometryReady());
+    G->ContinueDeferredSectorWork(true);
+    TestTrue(TEXT("Flushing without a landscape retires the coarse replacement"),G->IsSectorGeometryReady());
+    G->DeferredForestSector=0;
+    TestFalse(TEXT("The outgoing sector's deferred forest also counts"),G->IsSectorGeometryReady());
+    G->ContinueDeferredSectorWork(true);
+    TestTrue(TEXT("Flushing a removed forest cannot strand readiness"),G->IsSectorGeometryReady());
+
+    G->PendingForest=MakeShared<FSeigeForestBuild>();G->PendingForest->Sector=4;
+    TestFalse(TEXT("Partial forest batches keep geometry pending"),G->IsSectorGeometryReady());
+    G->ContinueDeferredSectorWork(true);
+    TestTrue(TEXT("A missing foliage actor cancels pending batches on flush"),G->IsSectorGeometryReady());
+
+    G->DeferredFoliageFrom=4;
+    TestFalse(TEXT("The entered sector's not-yet-prepared forest counts"),G->IsSectorGeometryReady());
+    G->PendingTerrainUpload=MakeShared<FSeigeTerrainUpload>();
+    G->PendingTerrainUpload->ReplaceTile=5;G->PendingTerrainUpload->PreviousSector=4;
+    G->RenderedSector=5;G->DeferredTerrainTile=4;G->DeferredForestSector=4;
+    G->ContinueDeferredSectorWork(true);
+    TestTrue(TEXT("Cancelling an uninstalled crossing restores the previous ready sector"),G->IsSectorGeometryReady());
+    return true;
+}
+#endif
+
 void ASeigeGameMode::RefreshEnvironment()
 {
     if(!FApp::CanEverRender())return;const bool Map=RegionMapAlpha()>=1;

@@ -4,6 +4,8 @@ Run in the Unreal Editor commandlet:
     UnrealEditor-Cmd.exe <project> -run=pythonscript -script=Tools/import_companion_dog_v3.py
 Reads Art/CompanionDog/dog_manifest.json written by Tools/build_rex_from_generated.py.
 """
+raise SystemExit('Retired generated-mesh importer: use Tools/import_companion_dog_v2.py for the original authored release asset.')
+
 from pathlib import Path
 import json
 import unreal as u

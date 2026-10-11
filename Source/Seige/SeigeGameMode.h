@@ -219,6 +219,7 @@ private:
     friend class FSeigeTransportClearanceTest;
     friend class FSeigeCompanionViewTest;
     friend class FSeigeCommandShuttlePickTest;
+    friend class FSeigeSectorReadinessTest;
 #endif
     UPROPERTY() TObjectPtr<class UDirectionalLightComponent> WeatherSun;
     UPROPERTY() TObjectPtr<class USkyLightComponent> WeatherSky;
@@ -289,6 +290,7 @@ private:
     // the left sector's forest, one step per frame.
     int32 DeferredFoliageFrom=INDEX_NONE,DeferredTerrainTile=INDEX_NONE,DeferredForestSector=INDEX_NONE;
     bool ContinueDeferredSectorWork(bool Flush);
+    bool IsSectorGeometryReady() const;
     // Recent heavy presentation steps (frame, label): benchmark spike attribution.
     TArray<TPair<uint64,FString>> RecentFrameSteps;
     void NoteFrameStep(const FString& Step){RecentFrameSteps.Add(TPair<uint64,FString>(GFrameCounter,Step));if(RecentFrameSteps.Num()>16)RecentFrameSteps.RemoveAt(0);}

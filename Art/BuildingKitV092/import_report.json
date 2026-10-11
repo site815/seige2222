@@ -15,7 +15,7 @@
         "IM_Concrete",
         "IM_Carbon",
         "IM_Steel",
-        "IM_Glass",
+        "IM_PV",
         "IM_Slate",
         "IM_Ceramic",
         "IM_Amber"
@@ -38,7 +38,7 @@
         "IM_Concrete",
         "IM_Carbon",
         "IM_Steel",
-        "IM_Glass",
+        "IM_PV",
         "IM_Slate",
         "IM_Ceramic",
         "IM_Amber"
@@ -62,7 +62,7 @@
         "IM_Carbon",
         "IM_Steel",
         "IM_Slate",
-        "IM_Glass",
+        "IM_PV",
         "IM_Ceramic",
         "IM_Amber"
       ],
@@ -72,14 +72,14 @@
     },
     "SM_BatteryBank": {
       "dimensions_cm": [
-        2460.000244140625,
+        2463.0001220703125,
         2460.000244140625,
         497.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 41100,
+      "source_triangles": 44108,
       "lod_count": 3,
-      "material_slots": 8,
+      "material_slots": 9,
       "active_material_slots": [
         "IM_Concrete",
         "IM_Carbon",
@@ -88,7 +88,8 @@
         "IM_Steel",
         "IM_Yellow",
         "IM_Light",
-        "IM_Copper"
+        "IM_Copper",
+        "IM_Blue"
       ],
       "building_families": [
         "battery_bank"
@@ -96,12 +97,12 @@
     },
     "SM_TradingPort": {
       "dimensions_cm": [
-        2491.732177734375,
         2460.000244140625,
+        2534.000244140625,
         1250.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 8804,
+      "source_triangles": 11244,
       "lod_count": 3,
       "material_slots": 10,
       "active_material_slots": [
@@ -122,12 +123,12 @@
     },
     "SM_TradingPort2": {
       "dimensions_cm": [
-        2491.732177734375,
         2460.000244140625,
+        2534.000244140625,
         1250.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 9252,
+      "source_triangles": 11156,
       "lod_count": 3,
       "material_slots": 10,
       "active_material_slots": [
@@ -148,12 +149,12 @@
     },
     "SM_TradingPort3": {
       "dimensions_cm": [
-        2491.732177734375,
         2460.000244140625,
+        2534.000244140625,
         1250.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 9592,
+      "source_triangles": 11756,
       "lod_count": 3,
       "material_slots": 10,
       "active_material_slots": [
@@ -174,14 +175,14 @@
     },
     "SM_Refinery": {
       "dimensions_cm": [
-        2117.0001220703125,
         2060.000244140625,
+        2146.0,
         1608.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 14692,
+      "source_triangles": 17984,
       "lod_count": 3,
-      "material_slots": 9,
+      "material_slots": 10,
       "active_material_slots": [
         "IM_Concrete",
         "IM_Carbon",
@@ -191,7 +192,8 @@
         "IM_Steel",
         "IM_Yellow",
         "IM_Light",
-        "IM_Copper"
+        "IM_Copper",
+        "IM_Blue"
       ],
       "building_families": [
         "alloy_refinery"
@@ -199,12 +201,12 @@
     },
     "SM_FuelRefinery": {
       "dimensions_cm": [
-        2151.382568359375,
         2240.000244140625,
+        2151.382568359375,
         1883.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 24076,
+      "source_triangles": 25792,
       "lod_count": 3,
       "material_slots": 10,
       "active_material_slots": [
@@ -220,18 +222,43 @@
         "IM_Copper"
       ],
       "building_families": [
-        "fuel_refinery",
+        "fuel_refinery"
+      ]
+    },
+    "SM_BiofuelRefinery": {
+      "dimensions_cm": [
+        2060.000244140625,
+        2060.000244140625,
+        1048.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 20156,
+      "lod_count": 3,
+      "material_slots": 10,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Ceramic",
+        "IM_Yellow",
+        "IM_Copper",
+        "IM_Glass",
+        "IM_Light",
+        "IM_Amber"
+      ],
+      "building_families": [
         "biofuel_refinery"
       ]
     },
     "SM_Greenhouse": {
       "dimensions_cm": [
-        2060.000244140625,
         2485.000244140625,
+        2060.000244140625,
         527.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 32296,
+      "source_triangles": 33080,
       "lod_count": 3,
       "material_slots": 9,
       "active_material_slots": [
@@ -249,14 +276,65 @@
         "food_producer"
       ]
     },
-    "SM_Works": {
+    "SM_ChipWorks": {
       "dimensions_cm": [
-        2060.000244140625,
-        2080.000244140625,
-        815.0
+        2082.5001220703125,
+        2260.0001220703125,
+        1554.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 21080,
+      "source_triangles": 17096,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Glass",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Light",
+        "IM_Blue",
+        "IM_Yellow"
+      ],
+      "building_families": [
+        "ai_chip_works"
+      ]
+    },
+    "SM_WorksConductor": {
+      "dimensions_cm": [
+        2060.000244140625,
+        2060.000244140625,
+        1414.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 26872,
+      "lod_count": 3,
+      "material_slots": 10,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Copper",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "conductor_works"
+      ]
+    },
+    "SM_WorksGlass": {
+      "dimensions_cm": [
+        2060.000244140625,
+        2060.000244140625,
+        1707.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 24324,
       "lod_count": 3,
       "material_slots": 9,
       "active_material_slots": [
@@ -271,23 +349,44 @@
         "IM_Blue"
       ],
       "building_families": [
-        "conductor_works",
-        "substrate_works",
-        "circuit_works",
-        "component_works",
-        "battery_works"
+        "substrate_works"
       ]
     },
-    "SM_ChipWorks": {
+    "SM_WorksCircuit": {
       "dimensions_cm": [
-        2260.0001220703125,
-        2082.5001220703125,
-        1554.0
+        2060.000244140625,
+        2060.000244140625,
+        1072.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 14900,
+      "source_triangles": 20904,
       "lod_count": 3,
-      "material_slots": 8,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "circuit_works"
+      ]
+    },
+    "SM_WorksParts": {
+      "dimensions_cm": [
+        2060.000244140625,
+        2060.000244140625,
+        824.4008178710938
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 16936,
+      "lod_count": 3,
+      "material_slots": 9,
       "active_material_slots": [
         "IM_Concrete",
         "IM_Carbon",
@@ -295,23 +394,50 @@
         "IM_Glass",
         "IM_Slate",
         "IM_Steel",
+        "IM_Yellow",
         "IM_Light",
         "IM_Blue"
       ],
       "building_families": [
-        "ai_chip_works"
+        "component_works"
+      ]
+    },
+    "SM_WorksBattery": {
+      "dimensions_cm": [
+        2060.000244140625,
+        2060.000244140625,
+        1078.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 14872,
+      "lod_count": 3,
+      "material_slots": 10,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Blue",
+        "IM_Copper"
+      ],
+      "building_families": [
+        "battery_works"
       ]
     },
     "SM_FusionWorks": {
       "dimensions_cm": [
-        2160.0001220703125,
         2200.0,
+        2206.0,
         1043.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 8476,
+      "source_triangles": 9668,
       "lod_count": 3,
-      "material_slots": 9,
+      "material_slots": 11,
       "active_material_slots": [
         "IM_Concrete",
         "IM_Carbon",
@@ -321,7 +447,9 @@
         "IM_Slate",
         "IM_Amber",
         "IM_Copper",
-        "IM_Glass"
+        "IM_Glass",
+        "IM_Yellow",
+        "IM_Blue"
       ],
       "building_families": [
         "fusion_reactor_works"
@@ -329,12 +457,12 @@
     },
     "SM_AmmunitionWorks": {
       "dimensions_cm": [
-        2060.000244140625,
         2430.000244140625,
+        2060.000244140625,
         958.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 16628,
+      "source_triangles": 17388,
       "lod_count": 3,
       "material_slots": 8,
       "active_material_slots": [
@@ -353,14 +481,14 @@
     },
     "SM_FuelGenerator": {
       "dimensions_cm": [
-        2060.000244140625,
         2075.0001220703125,
+        2060.000244140625,
         1240.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 21984,
+      "source_triangles": 23872,
       "lod_count": 3,
-      "material_slots": 9,
+      "material_slots": 10,
       "active_material_slots": [
         "IM_Concrete",
         "IM_Carbon",
@@ -370,7 +498,8 @@
         "IM_Light",
         "IM_Copper",
         "IM_Glass",
-        "IM_Yellow"
+        "IM_Yellow",
+        "IM_Blue"
       ],
       "building_families": [
         "fuel_generator"
@@ -378,12 +507,12 @@
     },
     "SM_Hangar": {
       "dimensions_cm": [
-        3210.0001220703125,
         3330.000244140625,
+        3210.0001220703125,
         995.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 14376,
+      "source_triangles": 16888,
       "lod_count": 3,
       "material_slots": 9,
       "active_material_slots": [
@@ -398,19 +527,17 @@
         "IM_Blue"
       ],
       "building_families": [
-        "vehicle_factory",
-        "vehicle_factory_2",
-        "vehicle_factory_3"
+        "vehicle_factory"
       ]
     },
     "SM_HangarTracked": {
       "dimensions_cm": [
-        3310.0001220703125,
         3580.000244140625,
+        3310.0001220703125,
         1055.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 15476,
+      "source_triangles": 18124,
       "lod_count": 3,
       "material_slots": 9,
       "active_material_slots": [
@@ -425,19 +552,17 @@
         "IM_Blue"
       ],
       "building_families": [
-        "tank_factory",
-        "tank_factory_2",
-        "tank_factory_3"
+        "tank_factory"
       ]
     },
     "SM_HangarMech": {
       "dimensions_cm": [
-        3140.000244140625,
         3280.000244140625,
+        3140.000244140625,
         1658.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 16260,
+      "source_triangles": 18908,
       "lod_count": 3,
       "material_slots": 9,
       "active_material_slots": [
@@ -452,8 +577,156 @@
         "IM_Blue"
       ],
       "building_families": [
-        "mech_factory",
-        "mech_factory_2",
+        "mech_factory"
+      ]
+    },
+    "SM_Hangar2": {
+      "dimensions_cm": [
+        3330.000244140625,
+        3210.0001220703125,
+        1033.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 21500,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "vehicle_factory_2"
+      ]
+    },
+    "SM_HangarTracked2": {
+      "dimensions_cm": [
+        3580.000244140625,
+        3310.0001220703125,
+        1055.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 21620,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "tank_factory_2"
+      ]
+    },
+    "SM_HangarMech2": {
+      "dimensions_cm": [
+        3280.000244140625,
+        3140.000244140625,
+        1658.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 23872,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "mech_factory_2"
+      ]
+    },
+    "SM_Hangar3": {
+      "dimensions_cm": [
+        3330.000244140625,
+        3210.0001220703125,
+        1131.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 23860,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "vehicle_factory_3"
+      ]
+    },
+    "SM_HangarTracked3": {
+      "dimensions_cm": [
+        3580.000244140625,
+        3310.0001220703125,
+        1181.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 24532,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "tank_factory_3"
+      ]
+    },
+    "SM_HangarMech3": {
+      "dimensions_cm": [
+        3280.000244140625,
+        3140.000244140625,
+        1658.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 25864,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Blue"
+      ],
+      "building_families": [
         "mech_factory_3"
       ]
     },
@@ -478,9 +751,7 @@
         "IM_Light"
       ],
       "building_families": [
-        "turret",
-        "turret_2",
-        "turret_3"
+        "turret"
       ]
     },
     "SM_TowerKinetic": {
@@ -501,9 +772,7 @@
         "IM_Yellow"
       ],
       "building_families": [
-        "kinetic_tower",
-        "kinetic_tower_2",
-        "kinetic_tower_3"
+        "kinetic_tower"
       ]
     },
     "SM_TowerMissile": {
@@ -526,15 +795,13 @@
         "IM_Glass"
       ],
       "building_families": [
-        "missile_tower",
-        "missile_tower_2",
-        "missile_tower_3"
+        "missile_tower"
       ]
     },
     "SM_TowerPlasma": {
       "dimensions_cm": [
-        1080.0001220703125,
         1090.0000610351562,
+        1080.0001220703125,
         255.0
       ],
       "ground_z": 0.0,
@@ -552,19 +819,218 @@
         "IM_Ceramic"
       ],
       "building_families": [
-        "plasma_tower",
-        "plasma_tower_2",
+        "plasma_tower"
+      ]
+    },
+    "SM_TowerLaser2": {
+      "dimensions_cm": [
+        1080.0001220703125,
+        1080.0001220703125,
+        579.2889404296875
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 9612,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light",
+        "IM_Copper"
+      ],
+      "building_families": [
+        "turret_2"
+      ]
+    },
+    "SM_TowerKinetic2": {
+      "dimensions_cm": [
+        1080.0001220703125,
+        1080.0001220703125,
+        579.2889404296875
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 6420,
+      "lod_count": 3,
+      "material_slots": 8,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light"
+      ],
+      "building_families": [
+        "kinetic_tower_2"
+      ]
+    },
+    "SM_TowerMissile2": {
+      "dimensions_cm": [
+        1080.0001220703125,
+        1080.0001220703125,
+        579.2889404296875
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 6704,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light",
+        "IM_Glass"
+      ],
+      "building_families": [
+        "missile_tower_2"
+      ]
+    },
+    "SM_TowerPlasma2": {
+      "dimensions_cm": [
+        1090.0000610351562,
+        1080.0001220703125,
+        579.2889404296875
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 10432,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light",
+        "IM_Copper"
+      ],
+      "building_families": [
+        "plasma_tower_2"
+      ]
+    },
+    "SM_TowerLaser3": {
+      "dimensions_cm": [
+        1080.0001220703125,
+        1080.0001220703125,
+        803.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 10944,
+      "lod_count": 3,
+      "material_slots": 10,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Copper"
+      ],
+      "building_families": [
+        "turret_3"
+      ]
+    },
+    "SM_TowerKinetic3": {
+      "dimensions_cm": [
+        1080.0001220703125,
+        1080.0001220703125,
+        803.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 7016,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light",
+        "IM_Glass"
+      ],
+      "building_families": [
+        "kinetic_tower_3"
+      ]
+    },
+    "SM_TowerMissile3": {
+      "dimensions_cm": [
+        1080.0001220703125,
+        1080.0001220703125,
+        803.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 7300,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light",
+        "IM_Glass"
+      ],
+      "building_families": [
+        "missile_tower_3"
+      ]
+    },
+    "SM_TowerPlasma3": {
+      "dimensions_cm": [
+        1090.0000610351562,
+        1080.0001220703125,
+        803.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 11764,
+      "lod_count": 3,
+      "material_slots": 10,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Steel",
+        "IM_Slate",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light",
+        "IM_Glass",
+        "IM_Copper"
+      ],
+      "building_families": [
         "plasma_tower_3"
       ]
     },
     "SM_DepotYard": {
       "dimensions_cm": [
+        2727.544921875,
         2460.000244140625,
-        2700.000244140625,
         770.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 10420,
+      "source_triangles": 13084,
       "lod_count": 3,
       "material_slots": 9,
       "active_material_slots": [
@@ -584,14 +1050,14 @@
     },
     "SM_WorkerFactory": {
       "dimensions_cm": [
-        2060.000244140625,
         2460.0001220703125,
+        2060.000244140625,
         785.0
       ],
       "ground_z": 0.0,
-      "source_triangles": 21068,
+      "source_triangles": 22140,
       "lod_count": 3,
-      "material_slots": 8,
+      "material_slots": 9,
       "active_material_slots": [
         "IM_Concrete",
         "IM_Carbon",
@@ -600,10 +1066,208 @@
         "IM_Glass",
         "IM_Steel",
         "IM_Yellow",
-        "IM_Light"
+        "IM_Light",
+        "IM_Blue"
       ],
       "building_families": [
         "worker_factory"
+      ]
+    },
+    "SM_ServiceBay": {
+      "dimensions_cm": [
+        2460.000244140625,
+        2460.000244140625,
+        749.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 31440,
+      "lod_count": 3,
+      "material_slots": 11,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Light",
+        "IM_Yellow",
+        "IM_Amber",
+        "IM_Copper",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "robot_service_bay"
+      ]
+    },
+    "SM_SensorMast": {
+      "dimensions_cm": [
+        780.0001220703125,
+        780.0001220703125,
+        1505.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 16536,
+      "lod_count": 3,
+      "material_slots": 9,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Ceramic",
+        "IM_Amber",
+        "IM_Light"
+      ],
+      "building_families": [
+        "sensor"
+      ]
+    },
+    "SM_ExtractionRig": {
+      "dimensions_cm": [
+        1387.0001220703125,
+        1380.0001220703125,
+        1156.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 19512,
+      "lod_count": 3,
+      "material_slots": 10,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Copper",
+        "IM_Ceramic",
+        "IM_Glass",
+        "IM_Light",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "extraction_mine"
+      ]
+    },
+    "SM_Wall": {
+      "dimensions_cm": [
+        600.0,
+        120.00005340576172,
+        300.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 892,
+      "lod_count": 3,
+      "material_slots": 4,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Slate",
+        "IM_Carbon",
+        "IM_Steel"
+      ],
+      "building_families": [
+        "wall_segment"
+      ]
+    },
+    "SM_Wall2": {
+      "dimensions_cm": [
+        600.0,
+        120.00005340576172,
+        400.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 2316,
+      "lod_count": 3,
+      "material_slots": 5,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Yellow",
+        "IM_Carbon"
+      ],
+      "building_families": [
+        "wall_segment_2"
+      ]
+    },
+    "SM_Wall3": {
+      "dimensions_cm": [
+        600.0,
+        120.00005340576172,
+        500.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 3580,
+      "lod_count": 3,
+      "material_slots": 6,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Slate",
+        "IM_Steel",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Light"
+      ],
+      "building_families": [
+        "wall_segment_3"
+      ]
+    },
+    "SM_CommandCampus2": {
+      "dimensions_cm": [
+        5760.0009765625,
+        5760.0009765625,
+        1753.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 41924,
+      "lod_count": 3,
+      "material_slots": 12,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Light",
+        "IM_Amber",
+        "IM_PV",
+        "IM_Copper",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "command_core_2"
+      ]
+    },
+    "SM_CommandCampus3": {
+      "dimensions_cm": [
+        8640.0009765625,
+        8640.0009765625,
+        2614.0
+      ],
+      "ground_z": 0.0,
+      "source_triangles": 66528,
+      "lod_count": 3,
+      "material_slots": 12,
+      "active_material_slots": [
+        "IM_Concrete",
+        "IM_Carbon",
+        "IM_Yellow",
+        "IM_Ceramic",
+        "IM_Slate",
+        "IM_Glass",
+        "IM_Steel",
+        "IM_Light",
+        "IM_Amber",
+        "IM_PV",
+        "IM_Copper",
+        "IM_Blue"
+      ],
+      "building_families": [
+        "command_core_3"
       ]
     }
   },
@@ -625,12 +1289,39 @@
     "TradingPort": "/Game/Art/Interface/T_Building_TradingPort",
     "TradingPort2": "/Game/Art/Interface/T_Building_TradingPort2",
     "TradingPort3": "/Game/Art/Interface/T_Building_TradingPort3",
-    "Works": "/Game/Art/Interface/T_Building_Works",
     "DepotYard": "/Game/Art/Interface/T_Building_DepotYard",
     "TowerKinetic": "/Game/Art/Interface/T_Building_TowerKinetic",
     "TowerLaser": "/Game/Art/Interface/T_Building_TowerLaser",
     "TowerMissile": "/Game/Art/Interface/T_Building_TowerMissile",
     "TowerPlasma": "/Game/Art/Interface/T_Building_TowerPlasma",
-    "WorkerFactory": "/Game/Art/Interface/T_Building_WorkerFactory"
+    "WorkerFactory": "/Game/Art/Interface/T_Building_WorkerFactory",
+    "BiofuelRefinery": "/Game/Art/Interface/T_Building_BiofuelRefinery",
+    "CommandCampus2": "/Game/Art/Interface/T_Building_CommandCampus2",
+    "CommandCampus3": "/Game/Art/Interface/T_Building_CommandCampus3",
+    "ExtractionRig": "/Game/Art/Interface/T_Building_ExtractionRig",
+    "Hangar2": "/Game/Art/Interface/T_Building_Hangar2",
+    "Hangar3": "/Game/Art/Interface/T_Building_Hangar3",
+    "HangarMech2": "/Game/Art/Interface/T_Building_HangarMech2",
+    "HangarMech3": "/Game/Art/Interface/T_Building_HangarMech3",
+    "HangarTracked2": "/Game/Art/Interface/T_Building_HangarTracked2",
+    "HangarTracked3": "/Game/Art/Interface/T_Building_HangarTracked3",
+    "SensorMast": "/Game/Art/Interface/T_Building_SensorMast",
+    "ServiceBay": "/Game/Art/Interface/T_Building_ServiceBay",
+    "TowerKinetic2": "/Game/Art/Interface/T_Building_TowerKinetic2",
+    "TowerKinetic3": "/Game/Art/Interface/T_Building_TowerKinetic3",
+    "TowerLaser2": "/Game/Art/Interface/T_Building_TowerLaser2",
+    "TowerLaser3": "/Game/Art/Interface/T_Building_TowerLaser3",
+    "TowerMissile2": "/Game/Art/Interface/T_Building_TowerMissile2",
+    "TowerMissile3": "/Game/Art/Interface/T_Building_TowerMissile3",
+    "TowerPlasma2": "/Game/Art/Interface/T_Building_TowerPlasma2",
+    "TowerPlasma3": "/Game/Art/Interface/T_Building_TowerPlasma3",
+    "Wall": "/Game/Art/Interface/T_Building_Wall",
+    "Wall2": "/Game/Art/Interface/T_Building_Wall2",
+    "Wall3": "/Game/Art/Interface/T_Building_Wall3",
+    "WorksBattery": "/Game/Art/Interface/T_Building_WorksBattery",
+    "WorksCircuit": "/Game/Art/Interface/T_Building_WorksCircuit",
+    "WorksConductor": "/Game/Art/Interface/T_Building_WorksConductor",
+    "WorksGlass": "/Game/Art/Interface/T_Building_WorksGlass",
+    "WorksParts": "/Game/Art/Interface/T_Building_WorksParts"
   }
 }

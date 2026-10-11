@@ -89,13 +89,14 @@ void ASeigeGameMode::RunWorldReview()
     if(Stage==20)Date(100,.25);
     if(Stage==21){Check(SnowCoverage()>.5&&Snowflakes&&Snowflakes->GetInstanceCount()==SnowflakeCount,TEXT("Midwinter has snow cover and bounded snowfall"));Capture(TEXT("10_winter"));}
     if(Stage==22){Observer=true;Date(0,.25);Frame(FVector2D(14000,-8500),13000,55);}
-    if(Stage==23){if(!IsSceneryStreamingReady()&&RenderClock-Since<60)return;Capture(TEXT("11_lake_and_stream"));}
+    if(Stage==23){if(!IsSceneryStreamingReady()&&RenderClock-Since<60)return;Check(IsSceneryStreamingReady(),TEXT("Lake scenery became ready within 60 seconds"));Capture(TEXT("11_lake_and_stream"));}
     if(Stage==24)Frame(FVector2D(-13500,9000),11500,38);
-    if(Stage==25){if(!IsSceneryStreamingReady()&&RenderClock-Since<60)return;Capture(TEXT("12_cliffs"));}
+    if(Stage==25){if(!IsSceneryStreamingReady()&&RenderClock-Since<60)return;Check(IsSceneryStreamingReady(),TEXT("Cliff scenery became ready within 60 seconds"));Capture(TEXT("12_cliffs"));}
     if(Stage==26){if(!Sim.Nodes.IsEmpty())Frame(Sim.Nodes[0].Position,2100,55);}
     if(Stage==27)
     {
         if(!IsSceneryStreamingReady()&&RenderClock-Since<60)return;
+        Check(IsSceneryStreamingReady(),TEXT("Deposit scenery became ready within 60 seconds"));
         int32 Outcrops=0;
         if(Foliage){TArray<UInstancedStaticMeshComponent*> Sets;Foliage->GetComponents(Sets);for(const auto* Set:Sets)if(Set->ComponentHasTag(TEXT("seige_deposit")))Outcrops+=Set->GetInstanceCount();}
         Check(Outcrops>0,TEXT("Revealed deposits acquire physical outcrop instances without a sector reload"));

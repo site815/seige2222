@@ -1,4 +1,4 @@
-"""Rex companion dog, revision 5: lofted golden-retriever anatomy with a card coat.
+"""Rex companion dog, revision 5: original lofted golden-retriever anatomy.
 
 Run with the bundled Blender in background mode (or the bpy module):
     blender -b -P Tools/create_companion_dog_v2.py [-- --preview-only]
@@ -21,6 +21,7 @@ ART = ROOT / 'Art/CompanionDog'
 for d in ('Source', 'Exports', 'Textures', 'Previews'):
     (ART / d).mkdir(parents=True, exist_ok=True)
 PREVIEW_ONLY = '--preview-only' in sys.argv
+FUR_CARDS = '--cards' in sys.argv
 RNG = np.random.default_rng(8152225)
 
 # ---------------------------------------------------------------- scene setup
@@ -867,8 +868,11 @@ def build_fur_cards():
     return o
 
 
-shells = build_shells()
-fur = build_fur_cards()
+# Shell layers were an unfinished experiment: the runtime importer never
+# implemented their cutout material. Keep the release coat opaque and cheap;
+# feathering cards remain an explicit authoring option for future review.
+shells = []
+fur = build_fur_cards() if FUR_CARDS else None
 for o in PARTS:
     if o is fur or o is skin:
         continue
@@ -958,7 +962,9 @@ report = {
     'uv_channels': {'0': 'rest-pose X/Y encoded as (x+120)/260,(y+60)/120 on skin; fur atlas on cards', '1': 'rest-pose Z/120 on skin; (0,1) marks cards'},
     'animations': {'A_DogIdle': {'duration_seconds': 3, 'fps': 30, 'loop': True}, 'A_DogWalk': likeness.walk_metadata(clips['A_DogWalk'])},
     'coat_vertex_attribute': 'CoatColor', 'max_bone_influences': 4, 'dog_name': 'Rex', 'name_on_tag': True,
-    'cosmetic_revision': 'Rex revision 5: lofted retriever anatomy (broad skull, defined stop, deep muzzle, pendant ears, deep chest), photo-guided coat zoning with the white muzzle and brow of an older dog, and a procedural fur-card coat with feathering on the ruff, chest, belly, legs, pants and tail plume.',
+    'cosmetic_revision': 'Rex authored release fallback: lofted retriever anatomy, broad skull, defined stop, deep muzzle, pendant ears and chest; cream muzzle and brow, golden coat and teal collar. No generated mesh or photograph pixels. Opaque coat with procedural detail; card feathering is opt-in.',
+    'fur_cards': {'enabled': FUR_CARDS},
+    'shell_fur': False,
     'exports': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in (ART / 'Exports').glob('*.fbx')} if not PREVIEW_ONLY else {},
     'unreal_import_pending': True, 'runtime_review_pending': True,
 }
