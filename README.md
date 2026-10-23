@@ -4,7 +4,7 @@ Current release: **v0.10.6 — Windows single-player prototype**. Roads are defe
 
 **Start a new scenario:** save format 9 remains, but environment, transport and AI fingerprints changed. Existing saves and earlier local builds are preserved.
 
-Download the Windows ZIP and checksum from the [v0.10.6 release](https://github.com/site815/seige2222/releases/tag/v0.10.6), extract the ZIP, and run `Seige.exe`. In the development workspace, use [Play-seige2222.cmd](Play-seige2222.cmd). All **73 focused native tests**, the separate three-colony AI acceptance, and **159 packaged assertions at each of 1600×900 and 3840×1600** passed. The ZIP passed CRC and runtime-file comparison. See [release notes](docs/releases/v0.10.6.md), [verification](docs/verification/v0.10.6.json), [development report](docs/DEVELOPMENT_REPORT.md) and [remaining work](docs/TODO.md). The [GitHub delivery review](docs/releases/GITHUB_DELIVERY_2026_10_23.md) records the validation failure investigated and CI safeguards.
+[Download releases](https://github.com/site815/seige2222/releases)
 
 ## Gameplay
 
