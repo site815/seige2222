@@ -1,6 +1,7 @@
 #include "Simulation/SeigeSimulation.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"
+#include "Dom/JsonObject.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeDefensiveCornerArrivalTest,"Seige.Combat.DefensiveCornerArrival",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
@@ -8,15 +9,30 @@ bool FSeigeDefensiveCornerArrivalTest::RunTest(const FString& Parameters)
 {
     FSeigeSimulation S;FString Error;
     if(!S.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Error,false,false)){AddError(Error);return false;}
-    // Explicit combat geometry, using one real carried guard. Isolate the
-    // narrow arrival condition from terrain, hostile motion and firing spread.
-    S.Environment.Enabled=false;S.Combat.Vehicles.SetNum(1);S.Buildings[0].Enabled=false;
+    // Author and validate one armed guard: the starting cargo manifest no
+    // longer supplies a combat vehicle. Keep a real fleet and valid source ID.
+    int32 FleetId=0;
+    if(!S.Combat.CreateFleet(S,TEXT("Arrival fixture guard"),FleetId,Error)){AddError(Error);return false;}
+    auto Saved=MakeShared<FJsonObject>();S.Combat.Save(Saved);
+    FSeigeVehicle Seed;Seed.Id=int32(Saved->GetObjectField(TEXT("combat"))->GetNumberField(TEXT("next_id")));
+    Seed.ChassisId=TEXT("mech_small");const auto& SeedDef=S.Combat.Chassis[Seed.ChassisId];Seed.FleetId=FleetId;
+    Seed.Position=Seed.Destination=S.BuildingAccessPoint(S.Buildings[0])+FVector2D(0,100);
+    Seed.Health=SeedDef.Health;Seed.Armor=SeedDef.Armor;Seed.Shield=SeedDef.Shield;Seed.BatteryKWh=SeedDef.BatteryKWh;
+    Seed.Weapons={TEXT("laser_small")};Seed.Cooldowns={0};Seed.Embarked=true;Seed.Status=TEXT("Authored arrival fixture guard");
+    S.Combat.Vehicles.Add(Seed);S.Combat.Save(Saved);
+    Saved->GetObjectField(TEXT("combat"))->SetNumberField(TEXT("next_id"),Seed.Id+1);
+    if(!S.Combat.Load(Saved,S,Error)){AddError(Error);return false;}
+    // Isolate arrival geometry from terrain, hostile motion and firing spread.
+    S.Environment.Enabled=false;S.Buildings[0].Enabled=false;
     auto& Guard=S.Combat.Vehicles[0];Guard.Embarked=false;Guard.SectorIndex=4;Guard.Route.Empty();Guard.NextWaypoint=0;
     const double Unit=S.MetersPerWorldUnit();const auto& Chassis=S.Combat.Chassis[Guard.ChassisId];
     auto& Weapon=S.Combat.Weapons[Guard.Weapons[0]];Weapon.AccuracyDegrees=0;
     FSeigeBuilding Cover;Cover.Id=990001;Cover.DefId=TEXT("solar_array");Cover.Position=S.Buildings[0].Position+FVector2D(6000,0);Cover.Health=S.BuildingDefs[Cover.DefId].Health;Cover.ConstructionProgress=1;
     S.Buildings.Add(Cover);
-    const double Half=S.Definition(Cover)->Footprint,Clearance=Chassis.RadiusMeters/Unit;
+    const auto* Profile=S.Mobility.Profile(Chassis.Family);
+    if(!Profile){AddError(TEXT("Arrival guard requires its authored mobility profile"));return false;}
+    const double Half=S.Definition(Cover)->ReservedFootprint;
+    const double Clearance=(FMath::Max(Profile->BodyRadiusMeters,Chassis.RadiusMeters)+Profile->ClearanceMeters)/Unit;
     const FVector2D Corner=Cover.Position+FVector2D(Half+Clearance+.001,Half+Clearance+.001);
     const FVector2D Start=Corner-FVector2D(0,.7/Unit);
     Guard.Position=Guard.Destination=Start;Guard.Status=TEXT("On station");Guard.DistanceMeters=0;Guard.Cooldowns.Init(0,Guard.Weapons.Num());

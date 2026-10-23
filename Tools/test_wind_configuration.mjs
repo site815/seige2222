@@ -4,7 +4,7 @@ import {readConfiguration, validateConfiguration} from './validate_configuration
 const data=readConfiguration();
 assert.doesNotThrow(()=>validateConfiguration(data));
 const invalid=[
- ['wind_cycle_seconds',0],['tree_wind_sway_centimeters',31],
+ ['wind_cycle_seconds',0],['wind_maximum_playback_rate',0],['wind_maximum_playback_rate',21],['tree_wind_sway_centimeters',31],
  ['leaf_wind_rustle_centimeters',9],['grass_wind_sway_centimeters',11],
  ['tree_wind_distance_meters',401],['wind_fade_start_fraction',1],
 ];

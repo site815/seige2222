@@ -9,19 +9,41 @@
 namespace
 {
 constexpr EAutomationTestFlags Flags=EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter;
+bool SeedCombatGuard(FSeigeSimulation& S,FString& Error)
+{
+    // This is an authored combat scenario, not the unarmed new-colony manifest.
+    int32 FleetId=0;if(!S.Combat.CreateFleet(S,TEXT("Fixture guard"),FleetId,Error))return false;
+    auto Saved=MakeShared<FJsonObject>();S.Combat.Save(Saved);
+    FSeigeVehicle V;V.Id=int32(Saved->GetObjectField(TEXT("combat"))->GetNumberField(TEXT("next_id")));
+    V.ChassisId=TEXT("mech_small");const auto& D=S.Combat.Chassis[V.ChassisId];V.FleetId=FleetId;
+    V.Position=V.Destination=S.BuildingAccessPoint(S.Buildings[0])+FVector2D(0,100);
+    V.Health=D.Health;V.Armor=D.Armor;V.Shield=D.Shield;V.BatteryKWh=D.BatteryKWh;
+    V.Weapons={TEXT("laser_small")};V.Cooldowns={0};V.Embarked=true;V.Status=TEXT("Authored fixture guard aboard shuttle");
+    S.Combat.Vehicles.Add(V);S.Combat.Save(Saved);Saved->GetObjectField(TEXT("combat"))->SetNumberField(TEXT("next_id"),V.Id+1);
+    return S.Combat.Load(Saved,S,Error);
+}
 bool Start(FSeigeSimulation& S,FString& Error)
 {
     if(!S.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Error,false,false))return false;
     for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
     if(S.Buildings[0].IsConstructing){Error=TEXT("Combat fixture's finite landed crew could not deploy the command core");return false;}
-    S.Tick(20);return true;
+    S.Tick(20);return SeedCombatGuard(S,Error);
 }
 FString State(const FSeigeCombatSystem& C){auto O=MakeShared<FJsonObject>();C.Save(O);FString Text;FJsonSerializer::Serialize(O,TJsonWriterFactory<>::Create(&Text));return Text;}
+void ClearFixtureFiringLane(FSeigeSimulation& S)
+{
+    // Keep all actual bodies, but isolate the authored +X weapon test from
+    // the shuttle's ordinary hatch traffic, which correctly blocks live fire.
+    int32 Slot=0;for(auto& W:S.Workers.Bodies)W.Position=FVector2D(800,500+50*Slot++);
+    for(auto& V:S.TransportVehicles.Bodies)V.Position=FVector2D(800,-500);
+    for(auto& D:S.Companions.Dogs)D.Position=FVector2D(-800,-500);
+}
 FString PlaceCarrierFixture(FSeigeSimulation& S,int32 BodyIndex,FSeigeCourier Cargo)
 {
     // Explicit battle setup repositions an existing body; the cargo marker
     // cannot stand in for a second, unaccounted worker.
     auto& Body=S.Workers.Bodies[BodyIndex];Body.State=TEXT("active");Body.Activity=TEXT("delivery");Body.BuildingId=Body.RoadId=Body.ContainerId=0;
+    Body.CrewBuildingId=Body.ChargingBuildingId=Body.TransportVehicleId=0;Body.SuspendedActivity.Empty();
     Body.ContainerKind.Empty();Body.Position=Cargo.Position;Body.Outdoor=true;Body.DeliveryId=Cargo.Id;Body.Route.Empty();Body.NextWaypoint=0;
     Cargo.WorkerId=Body.Id;Cargo.Phase=TEXT("carrying");Cargo.SourceId=Cargo.TargetId=S.Buildings[0].Id;Cargo.ReservedAmount=0;
     S.Couriers.Add(Cargo);S.Workers.RefreshMetrics(S);return Body.Id;
@@ -35,20 +57,21 @@ bool FSeigeCombatMountTest::RunTest(const FString& Parameters)
     TArray<FString> Mixed={TEXT("kinetic_medium"),TEXT("laser_medium")};for(int I=0;I<8;++I)Mixed.Add(TEXT("laser_small"));
     TestTrue(TEXT("One large area accepts two medium plus eight small"),S.Combat.ValidateLoadout(TEXT("mech_large"),Mixed,Error));Mixed.Add(TEXT("laser_small"));TestFalse(TEXT("Extra frontal area rejected"),S.Combat.ValidateLoadout(TEXT("mech_large"),Mixed,Error));
     TestFalse(TEXT("A small chassis cannot carry a large module"),S.Combat.ValidateLoadout(TEXT("wheeled_small"),{TEXT("laser_large")},Error));
-    auto& B=S.Buildings[0];
-    // Isolate fabrication from the core's automatic worker recipe without
-    // inventing operators or leaving a second batch's escrow in the fixture.
-    for(const auto& P:B.ProductionInputs)B.Inventory.FindOrAdd(P.Key)+=P.Value;
-    B.ProductionInputs.Empty();B.ProductionCommitted=false;B.CommittedRecipe.Empty();B.ProductionReservedLitres=B.Progress=0;B.Inventory.Empty();
+    // Specialist factories now build chassis. Author a completed, grid-connected
+    // factory, assigning existing physical workers instead of inventing operators.
+    FSeigeBuilding Factory;Factory.Id=9000;Factory.DefId=TEXT("vehicle_factory");Factory.Position=FVector2D(2000,0);
+    Factory.Health=S.BuildingDefs[Factory.DefId].Health;Factory.IsConstructing=false;Factory.ConstructionProgress=1;S.Buildings.Add(Factory);
+    auto& B=S.Buildings.Last();FSeigeTransportSegment Road;Road.Id=9001;Road.Tier=Road.TargetTier=S.InitialRoadTier();Road.IsConstructing=false;Road.ConstructionProgress=1;
+    Road.A=S.BuildingAccessPoint(S.Buildings[0]);Road.B=S.BuildingAccessPoint(B);S.Roads.Add(Road);
     int32 Station=0;for(auto& Body:S.Workers.Bodies)if(Body.State==TEXT("active"))
-    {const bool Operating=Station<S.Definition(B)->Jobs;Body.Activity=Operating?TEXT("operate"):TEXT("idle");Body.BuildingId=Operating?B.Id:0;Body.RoadId=Body.DeliveryId=Body.ContainerId=0;Body.ContainerKind.Empty();Body.Route.Empty();Body.NextWaypoint=0;Body.StationSlot=Station++;Body.Position=S.BuildingAccessPoint(B)+FVector2D(0,20*Station);Body.Outdoor=true;}
+    {const bool Operating=Station<S.Definition(B)->Jobs;Body.Activity=Operating?TEXT("operate"):TEXT("idle");Body.BuildingId=Body.CrewBuildingId=Operating?B.Id:0;Body.RoadId=Body.DeliveryId=Body.ContainerId=Body.ChargingBuildingId=Body.TransportVehicleId=0;Body.SuspendedActivity.Empty();Body.ContainerKind.Empty();Body.Route.Empty();Body.NextWaypoint=0;Body.StationSlot=Station++;Body.Position=S.BuildingAccessPoint(B)+FVector2D(0,20*Station);Body.Outdoor=true;}
     S.Workers.RefreshMetrics(S);S.Energy.Invalidate();S.Energy.Tick(S,0);
     const int32 Before=S.Combat.Vehicles.Num();TestFalse(TEXT("No free chassis without local materials"),S.Combat.QueueVehicle(S,B.Id,TEXT("wheeled_small"),{TEXT("laser_small")},Error));
     TestTrue(TEXT("Failed purchase retains a courier delivery plan"),S.Combat.FabricationPlans.Contains(B.Id));TestTrue(TEXT("Demand includes weapon circuits"),S.Combat.Demand(S,B.Id,TEXT("circuits"))>S.Combat.Chassis[TEXT("wheeled_small")].Cost[TEXT("circuits")]);
-    B.Inventory=S.Combat.Chassis[TEXT("wheeled_small")].Cost;for(const auto& P:S.Combat.Weapons[TEXT("laser_small")].Cost)B.Inventory.FindOrAdd(P.Key)+=P.Value;B.BatteryEnergyKWh=20;S.Energy.Tick(S,0);
-    const double Mass=S.InventoryMassKg(B.Inventory),Energy=B.BatteryEnergyKWh;
+    B.Inventory=S.Combat.Chassis[TEXT("wheeled_small")].Cost;for(const auto& P:S.Combat.Weapons[TEXT("laser_small")].Cost)B.Inventory.FindOrAdd(P.Key)+=P.Value;S.Buildings[0].BatteryEnergyKWh=20;S.Energy.Tick(S,0);
+    const double Mass=S.InventoryMassKg(B.Inventory),Energy=S.Energy.Info(S,B.Id).StoredKWh;
     TestTrue(TEXT("Local bill and stored energy can begin construction"),S.Combat.QueueVehicle(S,B.Id,TEXT("wheeled_small"),{TEXT("laser_small")},Error));
-    TestEqual(TEXT("Queueing does not instantly spawn a chassis"),S.Combat.Vehicles.Num(),Before);TestTrue(TEXT("Materials paid once"),S.InventoryMassKg(B.Inventory)<Mass);TestTrue(TEXT("Stored energy paid"),B.BatteryEnergyKWh<Energy);TestEqual(TEXT("One paid job"),S.Combat.Fabrication.Num(),1);
+    TestEqual(TEXT("Queueing does not instantly spawn a chassis"),S.Combat.Vehicles.Num(),Before);TestTrue(TEXT("Materials paid once"),S.InventoryMassKg(B.Inventory)<Mass);TestTrue(TEXT("Stored energy paid"),S.Energy.Info(S,B.Id).StoredKWh<Energy);TestEqual(TEXT("One paid job"),S.Combat.Fabrication.Num(),1);
     if(S.Combat.Fabrication.Num()){S.Combat.Tick(S,.05);TestTrue(TEXT("Work advances gradually"),S.Combat.Fabrication[0].ProgressSeconds>0&&S.Combat.Fabrication[0].ProgressSeconds<S.Combat.Fabrication[0].RequiredSeconds);TestTrue(TEXT("Paid work in progress remains in commodity ledger"),S.Combat.CargoStock(TEXT("alloy"))>0);}
     return true;
 }
@@ -67,7 +90,7 @@ bool FSeigeCombatProjectileTest::RunTest(const FString& Parameters)
     Protection.Shield=100;A.Combat.DamageBuilding(A,A.Buildings[0].Id,10,TEXT("energy"));TestTrue(TEXT("Kinetics damage shields more than lasers"),KineticShield>100-Protection.Shield);
     Protection.Shield=0;Protection.Armor=100;A.Combat.DamageBuilding(A,A.Buildings[0].Id,10,TEXT("plasma"));const double PlasmaArmor=100-Protection.Armor;Protection.Armor=100;A.Combat.DamageBuilding(A,A.Buildings[0].Id,10,TEXT("kinetic"));TestTrue(TEXT("Plasma damages armor more than kinetics"),PlasmaArmor>100-Protection.Armor);
     // Use a normal source-owned projectile ID for saved-state validation.
-    FSeigeSimulation C;if(!Start(C,Error)){AddError(Error);return false;}C.Combat.Vehicles.Empty();auto& State0=C.Combat.BuildingState[C.Buildings[0].Id];State0.Weapons={TEXT("plasma_small")};State0.Cooldowns={0};
+    FSeigeSimulation C;if(!Start(C,Error)){AddError(Error);return false;}C.Combat.Vehicles.Empty();ClearFixtureFiringLane(C);auto& State0=C.Combat.BuildingState[C.Buildings[0].Id];State0.Weapons={TEXT("plasma_small")};State0.Cooldowns={0};
     C.PeriodicAttacksEnabled=true;C.TriggerWave();C.Enemies.SetNum(1);C.Enemies[0].Id=8199;C.Enemies[0].Position=C.Buildings[0].Position+FVector2D(1000,0);C.Combat.Tick(C,.05);
     TestTrue(TEXT("Slow plasma remains in flight"),C.Combat.Projectiles.Num()>0);auto Root=MakeShared<FJsonObject>();C.Combat.Save(Root);FSeigeSimulation D=C;
     TestTrue(TEXT("Combat state loads atomically"),D.Combat.Load(Root,D,Error));C.Combat.Tick(C,.2);D.Combat.Tick(D,.2);TestEqual(TEXT("Projectile/RNG continuation is deterministic"),State(C.Combat),State(D.Combat));
@@ -81,7 +104,7 @@ bool FSeigeCombatWorldTest::RunTest(const FString& Parameters)
     Home.Buildings[0].IsConstructing=false;Home.Buildings[0].ConstructionProgress=1;Home.Buildings[0].ConstructionMaterials.Empty();
     Neighbor.Buildings[0].Enabled=false;Neighbor.Combat.Vehicles.Empty();
     Home.Combat.SetSectorResolver([&Neighbor](int32 Index)->const FSeigeSimulation*{return Index==5?&Neighbor:nullptr;});
-    TestTrue(TEXT("Initial fleet is physically carried aboard parked shuttle"),Home.Combat.Vehicles[0].Embarked);
+    TestTrue(TEXT("Authored combat fixture guard is physically carried aboard parked shuttle"),Home.Combat.Vehicles[0].Embarked);
     const int32 FleetId=Home.Combat.Fleets[0].Id,VehicleId=Home.Combat.Vehicles[0].Id;Home.Combat.Vehicles.SetNum(1);
     auto& Vehicle=Home.Combat.Vehicles[0];Vehicle.Position=FVector2D(Home.WorldHalfSize-1,0);Vehicle.Destination=Vehicle.Position;Vehicle.Weapons.Empty();Vehicle.Cooldowns.Empty();
     const FVector2D Destination(-Home.WorldHalfSize+500,0);const double BeforeBattery=Vehicle.BatteryKWh;
@@ -164,7 +187,7 @@ bool FSeigeCombatLootPriorityTest::RunTest(const FString& Parameters)
         for(auto* S:{&BaseHome,&BaseNeighbor})
         {auto& B=S->Buildings[0];B.IsConstructing=false;B.ConstructionProgress=1;B.ConstructionMaterials.Empty();B.Inventory.Empty();B.Enabled=false;}
         BaseNeighbor.Combat.Vehicles.Empty();BaseNeighbor.Combat.BuildingState[BaseNeighbor.Buildings[0].Id].Shield=0;
-        BaseHome.Combat.Vehicles.SetNum(1);auto& Vehicle=BaseHome.Combat.Vehicles[0];
+        if(!SeedCombatGuard(BaseHome,Error)){AddError(Error);return false;}auto& Vehicle=BaseHome.Combat.Vehicles[0];
         Vehicle.Position=BaseNeighbor.BuildingAccessPoint(BaseNeighbor.Buildings[0]);Vehicle.Destination=Vehicle.Position;Vehicle.SectorIndex=5;Vehicle.Inventory.Empty();Vehicle.Weapons.Empty();Vehicle.Cooldowns.Empty();
         if(!BaseHome.Combat.OrderPrivateer(BaseHome,BaseNeighbor,Vehicle.FleetId,5,Vehicle.Position,Error)){AddError(Error);return false;}
         BaseHome.Combat.Fleets[0].Aggression=TEXT("passive");return true;
@@ -217,7 +240,7 @@ bool FSeigeCombatLootPriorityTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCombatShotCostTest,"Seige.Combat.ShotCostsSplashAndRefitDemand",Flags)
 bool FSeigeCombatShotCostTest::RunTest(const FString& Parameters)
 {
-    FString Error;FSeigeSimulation S;if(!Start(S,Error)){AddError(Error);return false;}S.Combat.Vehicles.Empty();
+    FString Error;FSeigeSimulation S;if(!Start(S,Error)){AddError(Error);return false;}S.Combat.Vehicles.Empty();ClearFixtureFiringLane(S);
     auto& Core=S.Buildings[0];auto& Mount=S.Combat.BuildingState[Core.Id];Mount.Weapons={TEXT("kinetic_small")};Mount.Cooldowns={0};
     const auto& Weapon=S.Combat.Weapons[TEXT("kinetic_small")];Core.Inventory.Remove(Weapon.Ammo);const double Battery=Core.BatteryEnergyKWh;
     FSeigeEnemy E;E.Id=8099;E.Position=Core.Position+FVector2D(1000,0);E.Health=100;S.Enemies.Add(E);
@@ -227,7 +250,13 @@ bool FSeigeCombatShotCostTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("One paid shot fired"),S.Combat.ShotsFired,1.);TestEqual(TEXT("Physical ammo consumed once"),Core.Inventory.FindRef(Weapon.Ammo),0.);
     TestTrue(TEXT("Shot electricity deducted from grid battery"),FMath::Abs(Core.BatteryEnergyKWh-(Battery-Weapon.EnergyKWh))<1.e-8);
     Core.Enabled=false;TestEqual(TEXT("A disabled weapon platform reports its actual operating gate"),S.Combat.BuildingFireStatus(S,Core.Id),FString(TEXT("Disabled")));Core.Enabled=true;
-    TestTrue(TEXT("Refit plan creates real module-part demand"),S.Combat.SetRefitPlan(S,Core.Id,{TEXT("plasma_large")},Error));TestTrue(TEXT("Refit delivery request includes circuits"),S.Combat.Demand(S,Core.Id,TEXT("circuits"))>=S.Combat.Weapons[TEXT("plasma_large")].Cost[TEXT("circuits")]);
+    // Modules are now supplied by a specialist factory servicing the platform.
+    // Author only that empty facility: requesting a refit must create demand,
+    // not grant materials, energy or completed weapons.
+    const int32 CoreId=Core.Id;FSeigeBuilding Factory;Factory.Id=9000;Factory.DefId=TEXT("vehicle_factory_2");Factory.Health=S.BuildingDefs[Factory.DefId].Health;
+    Factory.Position=Core.Position+FVector2D(S.Definition(Core)->ReservedFootprint+S.BuildingDefs[Factory.DefId].ReservedFootprint+100,0);
+    Factory.IsConstructing=false;Factory.ConstructionProgress=1;S.Buildings.Add(Factory);
+    TestTrue(TEXT("Refit plan creates real module-part demand"),S.Combat.SetRefitPlan(S,CoreId,{TEXT("plasma_large")},Error));TestTrue(TEXT("Refit delivery request includes circuits at the specialist factory"),S.Combat.Demand(S,Factory.Id,TEXT("circuits"))>=S.Combat.Weapons[TEXT("plasma_large")].Cost[TEXT("circuits")]);
     auto Saved=MakeShared<FJsonObject>();S.Combat.Save(Saved);FSeigeSimulation Copy=S;TestTrue(TEXT("Pending refit deliveries persist"),Copy.Combat.Load(Saved,Copy,Error));TestEqual(TEXT("Refit plan state matches"),State(S.Combat),State(Copy.Combat));
     FSeigeSimulation Splash;if(!Start(Splash,Error)){AddError(Error);return false;}Splash.Buildings[0].Enabled=false;Splash.Combat.Vehicles.Empty();
     E.Position=FVector2D(2000,0);E.Health=100;Splash.Enemies.Add(E);E.Id=8199;E.Position=FVector2D(2010,0);Splash.Enemies.Add(E);
@@ -235,6 +264,9 @@ bool FSeigeCombatShotCostTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Missile damages direct collision target"),Splash.Enemies[0].Health<100);TestTrue(TEXT("Splash also damages nearby unintended target"),Splash.Enemies[1].Health<100);TestTrue(TEXT("Splash attenuates with actual distance"),Splash.Enemies[1].Health>Splash.Enemies[0].Health);
     FSeigeSimulation Victim;if(!Start(Victim,Error)){AddError(Error);return false;}Victim.Buildings[0].Enabled=false;Victim.Combat.Vehicles.Empty();
     FSeigeCourier Courier;Courier.Id=90100;Courier.Resource=TEXT("alloy");Courier.Amount=1;Courier.Position=FVector2D(2000,0);const FString FirstCarrier=PlaceCarrierFixture(Victim,0,Courier);Courier.Id=90101;Courier.Position=FVector2D(2010,0);const FString SecondCarrier=PlaceCarrierFixture(Victim,1,Courier);const int32 PopulationBeforeSplash=Victim.Population;
+    // Workers now have persistent HP: use wounded carriers to exercise lethal
+    // direct/splash cleanup rather than assuming any hit instantly kills them.
+    Victim.Workers.Find(FirstCarrier)->Health=1;Victim.Workers.Find(SecondCarrier)->Health=1;
     P.SectorIndex=5;Splash.Combat.Projectiles.Add(P);Splash.Combat.TickExternalSector(Splash,Victim,5,1);
     TestEqual(TEXT("Missile splash also destroys struck and nearby courier cargo"),Victim.Couriers.Num(),0);
     TestEqual(TEXT("Direct hit destroys the actual carrier identity"),Victim.Workers.Find(FirstCarrier)->State,FString(TEXT("destroyed")));
@@ -283,6 +315,9 @@ bool FSeigeCombatFriendlyFireTest::RunTest(const FString& Parameters)
     E.Id=8199;E.Position=FVector2D(1000,1500);Mobile.Enemies.Add(E);Mobile.Combat.Tick(Mobile,.05);TestEqual(TEXT("Vehicle chooses a clear alternative"),Mobile.Combat.ShotsFired,1.);TestEqual(TEXT("Vehicle preserves intervening friendly structure"),Mobile.Buildings[1].Health,Solar.Health);
     // A foreign defender uses the same clear-fire rule against raiders.
     FSeigeSimulation Raider,Defender;if(!Start(Raider,Error)||!Start(Defender,Error)){AddError(Error);return false;}Defender.Combat.Vehicles.Empty();Solar.Position=FVector2D(1000,0);Defender.Buildings.Add(Solar);
+    // This assertion isolates the solar obstruction. Living workers, Rex and
+    // the manifest transport now block shots too, so station them off this ray.
+    ClearFixtureFiringLane(Defender);
     auto& DefenderMount=Defender.Combat.BuildingState[Defender.Buildings[0].Id];DefenderMount.Weapons={TEXT("laser_large")};DefenderMount.Cooldowns={0};Defender.Combat.Weapons[TEXT("laser_large")].AccuracyDegrees=0;
     auto& V=Raider.Combat.Vehicles[0];V.Embarked=false;V.SectorIndex=5;V.Position=FVector2D(2000,0);V.Weapons.Empty();V.Cooldowns.Empty();const double Shield=V.Shield;
     Raider.Combat.TickExternalSector(Raider,Defender,5,.05);TestEqual(TEXT("Foreign defense also holds through friendly building"),V.Shield,Shield);TestEqual(TEXT("Foreign solar is not deliberately shot"),Defender.Buildings[1].Health,Solar.Health);

@@ -1,6 +1,10 @@
 # seige2222 — Open Decisions and Design Evolution
 
+**v0.10.6 current override:** Roads are deferred at the user’s request. The build catalog and AI create no roads; road bonuses and connector prerequisites are inactive. Each colony temporarily shares its own generation and batteries. Physical workers, cargo, construction costs and terrain access remain required. Earlier road/rail/vacuum descriptions below record the deferred design or historical builds, not the active rules.
+
 [Design index](README.md) · [Status definitions](README.md#design-status)
+
+**Current v0.10.3:** Local build only; GitHub push is deferred by the user. Save format 9 adds persistent unit health, Rex's aboard/shelter/death states and a thirty-calendar-day worker movement penalty. Exact Rules/AI fingerprints still govern compatibility; prior saves are preserved and require a new scenario. See [v0.10.3](../releases/v0.10.3.md).
 
 A cross-system decision register and the corrections that prevent superseded ideas from returning as current rules.
 
@@ -54,7 +58,7 @@ Detailed costs, numerical formulas, exact recipes, and tuning should remain visi
 - **Abbreviated building summaries → complete explicit statistics.** Buildings must expose resources, power, weapon damage, reload, DPS, and other relevant facts even when zero or unarmed. The v0.4 prototype uses actual data-defined weapon shots and displays zero power with an explicit absent-grid limitation; it does not settle the future energy system.
 
 - **SEIGE / informal “Robot Manor Lords” labels → seige2222.** This is the current user-selected working name; the existing workspace path may retain the older label.
-- **Documentation-only task → authorized Unreal prototype development.** The user requested a native playable single-player build, packaging, and a GitHub push. The complete persistent multiplayer design remains a later implementation stage.
+- **Documentation-only task → authorized Unreal prototype development.** The user requested a native playable single-player build, packaging, and previously a GitHub push (currently deferred). The complete persistent multiplayer design remains a later implementation stage.
 
 - **Pirates as the main enemy → aliens as the primary hostile faction.** Pirate and privateer fleets can still feature in fleet missions.
 - **Permanent online-only direction → single-player first, persistent multiplayer later.** Earlier online-only discussion does not settle connectivity requirements.

@@ -323,7 +323,7 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 53: Capture(TEXT("boundary"));break;
     case 54:
     {
-        ReturnToMainMenu();ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;CameraYaw=135;CameraPitch=50;StartScenario();
+        ReturnToMainMenu();ScenarioSeedOverride=815;ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;CameraYaw=135;CameraPitch=50;StartScenario();
         bool Found=false;
         for(const auto& Node:Sim.Nodes)if(!Found&&Sim.Resources[Node.Resource].Class==TEXT("standard"))for(int32 I=0;I<16&&!Found;++I)
         {const double A=I*UE_TWO_PI/16;const FVector2D Candidate=Node.Position+FVector2D(FMath::Cos(A),FMath::Sin(A))*1100;FString Why;if(CanLand(Candidate,Why)){SmokeLanding=Candidate;ExportPosition=Node.Position;ExportResource=Node.Resource;Found=true;}}
@@ -381,14 +381,14 @@ void ASeigeGameMode::RunPresentationSmoke()
         Speed=1;Paused=false;
         if(Hud)
         {
-            Hud->HandleShortcut(EKeys::Add);Require(Speed==5&&!Paused,TEXT("Plus selects5x after1x"));
-            Hud->HandleShortcut(EKeys::Add);Require(Speed==10&&!Paused,TEXT("Plus selects10x after5x"));
-            Hud->HandleShortcut(EKeys::Add);Require(Paused,TEXT("Plus wraps10x to pause"));
+            Hud->HandleShortcut(EKeys::Add);Require(Speed==10&&!Paused,TEXT("Plus selects10x after1x"));
+            Hud->HandleShortcut(EKeys::Add);Require(Speed==20&&!Paused,TEXT("Plus selects20x after10x"));
+            Hud->HandleShortcut(EKeys::Add);Require(Paused,TEXT("Plus wraps20x to pause"));
             Hud->HandleShortcut(EKeys::Add);Require(Speed==1&&!Paused,TEXT("Plus resumes1x from pause"));
             Hud->HandleShortcut(EKeys::Subtract);Require(Paused,TEXT("Minus reaches pause from1x"));
-            Hud->HandleShortcut(EKeys::Subtract);Require(Speed==10&&!Paused,TEXT("Minus wraps pause to10x"));
-            Hud->HandleShortcut(EKeys::SpaceBar);Require(Paused&&Speed==10,TEXT("Space pauses without losing10x"));
-            Hud->HandleShortcut(EKeys::SpaceBar);Require(!Paused&&Speed==10,TEXT("Space restores10x"));
+            Hud->HandleShortcut(EKeys::Subtract);Require(Speed==20&&!Paused,TEXT("Minus wraps pause to20x"));
+            Hud->HandleShortcut(EKeys::SpaceBar);Require(Paused&&Speed==20,TEXT("Space pauses without losing20x"));
+            Hud->HandleShortcut(EKeys::SpaceBar);Require(!Paused&&Speed==20,TEXT("Space restores20x"));
         }
         break;
     case 70: SelectedId=0;CameraCenter=FVector::ZeroVector;CameraYaw=135;CameraPitch=52;Zoom=150000;UpdateCamera();break;
@@ -515,9 +515,9 @@ void ASeigeGameMode::RunPresentationSmoke()
     case 104:
         SelectedCompanionId=0;CameraCenter=FVector(HomePosition(),0);Zoom=DefaultZoom;UpdateCamera();WorldClick(HomePosition());Require(SelectedId==Sim.Buildings[0].Id,TEXT("Core can be reselected after trade and Rex controls"));break;
     case 105:
-        Paused=true;ClickAction(TEXT("command:reserve-more"));Require(Sim.WorkerSurplusTarget==1,TEXT("Command UI must change the inactive worker production target"));Capture(TEXT("worker_reserve"));break;
+        Paused=true;Require(Sim.WorkerSurplusTarget()==Sim.BuildingDefs[Sim.CoreDefinition].Jobs,TEXT("Command reserve follows the current level"));Capture(TEXT("worker_reserve"));break;
     case 106:
-        ClickAction(TEXT("command:reserve-less"));Require(Sim.WorkerSurplusTarget==0,TEXT("Command target must return to zero"));
+        Require(Sim.WorkerSurplusTarget()==Sim.BuildingDefs[Sim.CoreDefinition].Jobs,TEXT("Automatic command reserve remains unchanged by inspection"));
         CameraCenter=FVector(PortPosition,0);Zoom=DefaultZoom;UpdateCamera();WorldClick(PortPosition);Require(SelectedId==TradePortId,TEXT("Select own trading port for worker exports"));break;
     case 107:
         ClickAction(TEXT("trade:reserve-more"));Require(Sim.FindBuilding(TradePortId)&&Sim.FindBuilding(TradePortId)->WorkerExportTarget==1,TEXT("Trading port must have an independent worker export target"));Capture(TEXT("worker_export_target"));break;

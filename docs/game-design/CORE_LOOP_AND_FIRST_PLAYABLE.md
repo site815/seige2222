@@ -1,5 +1,7 @@
 # seige2222 — Core Loop and First Playable
 
+**v0.10.6 current override:** Roads are deferred at the user’s request. The build catalog and AI create no roads; road bonuses and connector prerequisites are inactive. Each colony temporarily shares its own generation and batteries. Physical workers, cargo, construction costs and terrain access remain required. Earlier road/rail/vacuum descriptions below record the deferred design or historical builds, not the active rules.
+
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
 Working design document. The opening, current robotic population scope, and main competing priorities are established; detailed colony operation is still being developed. This is not yet an implementation specification.
@@ -92,7 +94,7 @@ The following is a discussion outline, not a selected set of mechanics:
 
 **Confirmed direction:** The player can make AI selections among the eight neighboring sectors. For each AI neighbor, the player can choose a developed colony representing an established human player or a newly founded colony starting out like the player. These choices allow single-player to represent different stages of settlement in a persistent world.
 
-**Confirmed setup correction:** The developed option loads an explicit established-colony manifest, not a simulated growth history. Starting AI keeps the same finite 9.57 t loose kit and six initial workers as the player. Normal paid operation and threats apply once either type is initialized; the established manifest is a one-time scenario boundary, not ongoing free production.
+**Confirmed setup correction:** The developed option loads an explicit established-colony manifest, not a simulated growth history. Starting AI keeps the same finite 9.57 t loose kit and five initial workers as the player, as authored in `Rules/scenario.json`. Normal paid operation and threats apply once either type is initialized; the established manifest is a one-time scenario boundary, not ongoing free production.
 
 Exact starting assets and development profiles remain open. See [World, Visibility, and Relocation](WORLD_AND_RELOCATION.md) for AI-neighbor setup.
 

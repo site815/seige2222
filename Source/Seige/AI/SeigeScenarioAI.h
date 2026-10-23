@@ -54,6 +54,8 @@ private:
     friend class FSeigeAIDevelopedContinuationDiagnostic;
     friend class FSeigeAICoveredPlacementTest;
     friend class FSeigeAIUpgradeTest;
+    friend class FSeigeAIPermanentCrewReadinessTest;
+    friend class FSeigeAIBootstrapExportHorizonTest;
 #endif
     bool Ready = false;
     bool Preparing=false;
@@ -81,7 +83,7 @@ private:
     double RecipeInputBuffer=4,CreditBufferBatches=3;
     double FuelImportBufferCycles=1,FuelImportRefillFraction=1;
     TArray<FString> CoreReplicationRecipes;
-    FString BulkInputPolicy,SurplusExportPolicy;
+    FString BulkInputPolicy,SurplusExportPolicy,ExportReserveHorizon;
     double GuardRechargeBelow=0,GuardResumeAbove=0;
     TMap<FString,double> ReserveTargets;
     TArray<FString> UpgradeFamilies;

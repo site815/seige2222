@@ -25,6 +25,16 @@ bool FSeigeEnergySystem::Initialize(const TSharedPtr<FJsonObject>& Doc,FSeigeSim
 void FSeigeEnergySystem::Rebuild(FSeigeSimulation& Sim)
 {
     Grids.Empty();BuildingGrid.Empty();RoadGrid.Empty();Fractions.Empty();RoadFractions.Empty();DefensiveReserve.Empty();
+    // Roads are deferred. Share electricity within this colony only; retain the
+    // real battery/generation/consumption ledger and the normal dispatch order.
+    if(!Sim.RoadsEnabled())
+    {
+        auto& G=Grids.AddDefaulted_GetRef();G.State.ComponentId=MAX_int32;G.State.Connected=true;
+        for(const auto& B:Sim.Buildings)if(B.Health>0)
+        {G.Buildings.Add(B.Id);BuildingGrid.Add(B.Id,0);G.State.ComponentId=FMath::Min(G.State.ComponentId,B.Id);}
+        G.Buildings.Sort([&](int A,int B){const int XP=Definitions[Sim.FindBuilding(A)->DefId].Priority,YP=Definitions[Sim.FindBuilding(B)->DefId].Priority;return XP==YP?A<B:XP<YP;});
+        TopologyRevision=Sim.TransportRevision;return;
+    }
     TArray<int32> Active;for(int I=0;I<Sim.Roads.Num();++I)if(Sim.Roads[I].Health>0&&!Sim.Roads[I].Tier.IsEmpty())Active.Add(I);
     TArray<int32> Parent;for(int I=0;I<Active.Num();++I)Parent.Add(I);
     auto Root=[&](int I){while(Parent[I]!=I)I=Parent[I];return I;};const double Tol=ConnectionToleranceMeters/Sim.MetersPerWorldUnit();

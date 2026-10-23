@@ -113,6 +113,55 @@ bool FSeigeConstructionSourceTest::RunTest(const FString&)
     TestTrue(TEXT("Source selection uses the same body without a parallel hauling population"),S.Workers.Bodies.Num()==BodyCount&&S.Workers.Find(Carrier)!=nullptr);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeReachableSupplyTest,"Seige.Workers.ReachableSupplyAfterBlockedNearest",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeReachableSupplyTest::RunTest(const FString&)
+{
+    FSeigeSimulation Base;FString Error;
+    if(!Base.Initialize(FPaths::ProjectDir()/TEXT("Rules"),Error,false,false,815)){AddError(Error);return false;}
+    Base.Environment.Enabled=false;Base.Buildings[0].IsConstructing=false;Base.Buildings[0].ConstructionProgress=1;
+    Base.Workers.DeploymentElapsed=Base.Workers.DeploymentDescentSeconds()+Base.Workers.DeploymentHatchSeconds();
+    Base.DeploymentHatchOpen=Base.DeploymentGrounded=true;Base.DeliveryPriorities={TEXT("trade")};
+    const int32 Core=Base.Buildings[0].Id;const FVector2D Origin=Base.Buildings[0].Position;
+    const int32 Port=Base.AddReviewBuilding(TEXT("trading_port"),Origin+FVector2D(2000,0));
+    const int32 Isolated=Base.AddReviewBuilding(TEXT("depot"),Origin+FVector2D(2000,1500));
+    if(!TestTrue(TEXT("Reachability fixture has two real supply locations and a trade destination"),Port>0&&Isolated>0&&Base.Workers.Bodies.Num()>=5))return false;
+    Base.Mobility.SetTerrainSampler([Origin](FVector2D P){return P.Y>Origin.Y+800.?100000.:0.;});
+    const FString Goods=TEXT("alloy");const double Quantity=40,IsolatedQuantity=100;
+    if(!TestTrue(TEXT("All fixture cargo comes from the finite landing stock"),Base.FindBuilding(Core)->Inventory.FindRef(Goods)>IsolatedQuantity+Quantity))return false;
+    Base.FindBuilding(Core)->Inventory.FindOrAdd(Goods)-=IsolatedQuantity;Base.FindBuilding(Isolated)->Inventory.Add(Goods,IsolatedQuantity);
+    auto& Order=Base.FindBuilding(Port)->Shipment;Order.Resource=Goods;Order.Quantity=Quantity;Order.PriceCredits=Base.TradeQuote(Goods,Quantity,false);
+    for(int32 I=0;I<Base.Workers.Bodies.Num();++I)
+    {
+        auto& W=Base.Workers.Bodies[I];const int32 Home=I==3?Isolated:I==4?Port:Core;
+        W.Activity=TEXT("operate");W.BuildingId=W.CrewBuildingId=Home;W.RoadId=W.DeliveryId=W.TransportVehicleId=W.ContainerId=0;
+        W.ContainerKind.Empty();W.Outdoor=true;W.Position=Base.BuildingAccessPoint(*Base.FindBuilding(Home))+FVector2D(0,20);W.Route.Empty();W.NextWaypoint=0;W.RetryAt=0;
+    }
+    Base.Workers.RefreshMetrics(Base);Base.DeploymentHatchOpen=Base.DeploymentGrounded=true;
+    TArray<FVector2D> Route;
+    TestFalse(TEXT("Closer stock is separated by an impassable cliff"),Base.FindRoute(Base.BuildingAccessPoint(*Base.FindBuilding(Isolated)),Base.BuildingAccessPoint(*Base.FindBuilding(Port)),Route));
+    TestTrue(TEXT("Farther finite supply has a physical route"),Base.FindRoute(Base.BuildingAccessPoint(*Base.FindBuilding(Core)),Base.BuildingAccessPoint(*Base.FindBuilding(Port)),Route));
+    for(bool UseTruck:{false,true})
+    {
+        FSeigeSimulation S=Base;auto& Truck=S.TransportVehicles.Bodies[0];Truck.Embarked=!UseTruck;Truck.Status=UseTruck?TEXT("Available"):TEXT("Aboard shuttle");Truck.Position=S.BuildingAccessPoint(*S.FindBuilding(Core));
+        const double TotalBefore=S.TotalStock(Goods),CoreBefore=S.FindBuilding(Core)->Inventory.FindRef(Goods);const int32 BodiesBefore=S.Workers.Bodies.Num();
+        TMap<FString,FVector2D> Positions;for(const auto& W:S.Workers.Bodies)Positions.Add(W.Id,W.Position);
+        S.StepLogistics(S.Number(TEXT("dispatch_interval")));
+        if(!TestEqual(TEXT("Only one real pickup is accepted after skipping the isolated nearest source"),S.Couriers.Num(),1))return false;
+        const auto Task=S.Couriers[0];
+        TestTrue(TEXT("The ordinary trade load uses farther reachable supply"),Task.SourceId==Core&&Task.TargetId==Port&&Task.Resource==Goods&&!Task.ForConstruction&&Task.Amount==0&&Task.ReservedAmount==Quantity);
+        TestEqual(TEXT("Both real worker hauling and autonomous vehicle hauling exercise fallback"),Task.TransportVehicleId!=0,UseTruck);
+        TestTrue(TEXT("Rejected source retains every kg and holds no reservation"),S.FindBuilding(Isolated)->Inventory.FindRef(Goods)==IsolatedQuantity&&S.Workers.PickupReserved(S,Isolated,Goods)==0&&S.TotalStock(Goods)==TotalBefore);
+        for(const auto& W:S.Workers.Bodies)TestTrue(TEXT("Dispatch does not relocate workers"),W.Position.Equals(Positions[W.Id],1.e-8));
+        bool Conserved=true;
+        for(int32 I=0;I<20000&&S.Couriers.ContainsByPredicate([&](const auto& C){return C.Id==Task.Id;});++I)
+        {const double Step=S.FixedStepSeconds();S.Time+=Step;S.Workers.Tick(S,Step);S.TransportVehicles.Tick(S,Step);Conserved&=FMath::IsNearlyEqual(S.TotalStock(Goods),TotalBefore,1.e-7);}
+        TestFalse(TEXT("The accepted carrier physically completes its delivery"),S.Couriers.ContainsByPredicate([&](const auto& C){return C.Id==Task.Id;}));
+        TestTrue(TEXT("Only the reachable stock is moved to the intended port"),FMath::IsNearlyEqual(S.FindBuilding(Core)->Inventory.FindRef(Goods),CoreBefore-Quantity,1.e-7)&&S.FindBuilding(Port)->Inventory.FindRef(Goods)==Quantity&&S.FindBuilding(Isolated)->Inventory.FindRef(Goods)==IsolatedQuantity);
+        TestTrue(TEXT("Source fallback conserves goods throughout actual movement"),Conserved);
+        TestEqual(TEXT("Source fallback uses only the existing finite workers"),S.Workers.Bodies.Num(),BodiesBefore);
+    }
+    return true;
+}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRawInputBufferTest,"Seige.Workers.RawInputBuffersUsePhysicalLoads",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FSeigeRawInputBufferTest::RunTest(const FString&)
 {

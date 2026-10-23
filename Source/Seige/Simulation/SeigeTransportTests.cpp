@@ -19,7 +19,7 @@ bool PrepareStoredCrew(FSeigeSimulation& S,FString& Error)
 {
     int32 Count=S.BuildingDefs[TEXT("sensor")].ConstructionWorkers;
     for(const auto& Tier:S.TransportTiers)Count=FMath::Max(Count,Tier.Value.ConstructionWorkers);
-    if(!S.SetWorkerSurplusTarget(Count,Error))return false;
+    if(Count>S.WorkerSurplusTarget()){Error=TEXT("Required fixture crew exceeds automatic command reserve");return false;}
     FString WorkerRecipe;
     for(const auto& Id:S.ProductionOptions(S.Buildings[0].Id))if(S.Recipes[Id].WorkerOutput>0){WorkerRecipe=Id;break;}
     if(WorkerRecipe.IsEmpty()){Error=TEXT("Core must offer worker assembly");return false;}
@@ -28,7 +28,7 @@ bool PrepareStoredCrew(FSeigeSimulation& S,FString& Error)
     const double Limit=S.ProductionSeconds(S.Buildings[0],WorkerRecipe)*(Count+2)*S.BuildingDefs[S.CoreDefinition].Jobs+60;
     for(double Elapsed=0;Elapsed<Limit&&S.InactiveWorkerCount()<Count;Elapsed+=10)S.Tick(10);
     if(S.InactiveWorkerCount()<Count){Error=TEXT("Core could not manufacture the paid transport-test crew");return false;}
-    return S.SetWorkerSurplusTarget(0,Error);
+    return true;
 }
 double InstalledAlloy(const FSeigeSimulation& S){double Result=0;for(const auto& B:S.Buildings)Result+=B.InstalledMaterials.FindRef(TEXT("alloy"));for(const auto& R:S.Roads)Result+=R.InstalledMaterials.FindRef(TEXT("alloy"))+R.PreviousTierMaterials.FindRef(TEXT("alloy"));return Result;}
 }
@@ -79,7 +79,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeTransportNetworkTest,"Seige.Simulation.Ro
 bool FSeigeTransportNetworkTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation S,Loaded;if(!Deploy(S,Error)||!PrepareStoredCrew(S,Error)){AddError(Error);return false;}
-    TestTrue(TEXT("Default walking pace converts to exactly five kilometres per hour"),FMath::IsNearlyEqual(S.WalkingSpeed()*S.MetersPerWorldUnit()*3.6,5.,1.e-9));
+    TestTrue(TEXT("Default hover-worker pace converts to exactly ten kilometres per hour"),FMath::IsNearlyEqual(S.WalkingSpeed()*S.MetersPerWorldUnit()*3.6,10.,1.e-9));
     TArray<FVector2D> Route;
     if(!TestTrue(TEXT("Walking path can go around command reserved plot"),S.FindRoute(FVector2D(-1100,0),FVector2D(1100,0),Route)))return false;
     double Length=0;FVector2D P(-1100,0);for(const auto& Waypoint:Route){TestTrue(TEXT("Every path leg avoids reserved plots"),S.ClearWalkingLine(P,Waypoint));Length+=FVector2D::Distance(P,Waypoint);P=Waypoint;}

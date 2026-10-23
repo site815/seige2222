@@ -13,6 +13,8 @@ bool FSeigeCombatSystem::ClearFriendlyFire(const FSeigeSimulation& Sim,const FSt
     for(const auto& B:Sim.Buildings)if(B.Health>0&&!(Kind==TEXT("building")&&B.Id==Owner)&&HitBox(From,Aim,B.Position,Sim.Definition(B)->Footprint)<=1){if(Blocker)*Blocker=Sim.Definition(B)->Name;return false;}
     for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&!(Kind==TEXT("vehicle")&&V.Id==Owner)&&HitCircle(From,Aim,V.Position,Chassis[V.ChassisId].RadiusMeters/MetresPerUnit)<=1){if(Blocker)*Blocker=Chassis[V.ChassisId].Name;return false;}
     for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&HitCircle(From,Aim,V.Position,Sim.Mobility.ClearanceMeters(TEXT("transport"))/MetresPerUnit)<=1){if(Blocker)*Blocker=Sim.TransportVehicles.Definition().Name;return false;}
+    for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D)&&HitCircle(From,Aim,D.Position,Sim.Companions.BodyRadiusMeters/MetresPerUnit)<=1){if(Blocker)*Blocker=Sim.Companions.Name;return false;}
+    for(const auto& W:Sim.Workers.Bodies)if(Sim.Workers.IsExposed(W)&&HitCircle(From,Aim,W.Position,Sim.Workers.BodyRadiusMeters()/MetresPerUnit)<=1){if(Blocker)*Blocker=TEXT("worker");return false;}
     return true;
 }
 double FSeigeCombatSystem::BuildingWeaponWork(const FSeigeSimulation& Sim,int32 Id) const
@@ -84,12 +86,15 @@ bool FSeigeCombatSystem::DefensivePosition(const FSeigeSimulation& Sim,const FSe
     // Keep a valid route while flanking instead of recomputing a visibility
     // graph each fixed step. No enemy outside the unit's sensor is pursued.
     if(V.Status==TEXT("Repositioning for defense")&&V.Route.IsValidIndex(V.NextWaypoint)&&FVector2D::Distance(Anchor,V.Destination)*MetresPerUnit<=C.SensorMeters&&CanFire(V.Destination)){Position=V.Destination;return true;}
-    double Best=TNumericLimits<double>::Max();const double Clearance=C.RadiusMeters/MetresPerUnit;
+    // A firing corner must be outside the same padded body envelope used by
+    // mobility routing, otherwise every corner is rejected as inside the plot.
+    const auto* Profile=Sim.Mobility.Profile(C.Family);if(!Profile)return false;
+    double Best=TNumericLimits<double>::Max();const double Clearance=(FMath::Max(Profile->BodyRadiusMeters,C.RadiusMeters)+Profile->ClearanceMeters)/MetresPerUnit;
     auto Consider=[&](FVector2D Candidate,const FSeigeEnemy& Enemy)
     {
         const double Distance=FVector2D::Distance(Candidate,Enemy.Position)*MetresPerUnit;
         if(Distance>=Range||Distance<SafeDistance||FVector2D::Distance(Candidate,Anchor)*MetresPerUnit>C.SensorMeters||FMath::Abs(Candidate.X)>Sim.WorldHalfSize-Clearance||FMath::Abs(Candidate.Y)>Sim.WorldHalfSize-Clearance||!Sim.ClearWalkingLine(Candidate,Candidate,Clearance)||!ClearFriendlyFire(Sim,TEXT("vehicle"),V.Id,Candidate,Enemy.Position))return;
-        TArray<FVector2D> Route;if(!Sim.FindMobilityRoute(Chassis[V.ChassisId].Family,V.Position,Candidate,Route,Clearance*MetresPerUnit))return;double Length=0;FVector2D Previous=V.Position;
+        TArray<FVector2D> Route;if(!Sim.FindMobilityRoute(C.Family,V.Position,Candidate,Route,C.RadiusMeters))return;double Length=0;FVector2D Previous=V.Position;
         for(const auto& P:Route)
         {
             // The building route graph does not contain mobile circles. A
@@ -123,7 +128,7 @@ void FSeigeCombatSystem::DamageBuilding(FSeigeSimulation& Sim,int32 Id,double Da
 }
 void FSeigeCombatSystem::DamageVehicle(FSeigeSimulation& Sim,int32 Id,double Damage,const FString& Family,double ShieldMultiplier,double ArmorMultiplier)
 {
-    auto* V=FindVehicle(Id);if(!V||V->Health<=0||!FMath::IsFinite(Damage)||Damage<=0)return;const auto Profile=DamageProfiles.FindRef(Family);const double SM=ShieldMultiplier>0?ShieldMultiplier:FMath::Max(.05,Profile.X),AM=ArmorMultiplier>0?ArmorMultiplier:FMath::Max(.05,Profile.Y);Layers(Damage,SM,AM,V->Shield,V->Armor,V->Health);V->LastDamageTime=Sim.Time;if(V->Health<=0){for(auto& Body:Sim.Workers.Bodies)if(Body.State==TEXT("vehicle")&&Body.ContainerId==V->Id){Body.State=TEXT("destroyed");Body.Activity=TEXT("terminal");}V->Inventory.Empty();V->Route.Empty();V->NextWaypoint=0;V->Status=TEXT("Destroyed");}
+    auto* V=FindVehicle(Id);if(!V||V->Health<=0||!FMath::IsFinite(Damage)||Damage<=0)return;const auto Profile=DamageProfiles.FindRef(Family);const double SM=ShieldMultiplier>0?ShieldMultiplier:FMath::Max(.05,Profile.X),AM=ArmorMultiplier>0?ArmorMultiplier:FMath::Max(.05,Profile.Y);Layers(Damage,SM,AM,V->Shield,V->Armor,V->Health);V->LastDamageTime=Sim.Time;if(V->Health<=0){for(auto& Body:Sim.Workers.Bodies)if(Body.State==TEXT("vehicle")&&Body.ContainerId==V->Id){Body.Health=0;Body.State=TEXT("destroyed");Body.Activity=TEXT("terminal");}V->Inventory.Empty();V->Route.Empty();V->NextWaypoint=0;V->Status=TEXT("Destroyed");}
 }
 bool FSeigeCombatSystem::Fire(FSeigeSimulation& Sim,const FString& Kind,int32 Owner,FVector2D Position,int32 TargetId,const FSeigeWeaponDef& W,int32 WeaponSlot)
 {
@@ -138,10 +143,12 @@ bool FSeigeCombatSystem::Fire(FSeigeSimulation& Sim,const FString& Kind,int32 Ow
 void FSeigeCombatSystem::Impact(FSeigeSimulation& Sim,const FSeigeProjectile& P,const FString& Kind,int32 Id,FVector2D Position)
 {
     const auto& W=Weapons[P.WeaponId];++Hits;
-    auto Damage=[&](const FString& K,int32 I,double Amount){if(K==TEXT("building"))DamageBuilding(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(K==TEXT("vehicle"))DamageVehicle(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(K==TEXT("transport"))Sim.TransportVehicles.Damage(Sim,I,Amount);else if(auto* E=Sim.Enemies.FindByPredicate([&](const auto& V){return V.Id==I;}))E->Health=FMath::Max(0.,E->Health-Amount);};
+    auto Damage=[&](const FString& K,int32 I,double Amount){if(K==TEXT("building"))DamageBuilding(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(K==TEXT("vehicle"))DamageVehicle(Sim,I,Amount,W.Family,W.ShieldMultiplier,W.ArmorMultiplier);else if(K==TEXT("transport"))Sim.TransportVehicles.Damage(Sim,I,Amount);else if(K==TEXT("companion"))Sim.Companions.Damage(Sim,I,Amount);else if(K==TEXT("worker")){if(Sim.Workers.Bodies.IsValidIndex(I-1))Sim.Workers.Damage(Sim,Sim.Workers.Bodies[I-1].Id,Amount);}else if(auto* E=Sim.Enemies.FindByPredicate([&](const auto& V){return V.Id==I;}))E->Health=FMath::Max(0.,E->Health-Amount);};
     if(W.SplashMeters<=0){Damage(Kind,Id,W.Damage);return;}
     auto Splash=[&](const FString& K,int32 I,FVector2D Q){double Scale=1-FVector2D::Distance(Position,Q)*MetresPerUnit/W.SplashMeters;if(K==Kind&&I==Id)Scale=1;if(Scale>0)Damage(K,I,W.Damage*Scale);};
     for(auto& B:Sim.Buildings)if(B.Health>0)Splash(TEXT("building"),B.Id,B.Position);for(auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4)Splash(TEXT("vehicle"),V.Id,V.Position);for(auto& E:Sim.Enemies)if(E.Health>0)Splash(TEXT("enemy"),E.Id,E.Position);for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated)Splash(TEXT("transport"),V.Id,V.Position);
+    for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D))Splash(TEXT("companion"),D.Id,D.Position);
+    for(int32 I=0;I<Sim.Workers.Bodies.Num();++I)if(Sim.Workers.IsExposed(Sim.Workers.Bodies[I]))Splash(TEXT("worker"),I+1,Sim.Workers.Bodies[I].Position);
 }
 void FSeigeCombatSystem::AdvanceProjectile(FSeigeSimulation& Sim,FSeigeProjectile& P,double Seconds,bool& Remove)
 {
@@ -152,6 +159,8 @@ void FSeigeCombatSystem::AdvanceProjectile(FSeigeSimulation& Sim,FSeigeProjectil
     for(const auto& B:Sim.Buildings)if(B.Health>0)Accept(HitBox(P.Position,End,B.Position,Sim.Definition(B)->Footprint),TEXT("building"),B.Id);
     for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4)Accept(HitCircle(P.Position,End,V.Position,Chassis[V.ChassisId].RadiusMeters/MetresPerUnit),TEXT("vehicle"),V.Id);
     for(const auto& E:Sim.Enemies)if(E.Health>0)Accept(HitCircle(P.Position,End,E.Position,EnemyRadiusMeters/MetresPerUnit),TEXT("enemy"),E.Id);for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated)Accept(HitCircle(P.Position,End,V.Position,Sim.Mobility.ClearanceMeters(TEXT("transport"))/MetresPerUnit),TEXT("transport"),V.Id);
+    for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D))Accept(HitCircle(P.Position,End,D.Position,Sim.Companions.BodyRadiusMeters/MetresPerUnit),TEXT("companion"),D.Id);
+    for(int32 I=0;I<Sim.Workers.Bodies.Num();++I)if(Sim.Workers.IsExposed(Sim.Workers.Bodies[I]))Accept(HitCircle(P.Position,End,Sim.Workers.Bodies[I].Position,Sim.Workers.BodyRadiusMeters()/MetresPerUnit),TEXT("worker"),I+1);
     P.Position=Best<=1?FMath::Lerp(P.Position,End,Best):End;P.RemainingMeters=FMath::Max(0.,P.RemainingMeters-Travel);P.AgeSeconds+=Seconds;
     if(Best<=1){Impact(Sim,P,Kind,HitId,P.Position);Remove=true;}else if(P.RemainingMeters<=1.e-8){if(W.SplashMeters>0)Impact(Sim,P,TEXT(""),0,P.Position);Remove=true;}
 }
@@ -214,7 +223,9 @@ void FSeigeCombatSystem::Tick(FSeigeSimulation& Sim,double Seconds,bool Defensiv
      for(int32 I=0;I<State.Weapons.Num();++I){const auto& W=Weapons[State.Weapons[I]];double Available=Seconds*Work;while(Work>0&&Available+1.e-8>=State.Cooldowns[I]){Available=FMath::Max(0.,Available-State.Cooldowns[I]);State.Cooldowns[I]=0;const auto Control=QueryFire(Sim,TEXT("building"),B.Id,B.Position,W,0);if(!Control.Ready||!Fire(Sim,TEXT("building"),B.Id,B.Position,Control.TargetId,W,I)){Available=0;break;}State.Cooldowns[I]=W.ReloadSeconds;}State.Cooldowns[I]=FMath::Max(0.,State.Cooldowns[I]-Available);}}
     for(auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4){for(int32 I=0;I<V.Weapons.Num();++I){const auto& W=Weapons[V.Weapons[I]];double Available=Seconds;while(Available+1.e-8>=V.Cooldowns[I]){Available=FMath::Max(0.,Available-V.Cooldowns[I]);V.Cooldowns[I]=0;const auto Control=QueryFire(Sim,TEXT("vehicle"),V.Id,V.Position,W,0);if(!Control.Ready||!Fire(Sim,TEXT("vehicle"),V.Id,V.Position,Control.TargetId,W,I)){Available=0;break;}V.Cooldowns[I]=W.ReloadSeconds;}V.Cooldowns[I]=FMath::Max(0.,V.Cooldowns[I]-Available);}}
     for(const auto& E:Sim.Enemies)if(E.Health>0&&E.Id%100<int32(BugRangedFraction*100))
-    {double& Cooldown=BugCooldowns.FindOrAdd(E.Id);Cooldown=FMath::Max(0.,Cooldown-Seconds);if(Cooldown>0||Projectiles.Num()>=MaximumProjectiles)continue;FVector2D Aim=FVector2D::ZeroVector;double Best=BugRangeMeters/MetresPerUnit;bool Found=false;for(const auto& B:Sim.Buildings)if(B.Health>0&&FVector2D::Distance(E.Position,B.Position)<Best){Aim=B.Position;Best=FVector2D::Distance(E.Position,B.Position);Found=true;}for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&FVector2D::Distance(E.Position,V.Position)<Best){Aim=V.Position;Best=FVector2D::Distance(E.Position,V.Position);Found=true;}if(!Found)continue;const auto& W=Weapons[BugWeapon];const double Angle=FMath::Atan2(Aim.Y-E.Position.Y,Aim.X-E.Position.X)+FMath::DegreesToRadians((Random.FRand()*2-1)*W.AccuracyDegrees);FSeigeProjectile P;P.Id=NextId++;P.OwnerId=E.Id;P.OwnerKind=TEXT("enemy");P.WeaponId=BugWeapon;P.Position=P.PreviousPosition=E.Position;P.Velocity=FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*W.SpeedMetersSecond/MetresPerUnit;P.RemainingMeters=W.RangeMeters;Projectiles.Add(P);Cooldown=BugFireInterval;}
+    {double& Cooldown=BugCooldowns.FindOrAdd(E.Id);Cooldown=FMath::Max(0.,Cooldown-Seconds);if(Cooldown>0||Projectiles.Num()>=MaximumProjectiles)continue;FVector2D Aim=FVector2D::ZeroVector;double Best=BugRangeMeters/MetresPerUnit;bool Found=false;for(const auto& B:Sim.Buildings)if(B.Health>0&&FVector2D::Distance(E.Position,B.Position)<Best){Aim=B.Position;Best=FVector2D::Distance(E.Position,B.Position);Found=true;}for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&FVector2D::Distance(E.Position,V.Position)<Best){Aim=V.Position;Best=FVector2D::Distance(E.Position,V.Position);Found=true;}for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D)&&FVector2D::Distance(E.Position,D.Position)<Best){Aim=D.Position;Best=FVector2D::Distance(E.Position,D.Position);Found=true;}
+    for(const auto& Body:Sim.Workers.Bodies)if(Sim.Workers.IsExposed(Body)&&FVector2D::Distance(E.Position,Body.Position)<Best){Aim=Body.Position;Best=FVector2D::Distance(E.Position,Body.Position);Found=true;}
+    if(!Found)continue;const auto& W=Weapons[BugWeapon];const double Angle=FMath::Atan2(Aim.Y-E.Position.Y,Aim.X-E.Position.X)+FMath::DegreesToRadians((Random.FRand()*2-1)*W.AccuracyDegrees);FSeigeProjectile P;P.Id=NextId++;P.OwnerId=E.Id;P.OwnerKind=TEXT("enemy");P.WeaponId=BugWeapon;P.Position=P.PreviousPosition=E.Position;P.Velocity=FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*W.SpeedMetersSecond/MetresPerUnit;P.RemainingMeters=W.RangeMeters;Projectiles.Add(P);Cooldown=BugFireInterval;}
     for(int32 I=Projectiles.Num()-1;I>=0;--I){if(Projectiles[I].SectorIndex!=4)continue;bool Remove=false;AdvanceProjectile(Sim,Projectiles[I],Seconds,Remove);if(Remove)Projectiles.RemoveAt(I);}
     for(auto It=BugCooldowns.CreateIterator();It;++It)if(!Sim.Enemies.ContainsByPredicate([&](const auto& E){return E.Id==It.Key()&&E.Health>0;}))It.RemoveCurrent();
 }

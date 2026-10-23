@@ -35,7 +35,7 @@ bool FSeigeTradeSystem::CanTrade(const FSeigeSimulation& Sim,int32 Id,const FStr
     if(!B->Shipment.Resource.IsEmpty()){Error=TEXT("This trading port already has a shipment");return false;}
     if(Buy){if(Sim.Credits<Quote(R,Q,true)){Error=TEXT("Not enough credits; export local goods first");return false;}if(Q*Resource->LitresPerUnit>Sim.StorageRoom(*B)+1.e-8){Error=TEXT("Trading port has insufficient unreserved import storage");return false;}}
     else{double Available=0;for(const auto& S:Sim.Buildings)if(S.Health>0&&!S.IsConstructing)Available+=ExportableStock(Sim,S,R);
-        if(R==Sim.TextRule(TEXT("inactive_worker_resource")))Available=FMath::Max(0.,Available-Sim.WorkerSurplusTarget-FMath::Max(0,FMath::Min(Sim.TotalJobs,Sim.RobotSupportCapacity)-Sim.Population));
+        if(R==Sim.TextRule(TEXT("inactive_worker_resource")))Available=FMath::Max(0.,Available-Sim.WorkerSurplusTarget()-FMath::Max(0,FMath::Min(Sim.TotalJobs,Sim.RobotSupportCapacity)-Sim.Population));
         if(Available+1.e-8<Q){Error=TEXT("Not enough unreserved goods for export");return false;}if(Q*Resource->LitresPerUnit>Sim.Definition(*B)->StorageCapacity){Error=TEXT("Export exceeds local port storage");return false;}}
     Error.Empty();return true;
 }

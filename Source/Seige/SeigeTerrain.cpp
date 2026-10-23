@@ -2,6 +2,7 @@
 #include "SeigeSceneryContact.h"
 #include "SeigeSceneryPlacement.h"
 #include "SeigeSceneryStreaming.h"
+#include "SeigeWindPresentation.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "ProceduralMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -14,6 +15,8 @@
 #include "Async/ParallelFor.h"
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Tests/AutomationCommon.h"
 #endif
 
@@ -139,17 +142,21 @@ struct FHeightPad
     FVector2D Position;
     double Height=0,Inner=0,Outer=0;
     double Core=0;   // half-width of the building's own (planned) plot
+    bool BlendLevelZone=false;
+    bool Visible=true;
 };
 struct FHeightRoad
 {
     FVector2D A,B;
     double Inner=0,Outer=0;
     bool RequiresSight=false;
+    TArray<FVector2D> Profile; // normalized distance, shared junction elevation
 };
 struct FPreparedTerrain
 {
     const ASeigeGameMode& Game;
     TArray<FHeightPad> Pads[9];
+    TArray<FHeightPad> AnchorPads[9];
     TArray<FHeightRoad> Roads[9];
     TMap<FString,FVector4> Bounds;
     FString Signature;
@@ -159,13 +166,14 @@ struct FPreparedTerrain
         Signature=G.Sim.Environment.Fingerprint+TEXT(";");
         const double Angle=FMath::DegreesToRadians(double(G.RidgeAngleDegrees));
         RidgeCos=FMath::Cos(Angle);RidgeSin=FMath::Sin(Angle);
+        TArray<TPair<FString,FHeightPad>> UniquePads;
         auto AddColony=[&](const FSeigeSimulation& Colony,FVector2D Offset,int32 Index)
         {
-            if(Index<0||Index>8||(!Authoritative&&Index==4&&HidePendingHomeFoundation(G)))return;
+            if(Index<0||Index>8)return;
             for(const auto& B:Colony.Buildings)
             {
                 const FVector2D P=B.Position+Offset;
-                if(B.Health<=0||(!Authoritative&&!G.Observer&&Index!=4&&!G.IsWorldVisible(P)))continue;
+                if(B.Health<=0)continue;
                 if(const auto* D=Colony.Definition(B))
                 {
                     const double GridStep=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
@@ -176,46 +184,84 @@ struct FPreparedTerrain
                     const double Reserved=Planned?Planned->Footprint:D->Footprint;
                     const double Inner=FMath::Max(double(Reserved*G.CorePadInnerRatio),Reserved+GridStep);
                     const double Outer=FMath::Max(double(Reserved*G.CorePadOuterRatio),Inner+GridStep);
-                    const FHeightPad Pad{P,Natural(P),Inner,Outer,Reserved};
+                    const bool Visible=Authoritative||(!(Index==4&&HidePendingHomeFoundation(G))&&(G.Observer||Index==4||G.IsWorldVisible(P)));
+                    const FHeightPad Pad{P,Natural(P),Inner,Outer,Reserved,false,Visible};
                     const FString Key=FString::Printf(TEXT("%d:%d"),Index,B.Id);
-                    Bounds.Add(Key,FVector4(P.X,P.Y,Inner,Outer));
-                    Signature+=FString::Printf(TEXT("%s:%.4f:%.4f:%.4f:%.4f;"),*Key,P.X,P.Y,Inner,Outer);
-                    const double Span=G.Sim.WorldHalfSize*2;
-                    const int32 MinX=FMath::Clamp(FMath::FloorToInt((P.X-Pad.Outer+Span*.5)/Span),-1,1),MaxX=FMath::Clamp(FMath::FloorToInt((P.X+Pad.Outer+Span*.5)/Span),-1,1);
-                    const int32 MinY=FMath::Clamp(FMath::FloorToInt((P.Y-Pad.Outer+Span*.5)/Span),-1,1),MaxY=FMath::Clamp(FMath::FloorToInt((P.Y+Pad.Outer+Span*.5)/Span),-1,1);
-                    // A border-side foundation has the same influence from either
-                    // adjacent tile, so changing detail level cannot open a seam.
-                    for(int32 Y=MinY;Y<=MaxY;++Y)for(int32 X=MinX;X<=MaxX;++X)Pads[(Y+1)*3+X+1].Add(Pad);
+                    UniquePads.Add({Key,Pad});
                 }
             }
         };
         AddColony(G.Sim,FVector2D::ZeroVector,4);
         for(const auto& N:G.Neighbors)AddColony(N.Sim,N.Offset,N.Index);
+        // Expanded flat shoulders can overlap even when the actual building
+        // footprints are separate. Blend those shoulders from the true plot
+        // edges; switching a nearest-pad owner made a vertical terrain step.
+        for(int32 I=0;I<UniquePads.Num();++I)for(int32 J=I+1;J<UniquePads.Num();++J)
+        {
+            auto& A=UniquePads[I].Value;auto& B=UniquePads[J].Value;const auto Delta=A.Position-B.Position;
+            if(FMath::Abs(Delta.X)<A.Inner+B.Inner&&FMath::Abs(Delta.Y)<A.Inner+B.Inner&&FMath::Abs(A.Height-B.Height)>1.e-6)
+                A.BlendLevelZone=B.BlendLevelZone=true;
+        }
+        for(const auto& Entry:UniquePads)
+        {
+            const auto& Pad=Entry.Value;const auto& P=Pad.Position;const double Span=G.Sim.WorldHalfSize*2;
+            // A neighbor can change this pad's complete shoulder. Encode that
+            // state in its identity so incremental mesh refresh includes its
+            // old and new full bounds, not only the new neighbor's footprint.
+            const FString Key=Entry.Key+FString::Printf(TEXT(":blend%d"),Pad.BlendLevelZone?1:0);
+            if(Pad.Visible){Bounds.Add(Key,FVector4(P.X,P.Y,Pad.Inner,Pad.Outer));Signature+=FString::Printf(TEXT("%s:%.4f:%.4f:%.4f:%.4f;"),*Key,P.X,P.Y,Pad.Inner,Pad.Outer);}
+            const int32 MinX=FMath::Clamp(FMath::FloorToInt((P.X-Pad.Outer+Span*.5)/Span),-1,1),MaxX=FMath::Clamp(FMath::FloorToInt((P.X+Pad.Outer+Span*.5)/Span),-1,1);
+            const int32 MinY=FMath::Clamp(FMath::FloorToInt((P.Y-Pad.Outer+Span*.5)/Span),-1,1),MaxY=FMath::Clamp(FMath::FloorToInt((P.Y+Pad.Outer+Span*.5)/Span),-1,1);
+            // Decide the shared state before copying into spatial buckets.
+            for(int32 Y=MinY;Y<=MaxY;++Y)for(int32 X=MinX;X<=MaxX;++X){AnchorPads[(Y+1)*3+X+1].Add(Pad);if(Pad.Visible)Pads[(Y+1)*3+X+1].Add(Pad);}
+        }
+        TArray<TPair<FString,FHeightRoad>> UniqueRoads;
         auto AddRoads=[&](const FSeigeSimulation& Colony,FVector2D Offset,int32 Index)
         {
-            if(Index<0||Index>8)return;
-            const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution,Span=G.Sim.WorldHalfSize*2;
+            if(Index<0||Index>8||!Colony.RoadsEnabled())return;
+            const double Step=G.Sim.WorldHalfSize*2/G.DetailedTerrainResolution;
             for(const auto& Road:Colony.Roads)
             {
                 if(Road.Health<=0)continue;
                 const double Half=RoadHalfWidth(Colony,Road);if(Half<=0)continue;
-                const FVector2D A=Road.A+Offset,B=Road.B+Offset,Center=(A+B)*.5;
+                const FVector2D A=Road.A+Offset,B=Road.B+Offset;
                 const double Inner=Half+Step,Outer=Inner+Step;
                 const bool RequiresSight=!Authoritative&&!G.Observer&&Index!=4;
                 bool AnyVisible=true;const FString Sight=RequiresSight?RoadSightToken(G,A,B,AnyVisible):FString();
-                if(!AnyVisible)continue;
                 const FHeightRoad Grade{A,B,Inner,Outer,RequiresSight};
-                const double Radius=FMath::Max(FMath::Abs(A.X-B.X),FMath::Abs(A.Y-B.Y))*.5+Outer;
                 const FString Key=FString::Printf(TEXT("road:%d:%d:%s"),Index,Road.Id,*Sight);
-                Bounds.Add(Key,FVector4(Center.X,Center.Y,Inner,Radius));
-                Signature+=FString::Printf(TEXT("%s:%.4f:%.4f:%.4f:%.4f:%.4f;"),*Key,A.X,A.Y,B.X,B.Y,Half);
-                const int32 MinX=FMath::Clamp(FMath::FloorToInt((FMath::Min(A.X,B.X)-Outer+Span*.5)/Span),-1,1),MaxX=FMath::Clamp(FMath::FloorToInt((FMath::Max(A.X,B.X)+Outer+Span*.5)/Span),-1,1);
-                const int32 MinY=FMath::Clamp(FMath::FloorToInt((FMath::Min(A.Y,B.Y)-Outer+Span*.5)/Span),-1,1),MaxY=FMath::Clamp(FMath::FloorToInt((FMath::Max(A.Y,B.Y)+Outer+Span*.5)/Span),-1,1);
-                for(int32 Y=MinY;Y<=MaxY;++Y)for(int32 X=MinX;X<=MaxX;++X)Roads[(Y+1)*3+X+1].Add(Grade);
+                UniqueRoads.Add({Key,Grade});
             }
         };
         AddRoads(G.Sim,FVector2D::ZeroVector,4);
         for(const auto& N:G.Neighbors)AddRoads(N.Sim,N.Offset,N.Index);
+        // Road joins share one elevation, including T junctions and crossings.
+        // Profiles come from complete geometry, independent of what is visible.
+        TArray<FVector2D> Nodes;
+        auto AddNode=[&](FVector2D P){for(const auto& Existing:Nodes)if(Existing.Equals(P,.001))return;Nodes.Add(P);};
+        for(const auto& Entry:UniqueRoads){AddNode(Entry.Value.A);AddNode(Entry.Value.B);}
+        auto Cross=[](FVector2D A,FVector2D B){return A.X*B.Y-A.Y*B.X;};
+        for(int32 I=0;I<UniqueRoads.Num();++I)for(int32 J=I+1;J<UniqueRoads.Num();++J)
+        {
+            const auto& A=UniqueRoads[I].Value;const auto& B=UniqueRoads[J].Value;const FVector2D D=A.B-A.A,E=B.B-B.A;const double Den=Cross(D,E);
+            if(FMath::Abs(Den)<1.e-9)continue;const double T=Cross(B.A-A.A,E)/Den,U=Cross(B.A-A.A,D)/Den;
+            if(T>=0&&T<=1&&U>=0&&U<=1)AddNode(A.A+D*T);
+        }
+        TArray<double> Heights;for(const auto& Node:Nodes)Heights.Add(PadHeight(Node,Natural(Node),true));
+        for(auto& Entry:UniqueRoads)
+        {
+            auto& Road=Entry.Value;const FVector2D D=Road.B-Road.A;const double LengthSquared=D.SizeSquared();
+            for(int32 I=0;I<Nodes.Num();++I)
+            {const double T=FVector2D::DotProduct(Nodes[I]-Road.A,D)/FMath::Max(LengthSquared,1.e-9);if(T>=-1.e-8&&T<=1+1.e-8&&ClosestRoadPoint(Nodes[I],Road.A,Road.B).Equals(Nodes[I],.001))Road.Profile.Add({FMath::Clamp(T,0.,1.),Heights[I]});}
+            Road.Profile.Sort([](const auto& A,const auto& B){return A.X<B.X;});
+            if(Road.RequiresSight){bool AnyVisible=false;RoadSightToken(G,Road.A,Road.B,AnyVisible);if(!AnyVisible)continue;}
+            FString Key=Entry.Key+FString::Printf(TEXT(":%.9g:%.9g:%.9g:%.9g:%.9g:%.9g"),Road.A.X,Road.A.Y,Road.B.X,Road.B.Y,Road.Inner,Road.Outer);for(const auto& Anchor:Road.Profile)Key+=FString::Printf(TEXT(":%.9g,%.9g"),Anchor.X,Anchor.Y);
+            const auto Center=(Road.A+Road.B)*.5;const double Radius=FMath::Max(FMath::Abs(D.X),FMath::Abs(D.Y))*.5+Road.Outer,Span=G.Sim.WorldHalfSize*2;
+            Bounds.Add(Key,FVector4(Center.X,Center.Y,Road.Inner,Radius));Signature+=Key+TEXT(";");
+            const int32 MinX=FMath::Clamp(FMath::FloorToInt((FMath::Min(Road.A.X,Road.B.X)-Road.Outer+Span*.5)/Span),-1,1),MaxX=FMath::Clamp(FMath::FloorToInt((FMath::Max(Road.A.X,Road.B.X)+Road.Outer+Span*.5)/Span),-1,1);
+            const int32 MinY=FMath::Clamp(FMath::FloorToInt((FMath::Min(Road.A.Y,Road.B.Y)-Road.Outer+Span*.5)/Span),-1,1),MaxY=FMath::Clamp(FMath::FloorToInt((FMath::Max(Road.A.Y,Road.B.Y)+Road.Outer+Span*.5)/Span),-1,1);
+            for(int32 Y=MinY;Y<=MaxY;++Y)for(int32 X=MinX;X<=MaxX;++X)Roads[(Y+1)*3+X+1].Add(Road);
+        }
     }
     double Natural(FVector2D P) const
     {
@@ -223,37 +269,39 @@ struct FPreparedTerrain
         const double Along=(Delta.X*RidgeCos+Delta.Y*RidgeSin)/Game.RidgeLength;
         const double Across=(-Delta.X*RidgeSin+Delta.Y*RidgeCos)/Game.RidgeWidth;
         const double Ridge=Game.RidgeHeight*FMath::Exp(-Across*Across-Along*Along*Along*Along);
-        const double Base=FMath::PerlinNoise2D(P/13000+FVector2D(17.8,-8.1))*1500+
+        const auto& Environment=Game.Sim.Environment;
+        const double Regional=Environment.Enabled?Environment.BaseElevation+P.Y*Environment.NorthSlope:0;
+        const double Macro=Environment.Enabled?Environment.MacroAmplitude:1500;
+        const double Base=Regional+FMath::PerlinNoise2D(P/13000+FVector2D(17.8,-8.1))*Macro+
             FMath::PerlinNoise2D(P/Game.RollingTerrainWavelength+FVector2D(-4.6,25.4))*Game.RollingTerrainAmplitude+
             FMath::PerlinNoise2D(P/Game.MicroTerrainWavelength+FVector2D(41.2,12.5))*Game.MicroTerrainAmplitude+Ridge;
         return Game.Sim.Environment.ShapeHeight(P-Game.Sim.Environment.WorldOffset,Base);
     }
-    double PadHeight(FVector2D P,double Base) const
+    double PadHeight(FVector2D P,double Base,bool Anchors=false) const
     {
         const double Span=Game.Sim.WorldHalfSize*2;
         const int32 X=FMath::FloorToInt((P.X+Span*.5)/Span),Y=FMath::FloorToInt((P.Y+Span*.5)/Span);
         if(X<-1||X>1||Y<-1||Y>1)return Base;
-        // Inside any pad's level zone the nearest plot owns the height: the
-        // point belongs to the building whose plot edge it is deepest behind.
-        // Overlapping level zones of adjacent plots on a slope used to average,
-        // which buried one building's edge and dropped the ground away under the
-        // other's; now each plot stays level and the step falls between them.
+        // Actual footprints stay exactly level. Isolated pads also retain
+        // their expanded level shoulder for the surrounding mesh vertices.
         const FHeightPad* Owner=nullptr;double OwnerDepth=0;
-        for(const auto& Pad:Pads[(Y+1)*3+X+1])
+        const auto& SelectedPads=Anchors?AnchorPads[(Y+1)*3+X+1]:Pads[(Y+1)*3+X+1];
+        for(const auto& Pad:SelectedPads)
         {
             const FVector2D D=P-Pad.Position;const double Distance=FMath::Max(FMath::Abs(D.X),FMath::Abs(D.Y));
-            if(Distance<=Pad.Inner&&(!Owner||Distance-Pad.Core<OwnerDepth)){Owner=&Pad;OwnerDepth=Distance-Pad.Core;}
+            const double LevelRadius=Pad.BlendLevelZone?Pad.Core:Pad.Inner;
+            if(Distance<=LevelRadius&&(!Owner||Distance-Pad.Core<OwnerDepth)){Owner=&Pad;OwnerDepth=Distance-Pad.Core;}
         }
         if(Owner)return Owner->Height;
         double WeightedHeight=0,TotalWeight=0,Influence=0;
-        for(const auto& Pad:Pads[(Y+1)*3+X+1])
+        for(const auto& Pad:SelectedPads)
         {
             // A square foundation needs level corners as well as its center.
             // Smooth compact falloffs keep the surrounding meadow continuous.
             const FVector2D D=P-Pad.Position;
             const double Distance=FMath::Max(FMath::Abs(D.X),FMath::Abs(D.Y));
             if(Distance>=Pad.Outer)continue;
-            const double Weight=1-FMath::SmoothStep(Pad.Inner,Pad.Outer,Distance);
+            const double Weight=1-FMath::SmoothStep(Pad.BlendLevelZone?Pad.Core:Pad.Inner,Pad.Outer,Distance);
             const double BlendWeight=Weight/FMath::Max(.000001,1-Weight);
             WeightedHeight+=Pad.Height*BlendWeight;TotalWeight+=BlendWeight;Influence=FMath::Max(Influence,Weight);
         }
@@ -264,26 +312,48 @@ struct FPreparedTerrain
         double Base=Natural(P);const double Span=Game.Sim.WorldHalfSize*2;
         const int32 X=FMath::FloorToInt((P.X+Span*.5)/Span),Y=FMath::FloorToInt((P.Y+Span*.5)/Span);
         if(X<-1||X>1||Y<-1||Y>1)return Base;
+        // Preserve water and exact building bodies. A constructed road may
+        // grade the surrounding foundation shoulder, not the building itself.
+        if(Game.Sim.Environment.WaterAt(P-Game.Sim.Environment.WorldOffset).Present)return Base;
+        double NearestFootprint=TNumericLimits<double>::Max();const double GridStep=Span/Game.DetailedTerrainResolution;
+        for(const auto& Pad:Pads[(Y+1)*3+X+1])
+        {
+            const auto D=P-Pad.Position;const double EdgeDistance=FMath::Max(FMath::Abs(D.X),FMath::Abs(D.Y))-Pad.Core;
+            if(EdgeDistance<=0)return Pad.Height;
+            NearestFootprint=FMath::Min(NearestFootprint,EdgeDistance);
+        }
+        Base=PadHeight(P,Base);
         double WeightedHeight=0,TotalWeight=0,Influence=0;
         for(const auto& Road:Roads[(Y+1)*3+X+1])
         {
             const FVector2D Q=ClosestRoadPoint(P,Road.A,Road.B);
             const double Distance=(P-Q).Length();
             if(Distance>=Road.Outer||(Road.RequiresSight&&(!Game.IsWorldVisible(Q)||!Game.IsWorldVisible(P))))continue;
-            const double Weight=1-FMath::SmoothStep(Road.Inner,Road.Outer,Distance);
-            const double BlendWeight=Weight/FMath::Max(.000001,1-Weight);
-            const FVector2D Along=(Road.B-Road.A).GetSafeNormal()*Span/Game.DetailedTerrainResolution;
-            // Smooth a few meters along the existing hill, not a straight ramp
-            // between distant endpoints. Pads take precedence at plot entrances.
-            const FVector2D Before=ClosestRoadPoint(Q-Along,Road.A,Road.B),After=ClosestRoadPoint(Q+Along,Road.A,Road.B);
-            const double Target=(PadHeight(Before,Natural(Before))+2*PadHeight(Q,Natural(Q))+PadHeight(After,Natural(After)))*.25;
+            double FootprintBlend=1;
+            if(NearestFootprint<GridStep)
+            {
+                // Limit the fade by this road's actual clearance to each
+                // footprint. Even a legal centerline nearer than one mesh
+                // cell must retain its exact longitudinal elevation.
+                double FadeWidth=GridStep;
+                for(const auto& Pad:Pads[(Y+1)*3+X+1])
+                {const auto D=Q-Pad.Position;FadeWidth=FMath::Min(FadeWidth,FMath::Max(1.e-6,FMath::Max(FMath::Abs(D.X),FMath::Abs(D.Y))-Pad.Core));}
+                FootprintBlend=FMath::SmoothStep(0.,FadeWidth,NearestFootprint);
+            }
+            const double Weight=(1-FMath::SmoothStep(Road.Inner,Road.Outer,Distance))*FootprintBlend;
+            const double T=FVector2D::DotProduct(Q-Road.A,Road.B-Road.A)/FMath::Max((Road.B-Road.A).SizeSquared(),1.e-9);
+            double Target=Road.Profile.Num()>=2?Road.Profile.Last().Y:FMath::Lerp(PadHeight(Road.A,Natural(Road.A)),PadHeight(Road.B,Natural(Road.B)),T);
+            for(int32 I=1;I<Road.Profile.Num();++I)if(T<=Road.Profile[I].X+1.e-9)
+            {const auto& A=Road.Profile[I-1];const auto& B=Road.Profile[I];Target=FMath::Lerp(A.Y,B.Y,FMath::Clamp((T-A.X)/FMath::Max(B.X-A.X,1.e-9),0.,1.));break;}
+            // Each centerline exactly follows its continuous longitudinal
+            // profile. Shared junction anchors agree, so bends/crossings do not
+            // create competing elevation plateaus. Blend only crosswise.
+            if(Distance<1.e-7)return FMath::Lerp(Base,Target,FootprintBlend);
+            const double BlendWeight=Weight/FMath::Max(1.e-8,Distance*Distance);
             WeightedHeight+=Target*BlendWeight;TotalWeight+=BlendWeight;Influence=FMath::Max(Influence,Weight);
         }
         if(TotalWeight>0)Base=FMath::Lerp(Base,WeightedHeight/TotalWeight,Influence);
-        // Dry building bodies may still have a broad smoothing shoulder near
-        // a bank. Do not let that shoulder fill the physical river/lake bed.
-        if(Game.Sim.Environment.WaterAt(P-Game.Sim.Environment.WorldOffset).Present)return Natural(P);
-        return PadHeight(P,Base);
+        return Base;
     }
 };
 double VertexHeight(const FPreparedTerrain& Prepared,const FSeigeTerrainTile& Tile,int32 X,int32 Y)
@@ -867,6 +937,7 @@ struct FSceneryClearance
 };
 void AddRoadClearances(const ASeigeGameMode& G,const FSeigeSimulation& Colony,FVector2D Offset,int32 Sector,TArray<FSceneryClearance>& Areas)
 {
+    if(!Colony.RoadsEnabled())return;
     for(const auto& Road:Colony.Roads)
     {
         if(Road.Health<=0)continue;
@@ -905,10 +976,11 @@ bool IsSceneryClear(const ASeigeGameMode& G,FVector2D P,double Radius,FVector2D 
     if(!G.Sim.Environment.CanStand(P-G.Sim.Environment.WorldOffset,Radius))return true;
     if(G.Sim.Environment.Enabled)for(const auto& Cliff:G.Sim.Environment.Cliffs)
     {
-        const double ShortRadius=FMath::Min(Cliff.Radii.X,Cliff.Radii.Y);
-        if(Cliff.Height/(ShortRadius*Cliff.EdgeRatio)<.65)continue;
-        const double Distance=((P-Cliff.Center)/Cliff.Radii).Size(),Margin=Radius/ShortRadius;
-        if(Distance>1-Cliff.EdgeRatio-Margin&&Distance<1+Margin)return true;
+        if(FVector2D::Distance(P,Cliff.Center)>FMath::Max(Cliff.Radii.X,Cliff.Radii.Y)*1.5+Radius)continue;
+        const double Step=FMath::Max(12.,Radius);
+        const double DX=(Cliff.Elevation(P+FVector2D(Step,0))-Cliff.Elevation(P-FVector2D(Step,0)))/(2*Step);
+        const double DY=(Cliff.Elevation(P+FVector2D(0,Step))-Cliff.Elevation(P-FVector2D(0,Step)))/(2*Step);
+        if(DX*DX+DY*DY>.65*.65)return true;
     }
     for(const auto& A:Areas)
     {
@@ -940,12 +1012,13 @@ UInstancedStaticMeshComponent* VegetationSet(AActor* Actor,USceneComponent* Root
     Set->InstanceMinDrawDistance=FMath::RoundToInt(MinDistance);
     Set->SetCullDistances(FMath::RoundToInt(FadeStart),FMath::RoundToInt(MaxDistance));
     const bool Tree=Kind.StartsWith(TEXT("Oak"))||Kind.StartsWith(TEXT("Pine"));
-    // Only leaves/grass have WPO; bark remains rigid. The material smoothly
-    // reaches zero before this per-instance cutoff, including proxy canopies.
-    // Cached shadows stay rigid: subtle rustle does not redraw forest VSM pages.
+    // Tree crowns keep low-frequency motion at survey zoom, including proxies.
+    // Only fine flutter fades with distance. Grass still reaches zero before its
+    // nearby cutoff. Bark and cached shadows stay rigid so restrained crown
+    // motion does not invalidate every forest shadow page every frame.
     const bool Wind=(Tree||Sward)&&WindDistanceMeters>0;
     Set->SetEvaluateWorldPositionOffset(Wind);
-    if(Wind)Set->WorldPositionOffsetDisableDistance=FMath::RoundToInt(WindDistanceMeters*100+Mesh->GetBounds().SphereRadius);
+    if(Wind)Set->WorldPositionOffsetDisableDistance=SeigeWindPresentation::DisableDistance(Tree,WindDistanceMeters,Mesh->GetBounds().SphereRadius);
     Set->ShadowCacheInvalidationBehavior=EShadowCacheInvalidationBehavior::Rigid;
     // One float per instance carries the terrain's coherent meadow vigor so the
     // card tint follows the ground colour beneath it (see M_GrassCardV091).
@@ -1682,6 +1755,80 @@ bool FSeigeSimulationTerrainCacheTest::RunTest(const FString&)
     if(!World.GetTestWorld()->SetGameMode(Url)){AddError(TEXT("Cannot create terrain fixture"));return false;}
     auto* G=Cast<ASeigeGameMode>(World.GetTestWorld()->GetAuthGameMode());
     if(!G||!G->Sim.Initialize(FPaths::ProjectDir()/TEXT("Rules"),G->Error,false,false)){AddError(G?G->Error:TEXT("No terrain fixture"));return false;}
+    if(FParse::Param(FCommandLine::Get(),TEXT("ProbeStalledRoutes")))
+    {
+        FString Snapshot=FPaths::ProjectSavedDir()/TEXT("Diagnostics/StartingAI/seed-815-sector-4-terrain/latest.json");
+        FParse::Value(FCommandLine::Get(),TEXT("ProbeStalledSnapshot="),Snapshot);
+        int32 Seed=815,Sector=4;FParse::Value(FCommandLine::Get(),TEXT("ProbeStalledSeed="),Seed);FParse::Value(FCommandLine::Get(),TEXT("ProbeStalledSector="),Sector);
+        if(Sector<0||Sector>8||!G->LoadGraphicsSettings()){AddError(TEXT("Invalid terrain probe settings"));return false;}
+        G->ScenarioSeedOverride=Seed;G->ScenarioBackgroundBugs=G->ScenarioPeriodicAttacks=false;
+        G->ScenarioSlots.Init(TEXT("empty"),9);G->ScenarioSlots[4]=TEXT("player");G->ScenarioSlots[Sector]=TEXT("starting");
+        if(!G->InitializeScenario(G->Error)){AddError(G->Error);return false;}
+        FSeigeSimulation* Colony=&G->Sim;FVector2D Offset=FVector2D::ZeroVector;
+        if(Sector!=4){auto* Neighbor=G->Neighbors.FindByPredicate([&](const auto& N){return N.Index==Sector;});if(!Neighbor){AddError(TEXT("Probe neighbor missing"));return false;}Colony=&Neighbor->Sim;Offset=Neighbor->Offset;}
+        if(!Colony->Load(Snapshot,G->Error)){AddError(G->Error);return false;}
+        auto& S=*Colony;G->Screen=TEXT("playing");G->Observer=true;G->ConfigureCombatTerrain();
+        FPreparedTerrain Roadless(*G,true);for(auto& SectorRoads:Roadless.Roads)SectorRoads.Empty();
+        auto MaximumGrade=[&](FVector2D A,FVector2D B,int32 Surface)
+        {
+            auto Sample=[&](FVector2D P){return Surface==0?G->SimulationTerrainHeight(P+Offset):Surface==1?Roadless.Height(P+Offset):Roadless.Natural(P+Offset);};
+            const int32 Steps=FMath::Max(1,FMath::CeilToInt(FVector2D::Distance(A,B)*S.MetersPerWorldUnit()/.05));
+            double Previous=Sample(A),Maximum=0;const double Step=FVector2D::Distance(A,B)/Steps;
+            for(int32 I=1;I<=Steps;++I){const double Current=Sample(FMath::Lerp(A,B,double(I)/Steps));Maximum=FMath::Max(Maximum,FMath::Abs(Current-Previous)/FMath::Max(Step,1.e-9));Previous=Current;}
+            return Maximum;
+        };
+        for(const auto& Road:S.Roads)
+            AddInfo(FString::Printf(TEXT("ROAD_PROBE id=%d a=(%.3f,%.3f) b=(%.3f,%.3f) worker=%d transport=%d max_grade=%.6f no_road=%.6f natural=%.6f"),Road.Id,Road.A.X,Road.A.Y,Road.B.X,Road.B.Y,S.Mobility.MovementAllowed(S,TEXT("drone"),Road.A,Road.B),S.Mobility.MovementAllowed(S,TEXT("transport"),Road.A,Road.B),MaximumGrade(Road.A,Road.B,0),MaximumGrade(Road.A,Road.B,1),MaximumGrade(Road.A,Road.B,2)));
+        const auto& Core=S.Buildings[0];const FVector2D Port=S.BuildingAccessPoint(Core);
+        for(const auto& Worker:S.Workers.Bodies)if(Worker.Outdoor&&Worker.State==TEXT("active"))
+        {
+            TArray<FVector2D> Route;const bool Routed=S.FindRoute(Worker.Position,Port,Route);
+            AddInfo(FString::Printf(TEXT("BODY_PROBE id=%s activity=%s p=(%.3f,%.3f) battery=%.6f route_core=%d direct_grade=%.6f"),*Worker.Id,*Worker.Activity,Worker.Position.X,Worker.Position.Y,Worker.BatteryKWh,Routed,MaximumGrade(Worker.Position,Port,0)));
+            for(int32 Direction=0;Direction<8;++Direction)
+            {
+                const FVector2D Unit(FMath::Cos(Direction*UE_PI/4),FMath::Sin(Direction*UE_PI/4)),End=Worker.Position+Unit*5/S.MetersPerWorldUnit();
+                AddInfo(FString::Printf(TEXT("BODY_DIRECTION id=%s angle=%d allowed=%d grade=%.6f no_road=%.6f natural=%.6f"),*Worker.Id,Direction*45,S.Mobility.MovementAllowed(S,TEXT("drone"),Worker.Position,End),MaximumGrade(Worker.Position,End,0),MaximumGrade(Worker.Position,End,1),MaximumGrade(Worker.Position,End,2)));
+            }
+        }
+        for(const auto& Vehicle:S.TransportVehicles.Bodies)if(!Vehicle.Embarked&&Vehicle.Health>0)
+        {
+            TArray<FVector2D> Route;const bool Routed=S.FindMobilityRoute(TEXT("transport"),Vehicle.Position,Port,Route);
+            AddInfo(FString::Printf(TEXT("TRUCK_PROBE id=%d p=(%.6f,%.6f) route_core=%d status=%s distance=%.3f"),Vehicle.Id,Vehicle.Position.X,Vehicle.Position.Y,Routed,*Vehicle.Status,Vehicle.DistanceMeters));
+            const auto* Task=S.Couriers.FindByPredicate([&](const auto& C){return C.Id==Vehicle.DeliveryId;});
+            if(Task)
+            {
+                const auto* Building=S.FindBuilding(Task->Amount<=1.e-9?Task->SourceId:Task->TargetId);const auto* Road=Task->Amount>1.e-9?S.FindRoad(Task->RoadTargetId):nullptr;
+                if(Building||Road)
+                {
+                    const FVector2D Goal=Road?S.RoadAccessPoint(*Road):S.BuildingAccessPoint(*Building);TArray<FVector2D> Planned;
+                    const bool Found=S.FindMobilityRoute(TEXT("transport"),Vehicle.Position,Goal,Planned);
+                    for(const auto& Leg:Planned)if(!Leg.Equals(Vehicle.Position,1.e-6))
+                    {
+                        const double Distance=FVector2D::Distance(Vehicle.Position,Leg),Speed=S.Mobility.Speed(S,TEXT("transport"),Vehicle.Position,Leg)/S.MetersPerWorldUnit();
+                        const FVector2D Next=Vehicle.Position+(Leg-Vehicle.Position).GetSafeNormal()*FMath::Min(Distance,Speed*.05);
+                        AddInfo(FString::Printf(TEXT("TRUCK_FIRST_LEG sector=%d found=%d from=(%.9f,%.9f) leg=(%.9f,%.9f) next=(%.9f,%.9f) whole_allowed=%d short_allowed=%d whole_dense_grade=%.9f short_dense_grade=%.9f"),Sector,Found,Vehicle.Position.X,Vehicle.Position.Y,Leg.X,Leg.Y,Next.X,Next.Y,S.Mobility.MovementAllowed(S,TEXT("transport"),Vehicle.Position,Leg),S.Mobility.MovementAllowed(S,TEXT("transport"),Vehicle.Position,Next),MaximumGrade(Vehicle.Position,Leg,0),MaximumGrade(Vehicle.Position,Next,0)));
+                        break;
+                    }
+                    if(!Found)AddInfo(FString::Printf(TEXT("TRUCK_FIRST_LEG sector=%d found=0 goal=(%.9f,%.9f)"),Sector,Goal.X,Goal.Y));
+                }
+            }
+            for(int32 Direction=0;Direction<16;++Direction)for(double Meters:{.1,1.,5.,20.})
+            {
+                const FVector2D Unit(FMath::Cos(Direction*UE_PI/8),FMath::Sin(Direction*UE_PI/8)),End=Vehicle.Position+Unit*Meters/S.MetersPerWorldUnit();
+                TArray<FVector2D> Detour;const int32 EndRoutes=Meters==5?(S.Mobility.MovementAllowed(S,TEXT("transport"),Vehicle.Position,End)&&S.FindMobilityRoute(TEXT("transport"),End,Port,Detour)):-1;
+                AddInfo(FString::Printf(TEXT("TRUCK_DIRECTION id=%d angle=%.1f meters=%.1f allowed=%d grade=%.6f routes_from_end=%d"),Vehicle.Id,Direction*22.5,Meters,S.Mobility.MovementAllowed(S,TEXT("transport"),Vehicle.Position,End),MaximumGrade(Vehicle.Position,End,0),EndRoutes));
+            }
+            for(int32 Direction=0;Direction<16;++Direction)for(double Meters:{.1,1.,5.,8.})
+            {
+                const FVector2D Unit(FMath::Cos(Direction*UE_PI/8),FMath::Sin(Direction*UE_PI/8)),End=Port+Unit*Meters/S.MetersPerWorldUnit();
+                TArray<FVector2D> Approach,Handler;const int32 Routes=Meters>=5?S.FindMobilityRoute(TEXT("transport"),Vehicle.Position,End,Approach):-1;
+                AddInfo(FString::Printf(TEXT("PORT_DIRECTION angle=%.1f meters=%.1f allowed=%d grade=%.6f truck_route=%d worker_route=%d"),Direction*22.5,Meters,S.Mobility.MovementAllowed(S,TEXT("transport"),Port,End),MaximumGrade(Port,End,0),Routes,S.FindRoute(Port,End,Handler)));
+            }
+        }
+        return true;
+    }
+    // Retain the legacy grading regression while shipped gameplay has roads disabled.
+    G->Sim.SetRoadsEnabledForTest(true);
     G->Screen=TEXT("playing");G->ConfigureCombatTerrain();
     const FVector2D P(2600,300);const double H=G->SimulationTerrainHeight(P);const auto Prepared=G->SimulationTerrainCache;
     const int32 Revision=G->Sim.Mobility.GetTerrainRevision();
@@ -1693,6 +1840,111 @@ bool FSeigeSimulationTerrainCacheTest::RunTest(const FString&)
     G->SimulationTerrainHeight(P);
     TestTrue(TEXT("Foundation changes invalidate prepared terrain"),G->SimulationTerrainCache!=Prepared);
     TestTrue(TEXT("Geometry change invalidates mobility edges"),G->Sim.Mobility.GetTerrainRevision()>Revision);
+    const double Plot=G->Sim.BuildingDefs[TEXT("depot")].Footprint,GridStep=G->Sim.WorldHalfSize*2/G->DetailedTerrainResolution;
+    const double Inner=FMath::Max(Plot*G->CorePadInnerRatio,Plot+GridStep);
+    const FVector2D AdjacentLeft(6000,2000),AdjacentRight=AdjacentLeft+FVector2D(Plot+Inner,0);
+    const int32 LeftId=G->Sim.AddReviewBuilding(TEXT("depot"),AdjacentLeft);FPreparedTerrain Alone(*G,true);
+    G->Sim.AddReviewBuilding(TEXT("depot"),AdjacentRight);
+    FPreparedTerrain Detected(*G,true);const auto* LeftPad=Detected.Pads[4].FindByPredicate([&](const auto& Pad){return Pad.Position.Equals(AdjacentLeft,1.e-8);});
+    const auto* RightPad=Detected.Pads[4].FindByPredicate([&](const auto& Pad){return Pad.Position.Equals(AdjacentRight,1.e-8);});
+    TestTrue(TEXT("Real separate foundations automatically enable continuous overlapping shoulders"),LeftPad&&RightPad&&LeftPad->BlendLevelZone&&RightPad->BlendLevelZone);
+    TestTrue(TEXT("Adding a neighbor invalidates the existing pad's entire changed shoulder"),Alone.Bounds.Contains(FString::Printf(TEXT("4:%d:blend0"),LeftId))&&Detected.Bounds.Contains(FString::Printf(TEXT("4:%d:blend1"),LeftId))&&!Detected.Bounds.Contains(FString::Printf(TEXT("4:%d:blend0"),LeftId)));
+    const FVector2D RealSeam=(AdjacentLeft+AdjacentRight)*.5;
+    TestTrue(TEXT("The real authoritative terrain has no ownership jump"),FMath::Abs(Detected.Height(RealSeam+FVector2D(.001,0))-Detected.Height(RealSeam-FVector2D(.001,0)))<.01);
+    const FVector2D BorderPad(G->Sim.WorldHalfSize-Plot-20,4000);
+    G->Sim.AddReviewBuilding(TEXT("depot"),BorderPad);G->Sim.AddReviewBuilding(TEXT("depot"),BorderPad-FVector2D(Plot+Inner,0));
+    FPreparedTerrain Border(*G,true);const auto* HomeCopy=Border.Pads[4].FindByPredicate([&](const auto& Pad){return Pad.Position.Equals(BorderPad,1.e-8);});
+    const auto* NeighborCopy=Border.Pads[5].FindByPredicate([&](const auto& Pad){return Pad.Position.Equals(BorderPad,1.e-8);});
+    TestTrue(TEXT("Every sector copy shares the unique pad's overlap decision"),HomeCopy&&NeighborCopy&&HomeCopy->BlendLevelZone&&NeighborCopy->BlendLevelZone);
+    // Reproduce adjacent foundations with different elevations and overlapping
+    // expanded level shoulders. Their real footprints do not overlap.
+    FPreparedTerrain Pads(*G,true);for(auto& SectorPads:Pads.Pads)SectorPads.Empty();for(auto& SectorRoads:Pads.Roads)SectorRoads.Empty();
+    const FVector2D Left(3000,0),Right(3300,0);const double PadHeight=Pads.Natural(Left);
+    Pads.Pads[4].Add({Left,PadHeight,180,250,100,true});Pads.Pads[4].Add({Right,PadHeight+10,180,250,100,true});
+    for(double Offset:{-100.,0.,100.})
+    {
+        TestEqual(TEXT("Left building's actual footprint stays exactly level"),Pads.PadHeight(Left+FVector2D(Offset,0),Pads.Natural(Left+FVector2D(Offset,0))),PadHeight);
+        TestEqual(TEXT("Right building's actual footprint stays exactly level"),Pads.PadHeight(Right+FVector2D(Offset,0),Pads.Natural(Right+FVector2D(Offset,0))),PadHeight+10);
+    }
+    double LargestStep=0;
+    for(double X=3100;X<=3200;X+=.25)
+    {
+        const FVector2D A(X,0),B(X+.001,0);
+        LargestStep=FMath::Max(LargestStep,FMath::Abs(Pads.PadHeight(B,Pads.Natural(B))-Pads.PadHeight(A,Pads.Natural(A))));
+    }
+    TestTrue(TEXT("Crossing the pad ownership seam has continuous height, not a vertical step"),LargestStep<.01);
+    // The live seed815 freeze was created by two road grading bands, even
+    // though the underlying meadow was walkable. Reproduce the same bend with
+    // no building pads, then densely sweep through both shoulder transitions.
+    FPreparedTerrain Junction(*G,true);for(auto& SectorPads:Junction.Pads)SectorPads.Empty();for(auto& SectorRoads:Junction.Roads)SectorRoads.Empty();
+    const FVector2D RoadStart(2029.133879815441,-8283.756444375553),Bend(2027.133879815441,-9061.756444375553),RoadEnd(471.133879815441,-9061.756444375553);
+    const double RoadInner=25+GridStep,RoadOuter=RoadInner+GridStep;
+    const double StartElevation=Junction.Natural(RoadStart);
+    Junction.Roads[4].Add({RoadStart,Bend,RoadInner,RoadOuter,false,{{0,StartElevation},{1,StartElevation-60}}});Junction.Roads[4].Add({Bend,RoadEnd,RoadInner,RoadOuter,false,{{0,StartElevation-60},{1,StartElevation-80}}});
+    double JunctionGrade=0;
+    for(const auto& Segment:TArray<TPair<FVector2D,FVector2D>>{{RoadStart,Bend},{Bend,RoadEnd}})
+    {
+        const int32 Steps=FMath::CeilToInt(FVector2D::Distance(Segment.Key,Segment.Value)/.25);const double Step=FVector2D::Distance(Segment.Key,Segment.Value)/Steps;
+        double Previous=Junction.Height(Segment.Key);
+        for(int32 I=1;I<=Steps;++I){const double Current=Junction.Height(FMath::Lerp(Segment.Key,Segment.Value,double(I)/Steps));JunctionGrade=FMath::Max(JunctionGrade,FMath::Abs(Current-Previous)/Step);Previous=Current;}
+    }
+    TestTrue(TEXT("Shared bend profiles remain physically traversable by the eighteen-percent truck"),JunctionGrade<G->Sim.Mobility.Profile(TEXT("transport"))->MaximumSlope);
+    G->Sim.Mobility.SetTerrainSampler([&Junction](FVector2D Point){return Junction.Height(Point);});
+    bool PhysicalSteps=true;
+    for(const auto& Segment:TArray<TPair<FVector2D,FVector2D>>{{RoadStart,Bend},{Bend,RoadEnd}})
+    {
+        FVector2D Position=Segment.Key;
+        while(!Position.Equals(Segment.Value,1.e-7))
+        {
+            const auto Delta=Segment.Value-Position;const double Step=FMath::Min(Delta.Size(),30./3.6/G->Sim.MetersPerWorldUnit()*.05);
+            const auto Next=Step>=Delta.Size()?Segment.Value:Position+Delta.GetSafeNormal()*Step;
+            PhysicalSteps&=G->Sim.Mobility.MovementAllowed(G->Sim,TEXT("transport"),Position,Next);Position=Next;
+        }
+    }
+    TestTrue(TEXT("Every real fifty-millisecond truck movement slice crosses the road bend legally"),PhysicalSteps);
+    FPreparedTerrain Entrance(*G,true);for(auto& SectorPads:Entrance.Pads)SectorPads.Empty();for(auto& SectorRoads:Entrance.Roads)SectorRoads.Empty();
+    const FVector2D PortCenter(2649.133879815439,-8283.756366484775),PortCorner(2381.133879815439,-8551.756366484775);
+    const double PortPlot=G->Sim.BuildingDefs[TEXT("trading_port")].Footprint,PortInner=FMath::Max(PortPlot*G->CorePadInnerRatio,PortPlot+GridStep);
+    Entrance.Pads[4].Add({PortCenter,Entrance.Natural(PortCenter),PortInner,FMath::Max(PortPlot*G->CorePadOuterRatio,PortInner+GridStep),PortPlot,false});
+    FPreparedTerrain EntranceWithoutRoad=Entrance;Entrance.Roads[4].Add({RoadStart,PortCorner,RoadInner,RoadOuter,false});
+    double EntranceGrade=0,FoundationGrade=0;const int32 EntranceSteps=FMath::CeilToInt(FVector2D::Distance(RoadStart,PortCorner)/.25);
+    const double EntranceStep=FVector2D::Distance(RoadStart,PortCorner)/EntranceSteps;
+    double PreviousRoad=Entrance.Height(RoadStart),PreviousFoundation=EntranceWithoutRoad.Height(RoadStart);
+    for(int32 I=1;I<=EntranceSteps;++I)
+    {
+        const auto Point=FMath::Lerp(RoadStart,PortCorner,double(I)/EntranceSteps);const double RoadHeight=Entrance.Height(Point),FoundationHeight=EntranceWithoutRoad.Height(Point);
+        EntranceGrade=FMath::Max(EntranceGrade,FMath::Abs(RoadHeight-PreviousRoad)/EntranceStep);FoundationGrade=FMath::Max(FoundationGrade,FMath::Abs(FoundationHeight-PreviousFoundation)/EntranceStep);
+        PreviousRoad=RoadHeight;PreviousFoundation=FoundationHeight;
+    }
+    TestTrue(TEXT("Adding a road does not apply a foundation shoulder twice"),EntranceGrade<=FoundationGrade+.05);
+    // Build real intersecting corridors through the constructor. Their shared
+    // profile node must agree, and inserting the junction invalidates the full
+    // pre-existing road profile, not merely the newly added road's bounds.
+    FSeigeTransportSegment Through;Through.Id=910;Through.A=FVector2D(7000,2000);Through.B=FVector2D(9000,2000);Through.Health=1000;Through.Tier=Through.TargetTier=G->Sim.InitialRoadTier();
+    G->Sim.Roads.Add(Through);FPreparedTerrain BeforeCross(*G,true);
+    FSeigeTransportSegment Crossing=Through;Crossing.Id=911;Crossing.A=FVector2D(8000,1000);Crossing.B=FVector2D(8000,3000);G->Sim.Roads.Add(Crossing);
+    FPreparedTerrain AfterCross(*G,true),RenderedCross(*G,false);
+    const auto* Across=AfterCross.Roads[4].FindByPredicate([&](const auto& R){return R.A==Through.A&&R.B==Through.B;});
+    const auto* Vertical=AfterCross.Roads[4].FindByPredicate([&](const auto& R){return R.A==Crossing.A&&R.B==Crossing.B;});
+    TestTrue(TEXT("Crossing corridors are split at the common elevation anchor"),Across&&Vertical&&Across->Profile.Num()==3&&Vertical->Profile.Num()==3&&Across->Profile[1].Y==Vertical->Profile[1].Y);
+    TestEqual(TEXT("Visible and authoritative road junction elevations agree"),AfterCross.Height(FVector2D(8000,2000)),RenderedCross.Height(FVector2D(8000,2000)));
+    FString BeforeKey,AfterKey;
+    for(const auto& Entry:BeforeCross.Bounds)if(Entry.Key.StartsWith(TEXT("road:4:910:")))BeforeKey=Entry.Key;
+    for(const auto& Entry:AfterCross.Bounds)if(Entry.Key.StartsWith(TEXT("road:4:910:")))AfterKey=Entry.Key;
+    TestTrue(TEXT("A newly inserted junction invalidates the existing road's whole profile"),!BeforeKey.IsEmpty()&&!AfterKey.IsEmpty()&&BeforeKey!=AfterKey);
+    FPreparedTerrain BuildingEdge(*G,true);for(auto& SectorPads:BuildingEdge.Pads)SectorPads.Empty();for(auto& SectorRoads:BuildingEdge.Roads)SectorRoads.Empty();
+    const FVector2D EdgeCenter(4000,4000);const double EdgeHeight=BuildingEdge.Natural(EdgeCenter);
+    BuildingEdge.Pads[4].Add({EdgeCenter,EdgeHeight,180,250,100,false});
+    BuildingEdge.Roads[4].Add({EdgeCenter+FVector2D(150,-500),EdgeCenter+FVector2D(150,500),100,180,false,{{0,EdgeHeight+40},{1,EdgeHeight+40}}});
+    double EdgeStep=0,PreviousEdge=BuildingEdge.Height(EdgeCenter+FVector2D(99.9,0));
+    for(double X=99.901;X<100+GridStep+1;X+=.001)
+    {const double Current=BuildingEdge.Height(EdgeCenter+FVector2D(X,0));EdgeStep=FMath::Max(EdgeStep,FMath::Abs(Current-PreviousEdge));PreviousEdge=Current;}
+    TestTrue(TEXT("A differently elevated road shoulder meets an exact building footprint without a vertical cut"),EdgeStep<.01);
+    TestEqual(TEXT("Road grading preserves the exact building body elevation"),BuildingEdge.Height(EdgeCenter+FVector2D(100,0)),EdgeHeight);
+    TestEqual(TEXT("Footprint edge protection preserves a legal nearby road centerline"),BuildingEdge.Height(EdgeCenter+FVector2D(150,0)),EdgeHeight+40);
+    BuildingEdge.Roads[4][0].A.X=BuildingEdge.Roads[4][0].B.X=EdgeCenter.X+125;
+    TestEqual(TEXT("Even a narrow road only twenty-five units outside the footprint retains its centerline grade"),BuildingEdge.Height(EdgeCenter+FVector2D(125,0)),EdgeHeight+40);
+    G->Sim.Mobility.SetTerrainSampler({});
     return true;
 }
 #endif

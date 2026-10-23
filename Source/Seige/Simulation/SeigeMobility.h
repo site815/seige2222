@@ -27,5 +27,5 @@ private:
     FString Fingerprint;
     TFunction<double(FVector2D)> TerrainHeight;
     int32 TerrainRevision=0;
-    double Grade(const FSeigeSimulation& Sim,FVector2D From,FVector2D To,double SampleMeters) const;
+    double Grade(const FSeigeSimulation& Sim,FVector2D From,FVector2D To,double SampleMeters,double GradeLimit) const;
 };

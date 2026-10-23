@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeActionFeedback.h"
 
 namespace
 {
@@ -20,8 +21,9 @@ bool ASeigeHUD::HandleTradeAction(const FString& Action,ASeigeGameMode& G)
 {
     if(!Action.StartsWith(TEXT("trade:")))return false;
     if(CombatPanelOpen||Ui.BuildOpen)return true;
-    const auto* Port=SelectedTradePort(G);if(!Port){G.Notice=TEXT("Select your own trading port to manage external trade.");return true;}
+    const auto* Port=SelectedTradePort(G);if(!Port){SeigeAudio::PlayUi(GetWorld(),TEXT("error"));G.Notice=TEXT("Select your own trading port to manage external trade.");return true;}
     const auto Ids=TradeResources(G.Sim);if(Ids.IsEmpty())return true;
+    if(Action==TEXT("trade:previous")||Action==TEXT("trade:next")||Action==TEXT("trade:less")||Action==TEXT("trade:more"))SeigeAudio::PlayUi(GetWorld(),TEXT("select"));
     int32 Index=Ids.IndexOfByKey(TradeResourceSelection);if(Index==INDEX_NONE)Index=0;
     if(Action==TEXT("trade:previous"))Index=(Index+Ids.Num()-1)%Ids.Num();
     else if(Action==TEXT("trade:next"))Index=(Index+1)%Ids.Num();
@@ -30,17 +32,17 @@ bool ASeigeHUD::HandleTradeAction(const FString& Action,ASeigeGameMode& G)
     if(Action==TEXT("trade:less"))TradeQuantity=FMath::Max(1.,TradeQuantity-Step);
     else if(Action==TEXT("trade:more"))TradeQuantity=FMath::Min(10000.,TradeQuantity+Step);
     else if(Action==TEXT("trade:reserve-less")||Action==TEXT("trade:reserve-more"))
-    {FString Error;G.Notice=G.Sim.SetPortWorkerTarget(Port->Id,FMath::Clamp(Port->WorkerExportTarget+(Action.EndsWith(TEXT("more"))?1:-1),0,100000),Error)?TEXT("Trading-port worker stock target updated."):Error;}
+    {FString Error;G.Notice=SeigeActionNotice(GetWorld(),G.Sim.SetPortWorkerTarget(Port->Id,FMath::Clamp(Port->WorkerExportTarget+(Action.EndsWith(TEXT("more"))?1:-1),0,100000),Error),TEXT("Trading-port worker stock target updated."),Error);}
     else if(Action==TEXT("trade:cancel-export"))
-    {FString Error;G.Notice=G.Sim.Trade.CancelPendingExport(G.Sim,Port->Id,Error)?TEXT("Pending export cancelled. Goods already in transit will still arrive."):Error;}
+    {FString Error;G.Notice=SeigeActionNotice(GetWorld(),G.Sim.Trade.CancelPendingExport(G.Sim,Port->Id,Error),TEXT("Pending export cancelled. Goods already in transit will still arrive."),Error);}
     else if(Action==TEXT("trade:import")||Action==TEXT("trade:export"))
     {
         FString Error;const bool Buy=Action==TEXT("trade:import");
-        G.Notice=G.Sim.TryTrade(Port->Id,TradeResourceSelection,TradeQuantity,Buy,Error)?
-            (Buy?TEXT("Import ordered. Credits are reserved; cargo arrives through this port."):TEXT("Export ordered. Goods must reach this port before departure; credits arrive after shipment.")):Error;
+        G.Notice=SeigeActionNotice(GetWorld(),G.Sim.TryTrade(Port->Id,TradeResourceSelection,TradeQuantity,Buy,Error),
+            Buy?TEXT("Import ordered. Credits are reserved; cargo arrives through this port."):TEXT("Export ordered. Goods must reach this port before departure; credits arrive after shipment."),Error);
     }
     else if(Action==TEXT("trade:upgrade"))
-    {FString Error;G.Notice=G.Sim.UpgradeBuilding(Port->Id,Error)?TEXT("Trading-port upgrade queued. Workers and materials will arrive at the site."):Error;}
+    {FString Error;G.Notice=SeigeActionNotice(GetWorld(),G.Sim.UpgradeBuilding(Port->Id,Error),TEXT("Trading-port upgrade queued. Workers and materials will arrive at the site."),Error);}
     return true;
 }
 

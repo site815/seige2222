@@ -2,7 +2,6 @@
   "version": "prototype-10.0",
   "transport": {
     "meters_per_world_unit": 0.06,
-    "worker_walk_kmh": 5,
     "access_clearance": 60,
     "path_clearance": 8,
     "snap_distance": 100,
@@ -73,6 +72,7 @@
     "repair_health_per_second": 20,
     "repair_health_per_unit": 100,
     "repair_energy_kwh_per_health": 0.0001,
-    "repair_buffer_units": 2
+    "repair_buffer_units": 2,
+    "roads_enabled": false
   }
 }

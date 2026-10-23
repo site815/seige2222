@@ -1,18 +1,20 @@
 # seige2222 — First Playable Scope
 
+**v0.10.6 current override:** Roads are deferred at the user’s request. The build catalog and AI create no roads; road bonuses and connector prerequisites are inactive. Each colony temporarily shares its own generation and batteries. Physical workers, cargo, construction costs and terrain access remain required. Earlier road/rail/vacuum descriptions below record the deferred design or historical builds, not the active rules.
+
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
 **Historical verified package: v0.7.0.** Packaging exited 0; all 38 native tests passed cleanly, the 79-stage Shipping interaction route passed with zero failures and exit 0, and all four actual Shipping display states passed. The route recorded 874 courier-motion frames; all 86 process-tree socket samples showed zero TCP/UDP endpoints. All nine loose JSON files matched source hashes. See the [v0.7 verification record](../verification/v0.7.0.json). Final performance benchmarks remain separate. The user requested a native Unreal single-player game, a packaged playable build, and a GitHub push. The current name is **seige2222**; SEIGE and “Robot Manor Lords” are earlier labels. This document records the implemented slice, its limitations, and version-specific evidence.
 
-## Current v0.9 scenario boundary
+## Current scenario boundary
 
-Player and Starting AI begin from the accepted finite 9.57 t kit, six 80 kg workers and zero credits. Developed AI instead loads an explicit established-colony manifest, without hours of simulated growth during loading. Initial assets are a declared scenario boundary, followed by the same paid production, workforce, logistics, AI and threats. Current Rules are `prototype-9.0` and saves require format 7; manifest integration and final release acceptance are pending. Earlier failed growth runs remain historical strategy diagnostics. [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md) and [Economy Baseline 0.9](ECONOMY_BASELINE_0_9.md) own the current details.
+Player and Starting AI begin from the accepted finite 9.57 t kit, five 80 kg workers and zero credits. Developed AI instead loads an explicit established-colony manifest, without hours of simulated growth during loading. Initial assets are a declared scenario boundary, followed by the same paid production, workforce, logistics, AI and threats. Current Rules use `prototype-10.0`; colony saves require format 9 and neighborhood metadata format 7. The core only assembles workers, with an automatic reserve derived from its 5/10/15 crew capacity; industrial goods require specialist buildings or paid imports. The former worker-factory definition is now the Construction Hub. Playback is Paused/1×/10×/20×. Current acceptance belongs to the release records and development report; earlier failed growth runs remain historical strategy diagnostics. [Scenario and AI Setup](SCENARIO_AND_AI_SETUP.md) owns the current setup details; [Economy Baseline 0.9](ECONOMY_BASELINE_0_9.md) preserves the earlier baseline.
 
 The versioned sections below retain their original evidence and older implementation boundaries; they do not override the current finite-worker or established-start design.
 
-## Retained v0.8.1 HUD and extraction revision
+## Historical v0.8.1 HUD and extraction revision
 
-[Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) records the expanded source contract. Workers and cargo follow physical access-port routes; construction installs delivered materials progressively and roads retain earlier service during upgrades. The latest scope adds tiered facilities, walls, selectable core replication, dedicated worker manufacture, inactive-worker storage/export and combat/fleet modules. Core bodies grow through 1×/2×/3× widths within one 3× reservation. Vegetation clears the reservation; grading follows the built body. UI terminology is Worker; Menu replaces Colony and manual launch requires selecting the own live core. Playback includes Paused, 1×, 5× and 10×.
+[Workers, Construction and Transport 0.8](CONSTRUCTION_AND_TRANSPORT_0_8.md) records that version's expanded source contract. Workers and cargo followed physical access-port routes; construction installed delivered materials progressively and roads retained earlier service during upgrades. That revision added tiered facilities, walls, selectable core replication, dedicated worker manufacture, inactive-worker storage/export and combat/fleet modules. Its universal core, worker factory, adjustable reserve and time controls have since been superseded by the current boundary above. Core bodies grew through 1×/2×/3× widths within one 3× reservation. Vegetation cleared the reservation; grading followed the built body. UI terminology was Worker; Menu replaced Colony and manual launch required selecting the own live core. Playback then included Paused, 1×, 5× and 10×.
 
 Current definitions use `prototype-8.1` with separate combat schemas; simulation and neighborhood snapshots use format 6. Earlier formats or differing Rules/AI fingerprints require a new scenario. The five resource HUD groups retain workforce controls below them. One Extraction Mine binds to its actual deposit and uses the resource-specific external extraction rate. v0.8.1 has compiled and been staged; package boot and four display states passed. The final v0.8.1 Shipping executable passed 117 interaction stages, boot/offline checks and four display states; reconciled native coverage contains 88 unique clean results. The [v0.8.1 verification record](../verification/v0.8.1.json) identifies the exact evidence and retained limitations. The completed [v0.8 verification record](../verification/v0.8.0.json) preserves the preceding package's results, which do not verify these changes.
 
@@ -77,7 +79,7 @@ Test whether a visible robotic colony is engaging when the player establishes an
 
 The complete design remains broader than this prototype. Scenario cells can be empty, starting AI, or developed AI; empty neighbors are the default. Assigning AI to the center selects observer play. The first AI implementation uses independent instances of the same colony simulation. Player-directed privateering now bridges separate colony simulations; general inter-colony commerce and strategic AI missions remain outside this slice. The persistent-world design baseline remains unchanged.
 
-## Current external definition set
+## Historical v0.8.1 external definition set
 
 The following files exist in [Rules](../../Rules/resources.json). They are prototype content and balance, not a finalized catalog.
 
@@ -95,11 +97,11 @@ The following files exist in [Rules](../../Rules/resources.json). They are proto
 | [AI definitions](../../AIFILES/README.md) | A separate `AIFILES` folder defines construction priorities, decision timing, placement/sensor search, and a separate established-colony initial-state manifest. Runtime AI uses the normal simulation rules afterward. |
 | [Graphics definitions](../../Graphics/scene.json) | Camera limits/clearance and orbit sensitivity, regional-view threshold, logical-to-rendered scale, relief/pad settings, terrain/cloud materials and lighting, vegetation density/scales, and ten nature roles. These change presentation without changing logical costs, rates, or travel times. |
 
-These catalogs describe current v0.8.1 source capabilities; they do not establish final balance or completed release acceptance. The JSON files own exact quantities and rates so this document does not become a second balance table.
+These catalog counts describe the historical v0.8.1 source; they do not establish current catalog counts, final balance or completed release acceptance. The current JSON files own exact quantities and rates so this document does not become a second balance table.
 
-## Current source behavior for this slice
+## Historical v0.8.1 source behavior for this slice
 
-These behaviors describe the current v0.8.1 source and retained v0.8 systems. Earlier release checks do not verify the new mine or HUD; current native/gameplay and rendered acceptance must be recorded separately.
+These behaviors and simplifications record the v0.8.1 slice. In particular, its aggregate workforce, support capacity and initial guard fleet are historical: current source uses finite identified worker bodies, permanent crews, physical battery charging and unarmed starting transports. The current boundary above and linked subject documents supersede these older details. Each later release requires its own native/gameplay and rendered acceptance.
 
 | Area | Prototype behavior |
 | --- | --- |

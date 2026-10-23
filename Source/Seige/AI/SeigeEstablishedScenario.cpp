@@ -97,7 +97,16 @@ bool FSeigeScenarioAI::TryEstablishedLayout(FSeigeSimulation& S,int32 DepositId,
     // All plots exist before routing, so a later building cannot obstruct an earlier road.
     // Add only route sections that are not already present in the connected network.
     const FVector2D Origin=S.BuildingAccessPoint(S.Buildings[0]);
-    for(int32 I=1;I<S.Buildings.Num();++I)
+    if(!S.RoadsEnabled())for(int32 I=1;I<S.Buildings.Num();++I)
+    {
+        // Power connectivity alone cannot certify a playable layout. Rivers
+        // can divide otherwise dry plots; reject this bounded manifest trial
+        // if its physical workforce cannot reach every completed facility.
+        TArray<FVector2D> Route;
+        if(!S.FindRoute(Origin,S.BuildingAccessPoint(S.Buildings[I]),Route))
+        {Error=TEXT("Established layout has no physical worker route: ")+S.Buildings[I].DefId;return false;}
+    }
+    if(S.RoadsEnabled())for(int32 I=1;I<S.Buildings.Num();++I)
     {
         const FVector2D Destination=S.BuildingAccessPoint(S.Buildings[I]);TArray<FVector2D> Starts{Origin};
         for(const auto& R:S.Roads){Starts.AddUnique(R.A);Starts.AddUnique(R.B);}

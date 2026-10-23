@@ -87,7 +87,7 @@ bool FSeigeThreatSaveValidationTest::RunTest(const FString& Parameters)
     Legacy->RemoveField(TEXT("background_bugs"));Legacy->RemoveField(TEXT("periodic_attacks"));
     Legacy->SetNumberField(TEXT("save_format"),2);
     if(!WriteThreatJson(Invalid,Legacy))return false;
-    TestFalse(TEXT("Version 8 explicitly rejects old construction save formats"),S.Load(Invalid,Error));
+    TestFalse(TEXT("Version 9 explicitly rejects old construction save formats"),S.Load(Invalid,Error));
     TestTrue(TEXT("Old format rejection explains incompatibility"),Error.Contains(TEXT("incompatible")));
     return true;
 }

@@ -1,0 +1,15 @@
+{
+	"scope": "Rendered geography-only fixture: paused, no player saves, three full-region river valleys and irregular lake/scarp views, plus close oblique ford/stream/scarp detail.",
+	"failures": 0,
+	"screenshots": [
+		"01_irregular_lake_valley",
+		"02_stream_in_lower_ground",
+		"03_fractured_escarpment",
+		"04_neighbor_lake",
+		"05_neighborhood_drainage",
+		"06_shallow_ford_oblique",
+		"07_stream_valley_oblique",
+		"08_scarp_face_oblique"
+	],
+	"assertion_failures": []
+}

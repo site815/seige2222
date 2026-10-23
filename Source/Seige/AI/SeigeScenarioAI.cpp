@@ -39,6 +39,14 @@ const FSeigeBuilding* Command(const FSeigeSimulation& Colony)
 {
     return Colony.Buildings.FindByPredicate([&](const FSeigeBuilding& B) { return B.Health > 0 && Colony.Definition(B)->Role == TEXT("core"); });
 }
+bool HasPermanentCrew(const FSeigeSimulation& Colony,const FSeigeBuilding& Building)
+{
+    // Operators temporarily leave their stations to charge and handle freight.
+    // Those real, owned bodies still satisfy the colony's expansion plan; using
+    // the instantaneous operating count repeatedly abandoned downstream bills.
+    const auto* Definition=Colony.Definition(Building);
+    return Definition&&Colony.Workers.AssignedCount(Building.Id)>=Definition->Jobs;
+}
 bool NodeOccupied(const FSeigeSimulation& Colony, const FSeigeNode& Node)
 {
     for(const auto& B:Colony.Buildings)if(B.Health>0&&B.DepositId==Node.Id)return true;
@@ -111,6 +119,8 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
     {Error=TEXT("Invalid AI bulk_input_policy");return false;}
     if(!(*Economy)->TryGetStringField(TEXT("export_policy"),SurplusExportPolicy)||(SurplusExportPolicy!=TEXT("surplus_shipment_value")&&SurplusExportPolicy!=TEXT("local_raw_only")))
     {Error=TEXT("Invalid AI export_policy");return false;}
+    if(!(*Economy)->TryGetStringField(TEXT("export_reserve_horizon"),ExportReserveHorizon)||(ExportReserveHorizon!=TEXT("next_prerequisite")&&ExportReserveHorizon!=TEXT("full_plan")))
+    {Error=TEXT("Invalid AI export_reserve_horizon");return false;}
     FString ReplicationPolicy;const TArray<TSharedPtr<FJsonValue>>* ReplicationRecipes=nullptr;
     if(!(*Economy)->TryGetStringField(TEXT("core_replication_policy"),ReplicationPolicy)||ReplicationPolicy!=TEXT("worker_only")||!(*Economy)->TryGetArrayField(TEXT("core_replication_recipes"),ReplicationRecipes)||!ReplicationRecipes||!ReplicationRecipes->IsEmpty())
     {Error=TEXT("Invalid AI core_replication_policy or core_replication_recipes");return false;}
@@ -189,7 +199,7 @@ bool FSeigeScenarioAI::DevelopmentComplete(const FSeigeSimulation& Colony) const
     for(const auto& Target:Targets)
     {
         if(!IncludesTarget(Colony,Target.Definition))continue;int32 Count=0;
-        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&Meets(Colony,B,Target.Definition)&&B.Workers>=Colony.Definition(B)->Jobs&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&Meets(Colony,B,Target.Definition)&&HasPermanentCrew(Colony,B)&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
         if(Count<Target.Count)return false;
     }
     return true;
@@ -203,7 +213,7 @@ bool FSeigeScenarioAI::FinishPreparation(FSeigeSimulation& Colony,FString& Error
     for(const auto& Target:Targets)
     {
         if(!IncludesTarget(Colony,Target.Definition))continue;int32 Count=0;const auto* Core=Command(Colony);
-        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&Meets(Colony,B,Target.Definition)&&B.Workers>=Colony.Definition(B)->Jobs&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&Meets(Colony,B,Target.Definition)&&HasPermanentCrew(Colony,B)&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
         if(Colony.Failed||Colony.Escaped||Count<Target.Count)
         {
             int32 Live=0,Destroyed=0,Unfinished=0,TargetDestroyed=0;for(const auto& B:Colony.Buildings){if(B.Health<=0){++Destroyed;if(Meets(Colony,B,Target.Definition))++TargetDestroyed;}else{++Live;if(B.IsConstructing)++Unfinished;}}
@@ -256,7 +266,7 @@ void FSeigeScenarioAI::ReportPreparationMilestone(const FSeigeSimulation& Colony
     for(const auto& Id:Ids)
     {
         int32 Count=0;
-        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&B.Enabled&&Meets(Colony,B,Id)&&B.Workers>=Colony.Definition(B)->Jobs&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&B.Enabled&&Meets(Colony,B,Id)&&HasPermanentCrew(Colony,B)&&Core&&Colony.IsRoadGridConnected(Core->Id,B.Id))++Count;
         Completed+=FMath::Min(Count,FinalCounts[Id]);Required+=FinalCounts[Id];
         if(Count<FinalCounts[Id])Missing.Add(FString::Printf(TEXT("%s:%d/%d"),*Id,Count,FinalCounts[Id]));
     }
@@ -486,7 +496,7 @@ bool FSeigeScenarioAI::ExtendSensors(FSeigeSimulation& Colony, FVector2D Destina
 {
     if (CountLive(Colony, SensorDefinition) >= MaxSensors) { Status = TEXT("Sensor extension limit reached"); return false; }
     for (const FSeigeBuilding& B : Colony.Buildings)
-        if (B.DefId == SensorDefinition && B.Health > 0 && B.Enabled && (B.IsConstructing||B.Workers < Colony.Definition(B)->Jobs))
+        if (B.DefId == SensorDefinition && B.Health > 0 && B.Enabled && (B.IsConstructing||!HasPermanentCrew(Colony,B)))
         { Status = TEXT("Waiting for existing sensor staffing"); return false; }
     const FSeigeBuilding* Source = nullptr; double BestRemaining = TNumericLimits<double>::Max();
     for (const FSeigeBuilding& B : Colony.Buildings)
@@ -522,6 +532,15 @@ bool FSeigeScenarioAI::PlaceConnectedBuilding(FSeigeSimulation& Colony,const FSt
 {
     if(!Colony.CanPlaceBuilding(Definition,Position,Error))return false;
     FSeigeBuilding Preview;Preview.Id=INDEX_NONE;Preview.DefId=Definition;Preview.Position=Position;Preview.Health=Colony.BuildingDefs[Definition].Health;
+    if(!Colony.RoadsEnabled())
+    {
+        const auto* Core=Command(Colony);TArray<FVector2D> Route;
+        // Even a wireless grid needs physical workers to construct and service
+        // the plot. Include the reserved footprint in the route preflight.
+        if(!Core||!Colony.FindRoute(Colony.BuildingAccessPoint(*Core),Colony.BuildingAccessPoint(Preview),Route,-1,false,&Preview))
+        {Error=TEXT("Workers cannot reach this construction access point");return false;}
+        return Colony.PlaceBuilding(Definition,Position,Error);
+    }
     FVector2D A,B;bool NeedsSegment=false;
     if(!FindPowerConnection(Colony,Preview,&Preview,A,B,NeedsSegment,Error))return false;
     return Colony.PlaceBuilding(Definition,Position,Error);
@@ -569,7 +588,7 @@ bool FSeigeScenarioAI::FindPowerConnection(const FSeigeSimulation& Colony,const 
 
 bool FSeigeScenarioAI::NextPowerRoad(const FSeigeSimulation& Colony,FVector2D& OutA,FVector2D& OutB,FString& TargetName,FString& Error) const
 {
-    TargetName.Empty();Error.Empty();const auto* Core=Command(Colony);if(!Core)return false;
+    TargetName.Empty();Error.Empty();if(!Colony.RoadsEnabled())return false;const auto* Core=Command(Colony);if(!Core)return false;
     for(const auto& R:Colony.Roads)if(R.Health>0&&R.IsConstructing){Error=TEXT("Constructing road-grid connection");return false;}
     // Completed worker-support bays and generators unlock the workforce and
     // power every later connection needs, so they are wired before sensors
@@ -674,13 +693,18 @@ double FSeigeScenarioAI::ManufacturedExportSurplus(const FSeigeSimulation& Colon
 {
     const auto* R=Colony.Resources.Find(Resource);
     if(!R||R->Discrete||R->Class!=TEXT("manufactured"))return 0;
-    TMap<FString,int32> FinalCounts;for(const auto& Target:Targets)if(IncludesTarget(Colony,Target.Definition))FinalCounts.FindOrAdd(Target.Definition)=FMath::Max(FinalCounts.FindRef(Target.Definition),Target.Count);
     double FutureBills=NextRoadBill,UninstalledBills=0;
-    for(const auto& Target:FinalCounts)FutureBills+=FMath::Max(0,Target.Value-CountLive(Colony,Target.Key))*Colony.BuildingDefs[Target.Key].Cost.FindRef(Resource);
+    if(ExportReserveHorizon==TEXT("full_plan"))
+    {
+        TMap<FString,int32> FinalCounts;for(const auto& Target:Targets)if(IncludesTarget(Colony,Target.Definition))FinalCounts.FindOrAdd(Target.Definition)=FMath::Max(FinalCounts.FindRef(Target.Definition),Target.Count);
+        for(const auto& Target:FinalCounts)FutureBills+=FMath::Max(0,Target.Value-CountLive(Colony,Target.Key))*Colony.BuildingDefs[Target.Key].Cost.FindRef(Resource);
+    }
+    else if(const auto* Next=NextConstructionTarget(Colony))
+        FutureBills+=Colony.BuildingDefs[Next->Definition].Cost.FindRef(Resource);
     // In-progress plots count toward the plan, but their remaining paid bill
     // stays protected whether the goods are at source, in transit or on site.
     for(const auto& B:Colony.Buildings)if(B.Health>0&&B.IsConstructing)UninstalledBills+=FMath::Max(0.,Colony.ConstructionCost(B).FindRef(Resource)-B.InstalledMaterials.FindRef(Resource));
-    for(const auto& Road:Colony.Roads)if(Road.Health>0&&Road.IsConstructing)UninstalledBills+=FMath::Max(0.,Colony.RoadCost(Road.A,Road.B,Road.TargetTier).FindRef(Resource)-Road.InstalledMaterials.FindRef(Resource));
+    if(Colony.RoadsEnabled())for(const auto& Road:Colony.Roads)if(Road.Health>0&&Road.IsConstructing)UninstalledBills+=FMath::Max(0.,Colony.RoadCost(Road.A,Road.B,Road.TargetTier).FindRef(Resource)-Road.InstalledMaterials.FindRef(Resource));
     double Buffer=Colony.OperatingBuffer(Resource)+ReserveTargets.FindRef(Resource),WorkerInput=0;
     for(const auto& Building:Colony.Buildings)if(Building.Health>0&&Building.Enabled&&!Building.IsConstructing)
     {
@@ -691,7 +715,7 @@ double FSeigeScenarioAI::ManufacturedExportSurplus(const FSeigeSimulation& Colon
     }
     Buffer+=WorkerInput*Colony.WorkerReserveTarget();
     // The local spendable bound also protects pickup claims. The gross-stock
-    // bound retains full future bills plus conservative operating/AI buffers.
+    // bound retains the configured planning horizon and operating/AI buffers.
     return FMath::Max(0.,FMath::Min(Colony.ConstructionAvailable(Resource)-FutureBills,
         Colony.TotalStock(Resource)-FutureBills-UninstalledBills-Buffer));
 }
@@ -917,7 +941,7 @@ const FSeigeAIBuildTarget* FSeigeScenarioAI::NextConstructionTarget(const FSeige
         if(!IncludesTarget(Colony,Target.Definition))continue;
         int32 Living=0,Operational=0;
         for(const auto& B:Colony.Buildings)if(B.Health>0&&Meets(Colony,B,Target.Definition))
-        {if(!B.Enabled)return nullptr;++Living;if((!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&B.Workers>=Colony.Definition(B)->Jobs)++Operational;}
+        {if(!B.Enabled)return nullptr;++Living;if((!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&HasPermanentCrew(Colony,B))++Operational;}
         if(Living<Target.Count)
         {
             // An unaffordable optional target is skipped, as in MakeDecision.
@@ -1007,7 +1031,7 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
         if (Existing >= Target.Count)
         {
             // A voluntary upgrade in progress keeps its plan entry satisfied.
-            int32 Operational=0;for(const auto& B:Colony.Buildings)if(Meets(Colony,B,Target.Definition)&&B.Health>0&&(!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&B.Enabled&&B.Workers>=Colony.Definition(B)->Jobs)++Operational;
+            int32 Operational=0;for(const auto& B:Colony.Buildings)if(Meets(Colony,B,Target.Definition)&&B.Health>0&&(!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&B.Enabled&&HasPermanentCrew(Colony,B))++Operational;
             if(Operational<Target.Count){Status=TEXT("Waiting for completion and staffing: ")+Target.Definition;return false;}
             continue;
         }

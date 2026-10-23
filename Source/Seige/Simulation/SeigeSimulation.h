@@ -150,6 +150,7 @@ public:
     bool SetInitialCorePosition(FVector2D Position, FString& Error);
     bool CanSetInitialCorePosition(FVector2D Position, FString& Error) const;
     void Tick(double Seconds);
+    double EnemyMaximumHealth() const{return Number(TEXT("enemy_health"));}
     bool PlaceBuilding(const FString& DefinitionId, FVector2D Position, FString& Error);
     // Review tooling only (graphics showcase): adds a completed, unpaid, unstaffed
     // building without placement checks. Gameplay never calls this.
@@ -203,9 +204,10 @@ public:
     double ProductionEnergy(const FSeigeBuilding& Building,const FString& RecipeId) const;
     bool CanCommitProduction(const FSeigeBuilding& Building,const FString& RecipeId) const;
     int32 InactiveWorkerCount() const;
+    // Spare bodies are derived from the current command capacity, never a player setting.
+    int32 WorkerSurplusTarget() const;
     int32 WorkerReserveTarget() const;
     double DisassemblyEnergyKWh() const;
-    bool SetWorkerSurplusTarget(int32 Target,FString& Error);
     bool SetPortWorkerTarget(int32 BuildingId,int32 Target,FString& Error);
     bool CanDisassembleWorkers(int32 BuildingId,int32 Count,FString& Error) const;
     bool DisassembleWorkers(int32 BuildingId,int32 Count,FString& Error);
@@ -229,6 +231,11 @@ public:
     int32 GenerationSeed=0;
     bool GenerateResourceNodesForSeed(int32 Seed,TArray<FSeigeNode>& OutNodes,FString& Error,FVector2D WorldOffset=FVector2D::ZeroVector) const;
     // Planning may omit affordability only; PlaceRoad always performs the full check.
+    bool RoadsEnabled() const;
+#if WITH_DEV_AUTOMATION_TESTS
+    // Legacy road fixtures opt in without mutating shared immutable rule JSON.
+    void SetRoadsEnabledForTest(bool Enabled){RoadsEnabledOverride=Enabled?1:0;++TransportRevision;Energy.Invalidate();}
+#endif
     bool CanPlaceRoad(FVector2D A, FVector2D B, FString& Error, bool CheckMaterials=true) const;
     bool PlaceRoad(FVector2D A, FVector2D B, FString& Error);
     bool CanUpgradeRoad(int32 Id, FString& Error) const;
@@ -241,10 +248,12 @@ public:
     double RoadConstructionSeconds(const FSeigeTransportSegment& Road) const;
     bool FindRoute(FVector2D From, FVector2D To, TArray<FVector2D>& Route, double ClearanceOverride=-1, bool RoadPlan=false, const FSeigeBuilding* ProspectivePlot=nullptr,const FString& MobilityProfile=TEXT("drone")) const;
     bool FindMobilityRoute(const FString& Profile,FVector2D From,FVector2D To,TArray<FVector2D>& Route,double AdditionalRadiusMeters=0) const;
+    void RejectMobilityRouteEdge(const FString& Profile,FVector2D From,FVector2D To,double AdditionalRadiusMeters=0) const;
     bool FindRoadRoute(FVector2D From,FVector2D To,TArray<FVector2D>& Route,const FSeigeBuilding* ProspectivePlot=nullptr) const;
     bool ClearRoadLine(FVector2D From,FVector2D To,const FSeigeBuilding* ProspectivePlot=nullptr) const;
     bool IsRoadGridConnected(int32 A,int32 B) const {const auto X=Energy.Info(*this,A),Y=Energy.Info(*this,B);return X.Connected&&Y.Connected&&X.ComponentId==Y.ComponentId;}
     double RouteSpeedMultiplier(FVector2D A, FVector2D B) const;
+    bool HasRoadLink(FVector2D A, FVector2D B) const;
     int32 CourierRoadId(const FSeigeCourier& Courier) const;
     FVector2D SnapRoadPoint(FVector2D Position) const;
     TMap<FString,FSeigeTransportTier> TransportTiers;
@@ -280,7 +289,7 @@ public:
     double Time = 0, NextWaveTime = 0, WorldHalfSize = 5000;
     int32 Population = 0, TotalJobs = 0, Employed = 0, Wave = 0, LostCouriers = 0;
     int32 RobotSupportCapacity = 0, SupportedPopulation = 0;
-    int32 WorkerSurplusTarget=0, WorkersDisassembled=0;
+    int32 WorkersDisassembled=0;
     double DeliveredUnits = 0;
     bool Escaped = false, Won = false, Failed = false;
     TMap<FString, double> ShuttleCargo;
@@ -298,6 +307,10 @@ private:
     friend class FSeigeTransportVehicleSystem;
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FSeigeTransportNetworkTest;
+    friend class FSeigeCompanionGriefMovementTest;
+    friend class FSeigeAutomaticWorkerReserveTest;
+    friend class FSeigeCargoMovementParityTest;
+    friend class FSeigeRoadMovementRegressionTest;
     friend class FSeigeReplicatorWorkforceTest;
     friend class FSeigeStoredWorkerLifecycleTest;
     friend class FSeigeRobotSupportTest;
@@ -306,11 +319,15 @@ private:
     friend class FSeigeMineIncomingStorageTest;
     friend class FSeigeLogisticsPriorityTest;
     friend class FSeigeConstructionSourceTest;
+    friend class FSeigeReachableSupplyTest;
     friend class FSeigeRawInputBufferTest;
     friend class FSeigeDispatchEligibilityTest;
     friend class FSeigeTransportConservationTest;
     friend class FSeigeEnemyContactTest;
     friend class FSeigeFirstPlayableTimelineDiagnostic;
+#endif
+#if WITH_DEV_AUTOMATION_TESTS
+    int32 RoadsEnabledOverride=-1;
 #endif
     TSharedPtr<class FJsonObject> Policy, Scenario, Transport;
     int32 NextId = 1;
@@ -327,6 +344,10 @@ private:
     // Directed visibility edges are shared by routes to different destinations.
     // A negative cost records a blocked edge for the current topology only.
     mutable TMap<FString,double> CachedRouteEdges;
+    // Real movement failures survive ordinary planner-cache eviction. Keep a
+    // separate bounded FIFO, reset only with the route geometry/terrain.
+    mutable TSet<FString> RejectedPhysicalRouteEdges;
+    mutable TArray<FString> RejectedPhysicalRouteOrder;
     double Number(const FString& Key) const;
     FString TextRule(const FString& Key) const;
     void AllocateWorkers();

@@ -1,0 +1,149 @@
+{
+  "scope": "Actual Editor rendering and wind phase isolation; local gameplay was sampled at10x before pausing for poses. This is not final Shipping acceptance. Terrain-only edits after this binary snapshot are outside this wind review.",
+  "views": [
+    {
+      "view": "near",
+      "zoom": 1600,
+      "files": {
+        "Art/WeatherV09/v0106-wind-review/near/benchmark.json": "ae6b3988a9a2b2124594b2c7241d8187856f3deaa1d42eb636ea608dd08a8bf2",
+        "Art/WeatherV09/v0106-wind-review/near/hills.png": "5bd1be9e050681776fe1ba8369ffa77144fb4769822d5b4a7eb6650cca38aefd",
+        "Art/WeatherV09/v0106-wind-review/near/hills-wind-phase1.png": "6f20437e693bcbd61474ed1ed1a13ebf8dac07abf58d2372b3eea02aa8df7850"
+      },
+      "pose_pixels": {
+        "crown": {
+          "rectangle_xyxy": [
+            700,
+            170,
+            1400,
+            760
+          ],
+          "mean_absolute_rgb_delta": 13.139450363196126,
+          "fraction_pixels_channel_delta_over_5": 0.6882300242130751,
+          "fraction_pixels_channel_delta_over_20": 0.34059322033898304
+        },
+        "ground": {
+          "rectangle_xyxy": [
+            30,
+            110,
+            350,
+            200
+          ],
+          "mean_absolute_rgb_delta": 0.651400462962963,
+          "fraction_pixels_channel_delta_over_5": 0.0027430555555555554,
+          "fraction_pixels_channel_delta_over_20": 3.472222222222222e-05
+        }
+      },
+      "instance_batches": 576,
+      "proxy_batches": 288,
+      "distance_disabled_crown_batches": 0,
+      "observed_mean_fps": 173.26471491320652
+    },
+    {
+      "view": "survey",
+      "zoom": 7000,
+      "files": {
+        "Art/WeatherV09/v0106-wind-review/survey/benchmark.json": "72e3e33d9e61a590823ac6b200e1a31b87b3c54a12f986a490851a7bb550dade",
+        "Art/WeatherV09/v0106-wind-review/survey/hills.png": "c923bdcbd2ba9ac4a4d656862886cd3e09fce38f38a3b82df83f4bb7dd1a7640",
+        "Art/WeatherV09/v0106-wind-review/survey/hills-wind-phase1.png": "c4dbb067018c27ed0ca4286e0bc2cd3bda56b2f730b70cc2256d02b97379c7b3"
+      },
+      "pose_pixels": {
+        "crown": {
+          "rectangle_xyxy": [
+            650,
+            340,
+            1170,
+            770
+          ],
+          "mean_absolute_rgb_delta": 2.982418008348241,
+          "fraction_pixels_channel_delta_over_5": 0.25329606440071556,
+          "fraction_pixels_channel_delta_over_20": 0.018381037567084077
+        },
+        "ground": {
+          "rectangle_xyxy": [
+            30,
+            420,
+            340,
+            620
+          ],
+          "mean_absolute_rgb_delta": 0.6712956989247312,
+          "fraction_pixels_channel_delta_over_5": 0.0006290322580645161,
+          "fraction_pixels_channel_delta_over_20": 0.0
+        }
+      },
+      "instance_batches": 576,
+      "proxy_batches": 288,
+      "distance_disabled_crown_batches": 0,
+      "observed_mean_fps": 211.71775614981584
+    }
+  ],
+  "asset_sha256": {
+    "/Game/Art/NatureV091/M_GrassCardV091": "16f9bab67c46ae6ea6e45c98936644ba3c8c351eb5d794a499238050d2913ce8",
+    "/Game/Art/NatureV04/M_V04Foliage": "3af9997571210f0781ed3dd1173e8f012cfbc8cc854a7b13dfb287084d84436c",
+    "/Game/Art/Nature/M_NatureFoliage": "a81c8ceb23995fc7b6a233f6426d22aacc9666376f44862bbe8a68e6a4f42c0b",
+    "/Game/Art/NatureV08/M_BroadleafSpraysV08": "fe3b2a217570730be3dea53161d9fdbb42dc22ad1d0de2e4241ba6a92e46125b",
+    "/Game/Art/NatureV08/M_ConiferSpraysV08": "d0842c91f550821462d88144913dfd8ff8a243f453cc9e6af74d61bd33a443d7",
+    "/Game/Art/NatureV04/M_V04Wildflowers": "4eedf7f8e656b8e6a38d813e5c47c6e94eac5490010614bf175fc665e0652a71",
+    "/Game/Art/NatureV08/M_GrassProxyV08": "c1cbe5c8158afc99381c74b7ab3692ecb77ad27e52a17340d2157a566926dc25",
+    "/Game/Art/WeatherV09/MPC_Weather": "a00961b58f09a174c60830a700a18f861de38b05480a1b6bba28ed2a2c45383e"
+  },
+  "reviewed_snapshot_sha256": {
+    "Binaries/Win64/UnrealEditor-Seige.dll": "0be92d306107801c30e4aefaef59ba17fdb500fa2020d504763842a752d8f72c",
+    "Source/Seige/SeigeWindPresentation.h": "bf37a44699b14f275044a77622ea05569da1676f190c7e15fea13211053fe41c",
+    "Source/Seige/SeigeWeather.cpp": "e2e9406df1e8e3e06e674afcee86a2ed7f7c42ac288560867b1d291a4c4e08a6",
+    "Source/Seige/SeigeGraphicsBenchmark.cpp": "af1a7fd637b5e4ff38f945b4ee1450fca50d75354b9e26c5f300e6f5de717db7",
+    "Tools/import_foliage_wind.py": "f4b59ca2b647a55fa77a4a21c0ec3f2b773b5338fe79d349dcb805200620e737",
+    "Graphics/weather.json": "fbbb9fb3ea3e4f12794702c378f5a41acac3bb3d3b469c2862062ef03493637c",
+    "Graphics/scene.json": "6622400966d948f142444ad8dcd2b4810317d244b9aa0ed393767bd2781aeee7"
+  },
+  "pose_radians": [
+    0,
+    1.5707963267948966
+  ],
+  "settle_seconds_each_pose": 0.75,
+  "timing_caveat": "Other native NullRHI tests ran concurrently; observed FPS is not an isolated performance comparison, minimum FPS, or improvement claim.",
+  "visual_review": "Both near and survey captures inspected: crown/leaf clusters change pose while fixed ground/trunks remain stable. Some cloud/material/history pixels can still vary. Tree ROIs change substantially more than open-ground controls.",
+  "configured_tree_coverage": [
+    {
+      "kind": "OakA",
+      "mesh": "/Game/Art/NatureV07/SM_JacarandaNearV07.SM_JacarandaNearV07",
+      "crown_materials": [
+        "/Game/Art/NatureV04/M_V04Foliage.M_V04Foliage"
+      ]
+    },
+    {
+      "kind": "OakB",
+      "mesh": "/Game/Art/NatureV07/SM_JacarandaNearV07.SM_JacarandaNearV07",
+      "crown_materials": [
+        "/Game/Art/NatureV04/M_V04Foliage.M_V04Foliage"
+      ]
+    },
+    {
+      "kind": "PineA",
+      "mesh": "/Game/Art/Nature/SM_FirA.SM_FirA",
+      "crown_materials": [
+        "/Game/Art/Nature/M_NatureFoliage.M_NatureFoliage"
+      ]
+    },
+    {
+      "kind": "PineB",
+      "mesh": "/Game/Art/Nature/SM_FirB.SM_FirB",
+      "crown_materials": [
+        "/Game/Art/Nature/M_NatureFoliage.M_NatureFoliage"
+      ]
+    },
+    {
+      "kind": "broadleaf_proxy",
+      "mesh": "/Game/Art/NatureV08/SM_BroadleafSpraysV08.SM_BroadleafSpraysV08",
+      "crown_materials": [
+        "/Game/Art/NatureV08/M_BroadleafSpraysV08.M_BroadleafSpraysV08"
+      ]
+    },
+    {
+      "kind": "conifer_proxy",
+      "mesh": "/Game/Art/NatureV08/SM_ConiferSpraysV08.SM_ConiferSpraysV08",
+      "crown_materials": [
+        "/Game/Art/NatureV08/M_ConiferSpraysV08.M_ConiferSpraysV08"
+      ]
+    }
+  ]
+}

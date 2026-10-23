@@ -122,7 +122,7 @@ bool FSeigeResourceHudTest::RunTest(const FString& Parameters)
         H.Ui.Scale=FMath::Min(View.X/1600.,View.Y/900.);H.Ui.ViewportWidth=View.X;H.Ui.ViewportHeight=View.Y;
         const auto Cards=H.Ui.ResourceCardBounds(View.X/H.Ui.Scale);
         TestEqual(TEXT("All display sizes retain six separate cards"),Cards.Num(),6);H.Ui.HitRegions.Reset();
-        TestTrue(TEXT("Resource casing width is half the physical screen height"),FMath::IsNearlyEqual((Cards.Last().Max.X-Cards[0].Min.X+16)*H.Ui.Scale,View.Y*.5,0.1));
+        TestTrue(TEXT("Resource casing width equals the physical screen height"),FMath::IsNearlyEqual((Cards.Last().Max.X-Cards[0].Min.X+16)*H.Ui.Scale,View.Y,0.1));
         for(int32 I=0;I<Cards.Num();++I)
         {
             const auto& B=Cards[I];TestTrue(TEXT("Resource card stays inside the visible viewport"),B.Min.X*H.Ui.Scale>=0&&B.Max.X*H.Ui.Scale<=View.X&&B.Max.Y*H.Ui.Scale<View.Y);
@@ -132,15 +132,16 @@ bool FSeigeResourceHudTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Physical mouse coordinates resolve the right scaled card"),H.Ui.HitTest(Center.X,Center.Y),TEXT("summary:")+H.Ui.ResourceGroups[I].Id);
         }
     }
-    H.Ui.Scale=.8f;H.Ui.HoverPanel=TEXT("workforce");
+    H.Ui.Scale=.8f;H.Ui.HoverPanel=TEXT("workforce");H.Ui.BuildOpen=true;
     H.Ui.HitRegions={{FVector2D(200,162),FVector2D(425,462),TEXT("hover-panel:workforce"),TEXT("")},{FVector2D(220,500),FVector2D(40,34),TEXT("command:reserve-more"),TEXT("")}};
     H.Ui.UpdateHoverPanel(240*.8f,516*.8f,true);
     TestEqual(TEXT("Crossing onto a child button keeps the workforce panel open"),H.Ui.HoverPanel,FString(TEXT("workforce")));
-    const int32 Target=G.Sim.WorkerSurplusTarget;H.ProcessClick(240*.8f,516*.8f,G);
-    TestEqual(TEXT("The retained reserve button still executes without a canvas"),G.Sim.WorkerSurplusTarget,Target+1);
+    const int32 Target=G.Sim.WorkerSurplusTarget();H.ProcessClick(240*.8f,516*.8f,G);
+    TestEqual(TEXT("Retired reserve actions cannot change the automatic reserve"),G.Sim.WorkerSurplusTarget(),Target);
+    TestTrue(TEXT("Top hover details remain usable above an open build catalog"),H.Ui.BuildOpen&&H.Ui.HoverPanel==TEXT("workforce"));
     H.Ui.UpdateHoverPanel(240*.8f,516*.8f,false);TestTrue(TEXT("Hidden or unowned economy closes stale details"),H.Ui.HoverPanel.IsEmpty());
     H.Ui.HoverPanel=TEXT("workforce");H.Ui.UpdateHoverPanel(20,20,true);TestTrue(TEXT("Leaving the panel closes the hover surface"),H.Ui.HoverPanel.IsEmpty());
-    H.HandleShortcut(EKeys::B);H.HandleShortcut(EKeys::R);H.HandleShortcut(EKeys::M);
+    H.Ui.BuildOpen=false;H.HandleShortcut(EKeys::B);H.HandleShortcut(EKeys::R);H.HandleShortcut(EKeys::M);
     TestEqual(TEXT("One extraction shortcut selects the deposit-driven mine"),G.SelectedBuild,FString(TEXT("extraction_mine")));
     return true;
 }
@@ -208,23 +209,23 @@ bool FSeigeSpeedAndMenuShortcutTest::RunTest(const FString& Parameters)
     FInteractionWorld World;if(!World.Prepare(*this))return false;
     auto& Game=*World.Game;auto& Hud=*World.Hud;
     Game.Speed=1;Game.Paused=false;
-    Hud.HandleShortcut(EKeys::Add);TestEqual(TEXT("Numpad plus selects 5x after 1x"),Game.Speed,5.f);
-    Hud.HandleShortcut(EKeys::Equals);TestEqual(TEXT("Keyboard plus selects 10x after 5x"),Game.Speed,10.f);
-    Hud.HandleShortcut(EKeys::Add);TestTrue(TEXT("Plus enters Paused after 10x and retains that running rate"),Game.Paused&&Game.Speed==10);
+    Hud.HandleShortcut(EKeys::Add);TestEqual(TEXT("Numpad plus selects 10x after 1x"),Game.Speed,10.f);
+    Hud.HandleShortcut(EKeys::Equals);TestEqual(TEXT("Keyboard plus selects 20x after 10x"),Game.Speed,20.f);
+    Hud.HandleShortcut(EKeys::Add);TestTrue(TEXT("Plus enters Paused after 20x and retains that running rate"),Game.Paused&&Game.Speed==20);
     Hud.HandleShortcut(EKeys::Equals);TestTrue(TEXT("Plus leaves Paused at 1x"),!Game.Paused&&Game.Speed==1);
     Hud.HandleShortcut(EKeys::Hyphen);TestTrue(TEXT("Minus enters Paused before 1x"),Game.Paused&&Game.Speed==1);
-    Hud.HandleShortcut(EKeys::Subtract);TestTrue(TEXT("Minus wraps Paused to 10x"),!Game.Paused&&Game.Speed==10);
-    Hud.HandleShortcut(EKeys::Subtract);TestEqual(TEXT("Numpad minus selects 5x after 10x"),Game.Speed,5.f);
-    Hud.HandleShortcut(EKeys::SpaceBar);TestTrue(TEXT("Space pauses without resetting speed"),Game.Paused&&Game.Speed==5);
+    Hud.HandleShortcut(EKeys::Subtract);TestTrue(TEXT("Minus wraps Paused to 20x"),!Game.Paused&&Game.Speed==20);
+    Hud.HandleShortcut(EKeys::Subtract);TestEqual(TEXT("Numpad minus selects 10x after 20x"),Game.Speed,10.f);
+    Hud.HandleShortcut(EKeys::SpaceBar);TestTrue(TEXT("Space pauses without resetting speed"),Game.Paused&&Game.Speed==10);
     Hud.HandleShortcut(EKeys::SpaceBar);TestFalse(TEXT("Space resumes the same speed"),Game.Paused);
-    Game.Speed=10;Hud.HandleShortcut(EKeys::Add);Hud.HandleShortcut(EKeys::SpaceBar);
-    TestTrue(TEXT("Space resumes 10x after the speed cycle entered pause"),!Game.Paused&&Game.Speed==10);
-    Game.Speed=5;
+    Game.Speed=20;Hud.HandleShortcut(EKeys::Add);Hud.HandleShortcut(EKeys::SpaceBar);
+    TestTrue(TEXT("Space resumes 20x after the speed cycle entered pause"),!Game.Paused&&Game.Speed==20);
+    Game.Speed=10;
     Game.SelectedBuild=TEXT("sensor");Hud.HandleShortcut(EKeys::Escape);
     TestTrue(TEXT("Escape first cancels a blueprint without opening the game menu"),Game.SelectedBuild.IsEmpty()&&!Game.MenuOpen&&Game.Screen==TEXT("playing"));
     Hud.HandleShortcut(EKeys::Escape);
     TestTrue(TEXT("A subsequent Escape opens the game menu"),Game.MenuOpen&&Game.Screen==TEXT("game-menu")&&Game.Paused);
-    Hud.HandleShortcut(EKeys::Add);TestEqual(TEXT("Speed shortcuts do not change a paused menu's saved speed"),Game.Speed,5.f);
+    Hud.HandleShortcut(EKeys::Add);TestEqual(TEXT("Speed shortcuts do not change a paused menu's saved speed"),Game.Speed,10.f);
     Game.CursorOnWorld=true;Game.CursorWorld=FVector2D(1100,0);const int32 Buildings=Game.Sim.Buildings.Num();
     Hud.Ui.Scale=1;Hud.Ui.HitRegions={{FVector2D(100,100),FVector2D(200,50),TEXT("build:sensor"),TEXT("")}};
     World.Controller->HandlePrimaryClick(150,125);
@@ -232,7 +233,7 @@ bool FSeigeSpeedAndMenuShortcutTest::RunTest(const FString& Parameters)
     Hud.HandleShortcut(EKeys::F10);Hud.HandleShortcut(EKeys::B);TestTrue(TEXT("Build catalog opens after resuming"),Hud.Ui.BuildOpen);
     Hud.HandleShortcut(EKeys::F10);
     TestTrue(TEXT("F10 opens the game menu directly even from the construction catalog"),Game.MenuOpen&&!Hud.Ui.BuildOpen&&Game.Paused);
-    Hud.HandleShortcut(EKeys::Escape);TestTrue(TEXT("Escape resumes the original running state"),!Game.MenuOpen&&!Game.Paused&&Game.Speed==5);
+    Hud.HandleShortcut(EKeys::Escape);TestTrue(TEXT("Escape resumes the original running state"),!Game.MenuOpen&&!Game.Paused&&Game.Speed==10);
     return true;
 }
 
@@ -319,7 +320,9 @@ bool FSeigeSelectedCoreCommandsTest::RunTest(const FString& Parameters)
     G.CameraCenter=FVector(G.Sim.WorldHalfSize*2,0,0);Reject(TEXT("A neighbor-local ID cannot command the home core"));G.CameraCenter=FVector::ZeroVector;
     G.Zoom=G.MaximumZoom;Reject(TEXT("Regional-map selection cannot launch the shuttle"));G.Zoom=G.DefaultZoom;
     G.SelectedBuild=TEXT("sensor");Reject(TEXT("An active blueprint cannot reuse a stale core command"));G.SelectedBuild.Empty();
-    G.BeginRoadPlacement();G.SelectedId=CoreId;Reject(TEXT("An active road tool cannot reuse a stale core command"));G.CancelRoadTool();
+    // Retain isolation coverage for saved/stale tool state, even though the
+    // current catalog cannot activate roads.
+    G.RoadPlacementActive=true;G.SelectedId=CoreId;Reject(TEXT("An active road tool cannot reuse a stale core command"));G.CancelRoadTool();
     G.SelectedId=CoreId;const double CoreHealth=G.Sim.FindBuilding(CoreId)->Health;G.Sim.FindBuilding(CoreId)->Health=0;
     Reject(TEXT("A destroyed selected core cannot issue a manual command"));G.Sim.FindBuilding(CoreId)->Health=CoreHealth;
     G.ToggleGameMenu();G.SelectedId=CoreId;Reject(TEXT("A paused game-menu surface consumes stale escape commands"));G.ResumeGameMenu();
@@ -334,12 +337,15 @@ bool FSeigeRoadShortcutTest::RunTest(const FString& Parameters)
     FInteractionWorld World;if(!World.Prepare(*this))return false;
     auto& G=*World.Game;auto& Hud=*World.Hud;
     Hud.HandleShortcut(EKeys::B);Hud.HandleShortcut(EKeys::L);Hud.HandleShortcut(EKeys::R);
-    TestTrue(TEXT("B L R opens road construction through the external catalog"),G.IsRoadToolActive()&&!Hud.Ui.BuildOpen&&G.SelectedBuild.IsEmpty());
+    TestTrue(TEXT("Removed road shortcut leaves logistics open without starting placement"),!G.IsRoadToolActive()&&Hud.Ui.BuildOpen&&G.SelectedBuild.IsEmpty());
     Hud.HandleShortcut(EKeys::Escape);
-    TestTrue(TEXT("Escape cancels the road tool before opening a menu"),!G.IsRoadToolActive()&&!G.MenuOpen);
+    TestTrue(TEXT("Escape leaves the logistics category before opening a menu"),!G.IsRoadToolActive()&&!Hud.Ui.GroupFocused&&!G.MenuOpen);
+    Hud.HandleShortcut(EKeys::Escape);
+    TestFalse(TEXT("A second Escape closes the construction palette"),Hud.Ui.BuildOpen);
     Hud.HandleShortcut(EKeys::B);Hud.HandleShortcut(EKeys::L);Hud.HandleShortcut(EKeys::U);
-    TestTrue(TEXT("B L U opens existing-road upgrade selection"),G.IsRoadToolActive()&&!Hud.Ui.BuildOpen);
-    Hud.HandleShortcut(EKeys::RightMouseButton);TestFalse(TEXT("Right click cancels upgrade targeting"),G.IsRoadToolActive());
+    TestTrue(TEXT("Removed upgrade shortcut cannot activate road targeting"),!G.IsRoadToolActive()&&Hud.Ui.BuildOpen);
+    Hud.HandleShortcut(EKeys::RightMouseButton);TestFalse(TEXT("Right click cannot activate the deferred upgrade tool"),G.IsRoadToolActive());
+    Hud.HandleShortcut(EKeys::Escape);TestFalse(TEXT("Close the palette before testing a stale road selection"),Hud.Ui.BuildOpen);
     G.SelectedRoadId=123;Hud.HandleShortcut(EKeys::Escape);
     TestTrue(TEXT("Escape clears road selection before the game menu"),G.SelectedRoadId==0&&!G.MenuOpen);
     auto ClickRoad=[&]()
@@ -381,18 +387,18 @@ bool FSeigeWorkerCommandUiTest::RunTest(const FString& Parameters)
     FInteractionWorld W;if(!W.Prepare(*this))return false;auto& G=*W.Game;auto& H=*W.Hud;
     const int32 CoreId=G.Sim.Buildings[0].Id;G.SelectedId=CoreId;
     auto Click=[&](const TCHAR* Action){H.Ui.Scale=1;H.Ui.HitRegions={{FVector2D(100,100),FVector2D(200,50),Action,TEXT("")}};W.Controller->HandlePrimaryClick(150,125);H.Ui.HitRegions.Reset();};
-    const auto Options=G.Sim.ProductionOptions(CoreId);if(!TestTrue(TEXT("Core exposes selectable manufacturing outputs"),Options.Num()>1))return false;
+    const auto Options=G.Sim.ProductionOptions(CoreId);if(!TestEqual(TEXT("Core manufactures only workers under the current production rules"),Options.Num(),1))return false;
     const FString Before=G.Sim.FindBuilding(CoreId)->SelectedRecipe;const double Stock=G.Sim.TotalStock(TEXT("components"));const int32 Population=G.Sim.Population;
-    Click(TEXT("command:recipe-next"));TestNotEqual(TEXT("Production button changes selected output without Canvas"),G.Sim.FindBuilding(CoreId)->SelectedRecipe,Before);
+    Click(TEXT("command:recipe-next"));TestEqual(TEXT("Stale recipe cycling cannot turn the worker-only core into a universal factory"),G.Sim.FindBuilding(CoreId)->SelectedRecipe,Before);
     TestEqual(TEXT("Selecting a recipe cannot award or consume physical parts"),G.Sim.TotalStock(TEXT("components")),Stock);
-    Click(TEXT("command:reserve-more"));TestEqual(TEXT("Worker HUD increases whole inactive reserve target"),G.Sim.WorkerSurplusTarget,1);
-    Click(TEXT("command:reserve-less"));Click(TEXT("command:reserve-less"));TestEqual(TEXT("Reserve decrement is bounded at zero"),G.Sim.WorkerSurplusTarget,0);
+    Click(TEXT("command:reserve-more"));TestEqual(TEXT("Retired increment cannot change the level-one reserve"),G.Sim.WorkerSurplusTarget(),5);
+    Click(TEXT("command:reserve-less"));Click(TEXT("command:reserve-less"));TestEqual(TEXT("Retired decrement cannot change the level-one reserve"),G.Sim.WorkerSurplusTarget(),5);
     Click(TEXT("command:disassemble"));TestEqual(TEXT("No stored surplus means no active workers are deleted"),G.Sim.Population,Population);
     const FString Selected=G.Sim.FindBuilding(CoreId)->SelectedRecipe;G.Observer=true;Click(TEXT("command:recipe-next"));Click(TEXT("command:reserve-more"));
-    TestEqual(TEXT("Observer cannot change selected production"),G.Sim.FindBuilding(CoreId)->SelectedRecipe,Selected);TestEqual(TEXT("Observer cannot change reserve"),G.Sim.WorkerSurplusTarget,0);G.Observer=false;
-    G.CameraCenter=FVector(G.Sim.WorldHalfSize*2,0,0);Click(TEXT("command:reserve-more"));TestEqual(TEXT("Neighbor view cannot issue home workforce commands"),G.Sim.WorkerSurplusTarget,0);G.CameraCenter=FVector::ZeroVector;
-    G.ToggleGameMenu();Click(TEXT("command:reserve-more"));TestEqual(TEXT("Paused game menu consumes stale worker actions"),G.Sim.WorkerSurplusTarget,0);G.ResumeGameMenu();
-    G.Sim.Won=true;G.WinAcknowledged=false;Click(TEXT("command:reserve-more"));TestEqual(TEXT("Outcome modal consumes stale worker actions"),G.Sim.WorkerSurplusTarget,0);
+    TestEqual(TEXT("Observer cannot change selected production"),G.Sim.FindBuilding(CoreId)->SelectedRecipe,Selected);TestEqual(TEXT("Observer cannot change reserve"),G.Sim.WorkerSurplusTarget(),5);G.Observer=false;
+    G.CameraCenter=FVector(G.Sim.WorldHalfSize*2,0,0);Click(TEXT("command:reserve-more"));TestEqual(TEXT("Neighbor view cannot issue home workforce commands"),G.Sim.WorkerSurplusTarget(),5);G.CameraCenter=FVector::ZeroVector;
+    G.ToggleGameMenu();Click(TEXT("command:reserve-more"));TestEqual(TEXT("Paused game menu consumes stale worker actions"),G.Sim.WorkerSurplusTarget(),5);G.ResumeGameMenu();
+    G.Sim.Won=true;G.WinAcknowledged=false;Click(TEXT("command:reserve-more"));TestEqual(TEXT("Outcome modal consumes stale worker actions"),G.Sim.WorkerSurplusTarget(),5);
     return true;
 }
 
@@ -404,7 +410,7 @@ bool FSeigePortWorkerUiTest::RunTest(const FString& Parameters)
     const int32 PortId=G.Sim.Buildings.Last().Id;G.SelectedId=PortId;
     auto Click=[&](const TCHAR* Action){H.Ui.Scale=1;H.Ui.HitRegions={{FVector2D(100,100),FVector2D(200,50),Action,TEXT("")}};W.Controller->HandlePrimaryClick(150,125);H.Ui.HitRegions.Reset();};
     Click(TEXT("trade:reserve-more"));TestEqual(TEXT("Selected own port has a separate worker target"),G.Sim.FindBuilding(PortId)->WorkerExportTarget,1);
-    TestEqual(TEXT("Port target does not overwrite colony target"),G.Sim.WorkerSurplusTarget,0);
+    TestEqual(TEXT("Port target does not overwrite colony target"),G.Sim.WorkerSurplusTarget(),5);
     G.SelectedId=G.Sim.Buildings[0].Id;Click(TEXT("trade:reserve-more"));TestEqual(TEXT("A stale port action cannot modify a nonselected port"),G.Sim.FindBuilding(PortId)->WorkerExportTarget,1);
     G.SelectedId=PortId;G.Observer=true;Click(TEXT("trade:reserve-more"));TestEqual(TEXT("Observer cannot change a port worker target"),G.Sim.FindBuilding(PortId)->WorkerExportTarget,1);G.Observer=false;
     G.SelectedBuild=TEXT("sensor");Click(TEXT("trade:reserve-more"));TestEqual(TEXT("Placement consumes stale trade actions"),G.Sim.FindBuilding(PortId)->WorkerExportTarget,1);
@@ -488,7 +494,7 @@ bool FSeigePreparationUiTest::RunTest(const FString& Parameters)
     W.Controller->HandlePrimaryClick(900,500);
     TestTrue(TEXT("Stale actions and world clicks keep preparation active"),G.IsPreparingScenario()&&G.Screen==TEXT("preparing")&&!H.Ui.BuildOpen&&!G.MenuOpen);
     TestEqual(TEXT("Preparation controls cannot alter pause state"),G.Paused,Paused);
-    TestEqual(TEXT("Preparation controls cannot change colony reserves"),G.Sim.WorkerSurplusTarget,0);
+    TestEqual(TEXT("Preparation controls cannot change colony reserves"),G.Sim.WorkerSurplusTarget(),5);
     TestEqual(TEXT("Preparation controls preserve captured region choice"),G.ScenarioSlots[0],FString(TEXT("developed")));
     Click(TEXT("cancel-preparation"));
     TestTrue(TEXT("Cancel button works before a render pass"),!G.IsPreparingScenario()&&G.Screen==TEXT("scenario"));
@@ -503,37 +509,53 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCombatUiTest,"Seige.Interaction.CombatPla
 bool FSeigeCombatUiTest::RunTest(const FString& Parameters)
 {
     FInteractionWorld W;if(!W.Prepare(*this))return false;auto& G=*W.Game;auto& H=*W.Hud;auto& C=G.Sim.Combat;
-    const int32 CoreId=G.Sim.Buildings[0].Id;G.SelectedId=CoreId;
+    const int32 CoreId=G.Sim.Buildings[0].Id,FactoryId=9000;
+    // The worker-only core is an outfit target, not a chassis factory. Use an
+    // authored specialist facility with real existing operators and a road grid.
+    FSeigeBuilding Factory;Factory.Id=FactoryId;Factory.DefId=TEXT("vehicle_factory_2");Factory.Health=G.Sim.BuildingDefs[Factory.DefId].Health;
+    Factory.Position=FVector2D(G.Sim.Definition(G.Sim.Buildings[0])->ReservedFootprint+G.Sim.BuildingDefs[Factory.DefId].ReservedFootprint+100,0);
+    Factory.IsConstructing=false;Factory.ConstructionProgress=1;G.Sim.Buildings.Add(Factory);
+    FSeigeTransportSegment Road;Road.Id=9001;Road.Tier=Road.TargetTier=G.Sim.InitialRoadTier();Road.IsConstructing=false;Road.ConstructionProgress=1;
+    Road.A=G.Sim.BuildingAccessPoint(*G.Sim.FindBuilding(CoreId));Road.B=G.Sim.BuildingAccessPoint(*G.Sim.FindBuilding(FactoryId));G.Sim.Roads.Add(Road);
+    const int32 Operators=G.Sim.BuildingDefs[Factory.DefId].Jobs;
+    if(!TestTrue(TEXT("Finite worker manifest can staff the factory fixture"),G.Sim.Workers.Bodies.Num()>=Operators))return false;
+    for(int32 I=0;I<Operators;++I){auto& Body=G.Sim.Workers.Bodies[I];Body.State=TEXT("active");Body.Activity=TEXT("operate");Body.BuildingId=Body.CrewBuildingId=FactoryId;Body.RoadId=Body.DeliveryId=Body.ContainerId=Body.ChargingBuildingId=Body.TransportVehicleId=0;Body.ContainerKind.Empty();Body.SuspendedActivity.Empty();Body.Route.Empty();Body.NextWaypoint=0;Body.StationSlot=I;Body.Position=Road.B+FVector2D(0,20*I);Body.Outdoor=true;}
+    G.Sim.Workers.RefreshMetrics(G.Sim);G.Sim.FindBuilding(CoreId)->BatteryEnergyKWh=G.Sim.Energy.Definition(G.Sim.CoreDefinition)->BatteryCapacityKWh;G.Sim.Energy.Invalidate();G.Sim.Energy.Tick(G.Sim,0);G.SelectedId=FactoryId;
     auto Click=[&](const TCHAR* Action){H.Ui.Scale=1;H.Ui.HitRegions={{FVector2D(100,100),FVector2D(200,50),Action,TEXT("")}};W.Controller->HandlePrimaryClick(150,125);H.Ui.HitRegions.Reset();};
-    Click(TEXT("combat:request"));TestFalse(TEXT("A stale hidden combat action cannot install a supply plan"),C.FabricationPlans.Contains(CoreId));
+    Click(TEXT("combat:request"));TestFalse(TEXT("A stale hidden combat action cannot install a supply plan"),C.FabricationPlans.Contains(FactoryId));
     Click(TEXT("combat:open"));Click(TEXT("combat:tab:factory"));Click(TEXT("combat:hull-next"));Click(TEXT("combat:hull-next"));Click(TEXT("combat:weapon-next"));Click(TEXT("combat:add"));
-    const double Alloy=G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),Energy=C.EnergySpentKWh;const int32 Jobs=C.Fabrication.Num();
-    Click(TEXT("combat:request"));const auto* Plan=C.FabricationPlans.Find(CoreId);
-    if(!TestNotNull(TEXT("Core can request a physical chassis and weapon bill through its UI"),Plan))return false;
+    const double Alloy=G.Sim.FindBuilding(FactoryId)->Inventory.FindRef(TEXT("alloy")),Energy=C.EnergySpentKWh;const int32 Jobs=C.Fabrication.Num();
+    Click(TEXT("combat:request"));const auto* Plan=C.FabricationPlans.Find(FactoryId);
+    if(!TestNotNull(TEXT("Specialist factory can request a physical chassis and weapon bill through its UI"),Plan))return false;
     TestEqual(TEXT("The draft contains the requested module count"),Plan->Weapons.Num(),1);
     TestEqual(TEXT("Requesting parts cannot start assembly"),C.Fabrication.Num(),Jobs);
-    TestEqual(TEXT("Requesting parts cannot spend or award alloy"),G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),Alloy);
+    TestEqual(TEXT("Requesting parts cannot spend or award alloy"),G.Sim.FindBuilding(FactoryId)->Inventory.FindRef(TEXT("alloy")),Alloy);
     TestEqual(TEXT("Requesting parts cannot spend grid energy"),C.EnergySpentKWh,Energy);
-    if(!TestTrue(TEXT("The selected large hull genuinely exceeds the finite starter alloy stock"),C.Chassis[Plan->ChassisId].Cost.FindRef(TEXT("alloy"))>Alloy))return false;
+    if(!TestTrue(TEXT("The selected large hull genuinely exceeds local factory stock"),C.Chassis[Plan->ChassisId].Cost.FindRef(TEXT("alloy"))>Alloy))return false;
     Click(TEXT("combat:queue"));TestEqual(TEXT("An unaffordable large hull does not bypass physical delivery"),C.Fabrication.Num(),Jobs);
-    TestEqual(TEXT("Rejected assembly preserves actual stock"),G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),Alloy);
+    TestEqual(TEXT("Rejected assembly preserves actual stock"),G.Sim.FindBuilding(FactoryId)->Inventory.FindRef(TEXT("alloy")),Alloy);
     Click(TEXT("combat:hull-prev"));Click(TEXT("combat:hull-prev"));Click(TEXT("combat:weapon-next"));Click(TEXT("combat:add"));Click(TEXT("combat:request"));
-    Plan=C.FabricationPlans.Find(CoreId);if(!TestNotNull(TEXT("Affordable small hull replaces the draft plan"),Plan))return false;
+    Plan=C.FabricationPlans.Find(FactoryId);if(!TestNotNull(TEXT("Small hull replaces the draft plan"),Plan))return false;
+    if(!TestEqual(TEXT("Small hull draft retains one fitted module"),Plan->Weapons.Num(),1))return false;
     const auto Hull=C.Chassis[Plan->ChassisId];const auto Weapon=C.Weapons[Plan->Weapons[0]];
+    // Author the delivered local bill only after proving a request supplies no stock.
+    auto& Delivered=G.Sim.FindBuilding(FactoryId)->Inventory;Delivered=Hull.Cost;for(const auto& P:Weapon.Cost)Delivered.FindOrAdd(P.Key)+=P.Value;
+    const double DeliveredAlloy=Delivered.FindRef(TEXT("alloy"));
     Click(TEXT("combat:queue"));if(!TestEqual(TEXT("Local paid stock and energy start a real timed job"),C.Fabrication.Num(),Jobs+1)){AddError(G.Notice);return false;}
-    TestEqual(TEXT("Assembly debits the exact hull and weapon bill"),G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),Alloy-Hull.Cost.FindRef(TEXT("alloy"))-Weapon.Cost.FindRef(TEXT("alloy")));
+    TestEqual(TEXT("Assembly debits the exact hull and weapon bill"),G.Sim.FindBuilding(FactoryId)->Inventory.FindRef(TEXT("alloy")),DeliveredAlloy-Hull.Cost.FindRef(TEXT("alloy"))-Weapon.Cost.FindRef(TEXT("alloy")));
     TestEqual(TEXT("Assembly debits the configured transaction energy"),C.EnergySpentKWh,Energy+Hull.BuildKWh);
-    TestFalse(TEXT("A committed paid job consumes its material-request plan"),C.FabricationPlans.Contains(CoreId));
+    TestFalse(TEXT("A committed paid job consumes its material-request plan"),C.FabricationPlans.Contains(FactoryId));
+    G.SelectedId=CoreId;
     Click(TEXT("combat:tab:outfit"));Click(TEXT("combat:outfit-platform"));Click(TEXT("combat:refit-request"));
-    TestTrue(TEXT("A selected home platform can request delivered refit parts"),C.RefitPlans.Contains(CoreId));
-    const auto OriginalWeapons=C.BuildingState[CoreId].Weapons;const double BeforeRefit=G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy"));
+    TestTrue(TEXT("A selected home platform requests refit parts at its specialist service factory"),C.RefitPlans.Contains(FactoryId));
+    Delivered=Weapon.Cost;const auto OriginalWeapons=C.BuildingState[CoreId].Weapons;const double BeforeRefit=Delivered.FindRef(TEXT("alloy"));
     G.CameraCenter=FVector(G.Sim.WorldHalfSize*2,0,0);Click(TEXT("combat:request"));Click(TEXT("combat:queue"));Click(TEXT("combat:refit"));
     TestEqual(TEXT("Viewing a neighbor cannot queue a home factory through an aliased ID"),C.Fabrication.Num(),Jobs+1);
     TestTrue(TEXT("Viewing a neighbor cannot refit a home platform"),C.BuildingState[CoreId].Weapons==OriginalWeapons);
     if(C.Fleets.Num()){G.SelectedFleetId=C.Fleets[0].Id;Click(TEXT("combat:defense"));TestTrue(TEXT("Own fleet can return to home defense while viewing a neighbor"),C.Fleets[0].Mission==TEXT("defense")&&C.Fleets[0].DestinationSector==4);}
     G.CameraCenter=FVector::ZeroVector;G.Observer=true;Click(TEXT("combat:refit"));TestTrue(TEXT("Observer cannot install a cached home outfit"),C.BuildingState[CoreId].Weapons==OriginalWeapons);G.Observer=false;
     Click(TEXT("combat:refit"));TestTrue(TEXT("Home outfit installation changes the actual platform modules"),C.BuildingState[CoreId].Weapons.Num()==1&&C.BuildingState[CoreId].Weapons[0]==Weapon.Id);
-    TestEqual(TEXT("Installation consumes actual delivered weapon materials"),G.Sim.FindBuilding(CoreId)->Inventory.FindRef(TEXT("alloy")),BeforeRefit-Weapon.Cost.FindRef(TEXT("alloy")));
+    TestEqual(TEXT("Installation consumes actual delivered factory weapon materials"),G.Sim.FindBuilding(FactoryId)->Inventory.FindRef(TEXT("alloy")),BeforeRefit-Weapon.Cost.FindRef(TEXT("alloy")));
     Click(TEXT("combat:close"));Click(TEXT("combat:queue"));TestEqual(TEXT("Closing the combat panel invalidates its cached assembly action"),C.Fabrication.Num(),Jobs+1);
     return true;
 }

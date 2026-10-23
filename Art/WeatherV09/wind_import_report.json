@@ -8,6 +8,9 @@
       "uses_engine_time": false,
       "previous_frame_phase": true,
       "bounded_offset_cm": 16,
+      "coarse_motion_distance_cutoff": true,
+      "height_weighting": "saturate(Vertex.r) * saturate(Vertex.r)",
+      "highest_temporal_harmonic": 3,
       "vertex_instructions": 226
     },
     {
@@ -18,7 +21,10 @@
       "uses_engine_time": false,
       "previous_frame_phase": true,
       "bounded_offset_cm": 48,
-      "vertex_instructions": 221
+      "coarse_motion_distance_cutoff": false,
+      "height_weighting": "per-mesh local bounds; squared crown bend",
+      "highest_temporal_harmonic": 3,
+      "vertex_instructions": 277
     },
     {
       "material": "/Game/Art/Nature/M_NatureFoliage",
@@ -28,7 +34,10 @@
       "uses_engine_time": false,
       "previous_frame_phase": true,
       "bounded_offset_cm": 48,
-      "vertex_instructions": 221
+      "coarse_motion_distance_cutoff": false,
+      "height_weighting": "per-mesh local bounds; squared crown bend",
+      "highest_temporal_harmonic": 3,
+      "vertex_instructions": 277
     },
     {
       "material": "/Game/Art/NatureV08/M_BroadleafSpraysV08",
@@ -38,7 +47,10 @@
       "uses_engine_time": false,
       "previous_frame_phase": true,
       "bounded_offset_cm": 48,
-      "vertex_instructions": 226
+      "coarse_motion_distance_cutoff": false,
+      "height_weighting": "per-mesh local bounds; squared crown bend",
+      "highest_temporal_harmonic": 3,
+      "vertex_instructions": 282
     },
     {
       "material": "/Game/Art/NatureV08/M_ConiferSpraysV08",
@@ -48,7 +60,10 @@
       "uses_engine_time": false,
       "previous_frame_phase": true,
       "bounded_offset_cm": 48,
-      "vertex_instructions": 226
+      "coarse_motion_distance_cutoff": false,
+      "height_weighting": "per-mesh local bounds; squared crown bend",
+      "highest_temporal_harmonic": 3,
+      "vertex_instructions": 282
     },
     {
       "material": "/Game/Art/NatureV04/M_V04Wildflowers",
@@ -58,6 +73,9 @@
       "uses_engine_time": false,
       "previous_frame_phase": true,
       "bounded_offset_cm": 16,
+      "coarse_motion_distance_cutoff": true,
+      "height_weighting": "smoothstep(0.0, 65.0, LocalPos.z)",
+      "highest_temporal_harmonic": 3,
       "vertex_instructions": 216
     },
     {
@@ -68,13 +86,75 @@
       "uses_engine_time": false,
       "previous_frame_phase": true,
       "bounded_offset_cm": 16,
+      "coarse_motion_distance_cutoff": true,
+      "height_weighting": "smoothstep(0.0, 65.0, LocalPos.z)",
+      "highest_temporal_harmonic": 3,
       "vertex_instructions": 216
+    }
+  ],
+  "configured_tree_coverage": [
+    {
+      "kind": "OakA",
+      "mesh": "/Game/Art/NatureV07/SM_JacarandaNearV07.SM_JacarandaNearV07",
+      "crown_materials": [
+        "/Game/Art/NatureV04/M_V04Foliage.M_V04Foliage"
+      ]
+    },
+    {
+      "kind": "OakB",
+      "mesh": "/Game/Art/NatureV07/SM_JacarandaNearV07.SM_JacarandaNearV07",
+      "crown_materials": [
+        "/Game/Art/NatureV04/M_V04Foliage.M_V04Foliage"
+      ]
+    },
+    {
+      "kind": "PineA",
+      "mesh": "/Game/Art/Nature/SM_FirA.SM_FirA",
+      "crown_materials": [
+        "/Game/Art/Nature/M_NatureFoliage.M_NatureFoliage"
+      ]
+    },
+    {
+      "kind": "PineB",
+      "mesh": "/Game/Art/Nature/SM_FirB.SM_FirB",
+      "crown_materials": [
+        "/Game/Art/Nature/M_NatureFoliage.M_NatureFoliage"
+      ]
+    },
+    {
+      "kind": "broadleaf_proxy",
+      "mesh": "/Game/Art/NatureV08/SM_BroadleafSpraysV08.SM_BroadleafSpraysV08",
+      "crown_materials": [
+        "/Game/Art/NatureV08/M_BroadleafSpraysV08.M_BroadleafSpraysV08"
+      ]
+    },
+    {
+      "kind": "conifer_proxy",
+      "mesh": "/Game/Art/NatureV08/SM_ConiferSpraysV08.SM_ConiferSpraysV08",
+      "crown_materials": [
+        "/Game/Art/NatureV08/M_ConiferSpraysV08.M_ConiferSpraysV08"
+      ]
     }
   ],
   "collection": "/Game/Art/WeatherV09/MPC_Weather.MPC_Weather",
   "gpu_only": true,
   "trunks": "unchanged rigid bark materials",
   "shadow_cache": "rigid; does not follow individual leaf rustle",
-  "timing": "authoritative calendar plus substep remainder, bounded cyclic phase and previous-frame phase",
-  "license": "Original material code; retained asset and texture licenses unchanged."
+  "timing": "integrated calendar delta, square-root time-lapse rate capped by editable maximum; frozen on pause; bounded phase and previous-frame phase",
+  "maximum_playback_rate": 4,
+  "license": "Original material code; retained asset and texture licenses unchanged.",
+  "asset_sha256": {
+    "/Game/Art/NatureV091/M_GrassCardV091": "16f9bab67c46ae6ea6e45c98936644ba3c8c351eb5d794a499238050d2913ce8",
+    "/Game/Art/NatureV04/M_V04Foliage": "3af9997571210f0781ed3dd1173e8f012cfbc8cc854a7b13dfb287084d84436c",
+    "/Game/Art/Nature/M_NatureFoliage": "a81c8ceb23995fc7b6a233f6426d22aacc9666376f44862bbe8a68e6a4f42c0b",
+    "/Game/Art/NatureV08/M_BroadleafSpraysV08": "fe3b2a217570730be3dea53161d9fdbb42dc22ad1d0de2e4241ba6a92e46125b",
+    "/Game/Art/NatureV08/M_ConiferSpraysV08": "d0842c91f550821462d88144913dfd8ff8a243f453cc9e6af74d61bd33a443d7",
+    "/Game/Art/NatureV04/M_V04Wildflowers": "4eedf7f8e656b8e6a38d813e5c47c6e94eac5490010614bf175fc665e0652a71",
+    "/Game/Art/NatureV08/M_GrassProxyV08": "c1cbe5c8158afc99381c74b7ab3692ecb77ad27e52a17340d2157a566926dc25",
+    "/Game/Art/WeatherV09/MPC_Weather": "a00961b58f09a174c60830a700a18f861de38b05480a1b6bba28ed2a2c45383e"
+  },
+  "source_sha256": {
+    "Tools/import_foliage_wind.py": "f4b59ca2b647a55fa77a4a21c0ec3f2b773b5338fe79d349dcb805200620e737",
+    "Graphics/weather.json": "fbbb9fb3ea3e4f12794702c378f5a41acac3bb3d3b469c2862062ef03493637c"
+  }
 }

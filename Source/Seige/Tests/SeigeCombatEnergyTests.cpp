@@ -19,8 +19,16 @@ bool FSeigeDefensiveChargingReserveTest::RunTest(const FString&)
     for(auto& Body:Base.Workers.Bodies)if(Body.State==TEXT("active"))
     {Body.Activity=TEXT("operate");Body.BuildingId=CoreId;Body.RoadId=Body.DeliveryId=Body.ContainerId=0;Body.Route.Empty();Body.NextWaypoint=0;Body.Position=Base.BuildingAccessPoint(Base.Buildings[0]);}
     Base.Workers.RefreshMetrics(Base);Base.Calendar.SetElapsedMicroseconds(2700000000);
-    Base.Combat.Vehicles.SetNum(1);auto& Vehicle=Base.Combat.Vehicles[0];Vehicle.Embarked=false;Vehicle.FleetId=0;Vehicle.Weapons.Empty();Vehicle.Cooldowns.Empty();Vehicle.BatteryKWh=0;Vehicle.Position=Base.BuildingAccessPoint(Base.Buildings[0])+FVector2D(0,100);
-    Vehicle.Shield=Base.Combat.Chassis[Vehicle.ChassisId].Shield;
+    // The starting cargo contains no combat chassis. Author one valid empty
+    // battery load for this dispatch fixture and validate its persistent state.
+    auto Saved=MakeShared<FJsonObject>();Base.Combat.Save(Saved);
+    FSeigeVehicle Vehicle;Vehicle.Id=int32(Saved->GetObjectField(TEXT("combat"))->GetNumberField(TEXT("next_id")));
+    Vehicle.ChassisId=TEXT("mech_small");const auto& Chassis=Base.Combat.Chassis[Vehicle.ChassisId];
+    Vehicle.Health=Chassis.Health;Vehicle.Armor=Chassis.Armor;Vehicle.Shield=Chassis.Shield;Vehicle.BatteryKWh=0;
+    Vehicle.Position=Vehicle.Destination=Base.BuildingAccessPoint(Base.Buildings[0])+FVector2D(0,100);
+    Vehicle.Status=TEXT("Authored unarmed charging fixture");Base.Combat.Vehicles.Add(Vehicle);Base.Combat.Save(Saved);
+    Saved->GetObjectField(TEXT("combat"))->SetNumberField(TEXT("next_id"),Vehicle.Id+1);
+    if(!Base.Combat.Load(Saved,Base,Error)){AddError(Error);return false;}
     auto& Platform=Base.Combat.BuildingState[CoreId];Platform.Weapons={TEXT("laser_small")};Platform.Cooldowns={0};Platform.LastDamageTime=Base.Time;
     Base.Buildings[0].BatteryEnergyKWh=0;Base.Energy.Invalidate();Base.Energy.Tick(Base,0);
     const double Step=Base.FixedStepSeconds(),ShotCost=Base.Combat.Weapons[TEXT("laser_small")].EnergyKWh;
@@ -57,7 +65,7 @@ bool FSeigeDefensiveChargingReserveTest::RunTest(const FString&)
 
     // Explicit disconnected electrical fixture: a completed factory and battery
     // on their own road. Its finite charge must not be held for the home gun.
-    FSeigeSimulation Separate=Base;AddThreat(Separate);
+    FSeigeSimulation Separate=Base;Separate.SetRoadsEnabledForTest(true);AddThreat(Separate);
     FSeigeBuilding Factory;Factory.Id=900002;Factory.DefId=TEXT("vehicle_factory");Factory.Position=FVector2D(8000,5000);Factory.Health=Separate.BuildingDefs[Factory.DefId].Health;Factory.IsConstructing=false;Factory.ConstructionProgress=1;
     FSeigeBuilding Battery;Battery.Id=900003;Battery.DefId=TEXT("battery_bank");Battery.Position=FVector2D(9000,5000);Battery.Health=Separate.BuildingDefs[Battery.DefId].Health;Battery.IsConstructing=false;Battery.ConstructionProgress=1;Battery.BatteryEnergyKWh=1;
     Separate.Buildings.Add(Factory);Separate.Buildings.Add(Battery);
@@ -73,7 +81,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeDefensiveTransactionsTest,"Seige.Combat.D
 bool FSeigeDefensiveTransactionsTest::RunTest(const FString&)
 {
     const FString Rules=FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules"));FString Error;FSeigeSimulation S,Loaded;
-    if(!S.Initialize(Rules,Error,false,false)||!S.SetWorkerSurplusTarget(0,Error)){AddError(Error);return false;}
+    if(!S.Initialize(Rules,Error,false,false)){AddError(Error);return false;}
     for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
     if(!TestFalse(TEXT("Real starter workers finish deployment before the transaction fixture"),S.Buildings[0].IsConstructing))return false;
     S.Tick(20);const int32 CoreId=S.Buildings[0].Id;const FString Recipe=TEXT("smelt_alloy");
@@ -81,7 +89,34 @@ bool FSeigeDefensiveTransactionsTest::RunTest(const FString&)
     // construction demand. Finish its paid work; do not erase escrow or refund it.
     for(int32 I=0;I<80000&&S.Buildings[0].ProductionCommitted;++I)S.Tick(S.FixedStepSeconds());
     if(!TestFalse(TEXT("The earlier paid deployment batch finishes through normal production"),S.Buildings[0].ProductionCommitted))return false;
-    if(!S.SetProductionRecipe(CoreId,Recipe,Error)){AddError(Error);return false;}
+    // The core now manufactures workers only. Install and staff a specialist
+    // refinery on the current colony grid, paying its bill from landed cargo.
+    FVector2D RefineryPosition=S.Buildings[0].Position+FVector2D(1300,0);
+    bool Valid=S.CanPlaceBuilding(TEXT("alloy_refinery"),RefineryPosition,Error);
+    for(int32 Ring=1;Ring<=4&&!Valid;++Ring)for(int32 Direction=0;Direction<8&&!Valid;++Direction)
+    {const double Angle=Direction*UE_TWO_PI/8;RefineryPosition=S.Buildings[0].Position+FVector2D(1300,0)+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Ring*250;Valid=S.CanPlaceBuilding(TEXT("alloy_refinery"),RefineryPosition,Error);}
+    if(!Valid||!S.PlaceBuilding(TEXT("alloy_refinery"),RefineryPosition,Error)){AddError(Error);return false;}
+    const int32 ProducerId=S.Buildings.Last().Id;
+    auto Pay=[&](const TMap<FString,double>& Bill)
+    {for(const auto& P:Bill)if(S.Buildings[0].Inventory.FindRef(P.Key)<P.Value){AddError(TEXT("Transaction fixture lacks landed construction materials"));return false;}for(const auto& P:Bill)S.Buildings[0].Inventory.FindOrAdd(P.Key)-=P.Value;return true;};
+    auto& Producer=*S.FindBuilding(ProducerId);const auto BuildingBill=S.ConstructionCost(Producer);
+    if(!Pay(BuildingBill))return false;
+    Producer.IsConstructing=false;Producer.ConstructionProgress=1;Producer.InstalledMaterials=BuildingBill;
+    Producer.Builders=Producer.BuildersOnSite=Producer.TravellingBuilders=0;Producer.BuilderRoute.Empty();Producer.BuilderNextWaypoint=0;
+    TestFalse(TEXT("Current transaction fixture uses roadless colony power"),S.RoadsEnabled());
+    int32 Staff=0;const int32 Jobs=S.Definition(Producer)->Jobs;
+    for(auto& Worker:S.Workers.Bodies)if(Staff<Jobs&&Worker.State==TEXT("active")&&!Worker.DeliveryId&&!Worker.ChargingBuildingId&&!Worker.TransportVehicleId)
+    {
+        Worker.Activity=TEXT("operate");Worker.BuildingId=Worker.CrewBuildingId=ProducerId;Worker.RoadId=Worker.ContainerId=0;Worker.ContainerKind.Empty();
+        Worker.Route.Empty();Worker.NextWaypoint=0;Worker.PhaseSeconds=0;Worker.StationSlot=Staff++;Worker.Outdoor=true;
+        Worker.Position=S.BuildingAccessPoint(Producer)+FVector2D(0,20*Staff);
+    }
+    if(!TestEqual(TEXT("Specialist production uses existing physical workers"),Staff,Jobs))return false;
+    S.Workers.RefreshMetrics(S);S.Energy.Invalidate();S.Energy.Tick(S,0);
+    if(!TestEqual(TEXT("Refinery shares the command weapon's colony battery"),S.Energy.Info(S,CoreId).ComponentId,S.Energy.Info(S,ProducerId).ComponentId))return false;
+    if(!S.SetProductionRecipe(ProducerId,Recipe,Error)){AddError(Error);return false;}
+    const auto Inputs=S.ProductionInputs(Producer,Recipe);
+    if(!Pay(Inputs))return false;for(const auto& P:Inputs)Producer.Inventory.FindOrAdd(P.Key)+=P.Value;
     // Controlled electrical starting condition, retaining real bodies, stock,
     // normal recipe transactions and a legitimately allocated threat ID.
     S.PeriodicAttacksEnabled=true;S.TriggerWave();S.PeriodicAttacksEnabled=false;
@@ -89,12 +124,12 @@ bool FSeigeDefensiveTransactionsTest::RunTest(const FString&)
     S.Enemies.SetNum(1);S.Enemies[0].Position=S.Buildings[0].Position+FVector2D(-1500,0);
     auto& Platform=S.Combat.BuildingState[CoreId];Platform.Weapons={TEXT("laser_small")};Platform.Cooldowns={0};Platform.LastDamageTime=S.Time;
     const double Step=S.FixedStepSeconds(),Shot=S.Combat.Weapons[TEXT("laser_small")].EnergyKWh;
-    const double Batch=S.ProductionEnergy(S.Buildings[0],Recipe);const auto Inputs=S.ProductionInputs(S.Buildings[0],Recipe);
+    const double Batch=S.ProductionEnergy(Producer,Recipe);
     S.Buildings[0].BatteryEnergyKWh=Batch;S.Energy.Invalidate();S.Energy.Tick(S,0);
-    TestTrue(TEXT("Batch is otherwise affordable with this finite battery"),S.Energy.CanConsume(S,CoreId,Batch));
+    TestTrue(TEXT("Batch is otherwise affordable with this finite battery"),S.Energy.CanConsume(S,ProducerId,Batch));
     S.Energy.RefreshDefensiveReserve(S,Step);
     TestTrue(TEXT("Reserve is the actual due weapon bill"),FMath::IsNearlyEqual(S.Energy.ReservedForDefense(CoreId),Shot,1.e-9));
-    TestFalse(TEXT("Production cannot claim electricity reserved for the pending valid shot"),S.Energy.CanConsume(S,CoreId,Batch));
+    TestFalse(TEXT("Production cannot claim electricity reserved for the pending valid shot"),S.Energy.CanConsume(S,ProducerId,Batch));
     TestTrue(TEXT("Reserved energy remains spendable by actual defensive firing"),S.Energy.CanConsume(S,CoreId,Shot,ESeigeEnergyPurpose::DefensiveShot));
 
     const FString Path=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Automation/Combat/defensive-reserve.json"));
@@ -104,10 +139,10 @@ bool FSeigeDefensiveTransactionsTest::RunTest(const FString&)
     TestEqual(TEXT("Energy saves contain only the three physical ledger totals, never a second reserve balance"),Document->GetObjectField(TEXT("energy"))->Values.Num(),3);
     TestTrue(TEXT("Loading reconstructs reserve from current targets, work and cooldowns"),FMath::IsNearlyEqual(Loaded.Energy.ReservedForDefense(CoreId),Shot,1.e-9));
     TestEqual(TEXT("Reconstructing reserve consumes no extra energy"),Loaded.Energy.ConsumedKWh,S.Energy.ConsumedKWh);
-    const double Iron=S.Buildings[0].Inventory.FindRef(TEXT("iron_ore")),Shots=S.Combat.ShotsFired,CombatSpent=S.Combat.EnergySpentKWh;
+    const double Iron=Producer.Inventory.FindRef(TEXT("iron_ore")),Shots=S.Combat.ShotsFired,CombatSpent=S.Combat.EnergySpentKWh;
     S.Tick(Step);Loaded.Tick(Step);
-    TestFalse(TEXT("Actual production step waits without claiming an underfunded batch"),S.Buildings[0].ProductionCommitted);
-    TestEqual(TEXT("Waiting recipe retains its actual local inputs"),S.Buildings[0].Inventory.FindRef(TEXT("iron_ore")),Iron);
+    TestFalse(TEXT("Actual production step waits without claiming an underfunded batch"),Producer.ProductionCommitted);
+    TestEqual(TEXT("Waiting recipe retains its actual local inputs"),Producer.Inventory.FindRef(TEXT("iron_ore")),Iron);
     TestEqual(TEXT("Actual simulation step fires its paid defensive shot"),S.Combat.ShotsFired,Shots+1);
     TestTrue(TEXT("Combat ledger records only the authored shot bill"),FMath::IsNearlyEqual(S.Combat.EnergySpentKWh-CombatSpent,Shot,1.e-9));
     TestEqual(TEXT("Load continuation fires identically"),Loaded.Combat.ShotsFired,S.Combat.ShotsFired);
@@ -117,8 +152,8 @@ bool FSeigeDefensiveTransactionsTest::RunTest(const FString&)
     const double BeforeStored=S.Energy.Info(S,CoreId).StoredKWh,BeforeGenerated=S.Energy.GeneratedKWh,BeforeSpilled=S.Energy.SpilledKWh;
     S.Tick(Step);
     TestEqual(TEXT("A quiet step releases the derived reservation"),S.Energy.ReservedForDefense(CoreId),0.);
-    TestTrue(TEXT("Normal recipe commits when its real local bill is affordable"),S.Buildings[0].ProductionCommitted);
-    TestEqual(TEXT("Committed recipe deducts exactly its configured iron input"),S.Buildings[0].Inventory.FindRef(TEXT("iron_ore")),Iron-Inputs.FindRef(TEXT("iron_ore")));
+    TestTrue(TEXT("Normal recipe commits when its real local bill is affordable"),Producer.ProductionCommitted);
+    TestEqual(TEXT("Committed recipe deducts exactly its configured iron input"),Producer.Inventory.FindRef(TEXT("iron_ore")),Iron-Inputs.FindRef(TEXT("iron_ore")));
     TestTrue(TEXT("Recipe energy plus ordinary passive use is charged"),S.Energy.ConsumedKWh-BeforeConsumed>=Batch);
     TestTrue(TEXT("Stored plus generated equals consumed, remaining and spilled electricity"),FMath::IsNearlyEqual(BeforeStored+S.Energy.GeneratedKWh-BeforeGenerated,S.Energy.Info(S,CoreId).StoredKWh+S.Energy.ConsumedKWh-BeforeConsumed+S.Energy.SpilledKWh-BeforeSpilled,1.e-8));
     return true;

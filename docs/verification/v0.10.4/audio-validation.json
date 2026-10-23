@@ -1,0 +1,27 @@
+{
+  "clips": 12,
+  "clipped_samples": 0,
+  "maximum_source_peak": 0.26075014496292004,
+  "routine_ui_and_placement_silent": true,
+  "synthetic_rex_silent": true,
+  "source_hashes_and_import_references_valid": true,
+  "maximum_voices_per_frame": 3,
+  "maximum_voices_per_real_second": 5,
+  "damage_alert_quiet_real_seconds": 30,
+  "effective_cue_gains": {
+    "select": 0.0,
+    "confirm": 0.0,
+    "cancel": 0.0,
+    "error": 0.13999999999999999,
+    "build": 0.0,
+    "complete": 0.13999999999999999,
+    "alert": 0.13,
+    "laser": 0.1625,
+    "kinetic": 0.1875,
+    "missile": 0.1625,
+    "plasma": 0.175,
+    "rex": 0.0,
+    "energy": 0.1625
+  },
+  "limitation": "Source waveform and configuration audit only; no subjective listening or imported PCM equivalence claim."
+}

@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "version": "0.10.3",
+  "date": "2026-10-11",
+  "status": "focused_local_checks_passed",
+  "scope": "Unit inspection, Rex lifecycle, worker health, HUD layout and a combat clearance repair. Focused native regressions and bounded10x packaged routes; not long-session balance or sustained FPS acceptance.",
+  "editor_build": "passed",
+  "shipping_package": "passed",
+  "native_tests": {
+    "succeeded": 46,
+    "failures": 0,
+    "warnings": 0,
+    "report": "v0.10.3/focused-native.json"
+  },
+  "packaged_checks": [
+    {
+      "resolution": [
+        1600,
+        900
+      ],
+      "report": "v0.10.3/packaged-1600x900.json",
+      "assertions": 143,
+      "stages": 34,
+      "failures": 0,
+      "elapsed_seconds": 46.57647570222616,
+      "simulation_speed": 10,
+      "socket_samples": 23,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 549,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    },
+    {
+      "resolution": [
+        3840,
+        1600
+      ],
+      "report": "v0.10.3/packaged-3840x1600.json",
+      "assertions": 143,
+      "stages": 34,
+      "failures": 0,
+      "elapsed_seconds": 47.09061510115862,
+      "simulation_speed": 10,
+      "socket_samples": 24,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 549,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    }
+  ],
+  "package_files": [
+    {
+      "path": "Builds/v0.10.3/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+      "bytes": 167313920,
+      "sha256": "0E58E91AF1E7994045FB3039717099A388F9FF5E60B44A8B1568427B84BCD89F"
+    },
+    {
+      "path": "Builds/v0.10.3/Windows/seige2222/Content/Paks/global.ucas",
+      "bytes": 3205888,
+      "sha256": "656F9CC750D6B9EA0B7B6FC221B8BFDC8BE20E737E66D5A18AF7CD7C118012D3"
+    },
+    {
+      "path": "Builds/v0.10.3/Windows/seige2222/Content/Paks/global.utoc",
+      "bytes": 782,
+      "sha256": "D4F99BC37B29DC911C8B2F0549314F2E4D974CB5B6D9B68EE5E9C5023A70CB6D"
+    },
+    {
+      "path": "Builds/v0.10.3/Windows/seige2222/Content/Paks/seige2222-Windows.pak",
+      "bytes": 11244862,
+      "sha256": "B7E0962A4AC01B40688A8CF1E2F05D65F768C444EB4D916885BD6BE5E821F50E"
+    },
+    {
+      "path": "Builds/v0.10.3/Windows/seige2222/Content/Paks/seige2222-Windows.ucas",
+      "bytes": 659061552,
+      "sha256": "0D72F36F3B56D4E8C0DDCEEFC983FB21FA9C878E9C108F55575442F7D546756B"
+    },
+    {
+      "path": "Builds/v0.10.3/Windows/seige2222/Content/Paks/seige2222-Windows.utoc",
+      "bytes": 436069,
+      "sha256": "B567D426CFBC74C9842750B95CBE100B1B1C912CBC8293314238AC86F029FCDC"
+    }
+  ],
+  "captures": [
+    {
+      "path": "v0.10.3/ui-1600x900/01_worker_and_hud.png",
+      "sha256": "480bcd0fd485e49b61edaf11b634bf4211228f5be74ffd21bc7cf2340ea6a2e0"
+    },
+    {
+      "path": "v0.10.3/ui-1600x900/02_map_chain.png",
+      "sha256": "c255de2f4c6fbdbb195836799a10d7be42651934740509adbe1e57930e585d29"
+    },
+    {
+      "path": "v0.10.3/ui-1600x900/03_equipment_bill.png",
+      "sha256": "81a0879f88a775e0ac77c325137de4619ea155bac3afd20994770ec87de338e2"
+    },
+    {
+      "path": "v0.10.3/ui-1600x900/04_night_trade.png",
+      "sha256": "ff0b7590b09ff65dc839439b0319c99c91d82b99f51762d0ce522584b19b3ba7"
+    },
+    {
+      "path": "v0.10.3/ui-1600x900/05_credits.png",
+      "sha256": "ca3376d50a66e695fe9fbed89c76b66ec00f6a61b2040dbf0748a61c9243400d"
+    },
+    {
+      "path": "v0.10.3/ui-1600x900/06_transport_inspection.png",
+      "sha256": "c137e69f457fb68cef91267dee485502a3b5b57ef32cd2582d8783876054709b"
+    },
+    {
+      "path": "v0.10.3/ui-1600x900/07_building_hover.png",
+      "sha256": "b3a289809af031bbcaeae3db964dea2d28b0353ea249552feca8b9252e525945"
+    },
+    {
+      "path": "v0.10.3/ui-1600x900/08_rex_focus.png",
+      "sha256": "e9352e38f7d2eef5b634db132711b151e95763683baf9718097213afa38e81f2"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/01_worker_and_hud.png",
+      "sha256": "42b493f8f5fb92c544b467409d2f259aeba92ac0d4e806e460e896ad25216cdc"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/02_map_chain.png",
+      "sha256": "6d13a06a4ebe46bfe85c1234629808251ddb5d010a70ded0b08c7883546c956f"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/03_equipment_bill.png",
+      "sha256": "3332141dc0e8021938ecd99ed008e41c82798fb8df9ee7f8337f8aa2b42f0e15"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/04_night_trade.png",
+      "sha256": "23bf8067d45c8d8779a32d661265b8ae394768c00f300dbd1b5630d241fe83e9"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/05_credits.png",
+      "sha256": "93ca02dbb39ed09d94b2990d0b2072869f8055199d9187a8e6c98fcdf418d19d"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/06_transport_inspection.png",
+      "sha256": "87433f86d443343be429dc0f8c3ddaaad8d5ae73e3da8f75344ceb4a2d2b142c"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/07_building_hover.png",
+      "sha256": "5edb41402c91d60c01d775b5dab341223e3c10f1577c659c295c39f90862065b"
+    },
+    {
+      "path": "v0.10.3/ui-3840x1600/08_rex_focus.png",
+      "sha256": "597257106ce12c6ffccc913dd91c16ceae3333f478f6babeea2d77c16ec6c34d"
+    }
+  ],
+  "archive": {
+    "path": "Builds/seige2222-v0.10.3-win64.zip",
+    "bytes": 759021805,
+    "sha256": "01469BBC57BB9653A866F7950C0C1B3B50183024B8E1BCF09429A67DFDC3ED7A",
+    "crc_check": "passed",
+    "all_runtime_bytes_match": true
+  },
+  "hud": {
+    "width_policy": "physical viewport height",
+    "control_rows": 1,
+    "verified_widths_px": {
+      "1600x900": 900,
+      "3840x1600": 1600
+    }
+  },
+  "rules_validation": {
+    "negative_cases": 137,
+    "passed": true
+  },
+  "save_compatibility": "Format9 plus changed Rules fingerprint. New scenario required; prior saves are preserved.",
+  "rex": {
+    "max_hp": 25,
+    "roam_m": 100,
+    "danger_m": 35,
+    "heal_hp_per_second": 5,
+    "safe_delay_seconds": 60,
+    "mourning_days": 30,
+    "worker_speed_during_mourning": 0.5,
+    "asset": "v0.10.2 mesh and coat unchanged; existing licence note remains in Credits."
+  },
+  "publication": "Local build only. No push or hosted release attempted at user request."
+}

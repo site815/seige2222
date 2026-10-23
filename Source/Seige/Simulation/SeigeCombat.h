@@ -61,7 +61,7 @@ struct FSeigeProjectile
 {
     int32 Id=0,OwnerId=0,TargetEnemyId=0,SectorIndex=4,OwnerSector=4;
     // building, vehicle, or enemy. Friendly projectiles can hit friendly bodies.
-    FString OwnerKind,WeaponId,TargetKind=TEXT("enemy");
+    FString OwnerKind,WeaponId,TargetKind=TEXT("enemy"),TargetWorkerId;
     FVector2D Position=FVector2D::ZeroVector,PreviousPosition=FVector2D::ZeroVector,Velocity=FVector2D::ZeroVector;
     double RemainingMeters=0,AgeSeconds=0;
     // Presentation-only source socket; absent on restored in-flight rounds.

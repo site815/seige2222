@@ -13,6 +13,7 @@ bool FSeigeCompanionViewTest::RunTest(const FString& Parameters)
     if(!World.GetTestWorld()->SetGameMode(Url))return false;
     auto* G=Cast<ASeigeGameMode>(World.GetTestWorld()->GetAuthGameMode());if(!G)return false;
     if(!G->Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),G->Error,false,false)){AddError(G->Error);return false;}
+    G->Sim.Companions.Dogs[0].Aboard=false;G->Sim.Companions.Dogs[0].Position=G->Sim.BuildingAccessPoint(G->Sim.Buildings[0]);
     G->Ready=true;G->Screen=TEXT("playing");G->Speed=10;G->CameraCenter=FVector(1400,800,0);G->Zoom=15000;G->CameraYaw=23;G->CameraPitch=61;
     const FVector CameraBefore=G->CameraCenter;const float ZoomBefore=G->Zoom;
     auto* DogActor=World.GetTestWorld()->SpawnActor<AActor>();
@@ -31,7 +32,7 @@ bool FSeigeCompanionViewTest::RunTest(const FString& Parameters)
     G->ExitCompanionView();TestFalse(TEXT("Exit restores colony mode"),G->CompanionView);TestEqual(TEXT("Exit releases simulated dog"),G->Sim.Companions.ControlledId,0);
     TestFalse(TEXT("Exiting first person restores the body immediately without a visual tick"),DogActor->IsHidden());
     TestTrue(TEXT("Original colony focus restored"),G->CameraCenter.Equals(CameraBefore));TestEqual(TEXT("Original survey zoom restored"),G->Zoom,ZoomBefore);
-    G->Observer=true;TestFalse(TEXT("Observer cannot take over AI dog"),G->EnterCompanionView());G->Observer=false;
+    G->Observer=true;G->FocusCompanion(1);TestTrue(TEXT("Observer can focus Rex without taking control"),G->CameraCenter.Equals(FVector(Dog->Position,0))&&!G->CompanionView);TestFalse(TEXT("Observer cannot take over AI dog"),G->EnterCompanionView());G->Observer=false;
     G->Screen=TEXT("landing");TestFalse(TEXT("Rex cannot roam before landing"),G->EnterCompanionView());G->Screen=TEXT("playing");
     Dog->Evacuated=true;TestFalse(TEXT("Evacuated dog cannot be possessed"),G->EnterCompanionView());return true;
 }

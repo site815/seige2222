@@ -12,6 +12,10 @@ The current economy source adds actual road-connected electricity and shared bat
 
 **Current crew policy:** Player and Starting-AI colonies land with five workers assigned to the core. Core crew capacity is 5/10/15 by level; this is the core's workplace capacity, not a global population limit. Buildings obtain their own permanent crews. Hauling and transport loading use those actual crew members, and `LogisticsJobs` contributes no extra phantom population demand. Construction Hubs specialize in building work.
 
+**Current v0.10.4 spare reserve:** The reserve is automatic: Level 1 keeps five spare bodies, Level 2 ten, and Level 3 fifteen, derived directly from the current command building's authored job capacity. It is additional to active job demand and cannot be edited through the UI or restored from a different saved manual value. Pending upgrades retain the current level's reserve until completed. Trading-port stock targets remain independently editable and additive. No body is granted to fill a target, and active workers are not pulled away from jobs merely to satisfy spare stock. Assembly still pays its material/energy bill and waits for room in physical storage.
+
+**Movement:** `Rules/mobility.json` is the only worker/transport base-speed authority. Empty and fully loaded workers both move at 10 km/h on easy terrain (previously 5); empty and fully loaded autonomous transports both move at 30 km/h (previously 15). Rough terrain applies the same multiplier to both cargo states: current workers 8 km/h, transports 7.5 km/h. Powered road, road+rail, and vacuum tiers multiply base speed by 2, 4, and 8; unpowered corridors give no bonus. Rex grief halves worker movement regardless of cargo, leaving autonomous transport unaffected. Loading/handling times and energy per distance are unchanged.
+
 Workers have 0.2 kWh batteries under the current provisional rules. Charging requires physical travel to the core or a charging/maintenance bay, a berth and delivered grid electricity. A berth serves one worker at a time; the station has its own crew requirement. Charging temporarily interrupts work without changing permanent crew ownership. No abstract service-support cap deletes bodies or limits total ownership. Exact autonomy, charge time and crew balance remain editable and require current-source checks.
 
 ## Historical v0.6 visible population boundary
@@ -37,14 +41,14 @@ The user chose this scope to support plausible growth at an accelerated game pac
 **Confirmed direction:**
 
 - The robotic population is produced.
-- Only the command core produces workers, using materials and electricity to fill jobs and an optional inactive-worker reserve target. Material processing, chassis and weapon manufacture require their specialist buildings.
+- Only the command core produces workers, using materials and electricity to fill jobs and an automatic inactive-worker reserve equal to command-center capacity. Material processing, chassis and weapon manufacture require their specialist buildings.
 - When job demand falls, excess workers leave active staffing and occupy physical storage. A player need not micromanage their jobs.
 - Robot production has a maximum rate: a ceiling on the number produced per unit of time.
 - Resource production provides a second bottleneck, with resources produced at defined rates per time unit. Having more production capacity does not remove the need for sufficient inputs.
 
 **Superseded:** The v0.8/v0.9 universal replicator and faster worker factory. v0.10 restores core-only worker manufacture and repurposes the old factory as a Construction Hub.
 
-**Current editable assembly baseline (verified against prototype-10.0 rules):** Each worker consumes 60 kg robotic parts, 12 kg construction alloy, 4 kg control circuits and 4 kg battery modules (80 kg total), plus 4 kWh per batch. The `assemble_robot` recipe supplies a 60-second base multiplied by the command center's 10× duration and 4× energy multipliers. All three core levels currently have the same nominal 600 simulation-second cycle: 10 real minutes at 1×, 2 at 5× or 1 at 10×, at full operating efficiency. Calendar hours use the separate accelerated day/night clock. Actual assembly takes longer with unavailable operators, low support efficiency, missing local deliveries or insufficient energy; the configured zero-crew recovery exception runs at 10% of normal work fraction. The five starting workers are installed starting assets, separate from the loose cargo kit. Sources: [recipes](../../Rules/recipes.json), [building multipliers](../../Rules/buildings.json), [worker recovery](../../Rules/workers.json).
+**Current editable assembly baseline (verified against prototype-10.0 rules):** Each worker consumes 60 kg robotic parts, 12 kg construction alloy, 4 kg control circuits and 4 kg battery modules (80 kg total), plus 4 kWh per batch. The `assemble_robot` recipe supplies a 60-second base multiplied by the command center's 10× duration and 4× energy multipliers. All three core levels currently have the same nominal 600 simulation-second cycle: 10 real minutes at 1×, 1 at 10× or 30 seconds at 20×, at full operating efficiency. Calendar hours use the separate accelerated day/night clock. Actual assembly takes longer with unavailable operators, low support efficiency, missing local deliveries or insufficient energy; the configured zero-crew recovery exception runs at 10% of normal work fraction. The five starting workers are installed starting assets, separate from the loose cargo kit. Sources: [recipes](../../Rules/recipes.json), [building multipliers](../../Rules/buildings.json), [worker recovery](../../Rules/workers.json).
 
 The earlier lithography explanation remains historical speculation; the current worker-only core restriction is an explicit production rule.
 
@@ -105,3 +109,12 @@ Robot-specific shortage consequences and any equivalent survival requirements re
 - [Provisional Resource, Building, and Product Catalog](PROVISIONAL_CATALOG.md)
 - [Resources, Industry, and Progression](RESOURCES_AND_INDUSTRY.md)
 - [Fleets, Physical Logistics, and Loot](FLEETS_AND_LOGISTICS.md)
+
+
+## v0.10.3 worker durability and companion mourning
+
+Each physical worker body has 100 HP, configured by `maximum_health` in `Rules/workers.json`. Health travels with that body's identity through jobs, storage, cargo and save/load. Exposed workers can be damaged by contact, direct or unintended projectiles, and splash. A lethal hit removes the worker from active tasks once: a hand courier's actual cargo is lost through the existing delivery ledger; a loading worker releases its handler claim while the independent transport and its cargo remain. Inactive bodies inside containers are protected until the enclosing container's destruction rules apply.
+
+Charging maintenance repairs 2 HP per simulation second while the powered, attended berth services that body. It cannot revive a destroyed worker. Worker health requires save format 9; older saves are left intact and rejected with a new-colony explanation.
+
+If Rex dies, every worker's physical movement is multiplied by 0.5 for thirty complete authoritative day/night cycles. This includes newly manufactured and reactivated workers, off-road movement and road travel. The road tier bonus still applies; production, construction labor and charging time receive no separate depression multiplier. The persistent deadline is checked directly against the world calendar and expires at exactly thirty days. Rex's companion rules own the duration and speed multiplier.

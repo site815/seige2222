@@ -28,6 +28,7 @@ struct FFrontendWorld : FTestWorldWrapper
         Game=Cast<ASeigeGameMode>(GetTestWorld()->GetAuthGameMode());
         Controller=GetTestWorld()->SpawnActor<ASeigeController>();
         if(!Game||!Controller){Test.AddError(TEXT("Frontend fixture actors were not created"));return false;}
+        Game->ScenarioSeedOverride=815;
         Controller->ClientSetHUD_Implementation(ASeigeHUD::StaticClass());Hud=Cast<ASeigeHUD>(Controller->GetHUD());
         if(!Hud){Test.AddError(TEXT("Frontend HUD was not created"));return false;}
         Hud->SetCanvas(nullptr,nullptr);FString Error;
@@ -110,7 +111,15 @@ bool FSeigeGameMenuTest::RunTest(const FString& Parameters)
     FFrontendWorld W;if(!W.Prepare(*this))return false;auto& G=*W.Game;
     G.ScenarioSlots[0]=TEXT("starting");G.StartScenario();G.ConfirmLanding(FVector2D(700,0));
     if(!TestTrue(TEXT("Menu fixture begins a live colony"),G.Ready&&G.Screen==TEXT("playing")&&G.Neighbors.Num()==1))return false;
-    G.Speed=5;G.Tick(.2f);
+    for(int32 Rate:{1,10,20})
+    {
+        G.Speed=Rate;
+        const double HomeBefore=G.Sim.Time,NeighborBefore=G.Neighbors[0].Sim.Time;
+        G.Tick(.2f);
+        TestTrue(FString::Printf(TEXT("%dx advances the colony at the configured rate"),Rate),FMath::IsNearlyEqual(G.Sim.Time-HomeBefore,.2*Rate,1.e-6));
+        TestTrue(FString::Printf(TEXT("%dx advances the neighbor on the same timeline"),Rate),FMath::IsNearlyEqual(G.Neighbors[0].Sim.Time-NeighborBefore,.2*Rate,1.e-6));
+    }
+    G.Speed=10;G.Tick(.2f);
     W.ClickAction(TEXT("game-menu"));
     TestTrue(TEXT("The direct Menu action pauses running gameplay"),G.MenuOpen&&G.Paused&&G.Screen==TEXT("game-menu"));
     const double CenterTime=G.Sim.Time,NeighborTime=G.Neighbors[0].Sim.Time;G.Tick(.2f);
@@ -124,20 +133,20 @@ bool FSeigeGameMenuTest::RunTest(const FString& Parameters)
     FString SavedText;TSharedPtr<FJsonObject> Saved;
     if(!FFileHelper::LoadFileToString(SavedText,*SaveGuard.Filename)||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(SavedText),Saved)){AddError(TEXT("Menu save metadata was not readable"));return false;}
     TestFalse(TEXT("A menu save records the earlier running state rather than its temporary pause"),Saved->GetBoolField(TEXT("paused")));
-    TestEqual(TEXT("Menu save retains the chosen speed"),Saved->GetNumberField(TEXT("speed")),5.);
+    TestEqual(TEXT("Menu save retains the chosen speed"),Saved->GetNumberField(TEXT("speed")),10.);
     W.Hud->HandleShortcut(EKeys::F10);
-    TestTrue(TEXT("F10 closes the menu and restores the running state"),!G.MenuOpen&&!G.Paused&&G.Screen==TEXT("playing")&&G.Speed==5);
+    TestTrue(TEXT("F10 closes the menu and restores the running state"),!G.MenuOpen&&!G.Paused&&G.Screen==TEXT("playing")&&G.Speed==10);
     G.Tick(.2f);TestTrue(TEXT("Simulation advances after closing the menu"),G.Sim.Time>CenterTime);
     G.Paused=true;W.Hud->HandleShortcut(EKeys::F10);W.ClickAction(TEXT("screen:credits"));W.Hud->HandleShortcut(EKeys::F10);
     TestTrue(TEXT("F10 from a menu subpage preserves an already paused colony"),G.Screen==TEXT("playing")&&!G.MenuOpen&&G.Paused);
     G.Paused=false;W.Hud->HandleShortcut(EKeys::F10);W.ClickAction(TEXT("load"));
-    TestTrue(TEXT("Loading from the menu restores the saved running state and closes the menu"),G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.Paused&&G.Speed==5);
+    TestTrue(TEXT("Loading from the menu restores the saved running state and closes the menu"),G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.Paused&&G.Speed==10);
     G.StartScenario();const double LandingTime=G.Sim.Time;W.Hud->HandleShortcut(EKeys::Escape);
     TestTrue(TEXT("Escape opens the game menu before landing"),G.MenuOpen&&G.Paused&&G.MenuReturnScreen==TEXT("landing"));
     W.ClickAction(TEXT("resume-game"));G.Tick(.2f);
     TestTrue(TEXT("Resume returns to the landing survey without starting time"),G.Screen==TEXT("landing")&&!G.MenuOpen&&G.Sim.Time==LandingTime);
     W.Hud->HandleShortcut(EKeys::F10);W.Hud->HandleShortcut(EKeys::F9);
-    TestTrue(TEXT("F9 loads from the pre-landing game menu just like its Load button"),G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.Paused&&G.Speed==5&&G.Sim.Time==CenterTime);
+    TestTrue(TEXT("F9 loads from the pre-landing game menu just like its Load button"),G.Screen==TEXT("playing")&&!G.MenuOpen&&!G.Paused&&G.Speed==10&&G.Sim.Time==CenterTime);
     FString GraphicsText;TSharedPtr<FJsonObject> Graphics;
     if(!FFileHelper::LoadFileToString(GraphicsText,*FPaths::Combine(FPaths::ProjectDir(),TEXT("Graphics/scene.json")))||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(GraphicsText),Graphics)){AddError(TEXT("Authored camera fixture was not readable"));return false;}
     G.CameraCenter=FVector(50000,-50000,0);G.Zoom=G.MaximumZoom;G.CameraYaw=320;G.CameraPitch=15;
@@ -179,7 +188,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     G.ScenarioSlots[0]=TEXT("starting");G.ScenarioSlots[8]=TEXT("developed");G.StartScenario();G.ConfirmLanding(FVector2D(700,0));
     if(!TestTrue(TEXT("Save scenario is ready and playing"),G.Ready&&G.Screen==TEXT("playing"))){AddError(G.Error);return false;}
     for(int32 I=0;I<64;++I)G.Tick(.2f);
-    G.CameraCenter=FVector(3000,-1200,0);G.Zoom=27000;G.CameraYaw=224;G.CameraPitch=67;G.Speed=5;G.Paused=true;G.WinAcknowledged=true;
+    G.CameraCenter=FVector(3000,-1200,0);G.Zoom=27000;G.CameraYaw=224;G.CameraPitch=67;G.Speed=20;G.Paused=true;G.WinAcknowledged=true;
     const FString CenterBefore=StateText(G.Sim,TEXT("center-before"),*this);
     TMap<int32,FString> NeighborBefore;for(const auto& N:G.Neighbors)NeighborBefore.Add(N.Index,StateText(N.Sim,TEXT("neighbor-before-")+FString::FromInt(N.Index),*this));
     G.SaveGame();FString MetadataText;
@@ -191,7 +200,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Saved neighbor count restores"),G.Neighbors.Num(),NeighborBefore.Num());
     for(const auto& N:G.Neighbors)TestEqual(TEXT("Neighbor full simulation snapshot restores"),StateText(N.Sim,TEXT("neighbor-restored-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
     TestEqual(TEXT("Scenario slot configuration restores"),G.ScenarioSlots[0],FString(TEXT("starting")));
-    TestTrue(TEXT("Camera focus, orbit, zoom, speed, pause and objective acknowledgment restore"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Zoom==27000&&G.CameraYaw==224&&G.CameraPitch==67&&G.Speed==5&&G.Paused&&G.WinAcknowledged);
+    TestTrue(TEXT("Camera focus, orbit, zoom, speed, pause and objective acknowledgment restore"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.Zoom==27000&&G.CameraYaw==224&&G.CameraPitch==67&&G.Speed==20&&G.Paused&&G.WinAcknowledged);
     TSharedPtr<FJsonObject> Metadata;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(MetadataText),Metadata)){AddError(TEXT("Could not read emitted metadata"));return false;}
     TestEqual(TEXT("Neighborhood saves use strict version-7 metadata"),Metadata->GetNumberField(TEXT("format")),7.);
     const auto Fingerprints=Metadata->GetArrayField(TEXT("neighbor_ai"));
@@ -203,7 +212,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Rejected metadata leaves center simulation unchanged"),StateText(G.Sim,TEXT("center-rejected"),*this),CenterBefore);
     TestEqual(TEXT("Rejected metadata leaves neighbors unchanged"),G.Neighbors.Num(),NeighborBefore.Num());
     for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected metadata preserves each neighbor"),StateText(N.Sim,TEXT("neighbor-rejected-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
-    TestTrue(TEXT("Rejected metadata leaves camera and gameplay flags unchanged"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.CameraYaw==224&&G.CameraPitch==67&&G.Paused&&G.Speed==5&&G.Screen==TEXT("playing"));
+    TestTrue(TEXT("Rejected metadata leaves camera and gameplay flags unchanged"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.CameraYaw==224&&G.CameraPitch==67&&G.Paused&&G.Speed==20&&G.Screen==TEXT("playing"));
     auto FreshMetadata=[&]()
     {
         TSharedPtr<FJsonObject> Result;
@@ -227,7 +236,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
         if(!TestTrue(TEXT("Invalid-camera fixture is written"),WriteMetadata(Invalid)))return false;
         G.LoadGame();
         TestTrue(TEXT("Malformed or out-of-range saved orientation is rejected"),G.Notice.Contains(TEXT("camera orientation is invalid")));
-        TestTrue(TEXT("Rejected camera metadata cannot alter the live view or timeline"),G.CameraYaw==224&&G.CameraPitch==67&&G.Zoom==27000&&G.Paused&&G.Speed==5);
+        TestTrue(TEXT("Rejected camera metadata cannot alter the live view or timeline"),G.CameraYaw==224&&G.CameraPitch==67&&G.Zoom==27000&&G.Paused&&G.Speed==20);
         TestEqual(TEXT("Rejected camera metadata leaves simulation state unchanged"),StateText(G.Sim,TEXT("camera-rejected"),*this),CenterBefore);
     }
     for(int32 Case=0;Case<8;++Case)
@@ -245,7 +254,7 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
         G.LoadGame();
         TestFalse(TEXT("Legacy or invalid required metadata cannot restore"),G.Notice.Contains(TEXT("Scenario restored")));
         if(Case==0)TestTrue(TEXT("Older format clearly requests a new scenario"),G.Notice.Contains(TEXT("Start a new scenario")));
-        TestTrue(TEXT("Rejected strict metadata preserves the camera and time controls"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.CameraYaw==224&&G.CameraPitch==67&&G.Zoom==27000&&G.Paused&&G.Speed==5);
+        TestTrue(TEXT("Rejected strict metadata preserves the camera and time controls"),G.CameraCenter.Equals(FVector(3000,-1200,0))&&G.CameraYaw==224&&G.CameraPitch==67&&G.Zoom==27000&&G.Paused&&G.Speed==20);
         TestEqual(TEXT("Rejected strict metadata preserves the center"),StateText(G.Sim,TEXT("strict-metadata-rejected"),*this),CenterBefore);
         for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected strict metadata preserves each neighbor"),StateText(N.Sim,TEXT("strict-neighbor-rejected-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
     }

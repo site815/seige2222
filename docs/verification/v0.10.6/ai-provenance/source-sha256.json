@@ -1,0 +1,853 @@
+{
+  "test": "Seige.AI.FiniteKitIndustryOnGameTerrain",
+  "report": "Saved/Automation/v0106-ai-game-terrain-recovered/index.json",
+  "captured_utc": "2026-10-17T14:30:21.3112020Z",
+  "inventory_policy": "All recursive Source .cpp/.h/.cs; Rules/AIFILES/Graphics/Interface JSON; Config INI; project file; tested editor DLL. No source subset exemptions.",
+  "sources": [
+    {
+      "path": "AIFILES/colony_ai.json",
+      "sha256": "1e08300edfbe6d10dd23cf1a5592f1be6eb68fdcc4990741d296c085903d50bd",
+      "bytes": 4048
+    },
+    {
+      "path": "AIFILES/developed_start.json",
+      "sha256": "13fd2f68bc84a3890f80f03cd5417e7f5d8526a5707a5f09d443693e8079a2a4",
+      "bytes": 7622
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Seige.dll",
+      "sha256": "f86fb584d600b6052881e246675b5b815838280c96adac9b3f0ca502b6157d37",
+      "bytes": 4718592
+    },
+    {
+      "path": "Config/DefaultEditor.ini",
+      "sha256": "e9b58e3d161ba72e87e7480dc068bd467324cbb55be6a169d14984e7eb012646",
+      "bytes": 276
+    },
+    {
+      "path": "Config/DefaultEditorSettings.ini",
+      "sha256": "ed2ba15c663adf598be22158f600f9ac70f59b7008d7ecd7d67bde0a26be7fad",
+      "bytes": 310
+    },
+    {
+      "path": "Config/DefaultEngine.ini",
+      "sha256": "d1a926889b37243a8199d4c6e90f2b3cb0c5309f2564f71c531348ec6d3366bd",
+      "bytes": 1000
+    },
+    {
+      "path": "Config/DefaultGame.ini",
+      "sha256": "5715084a51357ca67ddb398c70ab875967695eeee0e28f53760838fe3b26be8e",
+      "bytes": 533
+    },
+    {
+      "path": "Config/DefaultGameUserSettings.ini",
+      "sha256": "8c454db4c5b5b7166341f1db45ce2646191cbec9dfbe7099f2ca90f957b6837a",
+      "bytes": 552
+    },
+    {
+      "path": "Config/DefaultInput.ini",
+      "sha256": "4a259529b3246f2ecbb948df5d3aa2a08ab0215641f79a17b181d7af26513d6e",
+      "bytes": 9535
+    },
+    {
+      "path": "Graphics/audio.json",
+      "sha256": "95739a13a141b3841bca1839cea8e58edda24e9af562a1afb9097059496706b4",
+      "bytes": 3723
+    },
+    {
+      "path": "Graphics/building_visuals.json",
+      "sha256": "ade978559add5ec57cb021c8d53627199d4d28738776a373e3b090bc043fb269",
+      "bytes": 2970
+    },
+    {
+      "path": "Graphics/scene.json",
+      "sha256": "6622400966d948f142444ad8dcd2b4810317d244b9aa0ed393767bd2781aeee7",
+      "bytes": 4898
+    },
+    {
+      "path": "Graphics/weather.json",
+      "sha256": "fbbb9fb3ea3e4f12794702c378f5a41acac3bb3d3b469c2862062ef03493637c",
+      "bytes": 1088
+    },
+    {
+      "path": "Interface/ui.json",
+      "sha256": "8372fba144b8033f57bb6267579878339d2c2f473d78882777b29e09bead5be3",
+      "bytes": 9232
+    },
+    {
+      "path": "Rules/buildings.json",
+      "sha256": "2ce067298593c47a88f5efdea44e42ff6fc118288a45767150722bf6cfeec106",
+      "bytes": 94542
+    },
+    {
+      "path": "Rules/calendar.json",
+      "sha256": "69bdf2dfced7d046595f61f3f434a209b560fbe64f93837b96fcba037d929702",
+      "bytes": 316
+    },
+    {
+      "path": "Rules/chassis.json",
+      "sha256": "b4cfaf90b2a6e70c06b40e6408bf9f204aa253c42713ca645a7bcf62fd0872bb",
+      "bytes": 11193
+    },
+    {
+      "path": "Rules/combat.json",
+      "sha256": "30daaa838cced03460f898601a17ee609ede734bf8797727a00c194901dec037",
+      "bytes": 6164
+    },
+    {
+      "path": "Rules/companions.json",
+      "sha256": "d3bd32ed24a36ca94be9d44550f2ffc73543c84e895c991ed2933e37276980fb",
+      "bytes": 1107
+    },
+    {
+      "path": "Rules/energy.json",
+      "sha256": "e4cc59a7efe27f6a62c01272df257726877ca741d6c46af74345e9290203824a",
+      "bytes": 22023
+    },
+    {
+      "path": "Rules/environment.json",
+      "sha256": "dc40df27a511a1d4c704a7ba7ae5be823140e27564791b8229eb8ae0768f3d03",
+      "bytes": 6165
+    },
+    {
+      "path": "Rules/mobility.json",
+      "sha256": "d281a2babd72148f2812030ebe142aa270de0579eb8e9a1a97eeca3765b8b1aa",
+      "bytes": 1670
+    },
+    {
+      "path": "Rules/policies.json",
+      "sha256": "7de4347d8770715f4d8afba2f1aeafc8a50496f8ebc54269942b3560284bc69c",
+      "bytes": 3666
+    },
+    {
+      "path": "Rules/recipes.json",
+      "sha256": "ad4dbdf916ff1f2af0f88e7772b281ab918789f1f47dc1d7546a41eac5ba2fc3",
+      "bytes": 4213
+    },
+    {
+      "path": "Rules/resources.json",
+      "sha256": "54c9c55eec9d7bc3854405d8fb5afb9e58400ab465ffc330c44a41299258a664",
+      "bytes": 7724
+    },
+    {
+      "path": "Rules/scenario.json",
+      "sha256": "ffac67dfe459f6f355945c80705ce563b2cc9f1799624958ff0d36f0ed7f14d8",
+      "bytes": 1509
+    },
+    {
+      "path": "Rules/trade.json",
+      "sha256": "9055bc8afc3ce8e4c7a2f1eff3ce9de523a1fc3a0551837cc38d0aa7b10d4311",
+      "bytes": 2875
+    },
+    {
+      "path": "Rules/transport_vehicles.json",
+      "sha256": "f07e299c7a96f3a502cf3ec760674ff9f292dc8feb4effe24b8c86eae26e83b5",
+      "bytes": 893
+    },
+    {
+      "path": "Rules/transport.json",
+      "sha256": "c44471607a57e1f6ee34bc1e7e02bd367ef4ab95126427630de24bafc1f50ce0",
+      "bytes": 2274
+    },
+    {
+      "path": "Rules/walls.json",
+      "sha256": "210e2d447e8963025515e16172623d84b113b7f112d1b6b59fea426e6dee3535",
+      "bytes": 445
+    },
+    {
+      "path": "Rules/weapons.json",
+      "sha256": "631e3e4f3d00bb254e0dd01bb25e38567995000b5df865e5704707a0b096e6ec",
+      "bytes": 9703
+    },
+    {
+      "path": "Rules/workers.json",
+      "sha256": "10265a9278b408d5fe50e5923b70b7c8553db56e6bcb6d04fdacc490edc0664d",
+      "bytes": 1501
+    },
+    {
+      "path": "seige2222.uproject",
+      "sha256": "43fc569f49b9e27f4f244f0297bfec3119935d683754071fc7e7d90e9aa04f90",
+      "bytes": 1048
+    },
+    {
+      "path": "Source/Seige.Target.cs",
+      "sha256": "184646e22a915ecbc4da8ee89d0f5204ddc4f3c7560c9feee7e6c2a7dccafd1f",
+      "bytes": 360
+    },
+    {
+      "path": "Source/Seige/AI/SeigeEstablishedScenario.cpp",
+      "sha256": "d4e091e2c7822c09802306855cc5181d525882aba189bf627815865bb8b93366",
+      "bytes": 13465
+    },
+    {
+      "path": "Source/Seige/AI/SeigeScenarioAI.cpp",
+      "sha256": "c5e8b05ab3b9c93ba1dac19c080b8c75a4b818aeb03e481ceb42b43012def335",
+      "bytes": 79792
+    },
+    {
+      "path": "Source/Seige/AI/SeigeScenarioAI.h",
+      "sha256": "5d0a0f9eabe398636f046dcda100baf70a146e3b92569b69c0250767819aeede",
+      "bytes": 7452
+    },
+    {
+      "path": "Source/Seige/Seige.Build.cs",
+      "sha256": "1e4eeee42dcf916f749535d40c8e0e5282725186e3dac0282e2177aa7ccefea4",
+      "bytes": 1455
+    },
+    {
+      "path": "Source/Seige/Seige.cpp",
+      "sha256": "b5225666d2771fa6f117d9a0032073d28c4994592d934bb98d789f12b7613b72",
+      "bytes": 106
+    },
+    {
+      "path": "Source/Seige/SeigeActionFeedback.h",
+      "sha256": "26df8862764f75cb0a5780aad26277899c5218d030be577aaad49ccb63d43a6b",
+      "bytes": 811
+    },
+    {
+      "path": "Source/Seige/SeigeAudioPolicy.h",
+      "sha256": "4ad9b9895719adb82b7ba5286bfc57783afbe1811b923cf3aaf33d30fe086e31",
+      "bytes": 2670
+    },
+    {
+      "path": "Source/Seige/SeigeAudioSubsystem.cpp",
+      "sha256": "8b0ea3648c1ce6832c779e6e9398a881e1e978f4cd26a9c31eb3d92b93e46542",
+      "bytes": 13182
+    },
+    {
+      "path": "Source/Seige/SeigeAudioSubsystem.h",
+      "sha256": "b16768596cf484f20a230a7f5754495b74731f09bba82854951df42bba71b5f0",
+      "bytes": 2193
+    },
+    {
+      "path": "Source/Seige/SeigeCamera.cpp",
+      "sha256": "985d6afa611f6d16e9ea2e520264a510221545f1a9f385979ea5208466962989",
+      "bytes": 23248
+    },
+    {
+      "path": "Source/Seige/SeigeCombatUI.cpp",
+      "sha256": "31edc052c393129ec6fe81fed856b7b6fefa8f7ea3c1463e9303172bf97791e1",
+      "bytes": 18087
+    },
+    {
+      "path": "Source/Seige/SeigeCombatVisuals.cpp",
+      "sha256": "3a01bb5bf7d5233f689f2d7eea2682f1cdd6caab595e96233d7a2da470d40e9a",
+      "bytes": 17411
+    },
+    {
+      "path": "Source/Seige/SeigeCommandUI.cpp",
+      "sha256": "e321b87736bed6c25c3b265b792b85887af7fef639ce717a9bcbe3fea0c20052",
+      "bytes": 10986
+    },
+    {
+      "path": "Source/Seige/SeigeCompanionVisuals.cpp",
+      "sha256": "34fa97e58e8b247d504f4e77be4a14fc75acd37337a3ee22b8ce226a61b8c7be",
+      "bytes": 8174
+    },
+    {
+      "path": "Source/Seige/SeigeConstructionVisuals.cpp",
+      "sha256": "122f96f3ec58adc0f1c5f5b6369830c99809ca7716ed4ca2e3965119eac70457",
+      "bytes": 16158
+    },
+    {
+      "path": "Source/Seige/SeigeController.cpp",
+      "sha256": "3263d87530417a90752f81e5cd17b17fc21350c4e9e3dfb7a92001098fc8b58d",
+      "bytes": 9702
+    },
+    {
+      "path": "Source/Seige/SeigeDamageVisuals.cpp",
+      "sha256": "8c9623ecccc359e85bce1f25cc000adcc082151c8708694461b5dfda92bbd586",
+      "bytes": 7254
+    },
+    {
+      "path": "Source/Seige/SeigeDisplaySmoke.cpp",
+      "sha256": "1ae8bba53a8e7208e3150c11aedc371df7f778eff8ed426c2fe21c5be502069e",
+      "bytes": 4690
+    },
+    {
+      "path": "Source/Seige/SeigeEnvironmentWater.cpp",
+      "sha256": "9e16c66fd5ea6f5d7980e353ff7e7e2e86df58642571d7a51db6f95902332d44",
+      "bytes": 5842
+    },
+    {
+      "path": "Source/Seige/SeigeGameMode.cpp",
+      "sha256": "3ec867d3c90b47334ba006284f06462bbdb79dae1dd09a1e516aeefbbb5c2e11",
+      "bytes": 27725
+    },
+    {
+      "path": "Source/Seige/SeigeGameMode.h",
+      "sha256": "5f9bdd02a099ce7867bea0913073e7948455c07150902e1658dff3b38a048b89",
+      "bytes": 27053
+    },
+    {
+      "path": "Source/Seige/SeigeGraphicsBenchmark.cpp",
+      "sha256": "af1a7fd637b5e4ff38f945b4ee1450fca50d75354b9e26c5f300e6f5de717db7",
+      "bytes": 56586
+    },
+    {
+      "path": "Source/Seige/SeigeHardpointLayout.cpp",
+      "sha256": "ab7a6872681f5be0b59b183a75a41056cce5fc86c5d5c0acbe35137706262656",
+      "bytes": 1720
+    },
+    {
+      "path": "Source/Seige/SeigeHardpointLayout.h",
+      "sha256": "fac22c78bf09a886d098196e3a61751476c4fca95fe595aa98be4e83c486c8b4",
+      "bytes": 367
+    },
+    {
+      "path": "Source/Seige/SeigeHUD.cpp",
+      "sha256": "66657f0ce0baec1fe0bf227a659b63e1f9976ca7f1caec36b862ece9eaa0e66a",
+      "bytes": 120767
+    },
+    {
+      "path": "Source/Seige/SeigeNextUpdateSmoke.cpp",
+      "sha256": "cd0d2af9e21041c1950a9b775daa03722c6331e96a30e6017715c9b4236385d8",
+      "bytes": 24428
+    },
+    {
+      "path": "Source/Seige/SeigePersistence.cpp",
+      "sha256": "383d5b9a6e6c189bd27832a85fb51e4a958fad53ea81536299f9add186f70683",
+      "bytes": 12618
+    },
+    {
+      "path": "Source/Seige/SeigePresentationSmoke.cpp",
+      "sha256": "0896974a1a7d20ea1304ca9ac5b2078438da053730dd7537648ee2bd3a3b624e",
+      "bytes": 50421
+    },
+    {
+      "path": "Source/Seige/SeigeRegionResources.cpp",
+      "sha256": "f9318d82229f22c0dc14e56382ef886a3e8002bf703254cf8f839551e88ce87d",
+      "bytes": 2521
+    },
+    {
+      "path": "Source/Seige/SeigeRegions.cpp",
+      "sha256": "bbf451aa1c86d6c0977b6a0a97afa083ef1080d593404592178acf0391681f7c",
+      "bytes": 4811
+    },
+    {
+      "path": "Source/Seige/SeigeScenario.cpp",
+      "sha256": "10c94a6bd4ab7d271bbc70802b294d6601f3ff8845f9d67abe853d5a27521169",
+      "bytes": 20550
+    },
+    {
+      "path": "Source/Seige/SeigeSceneryContact.h",
+      "sha256": "b07007ef1b116d2b5aaed10f08ffd702effc2a2a10a192d3b379dca5d0caa4c9",
+      "bytes": 1162
+    },
+    {
+      "path": "Source/Seige/SeigeSceneryPlacement.h",
+      "sha256": "20485a3db40fac566a4f823f8a2735402ac8c42b5e4532893b91721b9d2c3d95",
+      "bytes": 967
+    },
+    {
+      "path": "Source/Seige/SeigeSceneryStreaming.h",
+      "sha256": "5e0130d3d85098dc9b239995e903748d9e80bcb8df15ca0d3f9c55943a40ba85",
+      "bytes": 1160
+    },
+    {
+      "path": "Source/Seige/SeigeTerrain.cpp",
+      "sha256": "169c4fa4bac5869aafade7bd16a20d3d4ff39885753e52954afcb9fe781eadc2",
+      "bytes": 132792
+    },
+    {
+      "path": "Source/Seige/SeigeTradeUI.cpp",
+      "sha256": "585a0fb87c230b39bc61c075dae5357b466dde334f729cc2d766b00dff4ab73c",
+      "bytes": 8762
+    },
+    {
+      "path": "Source/Seige/SeigeTransportVisuals.cpp",
+      "sha256": "11228a08376d01e6ea3a23ddad304624a5a4c0cd09594c9f35570231c4a10379",
+      "bytes": 13680
+    },
+    {
+      "path": "Source/Seige/SeigeUnitInspection.cpp",
+      "sha256": "806549410b930700886cae1f8318e0ab288971f1a85cd34c36be252956b8028c",
+      "bytes": 23159
+    },
+    {
+      "path": "Source/Seige/SeigeUnitInspection.h",
+      "sha256": "51294d519925ad863a8f0f71aaae1fb6fbe7fff029656947f03ab13f3a559a67",
+      "bytes": 1886
+    },
+    {
+      "path": "Source/Seige/SeigeWallVisuals.cpp",
+      "sha256": "58943d8541c9f5b6c1da76bf4d2f4eb2073110aa3b1baa9207eea43c238db3d1",
+      "bytes": 9478
+    },
+    {
+      "path": "Source/Seige/SeigeWeather.cpp",
+      "sha256": "e2e9406df1e8e3e06e674afcee86a2ed7f7c42ac288560867b1d291a4c4e08a6",
+      "bytes": 14011
+    },
+    {
+      "path": "Source/Seige/SeigeWindPresentation.h",
+      "sha256": "bf37a44699b14f275044a77622ea05569da1676f190c7e15fea13211053fe41c",
+      "bytes": 1989
+    },
+    {
+      "path": "Source/Seige/SeigeWorkerVisuals.cpp",
+      "sha256": "3f4df365d6860220846f9b9f153fc33eccf36cd944d258bcda0aa376c2c8d75d",
+      "bytes": 9941
+    },
+    {
+      "path": "Source/Seige/SeigeWorldReview.cpp",
+      "sha256": "aa7bbf965f8631a784c9a56c6689f77d4f32c7bbd87b7a6ce361a48ed26f3830",
+      "bytes": 13744
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeAdaptiveLogisticsTests.cpp",
+      "sha256": "6b606d867148837460d410ef5aa452f3d9eba03a8483f82b8322928b9036ba64",
+      "bytes": 10356
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeAutomaticReserveTests.cpp",
+      "sha256": "c041c3399f9fcaa2554179df5e804bd429b49da19a2bf7d992e40efb1521a59a",
+      "bytes": 9343
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeBuildingInfo.cpp",
+      "sha256": "28a851044865c43e446abdeebfcbcb2ec820c469be3566dbb5bcc741e71bb02f",
+      "bytes": 15994
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCalendarRules.cpp",
+      "sha256": "37f7d3068cf8e50fcd80b603c480109a31e4ad9f467681015adf4f02dd36d1f5",
+      "bytes": 2121
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCalendarRules.h",
+      "sha256": "2b29e9b14085ff2a2f745ae2750bc7438083cd911a1375f531c3d256731081fd",
+      "bytes": 204
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCanonicalJson.h",
+      "sha256": "49bf0450a2e8d0cb0e51abd4ee729daccce50bd7d0b5d6ba658117c307dac415",
+      "bytes": 653
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombat.cpp",
+      "sha256": "095361daedc41efd57935706fe00796a21a09e658b2fd9bea87cd254a7986884",
+      "bytes": 31454
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombat.h",
+      "sha256": "e33cf56041bdea9ab05d591a8eb26bb967f8be1316030b4642f357454771557c",
+      "bytes": 9960
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatActions.cpp",
+      "sha256": "397601d06efdd7bab6d8b75224f8376eaf284cde7accf2c20d590f79f2535f55",
+      "bytes": 17240
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatJson.h",
+      "sha256": "82e2183909d43703601b9eb54351de4764513670af5392e3188ed2f5e95f86f1",
+      "bytes": 2398
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatRules.cpp",
+      "sha256": "0459843d9a91509972600e50d8e946417d5ce26810537c2575a9ede7f0924b1e",
+      "bytes": 12809
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatState.cpp",
+      "sha256": "badf538f892b945964629f2c88cbe587df8dc97795e7da26edc0fb84e9011af5",
+      "bytes": 15283
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatWorld.cpp",
+      "sha256": "4cd9de8c22ef4a2dd31cf7b0c60d5e9df3521be1d1d3393dcbd036483844566a",
+      "bytes": 25203
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCompanions.cpp",
+      "sha256": "81bbf9e4345e0229115b87eead4f1e8bb2f14185322360289057027d387a74db",
+      "bytes": 19669
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCompanions.h",
+      "sha256": "a293517604c02d279687233cdfc03001a32dd3d0de8d41c97185cf656d28ee16",
+      "bytes": 2655
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCompanionTests.cpp",
+      "sha256": "9cd2d6a0350ab3463657b72c14c50abe44b39a011749485c619222a656131e0c",
+      "bytes": 13417
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeDependencyGraph.cpp",
+      "sha256": "17696b3ddda1db384f73650d23e562d22b87e2b9e869876751cc8f672b6794b1",
+      "bytes": 8751
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeDependencyGraph.h",
+      "sha256": "a9a2b8a0ad880bc82dbb1c59776c34d9bc5ccd77c61fa835e92eab21d60a588d",
+      "bytes": 1929
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeDependencyGraphTests.cpp",
+      "sha256": "dcee327b395a81906ec92de4332d9b3fc27479d9abd9c05629c19b31c263e26f",
+      "bytes": 2087
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEconomyTests.cpp",
+      "sha256": "4fb4b8af66c0c30e2f824d798c0388f8f58e439656a425e4527342ea02526c99",
+      "bytes": 20268
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnergy.cpp",
+      "sha256": "3312b532928317afb36ed7619edf7a3ff08cdc89be5efe4197f2385ac1afbe46",
+      "bytes": 12972
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnergy.h",
+      "sha256": "f85d45ae23a4386eb85ffc55effa76ae244bf3c18f1246142825225c747469cc",
+      "bytes": 2794
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnvironment.cpp",
+      "sha256": "10e326614f57582362252d7903ac2206d1fa8bf8338cec63b73f02c1b7213fd1",
+      "bytes": 22134
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnvironment.h",
+      "sha256": "162cdbc3e0ff61a2ac191a38618802cd928c9c13eca085e8471eba35d7a840b1",
+      "bytes": 2377
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEstablishedWorkerTests.cpp",
+      "sha256": "03b85a7050e2d94b4a0c5131673ac6f68ebd0e6e73931bc9f9abfd32d1d084c2",
+      "bytes": 8530
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeExtractionTests.cpp",
+      "sha256": "f58f246e5187cc6a76ed19517769902ee9f61b6fa3190b53e10f1fd5acc2915f",
+      "bytes": 14613
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeLogisticsTests.cpp",
+      "sha256": "e2545581918f7a832d71b0490ae4a4d2d3e028be2c2832f534fe13d84b486325",
+      "bytes": 26832
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeMobility.cpp",
+      "sha256": "2fed16cd1a7a795df148dd1b5f3b84041d718b01ca113d106b8bfc18303cb4de",
+      "bytes": 7031
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeMobility.h",
+      "sha256": "4ea3681a07bf68f1e2387713be5713377f1731e9685cd99bab46b50ff86c7ff1",
+      "bytes": 1535
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRenderInterpolation.h",
+      "sha256": "ab3cc603ccaa541110f1ef8592749b036ccbca79ee07a36730a4e11c6da467cc",
+      "bytes": 3804
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRenderInterpolationTests.cpp",
+      "sha256": "548e6fb8c0203e4e7a0dec269a20e6036a9b50a4719cb8fd6deb992e3a835ef1",
+      "bytes": 5846
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeResourceGeneration.cpp",
+      "sha256": "1ffc245eb679b57b9d45a604364ffbdebc233d712fe3203eed2ae98c5c749af1",
+      "bytes": 3170
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeResourceGeneration.h",
+      "sha256": "2908121f45dd2fdbb18b9e79482d4dfdb324d048cf9cc5b43ac0517907cdc647",
+      "bytes": 871
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeResourceGenerationTests.cpp",
+      "sha256": "eafb71c17cee89b7691a3d1c26101b8578ebcb5d0c0b4b8689a430be2f592812",
+      "bytes": 3375
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRoadMovementTests.cpp",
+      "sha256": "585f8dfd3a45729dbe9b971d656b69e55a33b17d803d07377310c84cc47db975",
+      "bytes": 40555
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRoadRepairTests.cpp",
+      "sha256": "93f68be30751109614f3cf087aa5f718a4fac22e4974f825b54996407da15956",
+      "bytes": 5292
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeSimulation.cpp",
+      "sha256": "48d8bc34130fae139feb7f28d7af15261f47d3919fa0283d895b17e93a2a3325",
+      "bytes": 125672
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeSimulation.h",
+      "sha256": "40a794030b502f6c9f8d8fd7445888a9823ae57be67bc48d0069e57caa75b5d3",
+      "bytes": 20306
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeSimulationTests.cpp",
+      "sha256": "25d47ed07ea0183943eb6aac4769870d3b27c47a9cf79f01a6fe1367e6b3d5c4",
+      "bytes": 39996
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeThreatTests.cpp",
+      "sha256": "814491aa702b10c78675dd62341946abe6ba0b1a7d23feb58dd496482832e3b2",
+      "bytes": 9419
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTrade.cpp",
+      "sha256": "b01b14ad75679070d51f27b978dbe5033c3a4b48f1198a12dcc0e47ebd59f408",
+      "bytes": 7583
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTrade.h",
+      "sha256": "1516959981a0980ad68c503e932d123390f429a7d6cd4049d1205327248d5f9d",
+      "bytes": 1469
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransport.cpp",
+      "sha256": "60af8096862802393cedd289156ea143a9ec1b566c3a2f280fb32db71e3a71bc",
+      "bytes": 35816
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportTests.cpp",
+      "sha256": "5a8bfa0e3a1adf96c99172713d1f31f48351e1cde3309f07ace35705c586e5bb",
+      "bytes": 14636
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportVehiclePersistence.cpp",
+      "sha256": "12dce64e3b4df360f0684e92219a93a738b5da0a7a7996f625a9c30c41e847f2",
+      "bytes": 6693
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportVehicles.cpp",
+      "sha256": "b46e2af50fcaafec13b84992b0b29d8cd309fe6f106aa83cb4f3340381f8411f",
+      "bytes": 27393
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportVehicles.h",
+      "sha256": "6229dbaa8ef89e93b666a83a0469ba8a58212f0d45289df3eb40d5001850fc67",
+      "bytes": 4014
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeUnitHealthTests.cpp",
+      "sha256": "5e31ee88fe62a2f73b2b5d8844a8c471a15e2d13e82772f315cdb8cfd7795b46",
+      "bytes": 5920
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWalls.cpp",
+      "sha256": "a40a3b0728fe896f6ed71d278d389279a8993dec8a948cb4b7e4f7b73ffa181f",
+      "bytes": 13622
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWalls.h",
+      "sha256": "d6dddbabe822dbc552121b8e65fd43212bd23b0911ad626008b29192a2d95b47",
+      "bytes": 1456
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWallTests.cpp",
+      "sha256": "3897e83cc997b75972f2cb1040ffd45f3cc350552fba4676fa0d7516f1e47ee9",
+      "bytes": 7125
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerAgentTests.cpp",
+      "sha256": "1a5e9cf8cd64f2a9a5c1ad3286af19b4c475498255d186c0776502b9ce9f5b63",
+      "bytes": 35291
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerCrews.cpp",
+      "sha256": "e8428133601363406aed6b63395a5f53251c90773e449813ff42c13890c93390",
+      "bytes": 21389
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerLifecycleTests.cpp",
+      "sha256": "8e1725f8ffa7e4ac7e90ffa9fddd8edcecebdde7a47753ce5ef8ab1de540b2eb",
+      "bytes": 5025
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerPersistence.cpp",
+      "sha256": "63ec2b31334e15ba0af3f3be8d30bf0ef75b96d1e9eb094055f6242352d2be83",
+      "bytes": 15231
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerReserveTests.cpp",
+      "sha256": "6d645f8c11f08dd5e178d327cad6941cf65c0788dcc2cbb94248ba83d0ae0d39",
+      "bytes": 9784
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkers.cpp",
+      "sha256": "d62abadc7af2cc9af67b4275cea89bdb3a50bf62cdfc1cbd9c06e6e3408ffa18",
+      "bytes": 39737
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkers.h",
+      "sha256": "ab34121f1543715e737239727548cd0256ccafdba775183a11644de90ad398bb",
+      "bytes": 6491
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkforce.cpp",
+      "sha256": "43f11f547a5113f0b9630b8bed51b85ea495f70e03ad83306a4f8fa3fcfc2f3f",
+      "bytes": 14763
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkforceTests.cpp",
+      "sha256": "307c470868a66c0b42eb27662310d08784456f3984c36470b82c1feb9e887e98",
+      "bytes": 26556
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorksiteLayout.h",
+      "sha256": "77b44cc86122a0b14c3bc6467b33796baedb791085d6aaaddfc7332411a1c4f6",
+      "bytes": 1396
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorldCalendar.cpp",
+      "sha256": "265e58bf93c4fc626ef58b9aa12c60e9219a3e423c93842de217c87946fce111",
+      "bytes": 3420
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorldCalendar.h",
+      "sha256": "0f6b922e75019853a2a7bd67994bf23230dbf0bdff49e58c34284a1e27215b59",
+      "bytes": 1217
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAIPlacementTests.cpp",
+      "sha256": "71ddfa9b5da12bc860503d095f60fab08934a8ca149a9129263c1db4c4f20c64",
+      "bytes": 9775
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAIPreparationDiagnostics.cpp",
+      "sha256": "20bc99609d2de60ccfd9199d4aaddfe2d99de138dc6e39ac3222ba5b923c255b",
+      "bytes": 11647
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAIUpgradeTests.cpp",
+      "sha256": "b4b19fa10436221c62532a39ba580d3d640d6f4d30dbce43b4d6bc787eca2f03",
+      "bytes": 4670
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAudioTests.cpp",
+      "sha256": "97f0ccee70c89a900a292e00db2d4172494fb1b4d1cbc610c2e172afd6999b0e",
+      "bytes": 4770
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCalendarEnergyTests.cpp",
+      "sha256": "365864fe023c0d09dcaf214d5d8e78eb00d0b254375fd34e6cb67425bfd485fc",
+      "bytes": 3215
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCalendarTests.cpp",
+      "sha256": "eb7ba4bdb8d499ce131e37914191804e1151a41ae559df587316e7e5ca5080b1",
+      "bytes": 3043
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCameraTests.cpp",
+      "sha256": "9ae2be53c035c1fb7ef6f3ee31b5584dc6f841179a6120bc1fc930b328bc2bbd",
+      "bytes": 49686
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatArrivalTests.cpp",
+      "sha256": "81222cbb0c2a3eb1675fcd41aa81e7e25ef1d213f01561f82cb33792e3f4c923",
+      "bytes": 6120
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatConfigurationTests.cpp",
+      "sha256": "552f4ebc2f7834644c464b18594d362b94f51948fb9831c76cfec6b8007c333c",
+      "bytes": 7895
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatEnergyTests.cpp",
+      "sha256": "151550826e6cffff7173b01a678ec7f51bdafa78bf3893047208fe9c1b5d3a7f",
+      "bytes": 16346
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatTests.cpp",
+      "sha256": "4355a816e8440f3c25a858b28d4848447992ab921c33eacc97e4f6a77a0223fc",
+      "bytes": 39929
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCompanionViewTests.cpp",
+      "sha256": "43b26ceca4bc26fe037061fe3f73ba7b43e5b7278fa337068001d5a4ead2f198",
+      "bytes": 3558
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeEnvironmentTests.cpp",
+      "sha256": "ac440f80c94dfccdf08eddf27a972ee178b43475a0299b25c4701dd38c2813d6",
+      "bytes": 17497
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeFirstPlayableDiagnostic.cpp",
+      "sha256": "1428aa066ed41c6a31de96501bddc9828927960fb59914a4c01b90e98da422eb",
+      "bytes": 6218
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeFrontendTests.cpp",
+      "sha256": "d60ce75e8a4d7338a8dec9d8d2809bb6c445950257d78def5d6a483598f1791d",
+      "bytes": 33622
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeHardpointLayoutTests.cpp",
+      "sha256": "b78aaf1db1abaf03bec6a576321a0072a625c4aa67296e592b118a946ecd1a87",
+      "bytes": 3126
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeInteractionTests.cpp",
+      "sha256": "9662327f3dfa32754bf5673aec77896aa92f9d94ba32df57dd98cf727f4abfe7",
+      "bytes": 45968
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeOwnedCrewTests.cpp",
+      "sha256": "07180bb600e747513bc94e502aa15fab737f2ecb8659c4a21729d48a4783e30c",
+      "bytes": 5883
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeRegionResourceTests.cpp",
+      "sha256": "7eed65f2fe0e181d91aef62987748cb7ae486bb86dbbabb4852f23cf466f0940",
+      "bytes": 6892
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeRoadlessEnergyTests.cpp",
+      "sha256": "7f92d74f675fc5d7e68a12957b74e6927d9b5f247c79cfd764fa0d5e70ece3c9",
+      "bytes": 2446
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeScenarioAITests.cpp",
+      "sha256": "43d0a436c95045abf743c229dd17cd93bd9f3564b5527734a7cdaf6d662ddc8d",
+      "bytes": 101110
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeScenarioSurveyTests.cpp",
+      "sha256": "e822ba876a7ba225531cc51c1b589d0d97ab79e0357cc56f2df7d3595127c2d7",
+      "bytes": 10176
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeStarterCombinationTests.cpp",
+      "sha256": "4d748ea4af693ccfa35dbc9c820757547c1a4ee2386ebeae6c4354f0ca391a92",
+      "bytes": 6390
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeStartingAIProgressTests.cpp",
+      "sha256": "4084a76bff40ec3ae9241c12b29077c323c7084a9be33651b7a13790b9ca0676",
+      "bytes": 43166
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeTransportConservationTests.cpp",
+      "sha256": "0f8b15416779c24ab807b90bc973b72b665d4b516e3072eae231bb112a864ea0",
+      "bytes": 7322
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeUnitInspectionTests.cpp",
+      "sha256": "eb22d732e4c0c12931f779ccf18b9caa7a9aa55ce4a754a9d73e5165a86220e9",
+      "bytes": 11241
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeWindPresentationTests.cpp",
+      "sha256": "fea5bf8059ae2f509bfc9ff1c1cf6b1b82e94fefd22f3865a091a6f0ac8a774e",
+      "bytes": 3965
+    },
+    {
+      "path": "Source/SeigeEditor.Target.cs",
+      "sha256": "db6b396a16a56ba38f42de2d31bd491c441b827aa02f250fb02d8d1679de6e46",
+      "bytes": 374
+    }
+  ]
+}

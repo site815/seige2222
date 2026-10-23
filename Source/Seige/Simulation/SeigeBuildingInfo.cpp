@@ -68,7 +68,7 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     Add(TEXT("Power"),E&&E->GenerationSource==TEXT("solar")?TEXT("Rated generation (daylight peak)"):TEXT("Rated generation"),N(E?E->GenerationKW:0)+TEXT(" kW"));
     if(E&&E->GenerationSource==TEXT("solar"))Add(TEXT("Power"),TEXT("Solar availability now"),N(Calendar.Sample().SolarFactor*100)+TEXT("% of peak before staffing; 0 at night"));
     Add(TEXT("Power"),TEXT("Battery charge / capacity"),N(B?B->BatteryEnergyKWh:0)+TEXT(" / ")+N(E?E->BatteryCapacityKWh:0)+TEXT(" kWh"));
-    Add(TEXT("Power"),TEXT("Power system"),B?(Grid.Connected?TEXT("Connected road grid"):E&&!E->RequiresRoadGrid?TEXT("Self-contained bootstrap generation"):TEXT("Disconnected; connect a powered road")):TEXT("Shares power and batteries within its connected road network"));
+    Add(TEXT("Power"),TEXT("Power system"),!RoadsEnabled()?TEXT("Shared colony grid / roads deferred"):B?(Grid.Connected?TEXT("Connected road grid"):E&&!E->RequiresRoadGrid?TEXT("Self-contained bootstrap generation"):TEXT("Disconnected; connect a powered road")):TEXT("Shares power and batteries within its connected road network"));
     Add(TEXT("Power"),TEXT("Current grid generation / demand"),N(Grid.GenerationKW)+TEXT(" / ")+N(Grid.DemandKW)+TEXT(" kW"));
     Add(TEXT("Power"),TEXT("Grid battery charge / capacity"),N(Grid.StoredKWh)+TEXT(" / ")+N(Grid.CapacityKWh)+TEXT(" kWh"));
     Add(TEXT("Power"),TEXT("Worker electricity"),N(Energy.WorkerKW)+TEXT(" kW per worker"));
@@ -114,7 +114,7 @@ TArray<FSeigeBuildingInfoRow> FSeigeSimulation::BuildingInfo(const FString& Defi
     if(D.StoresInactiveWorkers)
     {
         Add(TEXT("Production"),TEXT("Inactive workers here"),FString::FromInt(B?FMath::RoundToInt(B->Inventory.FindRef(TextRule(TEXT("inactive_worker_resource")))):0));
-        Add(TEXT("Production"),TEXT("Colony worker stock target"),FString::FromInt(WorkerSurplusTarget));
+        Add(TEXT("Production"),TEXT("Automatic spare workers"),FString::FromInt(WorkerSurplusTarget()));
         Add(TEXT("Production"),TEXT("Disassembly"),TEXT("Stored surplus only; ")+N(DisassemblyEnergyKWh())+TEXT(" kWh per worker; ")+Amounts(DisassemblyOutputs()));
         if(B)Add(TEXT("Production"),TEXT("Disassembly queue / progress"),FString::FromInt(B->DisassemblyQueued)+TEXT(" / ")+N(B->DisassemblyProgress*100)+TEXT("%"));
     }

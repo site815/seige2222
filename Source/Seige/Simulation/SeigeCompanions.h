@@ -10,7 +10,8 @@ struct FSeigeCompanion
     TArray<FVector2D> Route;
     int32 NextWaypoint=0;
     double FedUntil=0,NextMeal=0,RestUntil=0,Heading=0,DistanceWalked=0,FoodConsumedKg=0,ShelterUntil=0;
-    bool Moving=false,Evacuated=false,Retreating=false,Sheltered=false,ExitingShuttle=false;
+    double Health=0;
+    bool Moving=false,Evacuated=false,Retreating=false,Sheltered=false,ExitingShuttle=false,Aboard=true,Dead=false;
 };
 
 // Companions are not workforce. Physical food is consumed from nearby stores;
@@ -23,6 +24,12 @@ public:
     void ShiftHome(FVector2D Delta);
     void NotifyBuildingDamaged(const FSeigeSimulation& Sim,FVector2D Position);
     double EfficiencyAt(FVector2D Position) const;
+    void Damage(FSeigeSimulation& Sim,int32 Id,double Amount);
+    void Alert(const FSeigeSimulation& Sim,FSeigeCompanion& Dog);
+    double WorkerSpeedMultiplier(const FSeigeSimulation& Sim) const;
+    static bool IsOutside(const FSeigeCompanion& Dog){return Dog.Health>0&&!Dog.Dead&&!Dog.Aboard&&!Dog.Sheltered&&!Dog.Evacuated;}
+    int64 DepressionUntilCalendarUs=0;
+    double MaximumHealth=25,DangerRadiusMeters=35,HealPerSecond=5,DepressionDays=30,DepressionSpeedMultiplier=.5;
     bool Save(const TSharedPtr<FJsonObject>& Object) const;
     bool Load(const TSharedPtr<FJsonObject>& Object,const FSeigeSimulation& Sim,FString& Error);
     bool SetControlled(int32 Id);

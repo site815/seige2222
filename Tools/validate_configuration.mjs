@@ -74,10 +74,10 @@ export function validateConfiguration(data) {
   }
   if ('simulation_speeds' in ui) {
     const speeds = array(ui.simulation_speeds, 'UI simulation_speeds', 3, 3);
-    if (new Set(speeds).size !== 3 || !speeds.every(value => [1, 5, 10].includes(value))) fail('UI simulation_speeds must contain 1, 5 and 10 once each');
+    if (new Set(speeds).size !== 3 || !speeds.includes(1) || !speeds.every(value => Number.isInteger(value) && value >= 1 && value <= 100)) fail('UI simulation_speeds must include 1 and two distinct whole multipliers from 1 to 100');
   }
   const weather=object(data.weather,'Graphics/weather.json');version(weather,'Graphics/weather.json');
-  const weatherBounds={wind_cycle_seconds:[2,120],tree_wind_sway_centimeters:[0,30],leaf_wind_rustle_centimeters:[0,8],grass_wind_sway_centimeters:[0,10],tree_wind_distance_meters:[10,400],wind_fade_start_fraction:[.2,.9],night_exposure_offset_ev:[0,4],sun_direction_update_degrees:[.01,2],sun_shadow_update_seconds:[.05,10],night_sky_intensity_fraction:[.05,1],sunrise_sunset_softness:[.01,.5],winter_accumulation_fraction:[.001,.49],winter_melt_fraction:[.001,.49],maximum_snow_coverage:[0,1],snowflake_count:[0,2048,true],snow_radius_meters:[5,100],snow_height_meters:[5,100],snow_fall_meters_per_second:[.1,10],snowflake_size_centimeters:[.1,10]};
+  const weatherBounds={wind_cycle_seconds:[2,120],wind_maximum_playback_rate:[1,20],tree_wind_sway_centimeters:[0,30],leaf_wind_rustle_centimeters:[0,8],grass_wind_sway_centimeters:[0,10],tree_wind_distance_meters:[10,400],wind_fade_start_fraction:[.2,.9],night_exposure_offset_ev:[0,4],sun_direction_update_degrees:[.01,2],sun_shadow_update_seconds:[.05,10],night_sky_intensity_fraction:[.05,1],sunrise_sunset_softness:[.01,.5],winter_accumulation_fraction:[.001,.49],winter_melt_fraction:[.001,.49],maximum_snow_coverage:[0,1],snowflake_count:[0,2048,true],snow_radius_meters:[5,100],snow_height_meters:[5,100],snow_fall_meters_per_second:[.1,10],snowflake_size_centimeters:[.1,10]};
   for(const [key,[min,max,integer]]of Object.entries(weatherBounds))number(weather[key],`Weather ${key}`,min,max,!!integer);
   // Optional building art overrides: every key must be a building definition and every kind an imported mesh.
   if (data.buildingVisuals !== null && data.buildingVisuals !== undefined) {
@@ -240,6 +240,7 @@ export function validateConfiguration(data) {
   number(economy.fuel_import_buffer_cycles,'AI fuel_import_buffer_cycles',1,100);number(economy.fuel_import_refill_fraction,'AI fuel_import_refill_fraction',1e-8,1);
   if(!['remaining_output_bill','recipe_buffers'].includes(economy.bulk_input_policy))fail('Unsupported AI bulk_input_policy');
   if(!['surplus_shipment_value','local_raw_only'].includes(economy.export_policy))fail('Unsupported AI export_policy');
+  if(!['next_prerequisite','full_plan'].includes(economy.export_reserve_horizon))fail('Unsupported AI export_reserve_horizon');
   if(economy.core_replication_policy!=='worker_only')fail('Unsupported AI core_replication_policy');
   const replicationRecipes=array(economy.core_replication_recipes,'AI core_replication_recipes',0,0), replicationSeen=new Set();
   for(const id of replicationRecipes){const recipe=data.rules.recipes.recipes.find(r=>r.id===id);if(replicationSeen.has(id)||!recipe||recipe.worker_output>0||!Object.keys(recipe.outputs).length||!buildings.get(scenario.core_definition).allowed_recipes.includes(id))fail(`Invalid AI core_replication_recipes entry: ${id}`);replicationSeen.add(id);}
@@ -344,6 +345,7 @@ export function validateConfiguration(data) {
       const entryLabel = `${label}.entries[${entryIndex}]`;
       object(entry, entryLabel);
       if(!['road','upgrade_road','wall'].includes(entry.definition)) buildable(entry.definition, `${entryLabel}.definition`);
+      if(!data.rules.transport.transport.roads_enabled&&['road','upgrade_road'].includes(entry.definition))fail('Disabled roads cannot appear in the build menu');
       unique(assigned, entry.definition, 'UI building entry');
       unique(entryKeys, shortcut(entry.shortcut, `${entryLabel}.shortcut`), `UI shortcut in ${group.id}`);
     }

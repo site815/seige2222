@@ -1,0 +1,719 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "M9800X3D",
+			"instance": "061AF06F4069C4D742973D90423B960D",
+			"instanceName": "M9800X3D-24880",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.11-12.29.45",
+	"succeeded": 46,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 13.024327278137207,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "BoundariesAndSeasons",
+			"fullTestPath": "Seige.Calendar.BoundariesAndSeasons",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0082694999873638153,
+			"dateTime": "2026.10.11-12.29.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SolarIntegrationAndClockPartition",
+			"fullTestPath": "Seige.Calendar.SolarIntegrationAndClockPartition",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0084151998162269592,
+			"dateTime": "2026.10.11-12.29.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SolarNightAndConstantFusion",
+			"fullTestPath": "Seige.Calendar.SolarNightAndConstantFusion",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0095851011574268341,
+			"dateTime": "2026.10.11-12.29.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AutonomousClearFire",
+			"fullTestPath": "Seige.Combat.AutonomousClearFire",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 1.3088672161102295,
+			"dateTime": "2026.10.11-12.29.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefensiveCornerArrival",
+			"fullTestPath": "Seige.Combat.DefensiveCornerArrival",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0084308013319969177,
+			"dateTime": "2026.10.11-12.29.33",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefensiveEnergyBeforeVehicleCharging",
+			"fullTestPath": "Seige.Combat.DefensiveEnergyBeforeVehicleCharging",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.31826430559158325,
+			"dateTime": "2026.10.11-12.29.33",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefensiveEnergyTransactionsAndPersistence",
+			"fullTestPath": "Seige.Combat.DefensiveEnergyTransactionsAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.3365899920463562,
+			"dateTime": "2026.10.11-12.29.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EditableHardpointAndFleetBudgets",
+			"fullTestPath": "Seige.Combat.EditableHardpointAndFleetBudgets",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.03870609775185585,
+			"dateTime": "2026.10.11-12.29.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LoadoutAndFiniteFactory",
+			"fullTestPath": "Seige.Combat.LoadoutAndFiniteFactory",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32353341579437256,
+			"dateTime": "2026.10.11-12.29.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LootTierScarcityAndPersistence",
+			"fullTestPath": "Seige.Combat.LootTierScarcityAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.057689599692821503,
+			"dateTime": "2026.10.11-12.29.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PrivateerTravelCargoAndShuttle",
+			"fullTestPath": "Seige.Combat.PrivateerTravelCargoAndShuttle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 1.4013277292251587,
+			"dateTime": "2026.10.11-12.29.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProjectilesProtectionAndPersistence",
+			"fullTestPath": "Seige.Combat.ProjectilesProtectionAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.65678209066390991,
+			"dateTime": "2026.10.11-12.29.36",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ShotCostsSplashAndRefitDemand",
+			"fullTestPath": "Seige.Combat.ShotCostsSplashAndRefitDemand",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.97875046730041504,
+			"dateTime": "2026.10.11-12.29.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControlledRouteEligibility",
+			"fullTestPath": "Seige.Companions.ControlledRouteEligibility",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0096094012260437012,
+			"dateTime": "2026.10.11-12.29.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DamageTriggeredShelter",
+			"fullTestPath": "Seige.Companions.DamageTriggeredShelter",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.010636098682880402,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FirstPersonControls",
+			"fullTestPath": "Seige.Companions.FirstPersonControls",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.01528950035572052,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GriefSlowsPhysicalWorkers",
+			"fullTestPath": "Seige.Companions.GriefSlowsPhysicalWorkers",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0080575011670589447,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LandingHealingAndPermanentDeath",
+			"fullTestPath": "Seige.Companions.LandingHealingAndPermanentDeath",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.012722700834274292,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PhysicalFoodAndMorale",
+			"fullTestPath": "Seige.Companions.PhysicalFoodAndMorale",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0084217004477977753,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WalkingInterpolationAndPersistence",
+			"fullTestPath": "Seige.Companions.WalkingInterpolationAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0084781982004642487,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GameMenuPauseAndSave",
+			"fullTestPath": "Seige.Frontend.GameMenuPauseAndSave",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.073921099305152893,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NeighborhoodSaveLoad",
+			"fullTestPath": "Seige.Frontend.NeighborhoodSaveLoad",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 1.1151449680328369,
+			"dateTime": "2026.10.11-12.29.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BuildMenuShortcuts",
+			"fullTestPath": "Seige.Interaction.BuildMenuShortcuts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32809749245643616,
+			"dateTime": "2026.10.11-12.29.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPlansPaymentsAndOwnership",
+			"fullTestPath": "Seige.Interaction.CombatPlansPaymentsAndOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32794389128684998,
+			"dateTime": "2026.10.11-12.29.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CommandShuttleGeometrySelection",
+			"fullTestPath": "Seige.Interaction.CommandShuttleGeometrySelection",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.36454638838768005,
+			"dateTime": "2026.10.11-12.29.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControllerClickBetweenDraws",
+			"fullTestPath": "Seige.Interaction.ControllerClickBetweenDraws",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.33148559927940369,
+			"dateTime": "2026.10.11-12.29.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FloatingDockAndRegionIsolation",
+			"fullTestPath": "Seige.Interaction.FloatingDockAndRegionIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.33166289329528809,
+			"dateTime": "2026.10.11-12.29.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PreparationCancelAndInputIsolation",
+			"fullTestPath": "Seige.Interaction.PreparationCancelAndInputIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32850611209869385,
+			"dateTime": "2026.10.11-12.29.41",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ResourceGroupsAndHoverControls",
+			"fullTestPath": "Seige.Interaction.ResourceGroupsAndHoverControls",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32883191108703613,
+			"dateTime": "2026.10.11-12.29.41",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RoadToolsAndIsolation",
+			"fullTestPath": "Seige.Interaction.RoadToolsAndIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32937350869178772,
+			"dateTime": "2026.10.11-12.29.41",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SelectedCoreCommands",
+			"fullTestPath": "Seige.Interaction.SelectedCoreCommands",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32736518979072571,
+			"dateTime": "2026.10.11-12.29.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SpeedAndGameMenuShortcuts",
+			"fullTestPath": "Seige.Interaction.SpeedAndGameMenuShortcuts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.33037519454956055,
+			"dateTime": "2026.10.11-12.29.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TradingPortWorkerTargets",
+			"fullTestPath": "Seige.Interaction.TradingPortWorkerTargets",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.92174839973449707,
+			"dateTime": "2026.10.11-12.29.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UiClickIsolation",
+			"fullTestPath": "Seige.Interaction.UiClickIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32943019270896912,
+			"dateTime": "2026.10.11-12.29.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnitHoverGeometry",
+			"fullTestPath": "Seige.Interaction.UnitHoverGeometry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0081079006195068359,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnitHoverVisibility",
+			"fullTestPath": "Seige.Interaction.UnitHoverVisibility",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.012806400656700134,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WallPlanInputsWithoutCanvas",
+			"fullTestPath": "Seige.Interaction.WallPlanInputsWithoutCanvas",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.33021470904350281,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorkerProductionAndReserveControls",
+			"fullTestPath": "Seige.Interaction.WorkerProductionAndReserveControls",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.32869338989257812,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AuthoritativeTerrainStable",
+			"fullTestPath": "Seige.NextUpdate.AuthoritativeTerrainStable",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.011137302964925766,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AutonomousTransportConservation",
+			"fullTestPath": "Seige.NextUpdate.AutonomousTransportConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.037241600453853607,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MobilityRouteCache",
+			"fullTestPath": "Seige.NextUpdate.MobilityRouteCache",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0081342011690139771,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OwnedCrewConservation",
+			"fullTestPath": "Seige.NextUpdate.OwnedCrewConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.89397752285003662,
+			"dateTime": "2026.10.11-12.29.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PhysicalChargingAndSurplus",
+			"fullTestPath": "Seige.NextUpdate.PhysicalChargingAndSurplus",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.059042200446128845,
+			"dateTime": "2026.10.11-12.29.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DeadCourierAndLoaderConservation",
+			"fullTestPath": "Seige.Units.DeadCourierAndLoaderConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0082858018577098846,
+			"dateTime": "2026.10.11-12.29.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorkerAndDogPhysicalDamage",
+			"fullTestPath": "Seige.Units.WorkerAndDogPhysicalDamage",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.0080909989774227142,
+			"dateTime": "2026.10.11-12.29.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorkerHealthPersistenceAndDeath",
+			"fullTestPath": "Seige.Units.WorkerHealthPersistenceAndDeath",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"061AF06F4069C4D742973D90423B960D"
+			],
+			"duration": 0.021736700087785721,
+			"dateTime": "2026.10.11-12.29.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

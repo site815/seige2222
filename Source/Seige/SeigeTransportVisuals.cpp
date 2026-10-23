@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeAudioSubsystem.h"
 #include "ProceduralMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
@@ -67,18 +68,20 @@ FVector2D ASeigeGameMode::SnapRoadCursor(FVector2D Position) const{return Sim.Sn
 void ASeigeGameMode::CancelRoadTool(){RoadPlacementActive=RoadUpgradeActive=RoadHasStart=false;RoadStart=FVector2D::ZeroVector;}
 void ASeigeGameMode::BeginRoadPlacement()
 {
+    if(!Sim.RoadsEnabled()){CancelRoadTool();Notice=TEXT("Roads are deferred. Workers and vehicles use terrain routes.");return;}
     if(Observer||Screen!=TEXT("playing")||DetailedSectorIndex()!=4||IsRegionMap()||Sim.Escaped||Sim.Failed)return;
     CancelWallTool();CancelRoadTool();SelectedBuild.Empty();SelectedId=SelectedRoadId=0;RoadPlacementActive=true;
     Notice=TEXT("Road: select a building edge port or road endpoint, then the destination. Esc cancels.");
 }
 void ASeigeGameMode::BeginRoadUpgrade()
 {
+    if(!Sim.RoadsEnabled()){CancelRoadTool();Notice=TEXT("Roads are deferred.");return;}
     if(Observer||Screen!=TEXT("playing")||DetailedSectorIndex()!=4||IsRegionMap()||Sim.Escaped||Sim.Failed)return;
     CancelWallTool();CancelRoadTool();SelectedBuild.Empty();SelectedId=0;
     if(SelectedRoadId>0)
     {
-        if(Sim.UpgradeRoad(SelectedRoadId,Error)){RefreshTransportScenery();Notice=TEXT("Transport upgrade queued. The existing route remains operational during construction.");}
-        else Notice=Error;
+        if(Sim.UpgradeRoad(SelectedRoadId,Error)){SeigeAudio::PlayUi(GetWorld(),TEXT("build"));RefreshTransportScenery();Notice=TEXT("Transport upgrade queued. The existing route remains operational during construction.");}
+        else {Notice=Error;SeigeAudio::PlayUi(GetWorld(),TEXT("error"));}
         return;
     }
     RoadUpgradeActive=true;Notice=TEXT("Select a completed road to add rails, or a rail corridor to add vacuum tubes.");
@@ -86,6 +89,7 @@ void ASeigeGameMode::BeginRoadUpgrade()
 
 void ASeigeGameMode::SyncRoadVisuals(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live)
 {
+    if(!Colony.RoadsEnabled())return;
     for(const auto& Road:Colony.Roads)
     {
         if(Road.Health<=0)continue;
@@ -157,6 +161,7 @@ void ASeigeGameMode::SyncRoadVisuals(const FSeigeSimulation& Colony,FVector2D Of
 
 void ASeigeGameMode::SyncRoadPlacementGhost(TSet<FString>& Live)
 {
+    if(!Sim.RoadsEnabled())return;
     if(!RoadPlacementActive||!CursorOnWorld||Screen!=TEXT("playing")||Observer||DetailedSectorIndex()!=4||IsRegionMap())return;
     if(auto* PC=UGameplayStatics::GetPlayerController(this,0))if(auto* HUD=Cast<ASeigeHUD>(PC->GetHUD()))if(HUD->IsPointerOverUI())return;
     const FVector2D End=SnapRoadCursor(CursorWorld),Start=RoadHasStart?RoadStart:End-FVector2D(15,0);

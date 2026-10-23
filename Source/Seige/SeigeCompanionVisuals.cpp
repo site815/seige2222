@@ -34,11 +34,15 @@ void ASeigeGameMode::ExitCompanionView()
 }
 void ASeigeGameMode::FocusCompanion(int32 Id)
 {
-    if(Screen!=TEXT("playing")||Observer||Sim.Escaped||Sim.Failed)return;
+    if(Screen!=TEXT("playing")||Sim.Escaped||Sim.Failed)return;
     if(const auto* D=Sim.Companions.Find(Id))if(!D->Evacuated)
     {
-        ExitCompanionView();CancelRoadTool();SelectedId=SelectedRoadId=0;SelectedBuild.Empty();SelectedCompanionId=Id;
-        CameraCenter=FVector(D->Position,0);Zoom=MinimumZoom*3;
+        ExitCompanionView();CancelRoadTool();CancelWallTool();FleetOrderActive=false;SelectedId=SelectedRoadId=0;SelectedBuild.Empty();SelectedCompanionId=Id;
+        // A useful elevated close view keeps a moving dog in frame at 10x;
+        // ground-level minimum zoom can put the camera behind a nearby ridge.
+        CameraCenter=FVector(D->Aboard||D->Sheltered||D->Dead?D->Home:D->Position,0);
+        Zoom=FMath::Max(MinimumZoom*3,DefaultZoom*.35f);CameraPitch=FMath::Min(MaximumCameraPitch,65.f);
+        Notice=D->Dead?TEXT("Rex has died. Workers move at half speed during their month of mourning."):D->Aboard?TEXT("Rex is aboard the landing shuttle."):D->Sheltered?TEXT("Rex is healing safely inside the shuttle."):TEXT("Rex is near the orbital command module.");
     }
 }
 void ASeigeGameMode::LookCompanion(FVector2D Pixels)
@@ -80,7 +84,7 @@ FVector2D ASeigeGameMode::CompanionRenderPosition() const
 }
 void ASeigeGameMode::SyncCompanionVisuals(TSet<FString>& Live)
 {
-    if(CompanionView&&Sim.Companions.ControlledId==0){ExitCompanionView();Notice=TEXT("Rex is returning to shelter after a nearby building took damage.");}
+    if(CompanionView&&Sim.Companions.ControlledId==0){ExitCompanionView();Notice=TEXT("Rex is hurt or in danger and is returning to the shuttle.");}
     if(Screen==TEXT("landing")||(MenuOpen&&MenuReturnScreen==TEXT("landing"))||Sim.Escaped||Sim.Failed)return;
     if(Screen!=TEXT("playing")&&!MenuOpen)return;
     const FString AssetKey=Sim.Companions.MeshPath+TEXT("|")+Sim.Companions.WalkAnimation+TEXT("|")+Sim.Companions.IdleAnimation;
@@ -94,7 +98,7 @@ void ASeigeGameMode::SyncCompanionVisuals(TSet<FString>& Live)
     if(!CompanionMesh)return;
     for(const auto& D:Sim.Companions.Dogs)
     {
-        if(D.Evacuated||D.Sheltered)continue;
+        if(!Sim.Companions.IsOutside(D))continue;
         const auto* Snapshot=PresentationSnapshot(Sim);
         const FVector2D P=Snapshot?Snapshot->Companion(D,PresentationAlpha()):D.Position;
         if(FVector2D::Distance(P,FVector2D(CameraCenter))*Sim.MetersPerWorldUnit()>600)continue;

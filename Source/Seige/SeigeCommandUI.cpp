@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeActionFeedback.h"
 
 namespace
 {
@@ -18,24 +19,22 @@ bool ASeigeHUD::HandleCommandAction(const FString& A,ASeigeGameMode& G)
     if(!A.StartsWith(TEXT("command:")))return false;
     if(!CanManage(G)||CombatPanelOpen||Ui.BuildOpen)return true;
     FString Error;auto* B=G.Sim.FindBuilding(G.SelectedId);
-    if(A==TEXT("command:reserve-less")||A==TEXT("command:reserve-more"))
-    {G.Sim.SetWorkerSurplusTarget(FMath::Clamp(G.Sim.WorkerSurplusTarget+(A.EndsWith(TEXT("more"))?1:-1),0,100000),Error);G.Notice=Error.IsEmpty()?TEXT("Colony spare-worker target updated."):Error;}
-    else if(B&&B->Health>0)
+    if(B&&B->Health>0)
     {
         if(A==TEXT("command:transport-build"))
-            G.Notice=G.Sim.TransportVehicles.QueueVehicle(G.Sim,B->Id,Error)?TEXT("Transport fabrication ordered. Materials and energy are required before assembly."):Error;
+            G.Notice=SeigeActionNotice(GetWorld(),G.Sim.TransportVehicles.QueueVehicle(G.Sim,B->Id,Error),TEXT("Transport fabrication ordered. Materials and energy are required before assembly."),Error);
         else if(A==TEXT("command:transport-prev")||A==TEXT("command:transport-next"))
         {
-            TArray<int32> Ids;for(const auto& V:G.Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Evacuated)Ids.Add(V.Id);
+            SeigeAudio::PlayUi(GetWorld(),TEXT("select"));TArray<int32> Ids;for(const auto& V:G.Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Evacuated)Ids.Add(V.Id);
             if(!Ids.IsEmpty()){int32 I=Ids.IndexOfByKey(TransportFocusId);if(I<0)I=0;TransportFocusId=Ids[(I+(A.EndsWith(TEXT("next"))?1:Ids.Num()-1))%Ids.Num()];}
         }
         else if(A==TEXT("command:transport-board")&&G.Sim.Definition(*B)->Role==TEXT("core"))
-            G.Notice=G.Sim.TransportVehicles.BoardShuttle(G.Sim,TransportFocusId,Error)?TEXT("Transport shuttle order accepted."):Error;
-        else if(A==TEXT("command:upgrade"))G.Notice=G.Sim.UpgradeBuilding(B->Id,Error)?TEXT("Upgrade committed. Materials and workers will build the next level."):Error;
+            G.Notice=SeigeActionNotice(GetWorld(),G.Sim.TransportVehicles.BoardShuttle(G.Sim,TransportFocusId,Error),TEXT("Transport shuttle order accepted."),Error);
+        else if(A==TEXT("command:upgrade"))G.Notice=SeigeActionNotice(GetWorld(),G.Sim.UpgradeBuilding(B->Id,Error),TEXT("Upgrade committed. Materials and workers will build the next level."),Error);
         else if(A==TEXT("command:recipe-prev")||A==TEXT("command:recipe-next"))
         {
             const auto Options=G.Sim.ProductionOptions(B->Id);if(Options.Num())
-            {const auto* D=G.Sim.Definition(*B);const auto Current=B->SelectedRecipe.IsEmpty()?D->Recipe:B->SelectedRecipe;int32 I=Options.IndexOfByKey(Current);if(I==INDEX_NONE)I=0;I=(I+(A.EndsWith(TEXT("next"))?1:Options.Num()-1))%Options.Num();G.Notice=G.Sim.SetProductionRecipe(B->Id,Options[I],Error)?TEXT("Production selection updated; a paid batch finishes before switching."):Error;}
+            {const auto* D=G.Sim.Definition(*B);const auto Current=B->SelectedRecipe.IsEmpty()?D->Recipe:B->SelectedRecipe;int32 I=Options.IndexOfByKey(Current);if(I==INDEX_NONE)I=0;I=(I+(A.EndsWith(TEXT("next"))?1:Options.Num()-1))%Options.Num();G.Notice=SeigeActionNotice(GetWorld(),G.Sim.SetProductionRecipe(B->Id,Options[I],Error),TEXT("Production selection updated; a paid batch finishes before switching."),Error);}
         }
     }
     return true;
@@ -43,12 +42,9 @@ bool ASeigeHUD::HandleCommandAction(const FString& A,ASeigeGameMode& G)
 
 void ASeigeHUD::DrawWorkforceControls(ASeigeGameMode& G,float X,float Y,float W)
 {
-    Label(FString::Printf(TEXT("Stored: %d  /  spare target: %d"),G.Sim.Workers.StoredCount(),G.Sim.WorkerSurplusTarget),X,Y,14,Text);
+    Label(FString::Printf(TEXT("Stored: %d  /  automatic reserve: %d"),G.Sim.Workers.StoredCount(),G.Sim.WorkerSurplusTarget()),X,Y,14,Text);
     Label(FString::Printf(TEXT("Total target including trading ports: %d"),G.Sim.WorkerReserveTarget()),X,Y+24,12,Muted);
-    if(!CanManage(G))return;
-    Button(TEXT("-"),TEXT("command:reserve-less"),X,Y+48,38,34);
-    Button(TEXT("+"),TEXT("command:reserve-more"),X+44,Y+48,38,34);
-    Label(TEXT("Spare production target"),X+94,Y+57,13,Mint);
+    Label(TEXT("Reserve follows command level and crew capacity."),X,Y+48,12,Mint);
 }
 
 void ASeigeHUD::DrawCommandInfo(ASeigeGameMode& G,float W,float H)

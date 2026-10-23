@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "balance_status": "Provisional physical movement. Slopes are rise/run; clearances and access distances are metres. Roads use their authored powered speed multiplier.",
+  "balance_status": "Provisional physical movement. Slopes are rise/run; clearances and access distances are metres. Workers travel at 10 km/h empty or loaded; autonomous transport travels at 30 km/h empty or loaded. Terrain penalties and powered road multipliers apply equally to both cargo states.",
   "profiles": {
-    "drone": {"body_radius_meters":0.3,"clearance_meters":0.1,"access_meters":1.0,"speed_kmh":5,"maximum_slope":0.7,"rough_slope":0.15,"rough_speed_multiplier":0.8,"sample_meters":5,"allow_easy":true,"allow_rough":true,"allow_water":false,"allow_road":true},
-    "transport": {"body_radius_meters":1.1,"clearance_meters":0.2,"access_meters":2.0,"speed_kmh":15,"maximum_slope":0.18,"rough_slope":0.08,"rough_speed_multiplier":0.25,"sample_meters":5,"allow_easy":true,"allow_rough":true,"allow_water":false,"allow_road":true},
+    "drone": {"body_radius_meters":0.3,"clearance_meters":0.1,"access_meters":1.0,"speed_kmh":10,"maximum_slope":0.7,"rough_slope":0.15,"rough_speed_multiplier":0.8,"sample_meters":5,"allow_easy":true,"allow_rough":true,"allow_water":false,"allow_road":true},
+    "transport": {"body_radius_meters":1.1,"clearance_meters":0.2,"access_meters":2.0,"speed_kmh":30,"maximum_slope":0.18,"rough_slope":0.08,"rough_speed_multiplier":0.25,"sample_meters":5,"allow_easy":true,"allow_rough":true,"allow_water":false,"allow_road":true},
     "wheeled": {"body_radius_meters":1.0,"clearance_meters":0.2,"access_meters":2.0,"speed_kmh":18,"maximum_slope":0.2,"rough_slope":0.08,"rough_speed_multiplier":0.15,"sample_meters":5,"allow_easy":true,"allow_rough":true,"allow_water":false,"allow_road":true},
     "tracked": {"body_radius_meters":1.0,"clearance_meters":0.2,"access_meters":2.0,"speed_kmh":9,"maximum_slope":0.5,"rough_slope":0.12,"rough_speed_multiplier":0.6,"sample_meters":5,"allow_easy":true,"allow_rough":true,"allow_water":false,"allow_road":true},
     "mech": {"body_radius_meters":0.9,"clearance_meters":0.15,"access_meters":1.8,"speed_kmh":13,"maximum_slope":0.7,"rough_slope":0.15,"rough_speed_multiplier":0.75,"sample_meters":5,"allow_easy":true,"allow_rough":true,"allow_water":false,"allow_road":true}

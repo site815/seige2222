@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeAudioSubsystem.h"
 #include "Engine/World.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/GameViewportClient.h"
@@ -14,11 +15,12 @@ void ASeigeController::HandlePrimaryClick(float X,float Y)
     if(GetLocalPlayer())UpdateCursorFromScreen(X,Y);
     auto* UI=Cast<ASeigeHUD>(GetHUD());if(UI&&UI->Click(X,Y))return;
     if(G->IsRegionMap()||OrbitActive||G->CompanionView)return;
-    if(UI&&UI->SelectWorkerAt(X,Y,*G))return;
+    if(UI&&UI->SelectUnitAt(X,Y,*G))return;
     FVector Origin,Direction;
     if(GetLocalPlayer()&&ScreenRay(FVector2D(X,Y),Origin,Direction)&&G->SelectBuildingRay(Origin,Direction))return;
-    if(G->Screen==TEXT("playing")&&G->SelectedId==0&&G->SelectedRoadId==0&&G->SelectedCompanionId==0&&G->SelectedBuild.IsEmpty()&&!G->IsRoadToolActive()&&!G->WallPlacementActive&&!G->FleetOrderActive&&!G->RegionViewHistory.IsEmpty()&&G->RegionViewHistory.Last().Zoom>=G->RegionMapZoom)
-    {G->RestoreRegionView();return;}
+    // A world click selects or places objects; only the explicit survey/back
+    // controls restore a map bookmark. In particular construction sites may
+    // have no query collision and still need the footprint selection below.
     G->ClickWorld();
 }
 bool ASeigeController::ScreenRay(const FVector2D& ScreenPosition,FVector& WorldOrigin,FVector& WorldDirection) const
@@ -85,9 +87,9 @@ void ASeigeController::PlayerTick(float Dt)
     if(CaptureDog)
     {
         if(WasInputKeyJustPressed(EKeys::P)&&UI){G->Sim.Companions.SetControlDirection(FVector2D::ZeroVector);UI->HandleShortcut(EKeys::P);return;}
-        if(WasInputKeyJustPressed(EKeys::Escape)){G->ExitCompanionView();return;}
-        if(WasInputKeyJustPressed(EKeys::F10)){G->Sim.Companions.SetControlDirection(FVector2D::ZeroVector);G->ToggleGameMenu();return;}
-        if(WasInputKeyJustPressed(EKeys::SpaceBar))G->Paused=!G->Paused;
+        if(WasInputKeyJustPressed(EKeys::Escape)){G->ExitCompanionView();SeigeAudio::PlayUi(GetWorld(),TEXT("cancel"));return;}
+        if(WasInputKeyJustPressed(EKeys::F10)){G->Sim.Companions.SetControlDirection(FVector2D::ZeroVector);G->ToggleGameMenu();SeigeAudio::PlayUi(GetWorld(),TEXT("select"));return;}
+        if(WasInputKeyJustPressed(EKeys::SpaceBar)){G->Paused=!G->Paused;SeigeAudio::PlayUi(GetWorld(),TEXT("select"));}
         if(WasInputKeyJustPressed(EKeys::F5))G->SaveGame();
         if(WasInputKeyJustPressed(EKeys::F9)){G->LoadGame();return;}
         float X=0,Y=0;GetInputMouseDelta(X,Y);G->LookCompanion(FVector2D(X,-Y));

@@ -1,27 +1,335 @@
 {
-  "schema_version": 1,
-  "description": "Physical world geography; logical units at 0.06 m per unit. Surface water is scenery and an obstacle, not additional extractable deposits. River points run upstream to downstream. Prototype authored landforms, not an erosion simulation.",
+  "schema_version": 2,
+  "description": "Authored regional drainage at 0.06 m per logical unit: three downhill rivers enter and leave beyond the 3x3 world boundary, with connected irregular lake basins, broad valleys and oriented escarpments. Water is scenery and a physical obstacle, never an additional resource deposit. Not an erosion simulation.",
   "enabled": true,
   "river_half_width": 220,
   "river_depth": 45,
-  "bank_width": 500,
-  "bank_height": 35,
+  "bank_width": 700,
+  "bank_height": 28,
   "river": [
-    {"x": 20000, "y": 26000, "height": 420},
-    {"x": 17500, "y": 16000, "height": 250},
-    {"x": 14000, "y": 4000, "height": 40},
-    {"x": 14000, "y": -5000, "height": -100},
-    {"x": 14000, "y": -12000, "height": -100},
-    {"x": 9000, "y": -27000, "height": -330},
-    {"x": 16000, "y": -58000, "height": -680},
-    {"x": 7000, "y": -90000, "height": -1050}
+    {
+      "x": 15000,
+      "y": 97000,
+      "height": -820
+    },
+    {
+      "x": 8500,
+      "y": 74000,
+      "height": -950
+    },
+    {
+      "x": 18000,
+      "y": 52000,
+      "height": -1020
+    },
+    {
+      "x": 12000,
+      "y": 36000,
+      "height": -1100
+    },
+    {
+      "x": 15500,
+      "y": 18000,
+      "height": -1170
+    },
+    {
+      "x": 14000,
+      "y": 4000,
+      "height": -1250
+    },
+    {
+      "x": 14000,
+      "y": -5000,
+      "height": -1300
+    },
+    {
+      "x": 14000,
+      "y": -12000,
+      "height": -1300
+    },
+    {
+      "x": 9000,
+      "y": -27000,
+      "height": -1400
+    },
+    {
+      "x": 17000,
+      "y": -45000,
+      "height": -1470
+    },
+    {
+      "x": 11000,
+      "y": -65000,
+      "height": -1570
+    },
+    {
+      "x": 18000,
+      "y": -97000,
+      "height": -1740
+    }
   ],
   "lakes": [
-    {"x": 14000, "y": -8500, "radius_x": 3800, "radius_y": 3000, "height": -100, "depth": 140}
+    {
+      "x": 14000,
+      "y": -8500,
+      "radius_x": 3800,
+      "radius_y": 3000,
+      "height": -1300,
+      "depth": 140,
+      "shore_variation": 0.19,
+      "shore_phase": 0.8
+    },
+    {
+      "x": -54000,
+      "y": 49000,
+      "radius_x": 2600,
+      "radius_y": 4300,
+      "height": -1000,
+      "depth": 110,
+      "shore_variation": 0.16,
+      "shore_phase": 2.3
+    },
+    {
+      "x": 69000,
+      "y": -50000,
+      "radius_x": 3300,
+      "radius_y": 4700,
+      "height": -1480,
+      "depth": 130,
+      "shore_variation": 0.21,
+      "shore_phase": -0.9
+    }
   ],
   "cliffs": [
-    {"x": -13500, "y": 9000, "radius_x": 4200, "radius_y": 2100, "height": 530, "edge_ratio": 0.10},
-    {"x": 23000, "y": -17500, "radius_x": 5000, "radius_y": 1800, "height": 420, "edge_ratio": 0.13},
-    {"x": -28000, "y": 45500, "radius_x": 7200, "radius_y": 3400, "height": 800, "edge_ratio": 0.12}
+    {
+      "x": -13500,
+      "y": 9000,
+      "radius_x": 7200,
+      "radius_y": 2100,
+      "height": 530,
+      "edge_ratio": 0.1,
+      "angle_degrees": 23,
+      "irregularity": 0.14
+    },
+    {
+      "x": 23000,
+      "y": -17500,
+      "radius_x": 8200,
+      "radius_y": 2400,
+      "height": 420,
+      "edge_ratio": 0.13,
+      "angle_degrees": -32,
+      "irregularity": 0.11
+    },
+    {
+      "x": -28000,
+      "y": 45500,
+      "radius_x": 12000,
+      "radius_y": 3400,
+      "height": 800,
+      "edge_ratio": 0.12,
+      "angle_degrees": 61,
+      "irregularity": 0.16
+    },
+    {
+      "x": 45000,
+      "y": 71000,
+      "radius_x": 10000,
+      "radius_y": 2700,
+      "height": 650,
+      "edge_ratio": 0.11,
+      "angle_degrees": -15,
+      "irregularity": 0.13
+    },
+    {
+      "x": -70000,
+      "y": -24000,
+      "radius_x": 11000,
+      "radius_y": 3100,
+      "height": 720,
+      "edge_ratio": 0.12,
+      "angle_degrees": 42,
+      "irregularity": 0.16
+    }
+  ],
+  "valley_width": 8200,
+  "base_elevation": -350,
+  "north_slope": 0.004,
+  "macro_amplitude": 500,
+  "additional_rivers": [
+    [
+      {
+        "x": -49000,
+        "y": 97000,
+        "height": -820
+      },
+      {
+        "x": -43000,
+        "y": 74000,
+        "height": -950
+      },
+      {
+        "x": -56000,
+        "y": 54000,
+        "height": -1000
+      },
+      {
+        "x": -52000,
+        "y": 45000,
+        "height": -1000
+      },
+      {
+        "x": -45000,
+        "y": 23000,
+        "height": -1160
+      },
+      {
+        "x": -50000,
+        "y": 3000,
+        "height": -1270
+      },
+      {
+        "x": -42000,
+        "y": -20000,
+        "height": -1380
+      },
+      {
+        "x": -53000,
+        "y": -43000,
+        "height": -1470
+      },
+      {
+        "x": -46000,
+        "y": -65000,
+        "height": -1580
+      },
+      {
+        "x": -49000,
+        "y": -97000,
+        "height": -1740
+      }
+    ],
+    [
+      {
+        "x": 68000,
+        "y": 97000,
+        "height": -820
+      },
+      {
+        "x": 71000,
+        "y": 76000,
+        "height": -920
+      },
+      {
+        "x": 69000,
+        "y": 53000,
+        "height": -1050
+      },
+      {
+        "x": 75000,
+        "y": 32000,
+        "height": -1130
+      },
+      {
+        "x": 67000,
+        "y": 12000,
+        "height": -1210
+      },
+      {
+        "x": 71000,
+        "y": -12000,
+        "height": -1330
+      },
+      {
+        "x": 64000,
+        "y": -29000,
+        "height": -1410
+      },
+      {
+        "x": 69000,
+        "y": -45000,
+        "height": -1480
+      },
+      {
+        "x": 69000,
+        "y": -56000,
+        "height": -1480
+      },
+      {
+        "x": 74000,
+        "y": -76000,
+        "height": -1630
+      },
+      {
+        "x": 66000,
+        "y": -97000,
+        "height": -1740
+      }
+    ]
+  ],
+  "fords": [
+    {
+      "x": 14545.4545,
+      "y": 60000,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": 14000.0,
+      "y": 0,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": 12500.0,
+      "y": -60000,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": -52100.0,
+      "y": 60000,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": -48956.5217,
+      "y": 0,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": -47590.9091,
+      "y": -60000,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": 69608.6957,
+      "y": 60000,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": 69000.0,
+      "y": 0,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    },
+    {
+      "x": 70000.0,
+      "y": -60000,
+      "radius": 900,
+      "blend": 450,
+      "depth": 2
+    }
   ]
 }

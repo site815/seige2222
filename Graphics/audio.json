@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "master_volume": 0.5,
+  "version": 4,
+  "master_volume": 0.65,
   "maximum_voices_per_frame": 3,
   "cues": {
     "select": "/Game/Art/Audio/S_select.S_select",
@@ -17,99 +17,115 @@
     "rex": "/Game/Art/Audio/S_rex.S_rex",
     "energy": "/Game/Art/Audio/S_laser.S_laser"
   },
-  "maximum_voices_per_second": 8,
-  "timing_note": "All cooldowns and voice limits use monotonic real seconds, independent of pause and 1x/5x/10x simulation speed. Muted cues never consume the voice budget. Dropped events are not queued.",
+  "maximum_voices_per_second": 5,
+  "damage_alert_quiet_seconds": 30,
+  "timing_note": "Functional original console and machinery cues. Cooldowns and bounded world/interface/notification voice lanes use monotonic real seconds at every simulation speed. Combat cannot consume interface or notification budgets. Dropped events are never queued. Player results emit success, placement or error explicitly; hovering is silent. Damage alerts play once per incident, rearmed after 30 real seconds without new damage. Rex uses a companion-return instrument signal, not a synthetic animal voice.",
   "categories": {
     "ui": {
-      "volume": 0,
-      "cooldown_seconds": 0.15
+      "volume": 0.75,
+      "lane": "interface",
+      "cooldown_seconds": 0.075
+    },
+    "placement": {
+      "volume": 0.75,
+      "lane": "interface",
+      "cooldown_seconds": 0.18
     },
     "feedback": {
-      "volume": 0.4,
-      "cooldown_seconds": 0.6
+      "volume": 0.9,
+      "lane": "notification",
+      "cooldown_seconds": 0.65
     },
     "construction": {
-      "volume": 0.45,
-      "cooldown_seconds": 1.5
+      "volume": 0.75,
+      "lane": "notification",
+      "cooldown_seconds": 2.5
     },
     "combat": {
-      "volume": 0.6,
-      "cooldown_seconds": 0.2
+      "volume": 0.65,
+      "lane": "world",
+      "cooldown_seconds": 0.25
     },
     "alert": {
-      "volume": 0.5,
-      "cooldown_seconds": 12
+      "volume": 0.9,
+      "lane": "notification",
+      "cooldown_seconds": 30
     },
     "companion": {
-      "volume": 0,
-      "cooldown_seconds": 15
+      "volume": 0.75,
+      "lane": "notification",
+      "cooldown_seconds": 12
     }
   },
   "cue_mix": {
     "select": {
       "category": "ui",
-      "volume": 1,
-      "cooldown_seconds": 0.15
+      "cooldown_seconds": 0.09,
+      "volume": 0.7
     },
     "confirm": {
       "category": "ui",
-      "volume": 1,
-      "cooldown_seconds": 0.15
+      "cooldown_seconds": 0.12,
+      "volume": 0.8
     },
     "cancel": {
       "category": "ui",
-      "volume": 1,
-      "cooldown_seconds": 0.15
+      "cooldown_seconds": 0.12,
+      "volume": 0.7
     },
     "error": {
       "category": "feedback",
-      "volume": 0.7,
-      "cooldown_seconds": 1
+      "cooldown_seconds": 0.8,
+      "volume": 0.85
     },
     "build": {
-      "category": "construction",
-      "volume": 0.55,
-      "cooldown_seconds": 2
+      "category": "placement",
+      "cooldown_seconds": 0.18,
+      "volume": 0.8
     },
     "complete": {
       "category": "construction",
-      "volume": 0.8,
-      "cooldown_seconds": 1.5
+      "cooldown_seconds": 2.5,
+      "volume": 0.8
     },
     "alert": {
       "category": "alert",
-      "volume": 0.65,
-      "cooldown_seconds": 12
+      "cooldown_seconds": 30,
+      "volume": 0.9
     },
     "laser": {
       "category": "combat",
-      "volume": 0.65,
-      "cooldown_seconds": 0.25
+      "cooldown_seconds": 0.25,
+      "volume": 0.8
     },
     "energy": {
       "category": "combat",
-      "volume": 0.65,
-      "cooldown_seconds": 0.25
+      "cooldown_seconds": 0.25,
+      "volume": 0.8
     },
     "kinetic": {
       "category": "combat",
-      "volume": 0.75,
-      "cooldown_seconds": 0.3
+      "cooldown_seconds": 0.3,
+      "volume": 0.85
     },
     "missile": {
       "category": "combat",
-      "volume": 0.65,
-      "cooldown_seconds": 0.4
+      "cooldown_seconds": 0.4,
+      "volume": 0.8
     },
     "plasma": {
       "category": "combat",
-      "volume": 0.7,
-      "cooldown_seconds": 0.35
+      "cooldown_seconds": 0.35,
+      "volume": 0.8
     },
     "rex": {
       "category": "companion",
-      "volume": 1,
-      "cooldown_seconds": 15
+      "cooldown_seconds": 12,
+      "volume": 0.75
     }
-  }
+  },
+  "interface_voices_per_frame": 2,
+  "interface_voices_per_second": 6,
+  "notification_voices_per_frame": 2,
+  "notification_voices_per_second": 3
 }

@@ -1,5 +1,7 @@
 # seige2222 — Building Proposal
 
+**v0.10.6 current override:** Roads are deferred at the user’s request. The build catalog and AI create no roads; road bonuses and connector prerequisites are inactive. Each colony temporarily shares its own generation and batteries. Physical workers, cargo, construction costs and terrain access remain required. Earlier road/rail/vacuum descriptions below record the deferred design or historical builds, not the active rules.
+
 [Design index](README.md) · [Status definitions](README.md#design-status)
 
 **Current requirements and historical assistant proposals.** The latest confirmed expansion below supersedes contradictory older candidate rows. Exact rates, bills, capacities and dimensions beyond the user's specified relationships remain provisional in [buildings.json](../../Rules/buildings.json). The [construction document](CONSTRUCTION_AND_TRANSPORT_0_8.md) owns current implementation contracts and verification boundaries.
@@ -65,11 +67,11 @@ Tags would describe existing capabilities; they would not automatically add weap
 
 ## Current starter functions
 
-The older starter proposal assumed all four industrial materials could be obtained locally. That assumption is superseded: each region contains three distinct standard and two distinct rare deposits selected from the confirmed four-plus-four pool. Finite landed supplies, core replication and external trade must bridge missing local inputs. The following functions are present in the current catalog; their balance and complete bootstrap still require final expanded-version acceptance.
+The older starter proposal assumed all four industrial materials could be obtained locally. That assumption is superseded: each region contains three distinct standard and two distinct rare deposits selected from the confirmed four-plus-four pool. Finite landed supplies and external trade bridge missing local inputs while specialist facilities manufacture industrial goods. The core only assembles workers. The following functions are present in the current catalog; their balance and complete bootstrap still require final expanded-version acceptance.
 
 | Building/function | Category | Purpose in the starter loop | Current boundary |
 | --- | --- | --- | --- |
-| Command core | Central | Starting defense, fusion generation, storage, selectable replication and worker information | A parked shuttle at level 1; finite materials, process time and electricity govern manufacture. |
+| Command core | Central | Starting defense, fusion generation, storage, worker assembly and worker information | A parked shuttle at level 1; finite materials, process time and electricity govern worker manufacture. No industrial replication. |
 | Extraction Mine | Resource-related | Gather the raw resource at its bound deposit for local use or sale | One blueprint, at most one live mine per deposit, external per-resource rates; no selectable output or extra deposit. |
 | Solar array and road connection | Logistics | Establish a shared generating network | Electricity follows completed connected roads; batteries store charge rather than create it. |
 | Trading port | Logistics | Sell available goods, then import missing inputs | Credits start at zero. Orders use physical cargo, timed shipments and paid imports. |
@@ -78,7 +80,7 @@ The older starter proposal assumed all four industrial materials could be obtain
 | Logistics depot | Logistics; storage | Hold goods for automatic physical delivery | Stored volume and courier mass constrain transfers; no manual hauling orders are required. |
 | Defensive tower and sensor | Defense | Extend protection and paid sensor coverage | Four tiered weapon families are confirmed. Damage, ranges, upkeep and bills remain editable prototype balance; full sensor theft remains future work. |
 
-**Starter viability requirement:** Existing workers and finite landed stock must support extraction, a paid road/solar/trade bootstrap and subsequent replacement production. The starting kit and core replicator are selected mechanisms, not open alternatives. No first required facility may depend exclusively on output from that same unfinished facility. A missing local standard material must be obtainable through exports and paid imports without free credits or shared inventories.
+**Starter viability requirement:** Existing workers and finite landed stock must support extraction, a paid road/solar/trade bootstrap and subsequent replacement production. The finite kit funds the bootstrap, the core assembles replacement/additional workers, and specialist facilities or paid imports supply manufactured inputs. The earlier universal-core proposal is superseded. No first required facility may depend exclusively on output from that same unfinished facility. A missing local standard material must be obtainable through exports and paid imports without free credits or shared inventories.
 
 Worker service, power, trade and combat factories are now confirmed catalog functions. This does not require constructing every family at the start. Human housing and a separate dedicated repair hub remain unselected; automatic repair alone does not establish another building type.
 

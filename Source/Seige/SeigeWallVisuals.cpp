@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeAudioSubsystem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
@@ -24,11 +25,11 @@ void ASeigeGameMode::ClickWallPlan()
 bool ASeigeGameMode::WallShortcut(const FKey& Key)
 {
     if(!WallPlacementActive||Screen!=TEXT("playing"))return false;
-    if(Key==EKeys::Escape||Key==EKeys::RightMouseButton){CancelWallTool();return true;}
-    if(Key==EKeys::E){WallInsideLeft=!WallInsideLeft;return true;}
+    if(Key==EKeys::Escape||Key==EKeys::RightMouseButton){CancelWallTool();SeigeAudio::PlayUi(GetWorld(),TEXT("cancel"));return true;}
+    if(Key==EKeys::E){WallInsideLeft=!WallInsideLeft;SeigeAudio::PlayUi(GetWorld(),TEXT("select"));return true;}
     if(Key==EKeys::BackSpace){if(WallJoints.Num())WallJoints.Pop();SelectedWallJoint=INDEX_NONE;return true;}
     if(Key==EKeys::Delete){if(WallJoints.IsValidIndex(SelectedWallJoint))WallJoints.RemoveAt(SelectedWallJoint);SelectedWallJoint=INDEX_NONE;return true;}
-    if(Key==EKeys::Enter){if(Sim.Walls.Commit(Sim,WallJoints,WallInsideLeft,Error)){CancelWallTool();RefreshBuildingPads();Notice=TEXT("Wall plan committed; couriers and workers will build each section.");}else Notice=Error;return true;}
+    if(Key==EKeys::Enter){if(Sim.Walls.Commit(Sim,WallJoints,WallInsideLeft,Error)){SeigeAudio::PlayUi(GetWorld(),TEXT("build"));CancelWallTool();RefreshBuildingPads();Notice=TEXT("Wall plan committed; couriers and workers will build each section.");}else {Notice=Error;SeigeAudio::PlayUi(GetWorld(),TEXT("error"));}return true;}
     return false;
 }
 void ASeigeGameMode::SyncWallVisuals(const FSeigeSimulation& Colony,FVector2D Offset,const FString& Prefix,TSet<FString>& Live)

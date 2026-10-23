@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeActionFeedback.h"
 #include "AI/SeigeScenarioAI.h"
 #include "Simulation/SeigeResourceGeneration.h"
 #include "Misc/Paths.h"
@@ -18,6 +19,7 @@ bool WriteObject(const TSharedPtr<FJsonObject>& Object,const FString& Filename)
 }
 void ASeigeGameMode::SaveGame()
 {
+    FSeigeActionFeedback Feedback(GetWorld());
     if(!Ready||(Screen!=TEXT("playing")&&!(MenuOpen&&MenuReturnScreen==TEXT("playing")))) { Notice=TEXT("Begin a scenario before saving."); return; }
     BindScenarioCalendar();
     const FString Generation=FGuid::NewGuid().ToString(EGuidFormats::Digits);
@@ -46,10 +48,11 @@ void ASeigeGameMode::SaveGame()
     Metadata->SetArrayField(TEXT("neighbor_ai"),Fingerprints);
     const FString Pending=FPaths::Combine(SaveRoot(),TEXT("Scenario.pending.json")), Final=FPaths::Combine(SaveRoot(),TEXT("Scenario.json"));
     if(!WriteObject(Metadata,Pending)||!IFileManager::Get().Move(*Final,*Pending,true,true,false,true)) { Notice=TEXT("Could not finalize the scenario save. The previous snapshot is retained."); return; }
-    Notice=TEXT("Entire scenario saved: center, neighbors, AI and camera. F9 restores it.");
+    Feedback.Success=true;Notice=TEXT("Entire scenario saved: center, neighbors, AI and camera. F9 restores it.");
 }
 void ASeigeGameMode::LoadGame()
 {
+    FSeigeActionFeedback Feedback(GetWorld());
     if(!GraphicsSettingsValid){Notice=Error.IsEmpty()?TEXT("Correct Graphics/scene.json and restart the game."):Error;return;}
     FString Raw;
     TSharedPtr<FJsonObject> Metadata;
@@ -143,5 +146,5 @@ void ASeigeGameMode::LoadGame()
     CameraCenter=FVector(CameraX,CameraY,0);
     Zoom=StoredZoom; CameraYaw=StoredYaw; CameraPitch=StoredPitch; Screen=TEXT("playing");
     MenuOpen=false;
-    CreateLandscape(); SyncVisuals(); UpdateCamera(); Notice=TEXT("Scenario restored, including all AI neighbors.");
+    CreateLandscape(); SyncVisuals(); UpdateCamera(); Feedback.Success=true;Notice=TEXT("Scenario restored, including all AI neighbors.");
 }

@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "version": "0.10.5",
+  "date": "2026-10-12",
+  "status": "focused_local_checks_passed",
+  "scope": "Functional semantic SFX, physical road routing and finite-kit Starting AI on authoritative game terrain. Bounded rendered 10x interaction checks; not long-session balance or sustained FPS acceptance.",
+  "editor_build": "passed",
+  "shipping_package": "passed",
+  "native_tests": {
+    "succeeded": 64,
+    "failures": 0,
+    "warnings": 0,
+    "report": "v0.10.5/focused-native.json"
+  },
+  "starting_ai": [
+    {
+      "seed": 815,
+      "sector": 4,
+      "report": "v0.10.5/starting-ai-815-sector-4.json",
+      "simulation_hours": 21.76002777842106,
+      "buildings": 10,
+      "roads": 18,
+      "worker_bodies": 20,
+      "paid_worker_completions": 15,
+      "delivered_units": 51399.485639283186,
+      "components_kg": 12,
+      "completed_truck_deliveries": 197,
+      "truck_delivered_units": 6790.994088757604,
+      "transport_distance_meters": 28096.484272109567
+    },
+    {
+      "seed": 2222,
+      "sector": 0,
+      "report": "v0.10.5/starting-ai-2222-sector-0.json",
+      "simulation_hours": 17.646472222626066,
+      "buildings": 10,
+      "roads": 18,
+      "worker_bodies": 20,
+      "paid_worker_completions": 15,
+      "delivered_units": 49156.845509737155,
+      "components_kg": 12,
+      "completed_truck_deliveries": 242,
+      "truck_delivered_units": 3139.589013206582,
+      "transport_distance_meters": 52706.20568572425
+    },
+    {
+      "seed": 4242,
+      "sector": 8,
+      "report": "v0.10.5/starting-ai-4242-sector-8.json",
+      "simulation_hours": 15.904722222524681,
+      "buildings": 10,
+      "roads": 18,
+      "worker_bodies": 20,
+      "paid_worker_completions": 15,
+      "delivered_units": 51395.371196181775,
+      "components_kg": 12,
+      "completed_truck_deliveries": 268,
+      "truck_delivered_units": 20867.748838422245,
+      "transport_distance_meters": 71342.5010963245
+    }
+  ],
+  "packaged_checks": [
+    {
+      "resolution": [
+        1600,
+        900
+      ],
+      "report": "v0.10.5/packaged-1600x900.json",
+      "assertions": 146,
+      "stages": 34,
+      "failures": 0,
+      "elapsed_seconds": 48.36933819949627,
+      "simulation_speed": 10,
+      "audio_enabled": true,
+      "socket_samples": 23,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 556,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    },
+    {
+      "resolution": [
+        3840,
+        1600
+      ],
+      "report": "v0.10.5/packaged-3840x1600.json",
+      "assertions": 146,
+      "stages": 34,
+      "failures": 0,
+      "elapsed_seconds": 49.03781269863248,
+      "simulation_speed": 10,
+      "audio_enabled": true,
+      "socket_samples": 24,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 556,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    }
+  ],
+  "package_files": [
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+      "bytes": 167349760,
+      "sha256": "BE9AD459EBF1C566689F9DE741FD0F8D5861FAAFCB7C289D8566D5C24812C168"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/global.ucas",
+      "bytes": 3205888,
+      "sha256": "656F9CC750D6B9EA0B7B6FC221B8BFDC8BE20E737E66D5A18AF7CD7C118012D3"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/global.utoc",
+      "bytes": 782,
+      "sha256": "D4F99BC37B29DC911C8B2F0549314F2E4D974CB5B6D9B68EE5E9C5023A70CB6D"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/seige2222-Windows.pak",
+      "bytes": 11244862,
+      "sha256": "29F2FA45E230DCEC8DD303D5285321C4F9B18413CE852CABCB830D7BB5A54C67"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/seige2222-Windows.ucas",
+      "bytes": 659079984,
+      "sha256": "ADAD90916FACBD6DED4C5B3F681BFD40E091554EDA4F3B2B2B2F01395E4F2A58"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/seige2222-Windows.utoc",
+      "bytes": 436069,
+      "sha256": "9A37367A95CB5462F4B269A4564DC0349EE4DDF47199AEE6EDF8B19FD6414B0A"
+    }
+  ],
+  "captures": [
+    {
+      "path": "v0.10.5/ui-1600x900/01_worker_and_hud.png",
+      "sha256": "f2bf8ec15c9484171f751d546058741789f344dc1317f88a740465644a895f58"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/02_map_chain.png",
+      "sha256": "0adf7cc8e47cef280ab18ea77f7f9e84f22f1ebbad7ca2769d38adf38bc28340"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/03_equipment_bill.png",
+      "sha256": "8830911edd3668274ab480319598a804785d92ca838baf76e1a92b13103e80bc"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/04_night_trade.png",
+      "sha256": "ac75711a621067b71a8b81f7004930ae9df8daff1c74a7a6e8024807dc070e8b"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/05_credits.png",
+      "sha256": "849771659c7f1c2374534d91ac3a031fe241fa0596aef79eec45850dba1a1a1f"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/06_transport_inspection.png",
+      "sha256": "85249d461f995bd2ad85180e4db633fa2d358d1bab7fba8e3332665c55b71db7"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/07_building_hover.png",
+      "sha256": "2d0fa4ae956fd4868739f9ddf7c03943c8b6425c15faa34ef3bae7cd8d0100d6"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/08_rex_focus.png",
+      "sha256": "22a6f6d2cae61581bcdd7fe10e08f09c63c2cfd5c42e7f96f02514b2f8f5ea71"
+    },
+    {
+      "path": "v0.10.5/ui-1600x900/09_build_and_resources.png",
+      "sha256": "7a04f57d59831c51ca61edd14a21df7c3cada741881cdaec58531e6f804d51fc"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/01_worker_and_hud.png",
+      "sha256": "9c85f2ecebaa9fd65b0261197bf3e2345adbf3afdc2f63981b698732fadcad31"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/02_map_chain.png",
+      "sha256": "40de5d4548b090fc2ac2f8eab70a817dca1497306f4479bf7c7d454806e2afa9"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/03_equipment_bill.png",
+      "sha256": "e7d15d7336a5b74ea98dcf0147f3bf0ba0e0e08174669e79472966523dc13dd0"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/04_night_trade.png",
+      "sha256": "ecc75094e32fc339a6a0fc367463808cdfa1eff4727576ea98d10f6c2e8dd97f"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/05_credits.png",
+      "sha256": "a1ff5980cd923f93bf8ff652cf3ca92e51ca2ba696c75cd56fcb7b804532a2db"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/06_transport_inspection.png",
+      "sha256": "8bbd8208696ed73c1119a44e0f79b3a29d42b38ed7090f7a8fbd98000fd6b2b6"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/07_building_hover.png",
+      "sha256": "51e9de4d36a42b75deeb59d63afbad6aca4348235443a58a0bc949a8e79f3c46"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/08_rex_focus.png",
+      "sha256": "0b56cf6b1af396ad1a625e286eb0ab552b47009f472fb981ef054d2f7c205bc0"
+    },
+    {
+      "path": "v0.10.5/ui-3840x1600/09_build_and_resources.png",
+      "sha256": "af1394e8fa29e1d15cdec5b4525d436da0e915755ca4a7a2e62ad4f8487feaef"
+    }
+  ],
+  "archive": {
+    "path": "Builds/seige2222-v0.10.5-win64.zip",
+    "bytes": 759064254,
+    "sha256": "4B819D35B1983E3F1D5DB4F31735A80A72D959DFAD45EE42ED531BFB5BE27AF8",
+    "crc_check": "passed",
+    "all_runtime_bytes_match": true
+  },
+  "rules_validation": {
+    "negative_cases": 139,
+    "passed": true
+  },
+  "ui_configuration_validation": {
+    "negative_cases": 14,
+    "passed": true
+  },
+  "ai_configuration_validation": {
+    "negative_cases": 64,
+    "passed": true
+  },
+  "playback_rates": [
+    0,
+    1,
+    10,
+    20
+  ],
+  "audio": {
+    "report": "v0.10.5/audio-validation.json",
+    "source_clips": 12,
+    "placement_feedback": true,
+    "semantic_success_and_error_feedback": true,
+    "independent_interface_world_notification_budgets": true,
+    "subjective_listening_performed": false
+  },
+  "save_compatibility": "Save format9 remains, with a changed AIFILES fingerprint for next-prerequisite export reserves. Start a fresh scenario. Existing saves are preserved; previously depleted stranded workers are not teleported or given free energy.",
+  "publication": "Local build only. No push or hosted release attempted at user request."
+}

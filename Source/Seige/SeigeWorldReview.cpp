@@ -4,6 +4,8 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "HighResScreenshot.h"
 #include "Misc/Paths.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Misc/FileHelper.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformMisc.h"
@@ -15,6 +17,60 @@
 // this harness never opens or changes a player's save.
 void ASeigeGameMode::RunWorldReview()
 {
+    if(FParse::Param(FCommandLine::Get(),TEXT("TerrainReview")))
+    {
+        static TWeakObjectPtr<ASeigeGameMode> TerrainReviewOwner;static int32 Step=0;static double Since=0;static bool Requested=false;static TArray<FString> Shots,Failures;
+        if(TerrainReviewOwner.Get()!=this){TerrainReviewOwner=this;Step=0;Since=RenderClock;Requested=false;Shots.Reset();Failures.Reset();}
+        if(!Ready||RenderClock-Since<2||Step>17)return;
+        auto Frame=[&](int32 Sector,FVector2D Center,float Distance,float Pitch,float Yaw)
+        {FocusSector(Sector);CameraCenter=FVector(Center,0);Zoom=Distance;RenderedZoom=Distance;CameraPitch=Pitch;CameraYaw=Yaw;UpdateCamera();RefreshEnvironment();};
+        auto Capture=[&](const TCHAR* Name)
+        {
+            if(!IsSceneryStreamingReady()&&RenderClock-Since<90)return false;
+            if(!IsSceneryStreamingReady())Failures.Add(FString(TEXT("Scenery did not settle: "))+Name);
+            const FString Folder=FPaths::ProjectSavedDir()/TEXT("Screenshots/Terrain-v0106");IFileManager::Get().MakeDirectory(*Folder,true);
+            FScreenshotRequest::RequestScreenshot(Folder/(FString(Name)+TEXT(".png")),true,false);Shots.Add(Name);
+            UE_LOG(LogTemp,Display,TEXT("TERRAIN_REVIEW_CAPTURE %s"),Name);return true;
+        };
+        if(Step==0)
+        {
+            if(!Requested)
+            {
+                ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");ScenarioSeedOverride=815;
+                ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;StartScenario();Requested=true;Since=RenderClock;return;
+            }
+            if(Screen!=TEXT("landing"))return;
+            // Scenario creation completes asynchronously and resets observer /
+            // camera state. Only frame views after that initialization is done.
+            Observer=true;Screen=TEXT("playing");Paused=true;Notice.Empty();
+            ScenarioCalendar.SetElapsedMicroseconds(900000000);BindScenarioCalendar();UpdateWeather(0);
+            Frame(4,FVector2D(14000,-8500),16000,56,135);
+        }
+        if(Step==1&&!Capture(TEXT("01_irregular_lake_valley")))return;
+        if(Step==2)Frame(4,FVector2D(14800,14500),12000,48,155);
+        if(Step==3&&!Capture(TEXT("02_stream_in_lower_ground")))return;
+        if(Step==4)Frame(4,FVector2D(-13500,9000),18500,32,113);
+        if(Step==5&&!Capture(TEXT("03_fractured_escarpment")))return;
+        if(Step==6)Frame(6,FVector2D(-54000,49000),18000,56,135);
+        if(Step==7&&!Capture(TEXT("04_neighbor_lake")))return;
+        if(Step==8){RegionMapZoom=350000;Frame(4,FVector2D::ZeroVector,260000,80,90);}
+        if(Step==9&&!Capture(TEXT("05_neighborhood_drainage")))return;
+        if(Step==10)Frame(4,FVector2D(14000,0),2000,28,160);
+        if(Step==11&&!Capture(TEXT("06_shallow_ford_oblique")))return;
+        if(Step==12)Frame(4,FVector2D(15000,14000),1100,25,180);
+        if(Step==13&&!Capture(TEXT("07_stream_valley_oblique")))return;
+        if(Step==14)Frame(4,FVector2D(-13500,8500),2400,25,113);
+        if(Step==15&&!Capture(TEXT("08_scarp_face_oblique")))return;
+        if(Step==17)
+        {
+            auto Report=MakeShared<FJsonObject>();Report->SetStringField(TEXT("scope"),TEXT("Rendered geography-only fixture: paused, no player saves, three full-region river valleys and irregular lake/scarp views, plus close oblique ford/stream/scarp detail."));
+            Report->SetNumberField(TEXT("failures"),Failures.Num());TArray<TSharedPtr<FJsonValue>> I,F;
+            for(const auto& V:Shots)I.Add(MakeShared<FJsonValueString>(V));for(const auto& V:Failures)F.Add(MakeShared<FJsonValueString>(V));Report->SetArrayField(TEXT("screenshots"),I);Report->SetArrayField(TEXT("assertion_failures"),F);
+            FString Json;FJsonSerializer::Serialize(Report,TJsonWriterFactory<>::Create(&Json));FFileHelper::SaveStringToFile(Json,*(FPaths::ProjectSavedDir()/TEXT("TerrainReview-v0106.json")));
+            FPlatformMisc::RequestExitWithStatus(false,Failures.IsEmpty()?0:1);
+        }
+        ++Step;Since=RenderClock;return;
+    }
     static TWeakObjectPtr<ASeigeGameMode> ReviewOwner;
     static int32 Stage=0;static double Since=0;static TArray<FString> Failures,Images,InitialIds;
     if(ReviewOwner.Get()!=this){ReviewOwner=this;Stage=0;Since=RenderClock;Failures.Reset();Images.Reset();InitialIds.Reset();}
@@ -39,7 +95,7 @@ void ASeigeGameMode::RunWorldReview()
     if(Stage==0){Check(Ready,TEXT("Game definitions load"));Capture(TEXT("01_main_menu"));}
     if(Stage==1)ShowScreen(TEXT("scenario"));
     if(Stage==2)Capture(TEXT("02_scenario"));
-    if(Stage==3){ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;StartScenario();}
+    if(Stage==3){ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");ScenarioSeedOverride=815;ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;StartScenario();}
     if(Stage==4){Check(Screen==TEXT("landing"),TEXT("Human scenario starts paused at site selection"));Capture(TEXT("03_site_survey"));}
     if(Stage==5)
     {

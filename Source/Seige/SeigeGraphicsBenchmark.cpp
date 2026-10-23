@@ -13,6 +13,8 @@
 #include "HighResScreenshot.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PrimitiveComponent.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "Materials/MaterialParameterCollectionInstance.h"
 #include "RenderTimer.h"
 #include "DynamicRHI.h"
 #include "Kismet/GameplayStatics.h"
@@ -80,6 +82,8 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     static uint64 LastGarbageCollectFrame=0;
     static FDelegateHandle GarbageCollectHandle;
     static bool Orbit=false,Travel=false,SimpleTerrain=false;
+    static bool WindPoseReview=false;
+    static int32 WindPose=-1;
     static double MotionStarted=0;
     static double ViewSetupStarted=0,SynchronousSetupSeconds=0,SceneryReadySeconds=0;
     static int32 InitialPendingSceneryCells=0;
@@ -119,20 +123,34 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         Orbit=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkOrbit"));
         Travel=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkTravel"));
         SimpleTerrain=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkSimpleTerrain"));
+        WindPoseReview=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkWindPoses"));WindPose=-1;
         SimpleTerrainComponents=0;
         for(TCHAR& C:Name)if(!FChar::IsAlnum(C)&&C!=TEXT('-')&&C!=TEXT('_'))C=TEXT('_');
         if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkFullGrassShadows")))GrassShadowDistanceMeters=500;
         if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkFullGrassLighting")))GrassDistanceFieldLighting=true;
         if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkGrassOpaqueBeyond80")))GrassProgrammableDistanceMeters=80;
     }
+    // After normal time-lapse timing samples, hold the actual world/camera and
+    // capture two settled crown poses. This isolates real source/proxy material
+    // deformation from camera movement and changing sun/calendar lighting.
+    if(WindPoseReview&&WindPose>=0&&WeatherCollection)
+        if(auto* Wind=GetWorld()->GetParameterCollectionInstance(WeatherCollection))
+        {
+            const float Pose=WindPose==0?0.f:UE_PI*.5f;
+            Wind->SetScalarParameterValue(TEXT("WindPhase"),Pose);
+            Wind->SetScalarParameterValue(TEXT("WindPreviousPhase"),Pose);
+        }
     auto ApplySwardDiagnostic=[&]()
     {
         // Opt-in A/B comparison: same geometry, shaders, lighting and camera,
         // but skip vegetation vertex deformation. Never used by normal play.
-        if(GroundCover&&FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNoWind")))
+        if(FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNoWind")))
         {
-            TArray<UInstancedStaticMeshComponent*> Components;GroundCover->GetComponents(Components);
-            for(auto* Component:Components)Component->SetEvaluateWorldPositionOffset(false);
+            for(AActor* Vegetation:{GroundCover.Get(),Foliage.Get()})if(Vegetation)
+            {
+                TArray<UInstancedStaticMeshComponent*> Components;Vegetation->GetComponents(Components);
+                for(auto* Component:Components)Component->SetEvaluateWorldPositionOffset(false);
+            }
         }
         const bool Hide=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkHideSward"));
         const bool Opaque=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkOpaqueSward"));
@@ -205,7 +223,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         ViewSetupStarted=FPlatformTime::Seconds();
         CameraCenter=Views[View].Center;CameraYaw=Views[View].Yaw;CameraPitch=Views[View].Pitch;Zoom=Views[View].Distance;
         if(View==ShowcaseView)CameraCenter=FVector(ShowcaseCenter,0);
-        if(View==RexView||View==ShowcaseView)
+        if(View==RexView||View==ShowcaseView||WindPoseReview)
         {
             // Review-only camera overrides. A zoom below the player minimum is
             // allowed here so the companion can be inspected at close range.
@@ -261,7 +279,7 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
             if(auto* NaniteEdge=IConsoleManager::Get().FindConsoleVariable(TEXT("r.Nanite.MaxPixelsPerEdge")))
                 NaniteEdge->Set(1.f,ECVF_SetByConsole);
         const bool Clearing=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkClearing"));
-        ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");
+        ScenarioSlots.Init(TEXT("empty"),9);ScenarioSlots[4]=TEXT("player");ScenarioSeedOverride=815;
         const bool DevelopedNeighbors=FParse::Param(FCommandLine::Get(),TEXT("BenchmarkDevelopedNeighbors"));
         if(DevelopedNeighbors)for(int32 Index=0;Index<9;++Index)if(Index!=4)ScenarioSlots[Index]=TEXT("developed");
         if(Clearing)ScenarioBackgroundBugs=ScenarioPeriodicAttacks=false;
@@ -555,9 +573,16 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     }
     if(Phase==EPhase::Capture)
     {
+        if(WindPoseReview)
+        {
+            if(WindPose<0){Paused=true;WindPose=0;Started=Now;return;}
+            // Let temporal antialiasing resolve each static pose before capture.
+            if(Now-Started<.75)return;
+        }
         const FString Directory=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Screenshots/Benchmark"),Name);
         IFileManager::Get().MakeDirectory(*Directory,true);
-        FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Views[View].Name)+TEXT(".png")),true,false);
+        const FString Suffix=WindPoseReview&&WindPose==1?TEXT("-wind-phase1.png"):TEXT(".png");
+        FScreenshotRequest::RequestScreenshot(FPaths::Combine(Directory,FString(Views[View].Name)+Suffix),true,false);
         Phase=EPhase::AwaitCapture;Started=Now;return;
     }
     // Keep the old camera until its post-sample screenshot has been processed.
@@ -568,6 +593,9 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
         {UE_LOG(LogTemp,Error,TEXT("GRAPHICS_BENCHMARK screenshot timed out"));View=UE_ARRAY_COUNT(Views);FPlatformMisc::RequestExitWithStatus(false,1);}
         return;
     }
+    if(WindPoseReview&&WindPose==0)
+    {WindPose=1;Phase=EPhase::Capture;Started=Now;return;}
+    if(WindPoseReview){WindPose=-1;Paused=false;}
     View=SelectedView==INDEX_NONE?View+1:UE_ARRAY_COUNT(Views);
     if(SelectedView==INDEX_NONE&&View>=StandardViews)View=UE_ARRAY_COUNT(Views);
     if(View<UE_ARRAY_COUNT(Views))
@@ -599,6 +627,25 @@ void ASeigeGameMode::RunGraphicsBenchmark(float DeltaSeconds)
     Report->SetNumberField(TEXT("grass_shadow_distance_m"),GrassShadowDistanceMeters);
     Report->SetNumberField(TEXT("grass_wind_distance_m"),GrassWindDistanceMeters);
     Report->SetNumberField(TEXT("tree_wind_distance_m"),TreeWindDistanceMeters);
+    Report->SetBoolField(TEXT("wind_pose_pair"),WindPoseReview);
+    Report->SetNumberField(TEXT("wind_maximum_playback_rate"),WindMaximumPlaybackRate);
+    int32 CrownBatches=0,ProxyBatches=0,StoppedCrowns=0;
+    if(Foliage)
+    {
+        TArray<UInstancedStaticMeshComponent*> Trees;Foliage->GetComponents(Trees);
+        for(const auto* Tree:Trees)if(Tree&&Tree->GetInstanceCount()>0)
+        {
+            // Deposit rocks share the foliage owner but are intentionally rigid.
+            if(!Tree->ComponentTags.ContainsByPredicate([](const FName& Tag){return Tag.ToString().StartsWith(TEXT("seige_forest_set:"));}))continue;
+            ++CrownBatches;if(Tree->ComponentHasTag(TEXT("seige_proxy")))++ProxyBatches;
+            if(!Tree->bEvaluateWorldPositionOffset||Tree->GetWorldPositionOffsetDisableDistance()!=0)++StoppedCrowns;
+        }
+    }
+    Report->SetNumberField(TEXT("wind_tree_instance_batches"),CrownBatches);
+    Report->SetNumberField(TEXT("wind_proxy_instance_batches"),ProxyBatches);
+    Report->SetNumberField(TEXT("wind_tree_batches_with_distance_stop"),StoppedCrowns);
+    if(WindPoseReview&&(CrownBatches==0||ProxyBatches==0||StoppedCrowns>0))
+    {UE_LOG(LogTemp,Error,TEXT("WIND_POSE_REVIEW invalid crown batches: %d total, %d proxy, %d stopped"),CrownBatches,ProxyBatches,StoppedCrowns);FPlatformMisc::RequestExitWithStatus(false,1);return;}
     Report->SetBoolField(TEXT("diagnostic_wind_disabled"),FParse::Param(FCommandLine::Get(),TEXT("BenchmarkNoWind")));
     Report->SetNumberField(TEXT("grass_programmable_distance_m"),GrassProgrammableDistanceMeters);
     Report->SetNumberField(TEXT("configured_nanite_max_pixels_per_edge"),NaniteMaxPixelsPerEdge);

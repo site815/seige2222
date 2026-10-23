@@ -6,6 +6,7 @@
 #include "Simulation/SeigeSimulation.h"
 #include "Simulation/SeigeRenderInterpolation.h"
 #include "Simulation/SeigeDependencyGraph.h"
+#include "SeigeUnitInspection.h"
 #include "SeigeGameMode.generated.h"
 
 class FSeigeScenarioAI;
@@ -40,6 +41,8 @@ UCLASS()
 class SEIGE_API ASeigeGameMode : public AGameModeBase
 {
     friend class FSeigeSimulationTerrainCacheTest;
+    friend class FSeigeRegionalDrainageTest;
+    friend class FSeigeGroundStockInspectionTest;
     GENERATED_BODY()
 public:
     ASeigeGameMode();
@@ -65,9 +68,10 @@ public:
     float NightSkyFraction=.5f,NightExposureOffsetEV=2.f,SunriseSoftness=.12f,WinterAccumulationFraction=.08f,WinterMeltFraction=.12f,MaximumSnowCoverage=.92f;
     float SnowRadiusMeters=32,SnowHeightMeters=24,SnowFallMetersPerSecond=1.4f,SnowflakeSizeCentimeters=2.2f;
     float SunDirectionUpdateDegrees=.15f,SunShadowUpdateSeconds=.5f;
-    float WindCycleSeconds=10,TreeWindSwayCm=18,LeafWindRustleCm=4,GrassWindSwayCm=5,TreeWindDistanceMeters=260,WindFadeStartFraction=.6f;
+    float WindCycleSeconds=12,WindMaximumPlaybackRate=4,TreeWindSwayCm=14,LeafWindRustleCm=1.8f,GrassWindSwayCm=4,TreeWindDistanceMeters=260,WindFadeStartFraction=.6f;
     float PreviousWindPhase=0;
     double PreviousWindSeconds=-1;
+    double WindPresentationSeconds=0;
     bool HasWindPhase=false;
     double LastWeatherSunUpdate=-1;
     bool HasWeatherSunDirection=false;
@@ -149,6 +153,7 @@ public:
     FString Screen=TEXT("main"),ReturnScreen=TEXT("main");
     TArray<FString> ScenarioSlots;
     bool ScenarioBackgroundBugs=true,ScenarioPeriodicAttacks=true;
+    int32 ScenarioSeedOverride=INDEX_NONE; // Optional reproducible scenario; otherwise each new game draws a fresh seed.
     TArray<FSeigeNeighbor> Neighbors;
     TArray<FSeigeRegionResources> EmptyRegionResources;
     static bool GenerateEmptyRegionResources(const FSeigeSimulation& Center,const TArray<FString>& Slots,TArray<FSeigeRegionResources>& Output,FString& Error);
@@ -160,7 +165,7 @@ public:
     FString MenuReturnScreen=TEXT("playing");
     float RenderResolutionPercent=100;
     FIntPoint WindowResolution=FIntPoint(1600,900);
-    TArray<int32> GameSpeeds={1,5,10};
+    TArray<int32> GameSpeeds={1,10,20};
     void ShowScreen(const FString& NewScreen);
     void StartScenario();
     void BeginScenarioPreparation();
@@ -221,17 +226,20 @@ public:
     void ToggleRegionSurvey();
     bool RestoreRegionView();
     FVector WorkerWorldPosition(const FSeigeWorker& Worker,int32 Sector) const;
+    void GatherInspectionCandidates(TArray<FSeigeInspectionCandidate>& Out) const;
     struct FRegionViewBookmark { FVector Center; float Zoom,Yaw,Pitch; int32 Building,Road,Companion; };
     TArray<FRegionViewBookmark> RegionViewHistory;
     float WoodlandDensity(FVector2D WorldLogical) const;
 private:
     friend class USeigeAudioSubsystem;
 #if WITH_DEV_AUTOMATION_TESTS
+    friend struct FSeigeStartingAIHarness;
     friend class FSeigeIncrementalSectorSeamTest;
     friend class FSeigeTransportClearanceTest;
     friend class FSeigeCompanionViewTest;
     friend class FSeigeCommandShuttlePickTest;
     friend class FSeigeSectorReadinessTest;
+    friend class FSeigeUnitInspectionVisibilityTest;
 #endif
     UPROPERTY() TObjectPtr<class UDirectionalLightComponent> WeatherSun;
     UPROPERTY() TObjectPtr<class USkyLightComponent> WeatherSky;
@@ -397,7 +405,7 @@ struct FSeigeUiState
     TArray<FSeigeCredit> Credits;
     TArray<FSeigeResourceGroup> ResourceGroups;
     FString Title=TEXT("SEIGE"),Eyebrow=TEXT("FIRST LANDING"),Tagline=TEXT("A foothold in the wilderness.");
-    TArray<int32> SpeedSteps={1,5,10};
+    TArray<int32> SpeedSteps={1,10,20};
     TArray<FSeigeButton> HitRegions;
     FString HitTest(float ScreenX,float ScreenY) const;
     void UpdateHoverPanel(float ScreenX,float ScreenY,bool Enabled);
@@ -423,6 +431,9 @@ public:
     int32 ChainFocus=INDEX_NONE;FVector2D ChainMouse=FVector2D(-1,-1);   // keyboard/mouse highlight in the chain panel
     void MoveChainFocus(const FKey& Key);
     bool SelectWorkerAt(float ScreenX,float ScreenY,ASeigeGameMode& GameMode);
+    bool SelectUnitAt(float ScreenX,float ScreenY,ASeigeGameMode& GameMode);
+    void ClearUnitInspection();
+    bool HasUnitInspection() const;
     // Enabled only by the bounded opt-in UI smoke, never by ordinary play.
     bool SmokeLabelCapture=false;
     TArray<FString> SmokeLabels;
@@ -435,6 +446,9 @@ private:
     FString InterfaceError,Version,LastNotice;
     FString BuildingInfoSection;
     FString SelectedWorkerId,HoveredWorkerId;
+    FSeigeInspectionRef SelectedInspection;
+    int32 SelectedInspectionView=INDEX_NONE;
+    FBox2D UnitInspectorBounds=FBox2D(ForceInit);
     int32 SelectedWorkerSector=4;
     int32 TransportFocusId=0;
     int32 BuildingInfoPage=0;
@@ -451,6 +465,9 @@ private:
     void DrawWorkforceControls(ASeigeGameMode& GameMode,float X,float Y,float Width);
     void DrawResourceDetail(const FSeigeSimulation& Colony,const FString& Resource,float X,float Y,float Width,float Height);
     void DrawWorkerInspector(ASeigeGameMode& GameMode,float Width,float Height);
+    void DrawUnitInspector(ASeigeGameMode& GameMode,float Width,float Height);
+    void DrawWorldHoverStatus(ASeigeGameMode& GameMode,const FSeigeInspectionCandidate* KnownHover=nullptr);
+    bool InspectionAt(float ScreenX,float ScreenY,const ASeigeGameMode& GameMode,FSeigeInspectionCandidate& Out,const TArray<FSeigeInspectionCandidate>* KnownCandidates=nullptr) const;
     FString WorkerAt(float ScreenX,float ScreenY,const ASeigeGameMode& GameMode) const;
     void DrawWallPlan(ASeigeGameMode& GameMode,float Width,float Height);
     void DrawCombatInfo(ASeigeGameMode& GameMode,float Width,float Height);

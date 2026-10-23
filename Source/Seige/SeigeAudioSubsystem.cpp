@@ -14,10 +14,12 @@
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformTime.h"
+#include "CoreGlobals.h"
 
 namespace SeigeAudio
 {
 void PlayUi(UWorld* World,FName Cue){if(World)if(auto* Feedback=World->GetSubsystem<USeigeAudioSubsystem>())Feedback->PlayUi(Cue);}
+void PlayResult(UWorld* World,bool Success,FName SuccessCue){PlayUi(World,ResultCue(Success,SuccessCue));}
 }
 void USeigeAudioSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -29,8 +31,13 @@ void USeigeAudioSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     if(FFileHelper::LoadFileToString(Raw,*Path)&&FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Doc)&&Doc)
     {
         double Value=0;if(Doc->TryGetNumberField(TEXT("master_volume"),Value))MasterVolume=FMath::Clamp(float(Value),0.f,1.f);
-        if(Doc->TryGetNumberField(TEXT("maximum_voices_per_frame"),Value))MaximumVoices=FMath::Clamp(int32(Value),1,16);
-        if(Doc->TryGetNumberField(TEXT("maximum_voices_per_second"),Value))MaximumVoicesPerSecond=FMath::Clamp(int32(Value),1,32);
+        if(Doc->TryGetNumberField(TEXT("maximum_voices_per_frame"),Value))RateGate.MaximumPerFrame=FMath::Clamp(int32(Value),1,16);
+        if(Doc->TryGetNumberField(TEXT("maximum_voices_per_second"),Value))RateGate.MaximumPerSecond=FMath::Clamp(int32(Value),1,32);
+        if(Doc->TryGetNumberField(TEXT("interface_voices_per_frame"),Value))RateGate.InterfacePerFrame=FMath::Clamp(int32(Value),1,4);
+        if(Doc->TryGetNumberField(TEXT("interface_voices_per_second"),Value))RateGate.InterfacePerSecond=FMath::Clamp(int32(Value),1,12);
+        if(Doc->TryGetNumberField(TEXT("notification_voices_per_frame"),Value))RateGate.NotificationPerFrame=FMath::Clamp(int32(Value),1,4);
+        if(Doc->TryGetNumberField(TEXT("notification_voices_per_second"),Value))RateGate.NotificationPerSecond=FMath::Clamp(int32(Value),1,8);
+        if(Doc->TryGetNumberField(TEXT("damage_alert_quiet_seconds"),Value))DamageAlertQuietSeconds=FMath::Clamp(Value,1.,300.);
         const TSharedPtr<FJsonObject>* Groups=nullptr;
         if(Doc->TryGetObjectField(TEXT("categories"),Groups))for(const auto& Pair:(*Groups)->Values)
         {
@@ -38,6 +45,7 @@ void USeigeAudioSubsystem::Initialize(FSubsystemCollectionBase& Collection)
             FAudioCategory Mix;
             if((*Group)->TryGetNumberField(TEXT("volume"),Value))Mix.Volume=FMath::Clamp(float(Value),0.f,1.f);
             if((*Group)->TryGetNumberField(TEXT("cooldown_seconds"),Value))Mix.Cooldown=FMath::Clamp(Value,0.,60.);
+            FString Lane;if((*Group)->TryGetStringField(TEXT("lane"),Lane))Mix.Lane=Lane==TEXT("interface")?ESeigeAudioLane::Interface:Lane==TEXT("notification")?ESeigeAudioLane::Notification:ESeigeAudioLane::World;
             Categories.Add(FName(*Pair.Key),Mix);
         }
         const TSharedPtr<FJsonObject>* Mixes=nullptr;
@@ -74,16 +82,16 @@ void USeigeAudioSubsystem::Play(FName Cue,FVector Position,bool Spatial)
     const auto* Mix=CueMix.Find(Cue);if(!Mix)return;
     const auto* Category=Categories.Find(Mix->Category);if(!Category)return;
     const float Volume=MasterVolume*Category->Volume*Mix->Volume;if(Volume<=KINDA_SMALL_NUMBER)return;
-    if(VoicesThisFrame>=MaximumVoices)return;
     const auto* Found=Sounds.Find(Cue);if(!Found||!Found->Get())return;
-    // Wall-clock limits remain the same at pause, 1x, 5x and 10x. Dropped sounds are
+    if(Spatial)if(const auto* Game=Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode()))if(Game->Camera&&Attenuation)
+    {
+        const double AudibleRadius=Attenuation->Attenuation.AttenuationShapeExtents.X+Attenuation->Attenuation.FalloffDistance;
+        if(FVector::DistSquared(Position,Game->Camera->GetActorLocation())>FMath::Square(AudibleRadius))return;
+    }
+    // Wall-clock limits remain the same at pause, 1x, 5x, 10x and 20x. Dropped sounds are
     // never queued up to burst later, and muted clicks consume no audible budget.
     const double Now=FPlatformTime::Seconds();
-    if(const double* Previous=LastCuePlay.Find(Cue))if(Now-*Previous<Mix->Cooldown)return;
-    if(const double* Previous=LastCategoryPlay.Find(Mix->Category))if(Now-*Previous<Category->Cooldown)return;
-    VoiceTimes.RemoveAll([Now](double Time){return Now-Time>=1.;});
-    if(VoiceTimes.Num()>=MaximumVoicesPerSecond)return;
-    VoiceTimes.Add(Now);LastCuePlay.Add(Cue,Now);LastCategoryPlay.Add(Mix->Category,Now);++VoicesThisFrame;
+    if(!RateGate.TryPlay(Cue,Mix->Category,Volume,Now,GFrameCounter,Mix->Cooldown,Category->Cooldown,Category->Lane))return;
     if(Spatial)UGameplayStatics::PlaySoundAtLocation(GetWorld(),Found->Get(),Position,Volume,1,0,Attenuation);
     else UGameplayStatics::PlaySound2D(GetWorld(),Found->Get(),Volume);
 }
@@ -93,45 +101,51 @@ void USeigeAudioSubsystem::PlayUi(FName Cue)
 }
 void USeigeAudioSubsystem::Tick(float DeltaSeconds)
 {
-    Clock=FPlatformTime::Seconds();VoicesThisFrame=0;
+    Clock=FPlatformTime::Seconds();
     auto* Game=Cast<ASeigeGameMode>(GetWorld()->GetAuthGameMode());if(!Game||!Game->Ready)return;
     UpdateLights(*Game,DeltaSeconds);
     auto& Sim=Game->Sim;
-    if(Game->Screen!=TEXT("playing"))return;
+    if(Game->Screen!=TEXT("playing")){LastTime=-1;return;}
     const bool Reset=LastTime<0||Sim.Time<LastTime;
-    if(Reset){RecentShots.Empty();KnownProjectiles.Empty();BuildingConstruction.Empty();BuildingDamage.Empty();PreviousRetreat=false;}
+    if(Reset){RecentShots.Empty();KnownProjectiles.Empty();BuildingConstruction.Empty();BuildingDamage.Empty();PreviousRetreat=false;DamageIncident.Reset();}
     TSet<FString> Current;
     for(const auto& Shot:Sim.Combat.ShotEvents)
     {
-        const FString Key=FString::Printf(TEXT("%.6f:%d:%d:%s"),Shot.Time,Shot.OwnerId,Shot.WeaponSlot,*Shot.OwnerKind);Current.Add(Key);
+        const FString Key=FString::Printf(TEXT("%.6f:%d:%d:%d:%s"),Shot.Time,Shot.OwnerSector,Shot.OwnerId,Shot.WeaponSlot,*Shot.OwnerKind);Current.Add(Key);
         if(!Reset&&!Game->Paused&&!RecentShots.Contains(Key))Play(FName(*Shot.Family),Game->RenderPosition(Shot.Start),true);
     }
     RecentShots=MoveTemp(Current);TSet<int32> Projectiles;
     for(const auto& P:Sim.Combat.Projectiles)
     {
         Projectiles.Add(P.Id);if(!Reset&&!Game->Paused&&!KnownProjectiles.Contains(P.Id))
-        if(const auto* Weapon=Sim.Combat.Weapons.Find(P.WeaponId))Play(FName(*Weapon->Family),Game->RenderPosition(P.Position),true);
+        if(const auto* Weapon=Sim.Combat.Weapons.Find(P.WeaponId))Play(FName(*Weapon->Family),Game->RenderPosition(SeigeAudio::ProjectileWorldPosition(P.Position,P.SectorIndex,Sim.WorldHalfSize)),true);
     }
     KnownProjectiles=MoveTemp(Projectiles);
+    bool DamageSeen=false,ConstructionCompleted=false;
     for(const auto& B:Sim.Buildings)
     {
         if(!Reset)
         {
             if(const bool* Was=BuildingConstruction.Find(B.Id))
-            {if(*Was&&!B.IsConstructing&&B.Health>0)Play(TEXT("complete"),Game->RenderPosition(B.Position),true);}
-            else if(B.IsConstructing)Play(TEXT("build"),Game->RenderPosition(B.Position),true);
+            {if(*Was&&!B.IsConstructing&&B.Health>0)ConstructionCompleted=true;}
+            // Placement feedback is emitted from the actual successful player
+            // action, not from polling (which also sees autonomous AI builds).
         }
         BuildingConstruction.Add(B.Id,B.IsConstructing);
         if(const auto* Defense=Sim.Combat.BuildingState.Find(B.Id))
         {
             const double* Previous=BuildingDamage.Find(B.Id);
             if(!Reset&&Previous&&Defense->LastDamageTime>*Previous)
-                Play(TEXT("alert"),Game->RenderPosition(B.Position),true);
+            DamageSeen=true;
             BuildingDamage.Add(B.Id,Defense->LastDamageTime);
         }
     }
+    // One alert at the start of an incident, rearmed only after a real quiet
+    // interval. A long battle no longer emits a fresh warning tone every cooldown.
+    if(DamageIncident.Observe(DamageSeen,Clock,DamageAlertQuietSeconds))Play(TEXT("alert"),FVector::ZeroVector,false);
+    if(ConstructionCompleted)Play(TEXT("complete"),FVector::ZeroVector,false);
     const bool Retreat=Sim.Companions.Dogs.Num()>0&&Sim.Companions.Dogs[0].Retreating;
-    if(Retreat&&!PreviousRetreat&&!Reset)Play(TEXT("rex"),Game->RenderPosition(Sim.Companions.Dogs[0].Position),true);
+    if(Retreat&&!PreviousRetreat&&!Reset)Play(TEXT("rex"),FVector::ZeroVector,false);
     PreviousRetreat=Retreat;LastTime=Sim.Time;
 }
 void USeigeAudioSubsystem::UpdateLights(ASeigeGameMode& Game,float DeltaSeconds)

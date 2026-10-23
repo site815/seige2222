@@ -53,16 +53,6 @@
       "placement_index": 1
     },
     {
-      "definition": "robot_service_bay",
-      "count": 2,
-      "placement_index": 16
-    },
-    {
-      "definition": "robot_service_bay",
-      "count": 3,
-      "placement_index": 24
-    },
-    {
       "definition": "alloy_refinery",
       "count": 1,
       "placement_index": 17
@@ -71,6 +61,16 @@
       "definition": "component_works",
       "count": 1,
       "placement_index": 22
+    },
+    {
+      "definition": "robot_service_bay",
+      "count": 2,
+      "placement_index": 16
+    },
+    {
+      "definition": "robot_service_bay",
+      "count": 3,
+      "placement_index": 24
     },
     {
       "definition": "sensor",
@@ -159,7 +159,8 @@
     "core_replication_policy": "worker_only",
     "core_replication_recipes": [],
     "bulk_input_policy": "remaining_output_bill",
-    "export_policy": "surplus_shipment_value"
+    "export_policy": "surplus_shipment_value",
+    "export_reserve_horizon": "next_prerequisite"
   },
   "upgrades": {
     "families": [

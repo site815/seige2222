@@ -16,7 +16,7 @@ struct FSeigeWorker
     int32 StationSlot=0;
     // Permanent ownership is independent of today's physical task/location.
     int32 CrewBuildingId=0, ChargingBuildingId=0, TransportVehicleId=0, ChargeQueueSlot=0;
-    double BatteryKWh=0, BatteryCapacityKWh=0;
+    double BatteryKWh=0, BatteryCapacityKWh=0,Health=0;
     FString SuspendedActivity;
     FVector2D HandlingPosition=FVector2D::ZeroVector;
     FString ContainerKind=TEXT("building");
@@ -36,6 +36,9 @@ public:
     double RecyclingWasteKg=0;
     double DeploymentDescentSeconds() const{return Policy?Number(TEXT("deployment_ground_seconds")):0;}
     double DeploymentHatchSeconds() const{return Policy?Number(TEXT("deployment_hatch_seconds")):0;}
+    double MaximumHealth() const{return Policy?Number(TEXT("maximum_health")):0;}
+    static bool IsExposed(const FSeigeWorker& W){return W.State==TEXT("active")&&W.Outdoor&&W.Health>0;}
+    void Damage(FSeigeSimulation& Sim,const FString& Id,double Amount);
     double BodyRadiusMeters() const{return Policy?Number(TEXT("body_radius_meters")):0;}
     int32 LogisticsJobs(const FSeigeSimulation& Sim) const;
     bool Initialize(const TSharedPtr<FJsonObject>& Rules,FSeigeSimulation& Sim,FString& Error);
@@ -83,6 +86,11 @@ public:
     bool Load(const TSharedPtr<FJsonObject>& Root,FSeigeSimulation& Sim,FString& Error);
     FString Fingerprint;
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FSeigeCargoMovementParityTest;
+    friend class FSeigeRoadMovementRegressionTest;
+    friend class FSeigeRoadlessCrewAccessTest;
+#endif
     TSharedPtr<FJsonObject> Policy;
     FString LogisticsScalingPolicy;
     TSet<FString> LogisticsExcludedRoles;
@@ -93,8 +101,9 @@ private:
     void Schedule(FSeigeSimulation& Sim);
     void AssignCrews(FSeigeSimulation& Sim);
     bool StepBattery(FSeigeSimulation& Sim,FSeigeWorker& Worker,double Seconds);
+    bool CanLendCoreCrew(const FSeigeSimulation& Sim,const FSeigeWorker& Worker) const;
     void ResumeAfterCharging(FSeigeSimulation& Sim,FSeigeWorker& Worker);
-    FSeigeWorker* TaskWorker(FSeigeSimulation& Sim,int32 Source,int32 Target,bool Construction);
+    FSeigeWorker* TaskWorker(FSeigeSimulation& Sim,int32 Source,int32 Target,bool Construction,const TSet<FString>* Excluded=nullptr);
     void InitializeBattery(FSeigeWorker& Worker,int32 Sequence) const;
     void RouteTo(FSeigeSimulation& Sim,FSeigeWorker& W,FVector2D Destination);
     bool Move(FSeigeSimulation& Sim,FSeigeWorker& W,FVector2D Destination,double Seconds);

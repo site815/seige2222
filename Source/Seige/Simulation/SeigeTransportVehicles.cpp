@@ -7,6 +7,7 @@
 #include "Misc/SecureHash.h"
 #include "Serialization/JsonSerializer.h"
 using namespace SeigeCombatJson;
+namespace{FString ServiceKey(int32 Source,int32 Target,int32 Road){return FString::Printf(TEXT("%d:%d:%d"),Source,Target,Road);}}
 
 bool FSeigeTransportVehicleSystem::Initialize(const FString& Directory,FSeigeSimulation& S,FString& Error)
 {
@@ -22,7 +23,7 @@ bool FSeigeTransportVehicleSystem::Initialize(const FString& Directory,FSeigeSim
     if(!FMath::IsNearlyEqual(Mass,Def.BodyMassKg,.001)){Error=TEXT("Transport material bill must conserve body mass");return false;}
     for(const auto& P:(*Factories)->Values){double V=0;const FString Id(P.Key);if(!S.BuildingDefs.Contains(Id)||S.BuildingDefs[Id].Role!=TEXT("vehicle_factory")||!P.Value->TryGetNumber(V)||!FMath::IsFinite(V)||V<=0||V>10){Error=TEXT("Invalid autonomous transport factory");return false;}Def.Factories.Add(Id,V);}
     if(Def.Factories.IsEmpty()){Error=TEXT("Transport needs a vehicle factory");return false;}
-    Fingerprint=FMD5::HashAnsiString(*SeigeCanonicalJson(Root));Bodies.Empty();Jobs.Empty();NextId=NextJobId=1;
+    Fingerprint=FMD5::HashAnsiString(*SeigeCanonicalJson(Root));Bodies.Empty();Jobs.Empty();RejectedServices.Empty();ServiceGeometryRevision=ServiceTerrainRevision=INDEX_NONE;NextId=NextJobId=1;
     if(const auto* Core=S.Core()){FSeigeTransportVehicle V;V.Id=NextId++;V.Health=Def.Health;V.BatteryKWh=Def.InitialBatteryKWh;V.Position=S.Workers.HatchPoint(S);V.Embarked=true;V.Status=TEXT("Aboard shuttle");Bodies.Add(V);}
     Error.Empty();return true;
 }
@@ -37,8 +38,47 @@ bool FSeigeTransportVehicleSystem::Available(const FSeigeSimulation& S) const
 void FSeigeTransportVehicleSystem::ShiftHome(FVector2D Delta){for(auto& V:Bodies)V.Position+=Delta;}
 void FSeigeTransportVehicleSystem::ReleaseHandler(FSeigeSimulation& S,FSeigeTransportVehicle& V)
 {if(!V.HandlerWorkerId.IsEmpty())S.Workers.ReleaseTransportHandler(V.HandlerWorkerId,V.Id);V.HandlerWorkerId.Empty();}
+void FSeigeTransportVehicleSystem::RefreshServiceFailures(const FSeigeSimulation& S)
+{
+    if(ServiceGeometryRevision!=S.GeometryRevision()||ServiceTerrainRevision!=S.Mobility.GetTerrainRevision())
+    {RejectedServices.Empty();ServiceGeometryRevision=S.GeometryRevision();ServiceTerrainRevision=S.Mobility.GetTerrainRevision();}
+}
+bool FSeigeTransportVehicleSystem::FindServiceRoute(FSeigeSimulation& S,FVector2D From,FVector2D Port,FVector2D Heading,TArray<FVector2D>& Route) const
+{
+    Route.Empty();const double Unit=S.MetersPerWorldUnit(),Radius=Def.ServiceMeters/Unit;
+    const double TruckClearance=S.Mobility.ClearanceMeters(TEXT("transport"))/Unit,WorkerClearance=S.Mobility.ClearanceMeters(TEXT("drone"))/Unit;
+    auto HasDoor=[&](FVector2D Berth,FVector2D Direction)
+    {
+        const FVector2D Side=FVector2D(-Direction.Y,Direction.X)*(Def.BodySizeMeters.Y*.5+S.Mobility.ClearanceMeters(TEXT("drone")))/Unit;
+        for(double Sign:{1.,-1.})
+        {
+            const FVector2D Door=Berth+Side*Sign;TArray<FVector2D> WorkerRoute;
+            if(S.ClearWalkingLine(Berth,Door,WorkerClearance)&&S.Mobility.MovementAllowed(S,TEXT("drone"),Berth,Door)&&S.FindRoute(Port,Door,WorkerRoute))return true;
+        }
+        return false;
+    };
+    auto Try=[&](FVector2D Berth)
+    {
+        if(!S.ClearWalkingLine(Berth,Berth,TruckClearance))return false;
+        TArray<FVector2D> Candidate;if(!S.FindMobilityRoute(TEXT("transport"),From,Berth,Candidate))return false;
+        FVector2D Arrival=Heading;
+        for(int32 I=Candidate.Num()-1;I>=0;--I)
+        {const FVector2D Before=I?Candidate[I-1]:From;if(!Before.Equals(Berth,1.e-6)){Arrival=(Berth-Before).GetSafeNormal();break;}}
+        if(!HasDoor(Berth,Arrival))return false;
+        Route=MoveTemp(Candidate);return true;
+    };
+    // A port is a service anchor, not a requirement that the truck stand on
+    // one exact point of a graded shoulder. Prefer it, then bounded, stable
+    // berths inside the authored service radius; workers still reach a door.
+    if(Try(Port))return true;
+    for(double Fraction:{.5,1.})for(int32 Direction=0;Direction<16;++Direction)
+    {const double Angle=Direction*PI/8;if(Try(Port+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Radius*Fraction))return true;}
+    return false;
+}
 bool FSeigeTransportVehicleSystem::Dispatch(FSeigeSimulation& S,int32 Source,int32 Target,int32 Road,const FString& R,double Amount,bool Construction,bool Deployment)
 {
+    if(Road&&!S.RoadsEnabled())return false;
+    RefreshServiceFailures(S);if(RejectedServices.Contains(ServiceKey(Source,Target,Road)))return false;
     if(!Available(S)||Deployment||HaulUnits(S,R)<=0)return false;const auto* A=S.FindBuilding(Source);const auto* B=S.FindBuilding(Target);const auto* Lane=S.FindRoad(Road);
     if(!A||A->Health<=0||A->IsConstructing||(!B&&!Lane)||(B&&B->Health<=0)||(Lane&&Lane->Health<=0))return false;
     // Both ends must have a physical workforce; never reserve cargo to an
@@ -49,11 +89,10 @@ bool FSeigeTransportVehicleSystem::Dispatch(FSeigeSimulation& S,int32 Source,int
     if(B&&!Construction)Amount=FMath::Min(Amount,S.StorageRoom(*B)/S.Resources[R].LitresPerUnit);
     if(S.Resources[R].Discrete)Amount=FMath::FloorToDouble(Amount+1.e-9);if(Amount<=1.e-9)return false;
     const FVector2D Pickup=S.BuildingAccessPoint(*A),Destination=Lane?S.RoadAccessPoint(*Lane):S.BuildingAccessPoint(*B);
-    TArray<FVector2D> LoadedRoute;if(!S.FindMobilityRoute(TEXT("transport"),Pickup,Destination,LoadedRoute))return false;
     for(auto& V:Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&!V.ReturningToShuttle&&!V.DeliveryId&&V.BatteryKWh>=Def.BatteryKWh*Def.MinimumDepartureChargeFraction&&V.Status!=TEXT("Leaving shuttle"))
     {
-        TArray<FVector2D> Route;if(!S.FindMobilityRoute(TEXT("transport"),V.Position,Pickup,Route))continue;
-        double Distance=0;FVector2D Previous=V.Position;for(const auto& P:Route){Distance+=FVector2D::Distance(Previous,P);Previous=P;}Previous=Pickup;for(const auto& P:LoadedRoute){Distance+=FVector2D::Distance(Previous,P);Previous=P;}if(V.BatteryKWh<Distance*S.MetersPerWorldUnit()/1000*Def.TravelKWhPerKm+Def.BatteryKWh*Def.MinimumDepartureChargeFraction)continue;
+        TArray<FVector2D> Route,LoadedRoute;if(!FindServiceRoute(S,V.Position,Pickup,V.Heading,Route)||!FindServiceRoute(S,Route.Last(),Destination,V.Heading,LoadedRoute))continue;
+        double Distance=0;FVector2D Previous=V.Position;for(const auto& P:Route){Distance+=FVector2D::Distance(Previous,P);Previous=P;}for(const auto& P:LoadedRoute){Distance+=FVector2D::Distance(Previous,P);Previous=P;}if(V.BatteryKWh<Distance*S.MetersPerWorldUnit()/1000*Def.TravelKWhPerKm+Def.BatteryKWh*Def.MinimumDepartureChargeFraction)continue;
         FSeigeCourier C;C.Id=S.NextId++;C.TransportVehicleId=V.Id;C.SourceId=Source;C.TargetId=Target;C.RoadTargetId=Road;C.Resource=R;C.ReservedAmount=Amount;C.ForConstruction=Construction;C.Position=V.Position;
         S.Couriers.Add(C);V.DeliveryId=C.Id;V.Route=MoveTemp(Route);V.NextWaypoint=0;V.RouteRevision=S.TransportRevision;V.Status=TEXT("Collecting cargo");return true;
     }
@@ -61,12 +100,13 @@ bool FSeigeTransportVehicleSystem::Dispatch(FSeigeSimulation& S,int32 Source,int
 }
 bool FSeigeTransportVehicleSystem::Move(FSeigeSimulation& S,FSeigeTransportVehicle& V,FVector2D Destination,double Seconds)
 {
-    if(FVector2D::Distance(V.Position,Destination)*S.MetersPerWorldUnit()<=S.Mobility.AccessMeters(TEXT("transport")))return true;
-    if(V.Route.IsEmpty()||V.RouteRevision!=S.TransportRevision||FVector2D::Distance(V.Route.Last(),Destination)>.001)
+    if(V.Position.Equals(Destination,1.e-6))return true;
+    if(V.Route.IsEmpty()||!V.Route.IsValidIndex(V.NextWaypoint)||V.RouteRevision!=S.TransportRevision||!V.Route.Last().Equals(Destination,1.e-6))
     {
         if(S.Time<V.RetryAt)return false;V.Route.Reset();V.NextWaypoint=0;V.RouteRevision=S.TransportRevision;
         if(!S.FindMobilityRoute(TEXT("transport"),V.Position,Destination,V.Route)){V.RetryAt=S.Time+2;V.Status=TEXT("Waiting for accessible route");return false;}
     }
+    if(V.NextWaypoint==0&&!V.Route.IsEmpty()&&!V.Route[0].Equals(V.Position,1.e-8))V.Route.Insert(V.Position,0);
     while(V.Route.IsValidIndex(V.NextWaypoint)&&Seconds>1.e-9)
     {
         const FVector2D End=V.Route[V.NextWaypoint];const double Distance=FVector2D::Distance(V.Position,End);if(Distance<.000001){++V.NextWaypoint;continue;}
@@ -74,11 +114,16 @@ bool FSeigeTransportVehicleSystem::Move(FSeigeSimulation& S,FSeigeTransportVehic
         if(Speed<=0||V.BatteryKWh<=1.e-9){V.Status=TEXT("Battery depleted");return false;}
         const double FuelDistance=V.BatteryKWh/Def.TravelKWhPerKm*1000/S.MetersPerWorldUnit(),Step=FMath::Min3(Distance,Speed*Seconds,FuelDistance);
         const FVector2D Next=V.Position+(End-V.Position)/Distance*Step;
-        if(!S.Mobility.MovementAllowed(S,TEXT("transport"),V.Position,Next)){V.Route.Empty();V.RetryAt=S.Time+2;V.Status=TEXT("Terrain blocked");return false;}
+        if(!S.Mobility.MovementAllowed(S,TEXT("transport"),V.Position,Next))
+        {
+            S.RejectMobilityRouteEdge(TEXT("transport"),V.Position,End);
+            if(V.NextWaypoint>0)S.RejectMobilityRouteEdge(TEXT("transport"),V.Route[V.NextWaypoint-1],End);
+            V.Route.Empty();V.NextWaypoint=0;V.RetryAt=S.Time+2;V.Status=TEXT("Terrain blocked");return false;
+        }
         V.Heading=(End-V.Position).GetSafeNormal();V.Position=Next;V.DistanceMeters+=Step*S.MetersPerWorldUnit();V.BatteryKWh=FMath::Max(0.,V.BatteryKWh-Step*S.MetersPerWorldUnit()/1000*Def.TravelKWhPerKm);Seconds-=Step/Speed;
         if(Distance-Step<.000001)++V.NextWaypoint;else break;
     }
-    return V.NextWaypoint>=V.Route.Num()&&!V.Route.IsEmpty();
+    return V.NextWaypoint>=V.Route.Num()&&!V.Route.IsEmpty()&&V.Position.Equals(Destination,1.e-6);
 }
 void FSeigeTransportVehicleSystem::FinishDelivery(FSeigeSimulation& S,FSeigeTransportVehicle& V,int32 Id)
 {ReleaseHandler(S,V);V.DeliveryId=0;V.Route.Empty();V.NextWaypoint=0;V.Status=TEXT("Available");S.Couriers.RemoveAll([&](const auto& C){return C.Id==Id;});}
@@ -96,15 +141,69 @@ void FSeigeTransportVehicleSystem::StepDelivery(FSeigeSimulation& S,FSeigeTransp
         C.TargetId=Target->Id;C.RoadTargetId=0;C.ForConstruction=false;C.Phase=TEXT("carrying");C.PhaseSeconds=0;Road=nullptr;V.Route.Empty();
     }
     const bool Pickup=C.Amount<=1.e-9;
-    const FVector2D Endpoint=Pickup?S.BuildingAccessPoint(*Source):(Road?S.RoadAccessPoint(*Road):S.BuildingAccessPoint(*Target));
-    if(!Move(S,V,Endpoint,Seconds)){C.Position=V.Position;return;}C.Position=V.Position;
+    auto RecoverInaccessibleService=[&]()
+    {
+        V.RetryAt=S.Time+2;ReleaseHandler(S,V);V.Route.Empty();V.NextWaypoint=0;C.Position=V.Position;
+        auto RejectService=[&]()
+        {RefreshServiceFailures(S);if(RejectedServices.Num()>=256)RejectedServices.Empty();RejectedServices.Add(ServiceKey(C.SourceId,C.TargetId,C.RoadTargetId));};
+        if(Pickup)
+        {
+            RejectService();FinishDelivery(S,V,C.Id);return; // Release only the reservation; stock has not moved.
+        }
+        const auto* Return=Source&&Source->Health>0?Source:S.Core();
+        if(Return&&Return->Health>0&&(C.RoadTargetId||C.TargetId!=Return->Id))
+        {
+            RejectService();
+            // Keep the same loaded courier and physically return its cargo.
+            // Once returning, a second blocked edge cannot restore the old
+            // destination or bounce this load between the two endpoints.
+            C.TargetId=Return->Id;C.RoadTargetId=0;C.ForConstruction=false;C.Phase=TEXT("carrying");C.PhaseSeconds=0;
+            V.Status=TEXT("Returning cargo: destination inaccessible");
+        }
+        else V.Status=TEXT("Cargo held: return route inaccessible");
+    };
+    const FVector2D Port=Pickup?S.BuildingAccessPoint(*Source):(Road?S.RoadAccessPoint(*Road):S.BuildingAccessPoint(*Target));
+    if(V.Route.IsEmpty()||V.RouteRevision!=S.TransportRevision||FVector2D::Distance(V.Route.Last(),Port)*S.MetersPerWorldUnit()>Def.ServiceMeters+1.e-6)
+    {
+        if(S.Time<V.RetryAt)return;
+        ReleaseHandler(S,V);V.Route.Empty();V.NextWaypoint=0;V.RouteRevision=S.TransportRevision;
+        if(!FindServiceRoute(S,V.Position,Port,V.Heading,V.Route))
+        {
+            RecoverInaccessibleService();return;
+        }
+    }
+    const FVector2D Endpoint=V.Route.Last();
+    if(!Move(S,V,Endpoint,Seconds))
+    {
+        C.Position=V.Position;
+        // A solver-approved edge can still fail its finer physical movement
+        // check. That observed failure must not hold a whole construction bill
+        // indefinitely while successive route queries propose other bad edges.
+        if(V.Route.IsEmpty()&&V.Status==TEXT("Terrain blocked"))RecoverInaccessibleService();
+        return;
+    }
+    C.Position=V.Position;
     const auto* Handler=S.Workers.Find(V.HandlerWorkerId);if(Handler&&Handler->TransportVehicleId!=V.Id)Handler=nullptr;
+    // A real movement failure clears the handler's route and schedules retry.
+    // Release that claim now so another reachable operator can handle cargo;
+    // keeping the old identity indefinitely used to strand an otherwise valid truck.
+    if(Handler&&Handler->Activity==TEXT("to_handle")&&Handler->Route.IsEmpty()&&Handler->RetryAt>S.Time&&!Handler->Position.Equals(Handler->HandlingPosition,1.e-6))
+    {ReleaseHandler(S,V);Handler=nullptr;}
     if(!Handler)
     {
         V.HandlerWorkerId.Empty();
-        // The crew stands beside the cargo door, not inside the vehicle mesh.
-        const FVector2D Door=V.Position+FVector2D(-V.Heading.Y,V.Heading.X)*(Def.BodySizeMeters.Y*.5+S.Mobility.ClearanceMeters(TEXT("drone")))/S.MetersPerWorldUnit();
-        V.HandlerWorkerId=S.Workers.AcquireTransportHandler(S,V.Id,Pickup?C.SourceId:C.TargetId,Pickup?0:C.RoadTargetId,Door,!Pickup&&C.ForConstruction);
+        // Parked approach direction can put one cargo door against a reserved
+        // plot or shoreline. Use the reachable side; reserving an unreachable
+        // handler would block both this cargo and the building's only worker.
+        const double Unit=S.MetersPerWorldUnit(),WorkerClearance=S.Mobility.ClearanceMeters(TEXT("drone"))/Unit;
+        const FVector2D Side=FVector2D(-V.Heading.Y,V.Heading.X)*(Def.BodySizeMeters.Y*.5+S.Mobility.ClearanceMeters(TEXT("drone")))/Unit;
+        if(S.ClearWalkingLine(V.Position,V.Position,S.Mobility.ClearanceMeters(TEXT("transport"))/Unit))for(double Sign:{1.,-1.})
+        {
+            const FVector2D Door=V.Position+Side*Sign;
+            if(!S.ClearWalkingLine(V.Position,Door,WorkerClearance)||!S.Mobility.MovementAllowed(S,TEXT("drone"),V.Position,Door))continue;
+            V.HandlerWorkerId=S.Workers.AcquireTransportHandler(S,V.Id,Pickup?C.SourceId:C.TargetId,Pickup?0:C.RoadTargetId,Door,!Pickup&&C.ForConstruction);
+            if(!V.HandlerWorkerId.IsEmpty())break;
+        }
     }
     if(!S.Workers.TransportHandlingReady(V.HandlerWorkerId,V.Id)){V.Status=Pickup?TEXT("Waiting for loading worker"):TEXT("Waiting for unloading worker");return;}
     V.Status=Pickup?TEXT("Worker loading cargo"):TEXT("Worker unloading cargo");C.Phase=Pickup?TEXT("loading"):TEXT("unloading");

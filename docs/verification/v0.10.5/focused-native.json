@@ -1,0 +1,2370 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "M9800X3D",
+			"instance": "7E8DDE904D5665BD35157EB3D8BE656C",
+			"instanceName": "M9800X3D-9084",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.12-06.41.52",
+	"succeeded": 64,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 527.854736328125,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ChargingBuildersKeepPhysicalCrewCaps",
+			"fullTestPath": "Seige.AI.ChargingBuildersKeepPhysicalCrewCaps",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 8.8157157897949219,
+			"dateTime": "2026.10.12-06.33.03",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CoreCrewReserveDuringConstruction",
+			"fullTestPath": "Seige.AI.CoreCrewReserveDuringConstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 6.231074333190918,
+			"dateTime": "2026.10.12-06.33.12",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DepletedBodiesCannotReserveChargingBerths",
+			"fullTestPath": "Seige.AI.DepletedBodiesCannotReserveChargingBerths",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.40877959132194519,
+			"dateTime": "2026.10.12-06.33.18",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FiniteKitIndustryOnGameTerrain",
+			"fullTestPath": "Seige.AI.FiniteKitIndustryOnGameTerrain",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 492.6248779296875,
+			"dateTime": "2026.10.12-06.33.19",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=0 buildings=1 roads=0 bodies=5 delivered=0.0 components=0.0 truck_deliveries=0 truck_m=0.0 status=Starting colony ready",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.19"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=1800 buildings=2 roads=0 bodies=5 delivered=1820.0 components=0.0 truck_deliveries=0 truck_m=10.0 status=Waiting for completion and staffing: trading_port",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=3600 buildings=3 roads=3 bodies=6 delivered=3540.9 components=0.0 truck_deliveries=3 truck_m=508.0 status=Waiting for completion and staffing: extraction_mine",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.21"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=5400 buildings=3 roads=5 bodies=6 delivered=6449.6 components=0.0 truck_deliveries=5 truck_m=975.6 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.23"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=7200 buildings=4 roads=6 bodies=7 delivered=9143.7 components=0.0 truck_deliveries=11 truck_m=1847.3 status=Waiting for completion and staffing: solar_array",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.25"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=9000 buildings=5 roads=7 bodies=8 delivered=10245.5 components=0.0 truck_deliveries=14 truck_m=2317.5 status=Waiting for completion and staffing: solar_array",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.29"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=10800 buildings=5 roads=7 bodies=10 delivered=11279.2 components=0.0 truck_deliveries=23 truck_m=3799.4 status=Waiting for completion and staffing: solar_array",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.31"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=12600 buildings=5 roads=8 bodies=11 delivered=11784.5 components=0.0 truck_deliveries=26 truck_m=4439.8 status=Waiting for a valid road-grid connection: Solar array · Level 1. Insufficient unreserved road construction materials",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=14400 buildings=6 roads=9 bodies=13 delivered=12860.1 components=0.0 truck_deliveries=33 truck_m=5487.0 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.37"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=16200 buildings=6 roads=11 bodies=15 delivered=14203.2 components=0.0 truck_deliveries=38 truck_m=6769.7 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=18000 buildings=7 roads=11 bodies=16 delivered=15925.0 components=0.0 truck_deliveries=41 truck_m=7414.5 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.45"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=19800 buildings=7 roads=12 bodies=17 delivered=17198.8 components=0.0 truck_deliveries=52 truck_m=8814.9 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.49"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=21600 buildings=7 roads=12 bodies=17 delivered=17921.7 components=0.0 truck_deliveries=52 truck_m=8814.9 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.53"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=23400 buildings=7 roads=12 bodies=17 delivered=18668.5 components=0.0 truck_deliveries=52 truck_m=8814.9 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.33.57"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=25201 buildings=7 roads=12 bodies=17 delivered=19334.0 components=0.0 truck_deliveries=52 truck_m=8814.9 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.01"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=27001 buildings=7 roads=12 bodies=17 delivered=20070.2 components=0.0 truck_deliveries=52 truck_m=8814.9 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=28801 buildings=8 roads=12 bodies=17 delivered=21695.2 components=0.0 truck_deliveries=56 truck_m=9487.8 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.09"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=30601 buildings=8 roads=15 bodies=18 delivered=22659.7 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.16"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=32401 buildings=8 roads=15 bodies=18 delivered=23722.7 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.21"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=34201 buildings=8 roads=15 bodies=18 delivered=24430.4 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.26"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=36001 buildings=8 roads=15 bodies=18 delivered=25148.5 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.30"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=37801 buildings=8 roads=15 bodies=18 delivered=25906.7 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=39601 buildings=8 roads=15 bodies=18 delivered=26657.0 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.39"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=41401 buildings=8 roads=15 bodies=18 delivered=27433.5 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.43"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=43201 buildings=8 roads=15 bodies=18 delivered=28153.6 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.47"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=45001 buildings=8 roads=15 bodies=18 delivered=28835.3 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.52"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=46801 buildings=8 roads=15 bodies=18 delivered=29552.0 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.34.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=48601 buildings=8 roads=15 bodies=18 delivered=30277.1 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.00"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=50401 buildings=8 roads=15 bodies=18 delivered=31237.8 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=52201 buildings=8 roads=15 bodies=18 delivered=31925.6 components=0.0 truck_deliveries=62 truck_m=10181.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.09"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=54001 buildings=9 roads=15 bodies=18 delivered=34295.1 components=0.0 truck_deliveries=65 truck_m=10755.8 status=Waiting for completion and staffing: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.16"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=55801 buildings=9 roads=15 bodies=18 delivered=35272.5 components=0.0 truck_deliveries=76 truck_m=12102.0 status=Waiting for completion and staffing: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.21"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=57601 buildings=9 roads=16 bodies=18 delivered=36690.1 components=0.0 truck_deliveries=90 truck_m=13827.0 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.28"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=59401 buildings=9 roads=16 bodies=18 delivered=38270.0 components=0.0 truck_deliveries=101 truck_m=15207.6 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=61201 buildings=9 roads=16 bodies=18 delivered=39677.6 components=0.0 truck_deliveries=112 truck_m=16628.6 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.40"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=63001 buildings=9 roads=16 bodies=18 delivered=40743.6 components=0.0 truck_deliveries=122 truck_m=17974.7 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.45"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=64801 buildings=9 roads=16 bodies=18 delivered=41469.7 components=0.0 truck_deliveries=130 truck_m=19171.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.51"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=66601 buildings=9 roads=16 bodies=19 delivered=42453.0 components=0.0 truck_deliveries=140 truck_m=20367.8 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.35.55"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=68401 buildings=9 roads=16 bodies=20 delivered=43362.2 components=0.0 truck_deliveries=148 truck_m=21564.4 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.00"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=70201 buildings=10 roads=16 bodies=20 delivered=45510.5 components=0.0 truck_deliveries=153 truck_m=22456.1 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.09"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=72001 buildings=10 roads=16 bodies=20 delivered=46572.6 components=0.0 truck_deliveries=165 truck_m=24432.0 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.17"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=73801 buildings=10 roads=16 bodies=20 delivered=47807.1 components=0.0 truck_deliveries=175 truck_m=25404.2 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.23"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=75601 buildings=10 roads=16 bodies=20 delivered=49292.4 components=0.0 truck_deliveries=185 truck_m=26526.0 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.29"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=77401 buildings=10 roads=16 bodies=20 delivered=50700.2 components=0.0 truck_deliveries=193 truck_m=27498.2 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.35"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=815 sector=4 terrain=1 time=78336 buildings=10 roads=18 bodies=20 delivered=51399.5 components=12.0 truck_deliveries=197 truck_m=28096.5 status=Waiting for construction materials: sensor",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.40"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=0 buildings=1 roads=0 bodies=5 delivered=0.0 components=0.0 truck_deliveries=0 truck_m=0.0 status=Starting colony ready",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.40"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=1800 buildings=2 roads=0 bodies=5 delivered=1780.0 components=0.0 truck_deliveries=0 truck_m=188.0 status=Waiting for completion and staffing: trading_port",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=3600 buildings=3 roads=3 bodies=6 delivered=4880.9 components=0.0 truck_deliveries=1 truck_m=826.4 status=Waiting for completion and staffing: extraction_mine",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.43"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=5400 buildings=3 roads=5 bodies=6 delivered=7414.2 components=0.0 truck_deliveries=1 truck_m=1368.6 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.45"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=7200 buildings=4 roads=7 bodies=7 delivered=10998.1 components=0.0 truck_deliveries=3 truck_m=1957.1 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.47"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=9000 buildings=4 roads=7 bodies=8 delivered=12494.1 components=0.0 truck_deliveries=4 truck_m=2172.2 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.49"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=10800 buildings=5 roads=8 bodies=8 delivered=14279.0 components=0.0 truck_deliveries=6 truck_m=3170.3 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.51"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=12600 buildings=6 roads=9 bodies=9 delivered=16926.1 components=0.0 truck_deliveries=7 truck_m=4177.9 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=14400 buildings=6 roads=11 bodies=11 delivered=19412.2 components=0.0 truck_deliveries=9 truck_m=5878.9 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.36.58"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=16200 buildings=7 roads=11 bodies=13 delivered=21796.0 components=0.0 truck_deliveries=10 truck_m=7072.0 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.02"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=18000 buildings=7 roads=12 bodies=15 delivered=23022.5 components=0.0 truck_deliveries=17 truck_m=9793.0 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=19800 buildings=8 roads=12 bodies=17 delivered=24443.3 components=0.0 truck_deliveries=26 truck_m=12981.3 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.11"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=21600 buildings=8 roads=13 bodies=17 delivered=26884.4 components=0.0 truck_deliveries=27 truck_m=13961.6 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.16"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=23400 buildings=8 roads=15 bodies=18 delivered=28563.1 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.21"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=25201 buildings=8 roads=15 bodies=18 delivered=29331.6 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.26"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=27001 buildings=8 roads=15 bodies=18 delivered=30066.0 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.30"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=28801 buildings=8 roads=15 bodies=18 delivered=30935.8 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=30601 buildings=8 roads=15 bodies=18 delivered=31691.4 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.39"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=32401 buildings=8 roads=15 bodies=18 delivered=32554.1 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.43"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=34201 buildings=8 roads=15 bodies=18 delivered=33345.8 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.47"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=36001 buildings=8 roads=15 bodies=18 delivered=34164.2 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.52"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=37801 buildings=8 roads=15 bodies=18 delivered=35038.3 components=0.0 truck_deliveries=28 truck_m=14762.3 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.37.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=39601 buildings=9 roads=15 bodies=18 delivered=37118.6 components=0.0 truck_deliveries=30 truck_m=16456.3 status=Waiting for completion and staffing: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=41401 buildings=9 roads=15 bodies=18 delivered=38552.7 components=0.0 truck_deliveries=31 truck_m=16812.4 status=Waiting for completion and staffing: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.09"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=43201 buildings=9 roads=16 bodies=18 delivered=39711.0 components=0.0 truck_deliveries=31 truck_m=17313.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.14"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=45001 buildings=9 roads=16 bodies=19 delivered=40138.8 components=0.0 truck_deliveries=31 truck_m=17319.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=46801 buildings=9 roads=16 bodies=19 delivered=40439.2 components=0.0 truck_deliveries=31 truck_m=17319.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.25"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=48601 buildings=9 roads=16 bodies=19 delivered=40831.5 components=0.0 truck_deliveries=31 truck_m=17319.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.31"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=50401 buildings=9 roads=16 bodies=19 delivered=41200.9 components=0.0 truck_deliveries=31 truck_m=17319.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.36"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=52201 buildings=9 roads=16 bodies=20 delivered=41826.2 components=0.0 truck_deliveries=31 truck_m=17319.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=54001 buildings=9 roads=16 bodies=20 delivered=42209.9 components=0.0 truck_deliveries=31 truck_m=17319.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.46"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=55801 buildings=10 roads=16 bodies=20 delivered=44369.8 components=0.0 truck_deliveries=33 truck_m=18095.8 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=57601 buildings=10 roads=16 bodies=20 delivered=45575.8 components=0.0 truck_deliveries=77 truck_m=26231.5 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.38.59"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=59401 buildings=10 roads=16 bodies=20 delivered=46644.7 components=0.0 truck_deliveries=128 truck_m=34517.3 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=61201 buildings=10 roads=16 bodies=20 delivered=47755.8 components=0.0 truck_deliveries=184 truck_m=43352.8 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.10"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=63001 buildings=10 roads=16 bodies=20 delivered=48762.5 components=0.0 truck_deliveries=228 truck_m=50678.2 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.15"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=2222 sector=0 terrain=1 time=63527 buildings=10 roads=18 bodies=20 delivered=49156.8 components=12.0 truck_deliveries=242 truck_m=52706.2 status=Waiting for construction materials: sensor",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.17"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=0 buildings=1 roads=0 bodies=5 delivered=0.0 components=0.0 truck_deliveries=0 truck_m=0.0 status=Starting colony ready",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.17"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=1800 buildings=2 roads=0 bodies=5 delivered=1700.0 components=0.0 truck_deliveries=0 truck_m=0.0 status=Waiting for completion and staffing: trading_port",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.18"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=3600 buildings=3 roads=3 bodies=6 delivered=4006.9 components=0.0 truck_deliveries=2 truck_m=484.5 status=Waiting for completion and staffing: extraction_mine",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=5400 buildings=3 roads=5 bodies=6 delivered=6248.9 components=0.0 truck_deliveries=4 truck_m=915.8 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.22"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=7200 buildings=4 roads=6 bodies=7 delivered=8500.7 components=0.0 truck_deliveries=12 truck_m=2327.5 status=Waiting for completion and staffing: solar_array",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.23"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=9000 buildings=5 roads=7 bodies=8 delivered=10167.9 components=0.0 truck_deliveries=22 truck_m=5012.7 status=Waiting for completion and staffing: solar_array",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.26"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=10800 buildings=5 roads=9 bodies=10 delivered=11422.6 components=0.0 truck_deliveries=31 truck_m=6635.0 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.28"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=12600 buildings=6 roads=9 bodies=12 delivered=13846.5 components=0.0 truck_deliveries=38 truck_m=8477.8 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.31"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=14400 buildings=7 roads=11 bodies=14 delivered=14415.7 components=0.0 truck_deliveries=47 truck_m=10262.8 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=16200 buildings=7 roads=12 bodies=15 delivered=15977.5 components=0.0 truck_deliveries=54 truck_m=12852.1 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.38"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=18000 buildings=7 roads=12 bodies=17 delivered=18130.8 components=0.0 truck_deliveries=61 truck_m=14275.3 status=Waiting for construction materials: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.42"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=19800 buildings=8 roads=12 bodies=17 delivered=20414.8 components=0.0 truck_deliveries=67 truck_m=16520.2 status=Waiting for completion and staffing: robot_service_bay",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.47"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=21600 buildings=8 roads=13 bodies=17 delivered=21806.7 components=0.0 truck_deliveries=77 truck_m=19602.7 status=Waiting for a valid road-grid connection: Charging station. Insufficient unreserved road construction materials",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.52"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=23400 buildings=8 roads=15 bodies=18 delivered=23588.1 components=0.0 truck_deliveries=85 truck_m=22114.2 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.39.57"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=25201 buildings=8 roads=15 bodies=18 delivered=24616.2 components=0.0 truck_deliveries=97 truck_m=25373.8 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.02"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=27001 buildings=8 roads=15 bodies=18 delivered=25419.9 components=0.0 truck_deliveries=109 truck_m=28145.5 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.06"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=28801 buildings=8 roads=15 bodies=18 delivered=26297.3 components=0.0 truck_deliveries=124 truck_m=31742.2 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.11"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=30601 buildings=8 roads=15 bodies=18 delivered=27229.6 components=0.0 truck_deliveries=133 truck_m=33164.2 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.15"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=32401 buildings=8 roads=15 bodies=18 delivered=27989.8 components=0.0 truck_deliveries=146 truck_m=36341.9 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=34201 buildings=8 roads=15 bodies=18 delivered=28878.9 components=0.0 truck_deliveries=158 truck_m=38707.7 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.24"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=36001 buildings=8 roads=15 bodies=18 delivered=29755.8 components=0.0 truck_deliveries=168 truck_m=40879.9 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.29"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=37801 buildings=8 roads=15 bodies=18 delivered=30672.7 components=0.0 truck_deliveries=176 truck_m=42302.0 status=Waiting for construction materials: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.33"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=39601 buildings=9 roads=15 bodies=18 delivered=31729.7 components=0.0 truck_deliveries=182 truck_m=43800.0 status=Waiting for completion and staffing: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.38"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=41401 buildings=9 roads=15 bodies=18 delivered=35251.7 components=0.0 truck_deliveries=187 truck_m=46039.0 status=Waiting for completion and staffing: alloy_refinery",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.44"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=43201 buildings=9 roads=16 bodies=18 delivered=36920.1 components=0.0 truck_deliveries=195 truck_m=47994.6 status=Constructing road-grid connection",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.49"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=45001 buildings=9 roads=16 bodies=18 delivered=39748.2 components=0.0 truck_deliveries=213 truck_m=54177.8 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.40.55"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=46801 buildings=9 roads=16 bodies=18 delivered=41385.0 components=0.0 truck_deliveries=221 truck_m=56592.3 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.41.01"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=48601 buildings=9 roads=16 bodies=20 delivered=42956.2 components=0.0 truck_deliveries=231 truck_m=59736.7 status=Waiting for construction materials: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.41.06"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=50401 buildings=10 roads=16 bodies=20 delivered=45507.3 components=0.0 truck_deliveries=237 truck_m=61531.4 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.41.11"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=52201 buildings=10 roads=16 bodies=20 delivered=47092.4 components=0.0 truck_deliveries=247 truck_m=64561.8 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.41.16"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=54001 buildings=10 roads=16 bodies=20 delivered=48604.8 components=0.0 truck_deliveries=253 truck_m=66596.9 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.41.21"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=55801 buildings=10 roads=16 bodies=20 delivered=50857.9 components=0.0 truck_deliveries=260 truck_m=68825.8 status=Waiting for completion and staffing: component_works",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.41.27"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STARTING_AI seed=4242 sector=8 terrain=1 time=57257 buildings=10 roads=18 bodies=20 delivered=51395.4 components=12.0 truck_deliveries=268 truck_m=71342.5 status=Waiting for construction materials: sensor",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.12-06.41.31"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NextPrerequisiteExportsFundMissingParts",
+			"fullTestPath": "Seige.AI.NextPrerequisiteExportsFundMissingParts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.39986410737037659,
+			"dateTime": "2026.10.12-06.41.31",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PermanentCrewKeepsExpansionFunded",
+			"fullTestPath": "Seige.AI.PermanentCrewKeepsExpansionFunded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0089836008846759796,
+			"dateTime": "2026.10.12-06.41.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PowerlessCourierPreservesCargoAndReleasesUnpickedClaim",
+			"fullTestPath": "Seige.AI.PowerlessCourierPreservesCargoAndReleasesUnpickedClaim",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.39349541068077087,
+			"dateTime": "2026.10.12-06.41.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ServiceAttendantsKeepChargingDependencies",
+			"fullTestPath": "Seige.AI.ServiceAttendantsKeepChargingDependencies",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.39568188786506653,
+			"dateTime": "2026.10.12-06.41.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DamageIncidentsAndSectorPositions",
+			"fullTestPath": "Seige.Audio.DamageIncidentsAndSectorPositions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.015976499766111374,
+			"dateTime": "2026.10.12-06.41.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RealTimeRateAndFunctionalFeedback",
+			"fullTestPath": "Seige.Audio.RealTimeRateAndFunctionalFeedback",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.016369197517633438,
+			"dateTime": "2026.10.12-06.41.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BoundariesAndSeasons",
+			"fullTestPath": "Seige.Calendar.BoundariesAndSeasons",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.015677399933338165,
+			"dateTime": "2026.10.12-06.41.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SolarIntegrationAndClockPartition",
+			"fullTestPath": "Seige.Calendar.SolarIntegrationAndClockPartition",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.014889799058437347,
+			"dateTime": "2026.10.12-06.41.33",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SolarNightAndConstantFusion",
+			"fullTestPath": "Seige.Calendar.SolarNightAndConstantFusion",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.008671000599861145,
+			"dateTime": "2026.10.12-06.41.33",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AutonomousClearFire",
+			"fullTestPath": "Seige.Combat.AutonomousClearFire",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 1.6306015253067017,
+			"dateTime": "2026.10.12-06.41.33",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefensiveCornerArrival",
+			"fullTestPath": "Seige.Combat.DefensiveCornerArrival",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0083333998918533325,
+			"dateTime": "2026.10.12-06.41.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefensiveEnergyBeforeVehicleCharging",
+			"fullTestPath": "Seige.Combat.DefensiveEnergyBeforeVehicleCharging",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.39892038702964783,
+			"dateTime": "2026.10.12-06.41.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefensiveEnergyTransactionsAndPersistence",
+			"fullTestPath": "Seige.Combat.DefensiveEnergyTransactionsAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.71009910106658936,
+			"dateTime": "2026.10.12-06.41.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EditableHardpointAndFleetBudgets",
+			"fullTestPath": "Seige.Combat.EditableHardpointAndFleetBudgets",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.040159299969673157,
+			"dateTime": "2026.10.12-06.41.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LoadoutAndFiniteFactory",
+			"fullTestPath": "Seige.Combat.LoadoutAndFiniteFactory",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41504430770874023,
+			"dateTime": "2026.10.12-06.41.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LootTierScarcityAndPersistence",
+			"fullTestPath": "Seige.Combat.LootTierScarcityAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.060415200889110565,
+			"dateTime": "2026.10.12-06.41.36",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PrivateerTravelCargoAndShuttle",
+			"fullTestPath": "Seige.Combat.PrivateerTravelCargoAndShuttle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 1.7833626270294189,
+			"dateTime": "2026.10.12-06.41.36",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProjectilesProtectionAndPersistence",
+			"fullTestPath": "Seige.Combat.ProjectilesProtectionAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.8178132176399231,
+			"dateTime": "2026.10.12-06.41.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ShotCostsSplashAndRefitDemand",
+			"fullTestPath": "Seige.Combat.ShotCostsSplashAndRefitDemand",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 1.2368103265762329,
+			"dateTime": "2026.10.12-06.41.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControlledRouteEligibility",
+			"fullTestPath": "Seige.Companions.ControlledRouteEligibility",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0089179016649723053,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DamageTriggeredShelter",
+			"fullTestPath": "Seige.Companions.DamageTriggeredShelter",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.010912299156188965,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FirstPersonControls",
+			"fullTestPath": "Seige.Companions.FirstPersonControls",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.012570500373840332,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GriefSlowsPhysicalWorkers",
+			"fullTestPath": "Seige.Companions.GriefSlowsPhysicalWorkers",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0081801004707813263,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LandingHealingAndPermanentDeath",
+			"fullTestPath": "Seige.Companions.LandingHealingAndPermanentDeath",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.013161700218915939,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PhysicalFoodAndMorale",
+			"fullTestPath": "Seige.Companions.PhysicalFoodAndMorale",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0082913003861904144,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WalkingInterpolationAndPersistence",
+			"fullTestPath": "Seige.Companions.WalkingInterpolationAndPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.008268602192401886,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GameMenuPauseAndSave",
+			"fullTestPath": "Seige.Frontend.GameMenuPauseAndSave",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.081854797899723053,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NeighborhoodSaveLoad",
+			"fullTestPath": "Seige.Frontend.NeighborhoodSaveLoad",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 1.8947319984436035,
+			"dateTime": "2026.10.12-06.41.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BuildingClickAfterRegionSurvey",
+			"fullTestPath": "Seige.Interaction.BuildingClickAfterRegionSurvey",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.011357702314853668,
+			"dateTime": "2026.10.12-06.41.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BuildMenuShortcuts",
+			"fullTestPath": "Seige.Interaction.BuildMenuShortcuts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.40953820943832397,
+			"dateTime": "2026.10.12-06.41.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPlansPaymentsAndOwnership",
+			"fullTestPath": "Seige.Interaction.CombatPlansPaymentsAndOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41718050837516785,
+			"dateTime": "2026.10.12-06.41.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CommandShuttleGeometrySelection",
+			"fullTestPath": "Seige.Interaction.CommandShuttleGeometrySelection",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.45224690437316895,
+			"dateTime": "2026.10.12-06.41.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControllerClickBetweenDraws",
+			"fullTestPath": "Seige.Interaction.ControllerClickBetweenDraws",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41521620750427246,
+			"dateTime": "2026.10.12-06.41.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FloatingDockAndRegionIsolation",
+			"fullTestPath": "Seige.Interaction.FloatingDockAndRegionIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41389289498329163,
+			"dateTime": "2026.10.12-06.41.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PreparationCancelAndInputIsolation",
+			"fullTestPath": "Seige.Interaction.PreparationCancelAndInputIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41659799218177795,
+			"dateTime": "2026.10.12-06.41.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ResourceGroupsAndHoverControls",
+			"fullTestPath": "Seige.Interaction.ResourceGroupsAndHoverControls",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41151660680770874,
+			"dateTime": "2026.10.12-06.41.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RoadToolsAndIsolation",
+			"fullTestPath": "Seige.Interaction.RoadToolsAndIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41332250833511353,
+			"dateTime": "2026.10.12-06.41.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SelectedCoreCommands",
+			"fullTestPath": "Seige.Interaction.SelectedCoreCommands",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41386190056800842,
+			"dateTime": "2026.10.12-06.41.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SpeedAndGameMenuShortcuts",
+			"fullTestPath": "Seige.Interaction.SpeedAndGameMenuShortcuts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41433221101760864,
+			"dateTime": "2026.10.12-06.41.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TradingPortWorkerTargets",
+			"fullTestPath": "Seige.Interaction.TradingPortWorkerTargets",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 1.1351238489151001,
+			"dateTime": "2026.10.12-06.41.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UiClickIsolation",
+			"fullTestPath": "Seige.Interaction.UiClickIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.40899628400802612,
+			"dateTime": "2026.10.12-06.41.48",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnitHoverGeometry",
+			"fullTestPath": "Seige.Interaction.UnitHoverGeometry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.015783797949552536,
+			"dateTime": "2026.10.12-06.41.48",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnitHoverVisibility",
+			"fullTestPath": "Seige.Interaction.UnitHoverVisibility",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.011975400149822235,
+			"dateTime": "2026.10.12-06.41.48",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WallPlanInputsWithoutCanvas",
+			"fullTestPath": "Seige.Interaction.WallPlanInputsWithoutCanvas",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41492810845375061,
+			"dateTime": "2026.10.12-06.41.48",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorkerProductionAndReserveControls",
+			"fullTestPath": "Seige.Interaction.WorkerProductionAndReserveControls",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41076061129570007,
+			"dateTime": "2026.10.12-06.41.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AuthoritativeTerrainStable",
+			"fullTestPath": "Seige.NextUpdate.AuthoritativeTerrainStable",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.019574500620365143,
+			"dateTime": "2026.10.12-06.41.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AutonomousTransportConservation",
+			"fullTestPath": "Seige.NextUpdate.AutonomousTransportConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.048718497157096863,
+			"dateTime": "2026.10.12-06.41.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MobilityRouteCache",
+			"fullTestPath": "Seige.NextUpdate.MobilityRouteCache",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0084192007780075073,
+			"dateTime": "2026.10.12-06.41.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OwnedCrewConservation",
+			"fullTestPath": "Seige.NextUpdate.OwnedCrewConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 1.0349303483963013,
+			"dateTime": "2026.10.12-06.41.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PhysicalChargingAndSurplus",
+			"fullTestPath": "Seige.NextUpdate.PhysicalChargingAndSurplus",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.07148270308971405,
+			"dateTime": "2026.10.12-06.41.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HomeSurveyPersistsAfterLanding",
+			"fullTestPath": "Seige.Regions.HomeSurveyPersistsAfterLanding",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.011249501258134842,
+			"dateTime": "2026.10.12-06.41.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PreparedScenarioCapturesSeed",
+			"fullTestPath": "Seige.Regions.PreparedScenarioCapturesSeed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.017651300877332687,
+			"dateTime": "2026.10.12-06.41.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ScenarioResourceSeedsAndThreatIndependence",
+			"fullTestPath": "Seige.Regions.ScenarioResourceSeedsAndThreatIndependence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.071911700069904327,
+			"dateTime": "2026.10.12-06.41.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NearLimitSlopeConsistency",
+			"fullTestPath": "Seige.Transport.NearLimitSlopeConsistency",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.010976102203130722,
+			"dateTime": "2026.10.12-06.41.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PhysicalRoadRoutingAndDelivery",
+			"fullTestPath": "Seige.Transport.PhysicalRoadRoutingAndDelivery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 1.012541651725769,
+			"dateTime": "2026.10.12-06.41.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DeadCourierAndLoaderConservation",
+			"fullTestPath": "Seige.Units.DeadCourierAndLoaderConservation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0084243007004261017,
+			"dateTime": "2026.10.12-06.41.51",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorkerAndDogPhysicalDamage",
+			"fullTestPath": "Seige.Units.WorkerAndDogPhysicalDamage",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0082678981125354767,
+			"dateTime": "2026.10.12-06.41.51",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorkerHealthPersistenceAndDeath",
+			"fullTestPath": "Seige.Units.WorkerHealthPersistenceAndDeath",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.021605502814054489,
+			"dateTime": "2026.10.12-06.41.51",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AutomaticCommandReserve",
+			"fullTestPath": "Seige.Workers.AutomaticCommandReserve",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.41507360339164734,
+			"dateTime": "2026.10.12-06.41.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CargoSpeedParity",
+			"fullTestPath": "Seige.Workers.CargoSpeedParity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7E8DDE904D5665BD35157EB3D8BE656C"
+			],
+			"duration": 0.0088130012154579163,
+			"dateTime": "2026.10.12-06.41.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

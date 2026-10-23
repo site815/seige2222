@@ -1,0 +1,62 @@
+{
+  "select": {
+    "asset": "/Game/Art/Audio/S_select.S_select",
+    "source_sha256": "64cfacbf884f9bce75f03a91d36ebb646dcce9b836ac4b93ff60e931d89eee15",
+    "generator_revision": "functional-console-v2"
+  },
+  "confirm": {
+    "asset": "/Game/Art/Audio/S_confirm.S_confirm",
+    "source_sha256": "cdacdfa3791d793a400f36a4a352440e9614bc924c2d82f5c333e3ee928f0ba6",
+    "generator_revision": "functional-console-v2"
+  },
+  "cancel": {
+    "asset": "/Game/Art/Audio/S_cancel.S_cancel",
+    "source_sha256": "37c3973c7fb3a89843d99d679131a9b5883e3a803bafacfcf70bce64aca36d55",
+    "generator_revision": "functional-console-v2"
+  },
+  "error": {
+    "asset": "/Game/Art/Audio/S_error.S_error",
+    "source_sha256": "076ce40504f8cac12f0ef7e7963ac1948a494eade2ca37751114a1e316fc3ee5",
+    "generator_revision": "functional-console-v2"
+  },
+  "build": {
+    "asset": "/Game/Art/Audio/S_build.S_build",
+    "source_sha256": "dcb5b52ca77dbd05b059ee51888f080897739b7b2148a414fb775f61c0228001",
+    "generator_revision": "functional-console-v2"
+  },
+  "complete": {
+    "asset": "/Game/Art/Audio/S_complete.S_complete",
+    "source_sha256": "15aa7b2baa098acdd16211d50f7b2d22cde8e75042b704484a7aa6cd957a4c9f",
+    "generator_revision": "functional-console-v2"
+  },
+  "alert": {
+    "asset": "/Game/Art/Audio/S_alert.S_alert",
+    "source_sha256": "1c14d7e01e94547e40c5d8819d7acbaa6feea9b2d9a8963e957ef292ae602679",
+    "generator_revision": "functional-console-v2"
+  },
+  "laser": {
+    "asset": "/Game/Art/Audio/S_laser.S_laser",
+    "source_sha256": "017b3f059a1f4a88d36d4dc74b5004bc8a84b41e0626aabfe8927c95c579e540",
+    "generator_revision": "functional-console-v2"
+  },
+  "kinetic": {
+    "asset": "/Game/Art/Audio/S_kinetic.S_kinetic",
+    "source_sha256": "947729292a99173b5746cc91d740f61723279cd63bfae8bd66c46c67b46dde12",
+    "generator_revision": "functional-console-v2"
+  },
+  "missile": {
+    "asset": "/Game/Art/Audio/S_missile.S_missile",
+    "source_sha256": "6b376096431662c57775d4313f1e981b1e1c95cb430f76c6df37d93b3dd520f8",
+    "generator_revision": "functional-console-v2"
+  },
+  "plasma": {
+    "asset": "/Game/Art/Audio/S_plasma.S_plasma",
+    "source_sha256": "fc2c646cc1816778d7b94491c64af1d5e2422b1d4836dd30511f6d7e7221f9d3",
+    "generator_revision": "functional-console-v2"
+  },
+  "rex": {
+    "asset": "/Game/Art/Audio/S_rex.S_rex",
+    "source_sha256": "b47a406c3e7d474599ea8820035df7fe736495bf447314ced13cf0c9b5ae7368",
+    "generator_revision": "functional-console-v2"
+  }
+}

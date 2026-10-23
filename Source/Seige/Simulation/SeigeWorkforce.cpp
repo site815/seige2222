@@ -9,8 +9,8 @@ bool FSeigeSimulation::LoadWorkforce(FString& Error)
     {double V=0;if(!Policy->TryGetNumberField(Key,V)||!FMath::IsFinite(V)||V<=0){Error=FString(TEXT("Invalid workforce policy: "))+Key;return false;}}
     if(Number(TEXT("inactive_worker_litres"))!=Resources[Resource].LitresPerUnit){Error=TEXT("Worker storage must match physical cargo volume");return false;}
     for(const TCHAR* Key:{TEXT("auto_disassemble_parts_shortage"),TEXT("auto_disassemble_storage_full")}){bool Flag=false;if(!Policy->TryGetBoolField(Key,Flag)){Error=TEXT("Missing automatic disassembly selector");return false;}}
-    for(const TCHAR* Key:{TEXT("default_inactive_worker_target"),TEXT("default_port_worker_reserve_target")}){double V=0;if(!Policy->TryGetNumberField(Key,V)||!FMath::IsFinite(V)||V<0||V>100000||V!=FMath::FloorToDouble(V)){Error=TEXT("Invalid worker reserve target");return false;}}
-    WorkerSurplusTarget=int32(Number(TEXT("default_inactive_worker_target")));
+    FString ReservePolicy;if(!Policy->TryGetStringField(TEXT("inactive_worker_target_policy"),ReservePolicy)||ReservePolicy!=TEXT("command_capacity")||Policy->HasField(TEXT("default_inactive_worker_target"))){Error=TEXT("Worker spare target must derive from command capacity");return false;}
+    double PortTarget=0;if(!Policy->TryGetNumberField(TEXT("default_port_worker_reserve_target"),PortTarget)||!FMath::IsFinite(PortTarget)||PortTarget<0||PortTarget>100000||PortTarget!=FMath::FloorToDouble(PortTarget)){Error=TEXT("Invalid trading-port worker reserve target");return false;}
     const TSharedPtr<FJsonObject>* Returns=nullptr;if(!Policy->TryGetObjectField(TEXT("worker_disassembly_outputs"),Returns)||!Returns||!Returns->IsValid()){Error=TEXT("Missing disassembly output bill");return false;}
     double Mass=0;for(const auto& P:(*Returns)->Values){const FString Id(P.Key);double V=0;if(!Resources.Contains(Id)||Id==Resource||!P.Value->TryGetNumber(V)||!FMath::IsFinite(V)||V<0||(Resources[Id].Discrete&&V!=FMath::FloorToDouble(V))){Error=TEXT("Invalid worker disassembly output");return false;}Mass+=V*Resources[Id].UnitMassKg;}
     if(Mass<=0||Mass>Resources[Resource].UnitMassKg+1.e-8){Error=TEXT("Disassembly cannot create physical mass");return false;}
@@ -37,7 +37,8 @@ bool FSeigeSimulation::CanCommitProduction(const FSeigeBuilding& B,const FString
 double FSeigeSimulation::ProductionOutputLitres(const FSeigeRecipeDef& R) const{return InventoryLitres(R.Outputs)+R.WorkerOutput*Number(TEXT("inactive_worker_litres"));}
 int32 FSeigeSimulation::InactiveWorkerCount() const{if(!Policy)return 0;int32 Count=FMath::RoundToInt(TotalStock(TextRule(TEXT("inactive_worker_resource"))));for(const auto& B:Buildings)if(B.Health>0&&B.DisassemblyCommitted)--Count;return Count;}
 double FSeigeSimulation::DisassemblyEnergyKWh() const{return Policy?Number(TEXT("worker_disassembly_kwh")):0;}
-int32 FSeigeSimulation::WorkerReserveTarget() const{int32 Target=WorkerSurplusTarget;for(const auto& B:Buildings)if(B.Health>0)Target+=B.WorkerExportTarget;return Target;}
+int32 FSeigeSimulation::WorkerSurplusTarget() const{const auto* B=Core();const auto* D=B&&B->Health>0?Definition(*B):nullptr;return D?D->Jobs:0;}
+int32 FSeigeSimulation::WorkerReserveTarget() const{int32 Target=WorkerSurplusTarget();for(const auto& B:Buildings)if(B.Health>0)Target+=B.WorkerExportTarget;return Target;}
 int32 FSeigeSimulation::PendingWorkers() const{int32 Count=0;const FString Resource=TextRule(TEXT("inactive_worker_resource"));for(const auto& B:Buildings)if(B.Health>0){if(B.ProductionCommitted)if(const auto* R=Recipes.Find(B.CommittedRecipe))Count+=R->WorkerOutput;if(B.Shipment.Buy&&B.Shipment.Resource==Resource)Count+=FMath::RoundToInt(B.Shipment.Quantity);}return Count;}
 int32 FSeigeSimulation::WorkersNeeded() const
 {const int32 Active=FMath::Max(TotalJobs,int32(Number(TEXT("minimum_population"))));return FMath::Max(0,Active+WorkerReserveTarget()-Population-InactiveWorkerCount()-PendingWorkers());}
@@ -68,8 +69,6 @@ bool FSeigeSimulation::SetProductionRecipe(int32 Id,const FString& Recipe,FStrin
     auto* B=FindBuilding(Id);if(Escaped||Failed||!B||B->Health<=0||B->IsConstructing||!ProductionOptions(Id).Contains(Recipe)){Error=TEXT("Select an available recipe on a completed production building");return false;}
     B->SelectedRecipe=Recipe;Error.Empty();AddEvent(B->ProductionCommitted?TEXT("Production selection saved; current paid batch finishes first"):TEXT("Production selection changed"));return true;
 }
-bool FSeigeSimulation::SetWorkerSurplusTarget(int32 Target,FString& Error)
-{if(Escaped||Failed||Target<0||Target>100000){Error=TEXT("Invalid inactive-worker target");return false;}WorkerSurplusTarget=Target;Error.Empty();return true;}
 bool FSeigeSimulation::SetPortWorkerTarget(int32 Id,int32 Target,FString& Error)
 {auto* B=FindBuilding(Id);if(Escaped||Failed||!B||B->Health<=0||!Trade.Definition(B->DefId)||Target<0||Target>100000){Error=TEXT("Select a trading port and a valid whole-worker reserve target");return false;}B->WorkerExportTarget=Target;Error.Empty();return true;}
 

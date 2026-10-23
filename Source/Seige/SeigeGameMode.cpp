@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeActionFeedback.h"
 #include "AI/SeigeScenarioAI.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Camera/CameraActor.h"
@@ -374,11 +375,11 @@ void ASeigeGameMode::SyncVisuals()
 void ASeigeGameMode::ClickWorld()
 {
     if(!Ready||!CursorOnWorld||IsRegionMap()||CompanionView) return;
-    if(Screen==TEXT("landing")) { ConfirmLanding(CursorWorld); return; }
+    if(Screen==TEXT("landing")) { ConfirmLanding(CursorWorld);SeigeAudio::PlayResult(GetWorld(),Screen==TEXT("playing"),TEXT("build")); return; }
     if(Screen!=TEXT("playing")) return;
     if(FleetOrderActive)
     {
-        if(!Observer&&DetailedSectorIndex()==4)Notice=Sim.Combat.OrderFleet(Sim,SelectedFleetId,TEXT("move"),CursorWorld,0,Error)?TEXT("Fleet moving; units choose their own routes and targets."):Error;
+        if(!Observer&&DetailedSectorIndex()==4)Notice=SeigeActionNotice(GetWorld(),Sim.Combat.OrderFleet(Sim,SelectedFleetId,TEXT("move"),CursorWorld,0,Error),TEXT("Fleet moving; units choose their own routes and targets."),Error);
         FleetOrderActive=false;return;
     }
     if(WallPlacementActive){ClickWallPlan();return;}
@@ -388,9 +389,9 @@ void ASeigeGameMode::ClickWorld()
         if(RoadPlacementActive)
         {
             const FVector2D Point=SnapRoadCursor(CursorWorld);
-            if(!RoadHasStart){RoadStart=Point;RoadHasStart=true;Notice=TEXT("Choose the road destination. Endpoints snap to building edge ports and existing roads.");}
-            else if(Sim.PlaceRoad(RoadStart,Point,Error)){SelectedRoadId=Sim.Roads.Last().Id;RoadHasStart=false;RefreshTransportScenery();Notice=TEXT("Road construction queued: workers must deliver materials and build the corridor.");}
-            else Notice=Error;
+            if(!RoadHasStart){RoadStart=Point;RoadHasStart=true;SeigeAudio::PlayUi(GetWorld(),TEXT("select"));Notice=TEXT("Choose the road destination. Endpoints snap to building edge ports and existing roads.");}
+            else if(Sim.PlaceRoad(RoadStart,Point,Error)){SeigeAudio::PlayUi(GetWorld(),TEXT("build"));SelectedRoadId=Sim.Roads.Last().Id;RoadHasStart=false;RefreshTransportScenery();Notice=TEXT("Road construction queued: workers must deliver materials and build the corridor.");}
+            else {Notice=Error;SeigeAudio::PlayUi(GetWorld(),TEXT("error"));}
             return;
         }
         SelectedRoadId=0;
@@ -404,26 +405,25 @@ void ASeigeGameMode::ClickWorld()
             const auto* Tier=Sim.TransportTiers.Find(Road.Tier.IsEmpty()?Road.TargetTier:Road.Tier);
             if(Tier&&Distance<FMath::Max(20.,Tier->WidthMeters*.6/Sim.MetersPerWorldUnit())&&Distance<Best){SelectedRoadId=Road.Id;Best=Distance;}
         }
-        if(SelectedRoadId>0)BeginRoadUpgrade();else Notice=TEXT("Select the surface of a completed transport corridor.");
+        if(SelectedRoadId>0)BeginRoadUpgrade();else {Notice=TEXT("Select the surface of a completed transport corridor.");SeigeAudio::PlayUi(GetWorld(),TEXT("error"));}
         return;
     }
     if(!SelectedBuild.IsEmpty())
     {
         if(Observer||DetailedSectorIndex()!=4)return;
-        if(Sim.PlaceBuilding(SelectedBuild,CursorWorld,Error)) Notice=TEXT("Construction queued. Workers deliver materials, prepare foundations and assemble the building."); else Notice=Error;
+        Notice=SeigeActionNotice(GetWorld(),Sim.PlaceBuilding(SelectedBuild,CursorWorld,Error),TEXT("Construction queued. Workers deliver materials, prepare foundations and assemble the building."),Error,TEXT("build"));
         return;
     }
     SelectedId=SelectedRoadId=SelectedCompanionId=0; double Distance=TNumericLimits<double>::Max();
-    if(!Observer&&DetailedSectorIndex()==4)for(const auto& V:Sim.Combat.Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&FVector2D::Distance(CursorWorld,V.Position)<Sim.Combat.Chassis[V.ChassisId].RadiusMeters/Sim.MetersPerWorldUnit())
-    {SelectedFleetId=V.FleetId;Notice=FString::Printf(TEXT("Fleet %d selected. Open its command-center fleet panel to issue a mission."),SelectedFleetId);return;}
-    for(const auto& Dog:Sim.Companions.Dogs)if(!Dog.Evacuated&&FVector2D::Distance(CursorWorld,Dog.Position)<FMath::Max(22.,CameraViewZoom()*.01)){SelectedCompanionId=Dog.Id;return;}
+    // Rendered unit selection is resolved by the controller's shared inspection
+    // path. Ground-only fallbacks must not resurrect indoor or out-of-sector units.
     if(const auto* Viewed=ViewedSimulation())for(const auto& B:Viewed->Buildings)
     {
         const auto* D=Viewed->Definition(B);const FVector2D Local=CursorWorld-B.Position-DetailedSectorOffset();
         if(D&&B.Health>0&&(Observer||DetailedSectorIndex()==4||IsWorldVisible(B.Position+DetailedSectorOffset()))&&FMath::Abs(Local.X)<=D->ReservedFootprint&&FMath::Abs(Local.Y)<=D->ReservedFootprint&&Local.Size()<Distance)
         {Distance=Local.Size();SelectedId=B.Id;}
     }
-    if(!SelectedId&&DetailedSectorIndex()==4)for(const auto& Road:Sim.Roads)
+    if(Sim.RoadsEnabled()&&!SelectedId&&DetailedSectorIndex()==4)for(const auto& Road:Sim.Roads)
     {
         if(Road.Health<=0)continue;
         const FVector2D Delta=Road.B-Road.A;const double T=FMath::Clamp(FVector2D::DotProduct(CursorWorld-Road.A,Delta)/FMath::Max(Delta.SizeSquared(),1.),0.,1.);
@@ -431,6 +431,7 @@ void ASeigeGameMode::ClickWorld()
         const auto* Tier=Sim.TransportTiers.Find(Road.Tier.IsEmpty()?Road.TargetTier:Road.Tier);
         if(Tier&&D<FMath::Max(20.,Tier->WidthMeters*.6/Sim.MetersPerWorldUnit())&&D<Distance){SelectedRoadId=Road.Id;Distance=D;}
     }
+    if(SelectedId||SelectedRoadId)SeigeAudio::PlayUi(GetWorld(),TEXT("select"));
 }
 bool ASeigeGameMode::SelectBuildingRay(const FVector& Origin,const FVector& Direction)
 {
@@ -441,6 +442,6 @@ bool ASeigeGameMode::SelectBuildingRay(const FVector& Origin,const FVector& Dire
     if(TraceGroundRay(Origin,Direction,TerrainHit)&&FVector::DistSquared(Origin,TerrainHit)+25<FVector::DistSquared(Origin,Hit.ImpactPoint))return false;
     const FString Prefix=DetailedSectorIndex()==4?TEXT("home_"):FString::Printf(TEXT("zone_%d_"),DetailedSectorIndex());
     if(const auto* Viewed=ViewedSimulation())for(const auto& B:Viewed->Buildings)
-        if(B.Health>0&&Visuals.FindRef(Prefix+FString::Printf(TEXT("building_%d"),B.Id))==Hit.GetActor()){SelectedId=B.Id;SelectedRoadId=SelectedCompanionId=0;return true;}
+        if(B.Health>0&&Visuals.FindRef(Prefix+FString::Printf(TEXT("building_%d"),B.Id))==Hit.GetActor()){SelectedId=B.Id;SelectedRoadId=SelectedCompanionId=0;SeigeAudio::PlayUi(GetWorld(),TEXT("select"));return true;}
     return false;
 }

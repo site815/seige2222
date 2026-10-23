@@ -4,6 +4,7 @@
   "opaque": true,
   "world_space_ripple_normals": true,
   "filtered_irregular_ripples": true,
+  "continuous_shallow_vertex_tint": true,
   "roughness": 0.48,
   "specular": 0.12,
   "deposit_materials": {

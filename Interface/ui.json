@@ -7,8 +7,8 @@
   },
   "simulation_speeds": [
     1,
-    5,
-    10
+    10,
+    20
   ],
   "credits": [
     {
@@ -113,7 +113,7 @@
       "id": "energy",
       "name": "Energy",
       "shortcut": "E",
-      "description": "Solar generation, fuel and fusion power, and grid battery storage. Roads connect consumers to the shared grid.",
+      "description": "Solar generation, fuel and fusion power, and battery storage shared within this colony.",
       "entries": [
         {
           "definition": "solar_array",
@@ -137,16 +137,8 @@
       "id": "logistics",
       "name": "Logistics",
       "shortcut": "L",
-      "description": "Road grids, cargo, workers and trade. Wall: click joints, E flips inside/outside, Enter commits, Backspace undoes; Delete removes a selected segment.",
+      "description": "Cargo, workers, charging and trade. Workers and vehicles travel over terrain. Wall: click joints, E flips inside/outside, Enter commits, Backspace undoes; Delete removes a selected segment.",
       "entries": [
-        {
-          "definition": "road",
-          "shortcut": "R"
-        },
-        {
-          "definition": "upgrade_road",
-          "shortcut": "U"
-        },
         {
           "definition": "sensor",
           "shortcut": "S"

@@ -1,0 +1,38 @@
+{
+  "source_manifest": {
+    "path": "Saved/Diagnostics/v0106-ai-recovered-provenance/source-sha256.json",
+    "bytes": 30441,
+    "sha256": "d3f87c7514c73d55ea9af9cd98d77b2598e5010b674d8d10c395353ed478f701"
+  },
+  "native_report": {
+    "path": "Saved/Automation/v0106-ai-game-terrain-recovered/index.json",
+    "bytes": 31046,
+    "sha256": "3cd0bf20a5ed4f0716f110b55b4a38b4be3a0321c63073035021ecc534a18ae9"
+  },
+  "tested_editor": {
+    "path": "Saved/Diagnostics/v0106-ai-recovered-provenance/UnrealEditor-Seige-tested.dll",
+    "bytes": 4718592,
+    "sha256": "f86fb584d600b6052881e246675b5b815838280c96adac9b3f0ca502b6157d37"
+  },
+  "journals": [
+    {
+      "path": "Saved/Diagnostics/v0106-ai-recovered-provenance/seed-815-sector-4-terrain/progress.json",
+      "bytes": 472150,
+      "sha256": "fdd4c9d551d3514edcc1f780ff190b70eac4938f219afbf4d5408344bf911113"
+    },
+    {
+      "path": "Saved/Diagnostics/v0106-ai-recovered-provenance/seed-2222-sector-0-terrain/progress.json",
+      "bytes": 559475,
+      "sha256": "684d5ce5bd3d2cfb6e4c98fcbc70d3bf2897bffb6c36c21a75c660d133d71d5a"
+    },
+    {
+      "path": "Saved/Diagnostics/v0106-ai-recovered-provenance/seed-4242-sector-8-terrain/progress.json",
+      "bytes": 265153,
+      "sha256": "b1f79604fa79b950b0efae2fc0f8b9f4819a597f28f807fba039a2fc7d717016"
+    }
+  ],
+  "process_exit_code": 0,
+  "passed": true,
+  "completed_utc": "2026-10-17T14:37:00.2197858Z",
+  "source_drift_count": 0
+}

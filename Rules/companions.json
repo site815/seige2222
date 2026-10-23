@@ -26,6 +26,11 @@
     "look_sensitivity": 0.13,
     "body_radius_meters": 0.3,
     "maximum_slope_grade": 0.8,
-    "walk_cycle_meters": 0.6018518518518519
+    "walk_cycle_meters": 0.6018518518518519,
+    "maximum_health": 25,
+    "danger_radius_meters": 35,
+    "heal_per_second": 5,
+    "depression_days": 30,
+    "depression_speed_multiplier": 0.5
   }
 }

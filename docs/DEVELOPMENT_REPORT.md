@@ -1,6 +1,48 @@
 # seige2222 — Development and verification
 
-Updated: **2026-10-11** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
+Updated: **2026-10-23** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
+
+## GitHub delivery — v0.10.6
+
+Account access is restored and the user has authorized source and build publication. The [delivery review](releases/GITHUB_DELIVERY_2026_10_23.md) records a representative October 9 missing-mesh CI failure and the workflow safeguards. All current CI commands pass locally, including validation against Git-tracked asset names only. The existing October 17 archive was rechecked against all 557 source/runtime inputs, six packaged binaries/paks, 25 archived JSON files, its CRC and SHA-256. Runtime content is unchanged. Download and launch instructions are in the [current release notes](releases/v0.10.6.md); historical evidence below retains its original dates.
+
+## v0.10.6 — local Shipping release verified
+
+Roads are deferred. Colonies use their own shared power grid and physical terrain routes, including shallow river crossings. Worker and truck dispatch now checks reachable crew, work and supplies; outdoor goods support hover and pinned inspection. Regional valleys, lake shores, escarpments and distant crown motion are revised. See [release notes](releases/v0.10.6.md).
+
+The focused native suite passed **73 tests**, and the separate actual-terrain AI acceptance passed, for **74 native tests with zero failures or test warnings**. Three fresh colonies reached component production and completed physical truck deliveries using finite starting supplies and no roads. Both suites ran against the final Editor build; failed intermediate AI evidence is preserved separately. See [verification](verification/v0.10.6.json).
+
+Shipping packaging passed. The final rendered **10×** interaction route passed **159 assertions / 38 stages** at both **1600×900 and 3840×1600**, including stockpile hover, selection and depletion. Actual UI captures were inspected at both resolutions. All 25 staged JSON files matched, source/package identities stayed unchanged during the checks, and sampled game processes had zero TCP/UDP endpoints. Eight terrain views and four earlier wind pose views retain their separate identities. No sustained FPS gain or new subjective audio review is claimed.
+
+The **759,184,438-byte** ZIP passed CRC and every-runtime-file SHA-256 comparison. Its SHA-256 is `E0F0C33A9E49342AD9E0D3B772F57574B15434FD488E40F6B2690A15A745C42C`. The launcher targets **v0.10.6**. Start a new scenario for the revised terrain, transport and AI fingerprints; existing saves and previous builds remain intact. Publication was deferred at the October 17 checkpoint; the October 23 delivery above supersedes that restriction.
+
+## v0.10.5 — local Shipping release verified
+
+Functional semantic SFX, finite Starting-AI growth, road/terrain routing, real truck service berths, charging dependencies and next-prerequisite export reserves are repaired. The failed intermediate growth snapshots exposed actual physical cargo stalls and were not treated as acceptance. See [release notes](releases/v0.10.5.md).
+
+The combined Editor/native suite passed **64 tests with zero failures or warnings**. Fresh seed/sector 815/4, 2222/0 and 4242/8 each reached component production, completed loaded truck deliveries and passed worker/cargo save validation using the finite starter kit, with no free material, credit or worker injection. Targeted trade fixtures separately verify actual paid settlement and conserved goods. These tests do not establish every seed or completion of the full plan.
+
+Shipping packaging passed. At both 1600×900 and 3840×1600, the rendered 10× interaction route passed **146 assertions / 34 stages**. Representative captures were visually reviewed at both resolutions; all 25 staged JSON files matched and sampled game processes had zero TCP/UDP endpoints. Rules/UI/AI negative checks passed 139 / 14 / 64 cases. Audio clips/import hashes and objective stress-mix validation passed; subjective listening remains unverified.
+
+The **759,064,254-byte** archive passed CRC and every-runtime-file SHA-256 comparison. Its SHA-256 is `4B819D35B1983E3F1D5DB4F31735A80A72D959DFAD45EE42ED531BFB5BE27AF8`. The launcher targets v0.10.5. [Verification](verification/v0.10.5.json) retains native and audio results, each fresh-colony journal, packaged reports and eighteen captures. Start a new scenario for the changed AI fingerprint; old saves remain untouched. No push or hosted release was attempted.
+
+## v0.10.4 — local Shipping release verified
+
+The update fixes implicit building-click map navigation, preserves surveyed home deposits, randomizes fresh scenario layouts independently of bug toggles, derives spare workers from command capacity (5/10/15), doubles worker/transport movement with loaded/empty parity, adds 1×/10×/20× playback, and enables top resource hovers over the construction catalog. The audio review silences placement feedback, limits repetitive cues by real time, suppresses repeated damage alerts in one incident and corrects remote projectile sound positions. See [release notes](releases/v0.10.4.md).
+
+Editor and Shipping builds passed. All **54 focused native tests** passed without failures or test warnings. Rules/UI validation passed **139 / 14 negative cases**. Twelve source sound clips passed waveform, clipping, hash and import-reference checks; no subjective listening result is claimed. The final packaged **10×** route passed **146 assertions / 34 stages** at **1600×900 (46.69 s)** and **3840×1600 (46.89 s)**. Actual resource/build-menu overlays were visually reviewed at both resolutions. All 553 recorded source inputs stayed unchanged, all 25 staged JSON files matched, and 46 process samples observed zero game TCP/UDP endpoints.
+
+The **759,021,812-byte** ZIP passed CRC and every-runtime-file SHA-256 comparison. The launcher targets v0.10.4; [verification](verification/v0.10.4.json) retains package/archive hashes, native/audio reports and eighteen captures. Rules fingerprints changed, so start a new scenario; save format remains9 and older files are preserved. No Git push or hosted release was attempted. These bounded tests do not establish long-session balance, subjective SFX preference or sustained FPS. Older universal-replicator/worker-factory tests need redesign for the current worker-only core and are outside the focused pass.
+
+## v0.10.3 — local Shipping release verified
+
+Current update: visible-model vehicle inspection, all-unit HP and building progress hovers, one-row screen-height-width HUD, and physical Rex landing/retreat/healing with persistent health and thirty-calendar-day worker mourning. See [release notes](releases/v0.10.3.md). Save format 9 and the new Rules fingerprint require a new scenario. Prior save files are preserved. No push or hosted publication was attempted.
+
+The final Editor build and Windows Shipping package passed. The selected native suite passed **46 tests with zero failures or warnings**, covering companion and worker health, landing/retreat/mourning, inspection geometry/visibility, combat, energy/calendar and save/menu behavior. The review found and fixed a real fleet issue: defensive positions now use the same padded clearance as movement routes. Older combat fixtures were updated for real body traffic, valid authored chassis and specialist factories; their payment, damage and persistence assertions remain.
+
+The final packaged route passed **143 assertions / 34 stages at 10×** at both **1600×900** (46.58 seconds) and **3840×1600** (47.09 seconds). Visual review confirms the one-row dock, actual transport inspector, building bars and Rex panel. The upper and lower casings measure 900 and 1600 physical pixels respectively across those viewports. All 549 source inputs and package identities stayed unchanged during each run; 25 staged JSON files match, and 47 total process samples observed zero TCP/UDP endpoints. Rules validation passed 137 negative cases. The 759,021,805-byte ZIP passed CRC and per-file comparison against the tested package. The launcher now targets v0.10.3; [verification evidence](verification/v0.10.3.json) retains reports, hashes and 16 captures.
+
+The rendered route uses an established-colony fixture, a review-only factory/construction site and an explicit night phase. It does not prove long-session balance, crowded-neighbor performance or sustained FPS. Rex's v0.10.2 model and photo coat are unchanged; the existing prototype licence note remains in Credits. Earlier results below belong to their named historical builds.
 
 ## v0.10.2 — final Shipping build and focused checks passed
 

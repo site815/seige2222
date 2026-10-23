@@ -1,0 +1,202 @@
+{
+  "clips": 12,
+  "clipped_samples": 0,
+  "maximum_source_peak": 0.7000030518509476,
+  "all_functional_cues_enabled": true,
+  "rex_is_instrument_notification_not_animal_voice": true,
+  "source_hashes_and_import_references_valid": true,
+  "imported_sources_current": true,
+  "maximum_voices_per_frame": 3,
+  "maximum_voices_per_real_second": 5,
+  "damage_alert_quiet_real_seconds": 30,
+  "effective_cue_gains": {
+    "select": 0.34124999999999994,
+    "confirm": 0.39,
+    "cancel": 0.34124999999999994,
+    "error": 0.49725,
+    "build": 0.39,
+    "complete": 0.39,
+    "alert": 0.5265000000000001,
+    "laser": 0.338,
+    "kinetic": 0.359125,
+    "missile": 0.338,
+    "plasma": 0.338,
+    "rex": 0.36562500000000003,
+    "energy": 0.338
+  },
+  "saturated_combat_and_ui_pcm_mix": {
+    "1x": {
+      "accepted_cues": {
+        "select": 48,
+        "confirm": 0,
+        "cancel": 0,
+        "error": 8,
+        "build": 0,
+        "complete": 2,
+        "alert": 1,
+        "laser": 8,
+        "kinetic": 8,
+        "missile": 8,
+        "plasma": 8,
+        "rex": 0
+      },
+      "unattenuated_sum_peak": 0.517115497299112,
+      "headroom_db": 5.72824893550283,
+      "clipped_samples": 0
+    },
+    "20x": {
+      "accepted_cues": {
+        "select": 48,
+        "confirm": 0,
+        "cancel": 0,
+        "error": 8,
+        "build": 0,
+        "complete": 2,
+        "alert": 1,
+        "laser": 8,
+        "kinetic": 8,
+        "missile": 8,
+        "plasma": 8,
+        "rex": 0
+      },
+      "unattenuated_sum_peak": 0.517115497299112,
+      "headroom_db": 5.72824893550283,
+      "clipped_samples": 0
+    }
+  },
+  "temporal_and_spectral_analysis": {
+    "select": {
+      "centroid_hz": 853.6993774661739,
+      "rolloff_95_hz": 1335.9375,
+      "energy_above_6khz_fraction": 0.0003110640598438384,
+      "seconds": 0.07,
+      "source_rms_dbfs": -21.411628809575916,
+      "nominal_mixed_rms_dbfs": -30.750175608599672,
+      "maximum_adjacent_sample_step": 0.051026947843867305,
+      "dc_fraction": 4.177220984527116e-05,
+      "purpose": "A single soft tactile console key; navigation and selection"
+    },
+    "confirm": {
+      "centroid_hz": 997.7140055021347,
+      "rolloff_95_hz": 1687.5,
+      "energy_above_6khz_fraction": 0.0002863890925190288,
+      "seconds": 0.18,
+      "source_rms_dbfs": -21.411621353561642,
+      "nominal_mixed_rms_dbfs": -29.59032921303166,
+      "maximum_adjacent_sample_step": 0.05993835261085849,
+      "dc_fraction": 2.3100816200581208e-05,
+      "purpose": "Two rounded latch contacts resolving upward; accepted command"
+    },
+    "cancel": {
+      "centroid_hz": 552.5360206999682,
+      "rolloff_95_hz": 796.875,
+      "energy_above_6khz_fraction": 0.0003300994099962333,
+      "seconds": 0.12,
+      "source_rms_dbfs": -21.938188876865947,
+      "nominal_mixed_rms_dbfs": -31.276735675889704,
+      "maximum_adjacent_sample_step": 0.048554948576311534,
+      "dc_fraction": 3.1138416699728385e-05,
+      "purpose": "A soft return latch, lower than selection; back or cancel"
+    },
+    "error": {
+      "centroid_hz": 229.11880469553904,
+      "rolloff_95_hz": 269.53125,
+      "energy_above_6khz_fraction": 5.351965185028295e-09,
+      "seconds": 0.33,
+      "source_rms_dbfs": -18.78603422235304,
+      "nominal_mixed_rms_dbfs": -24.854538386423577,
+      "maximum_adjacent_sample_step": 0.01913510544145024,
+      "dc_fraction": 7.477420156334918e-06,
+      "purpose": "Two muted descending knocks; command rejected"
+    },
+    "build": {
+      "centroid_hz": 212.083992432394,
+      "rolloff_95_hz": 621.09375,
+      "energy_above_6khz_fraction": 3.717464993113654e-05,
+      "seconds": 0.24,
+      "source_rms_dbfs": -19.57621788411164,
+      "nominal_mixed_rms_dbfs": -27.75492574358165,
+      "maximum_adjacent_sample_step": 0.02511673329874569,
+      "dc_fraction": 1.5850021023862083e-05,
+      "purpose": "Low mechanical clamp and locking contact; construction order committed"
+    },
+    "complete": {
+      "centroid_hz": 477.00157520163754,
+      "rolloff_95_hz": 539.0625,
+      "energy_above_6khz_fraction": 4.430391990730636e-09,
+      "seconds": 0.64,
+      "source_rms_dbfs": -18.786043202282702,
+      "nominal_mixed_rms_dbfs": -26.964751061752715,
+      "maximum_adjacent_sample_step": 0.030701620532853177,
+      "dc_fraction": 4.4605503758863084e-07,
+      "purpose": "Two gentle consonant notes; construction completed"
+    },
+    "alert": {
+      "centroid_hz": 523.5495421434985,
+      "rolloff_95_hz": 562.5,
+      "energy_above_6khz_fraction": 3.051411422785349e-09,
+      "seconds": 0.74,
+      "source_rms_dbfs": -17.39332113258204,
+      "nominal_mixed_rms_dbfs": -22.965353622151934,
+      "maximum_adjacent_sample_step": 0.03558458204901273,
+      "dc_fraction": 2.3971464368815363e-07,
+      "purpose": "Two separated attention notes with a soft body; one damage incident"
+    },
+    "laser": {
+      "centroid_hz": 689.3925711590408,
+      "rolloff_95_hz": 925.78125,
+      "energy_above_6khz_fraction": 9.028553068408749e-05,
+      "seconds": 0.23,
+      "source_rms_dbfs": -17.07743980285572,
+      "nominal_mixed_rms_dbfs": -26.499105797302626,
+      "maximum_adjacent_sample_step": 0.07373271889400922,
+      "dc_fraction": 1.0546024787221856e-05,
+      "purpose": "Brief electrical discharge with filtered hiss and resonant body"
+    },
+    "kinetic": {
+      "centroid_hz": 190.23497613916388,
+      "rolloff_95_hz": 679.6875,
+      "energy_above_6khz_fraction": 0.0003745578801700479,
+      "seconds": 0.36,
+      "source_rms_dbfs": -19.654355102081542,
+      "nominal_mixed_rms_dbfs": -28.549442322081468,
+      "maximum_adjacent_sample_step": 0.05294961394085513,
+      "dc_fraction": 1.4423881185791033e-05,
+      "purpose": "Low cannon impulse, mechanical contact and decaying pressure"
+    },
+    "missile": {
+      "centroid_hz": 729.7386913822893,
+      "rolloff_95_hz": 2332.03125,
+      "energy_above_6khz_fraction": 0.0027656424846074523,
+      "seconds": 0.6,
+      "source_rms_dbfs": -18.608924927514874,
+      "nominal_mixed_rms_dbfs": -28.03059092196178,
+      "maximum_adjacent_sample_step": 0.09759819330423902,
+      "dc_fraction": 3.7099063081759087e-06,
+      "purpose": "Ignition contact into a broad filtered rocket whoosh; launch only"
+    },
+    "plasma": {
+      "centroid_hz": 253.76974409700208,
+      "rolloff_95_hz": 433.59375,
+      "energy_above_6khz_fraction": 0.00030184167078723295,
+      "seconds": 0.48,
+      "source_rms_dbfs": -16.193368502773765,
+      "nominal_mixed_rms_dbfs": -25.61503449722067,
+      "maximum_adjacent_sample_step": 0.05157628101443525,
+      "dc_fraction": 1.3885656893961743e-05,
+      "purpose": "Slower resonant energy discharge, rough low core and soft tail"
+    },
+    "rex": {
+      "centroid_hz": 456.6992833874767,
+      "rolloff_95_hz": 539.0625,
+      "energy_above_6khz_fraction": 5.291981835820964e-09,
+      "seconds": 0.52,
+      "source_rms_dbfs": -19.57621790825477,
+      "nominal_mixed_rms_dbfs": -28.315500239729655,
+      "maximum_adjacent_sample_step": 0.02478102969450972,
+      "dc_fraction": 1.3107308556998794e-06,
+      "purpose": "Gentle companion-return instrument signal; not a dog voice"
+    }
+  },
+  "limitation": "Objective waveform, spectrum, nominal gain and import-provenance audit; no subjective listening claim."
+}

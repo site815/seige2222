@@ -49,7 +49,22 @@ bool FSeigeCombatEditableBudgetTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Edited mass ceiling admits a module above the original 500 kg"),Edited.Combat.Weapons[TEXT("laser_small")].MassKg,550.);
     TestTrue(TEXT("Edited module uses the configured point unit"),Edited.Combat.ValidateLoadout(TEXT("wheeled_small"),{TEXT("laser_small")},Error));
     TestFalse(TEXT("Edited area budget still rejects a second module"),Edited.Combat.ValidateLoadout(TEXT("wheeled_small"),{TEXT("laser_small"),TEXT("laser_small")},Error));
-    const int32 Fleet=Edited.Combat.Fleets[0].Id;TestEqual(TEXT("Actual fleet usage comes from edited chassis costs"),Edited.Combat.FleetUsed(Fleet),40);
+    // New colonies no longer receive two armed starter vehicles. Seed a real
+    // fleet with two valid authored units so the edited budget is exercised.
+    int32 Fleet=0;if(!Edited.Combat.CreateFleet(Edited,TEXT("Editable budget fixture"),Fleet,Error)){AddError(Error);return false;}
+    auto Saved=MakeShared<FJsonObject>();Edited.Combat.Save(Saved);
+    int32 NextId=int32(Saved->GetObjectField(TEXT("combat"))->GetNumberField(TEXT("next_id")));
+    const auto& Chassis=Edited.Combat.Chassis[TEXT("wheeled_small")];
+    for(int32 GuardIndex=0;GuardIndex<2;++GuardIndex)
+    {
+        FSeigeVehicle Guard;Guard.Id=NextId++;Guard.ChassisId=Chassis.Id;Guard.FleetId=Fleet;
+        Guard.Position=Guard.Destination=Edited.BuildingAccessPoint(Edited.Buildings[0])+FVector2D(0,100+100*GuardIndex);
+        Guard.Health=Chassis.Health;Guard.Armor=Chassis.Armor;Guard.Shield=Chassis.Shield;Guard.BatteryKWh=Chassis.BatteryKWh;
+        Guard.Weapons={TEXT("laser_small")};Guard.Cooldowns={0};Guard.Status=TEXT("Authored budget fixture guard");Edited.Combat.Vehicles.Add(Guard);
+    }
+    Edited.Combat.Save(Saved);Saved->GetObjectField(TEXT("combat"))->SetNumberField(TEXT("next_id"),NextId);
+    if(!Edited.Combat.Load(Saved,Edited,Error)){AddError(Error);return false;}
+    TestEqual(TEXT("Actual fleet usage comes from edited chassis costs"),Edited.Combat.FleetUsed(Fleet),40);
     auto Vehicle=Edited.Combat.Vehicles[0];Vehicle.Id=999001;Vehicle.Embarked=false;Vehicle.FleetId=0;Edited.Combat.Vehicles.Add(Vehicle);
     TestTrue(TEXT("A third twenty-point chassis fits the edited sixty-point fleet"),Edited.Combat.AssignVehicle(Edited,Vehicle.Id,Fleet,Error));
     Vehicle.Id=999002;Edited.Combat.Vehicles.Add(Vehicle);

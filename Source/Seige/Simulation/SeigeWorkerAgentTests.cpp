@@ -228,7 +228,7 @@ bool FSeigeWorkerCoreMinimumTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeWorkerTransferAdmissionTest,"Seige.Workers.SelfRelocationReservesLiveSupport",WorkerAgentFlags)
 bool FSeigeWorkerTransferAdmissionTest::RunTest(const FString&)
 {
-    FString Error;FSeigeSimulation S,Loaded;if(!WorkerAgentDeploy(S,Error)||!S.SetWorkerSurplusTarget(2,Error)){AddError(Error);return false;}
+    FString Error;FSeigeSimulation S,Loaded;if(!WorkerAgentDeploy(S,Error)){AddError(Error);return false;}
     for(int32 I=0;I<500&&S.InactiveWorkerCount()<2;++I)S.Tick(10);
     if(!TestTrue(TEXT("Paid assembly supplies two real stored bodies"),S.InactiveWorkerCount()>=2))return false;
     const int32 CoreId=S.Buildings[0].Id,BodyCount=S.Workers.Bodies.Num();FString Resource;
@@ -266,14 +266,14 @@ bool FSeigeWorkerIdentityLifecycleTest::RunTest(const FString&)
 {
     FString Error;FSeigeSimulation S,Loaded;if(!WorkerAgentDeploy(S,Error)){AddError(Error);return false;}const int32 OriginalBodies=S.Workers.Bodies.Num(),CoreId=S.Buildings[0].Id;
     FString BodyResource;for(const auto& P:S.Resources)if(P.Value.Unit==TEXT("workers")){BodyResource=P.Key;break;}if(BodyResource.IsEmpty()){AddError(TEXT("No configured discrete worker cargo"));return false;}
-    if(!S.SetWorkerSurplusTarget(2,Error)){AddError(Error);return false;}
+    TestEqual(TEXT("Level-one command automatically protects five spare workers"),S.WorkerSurplusTarget(),5);
     // Real paid core batches fill one operating vacancy and then the requested
     // inactive reserve. No fixture writes inventories or assembly progress.
     for(int32 I=0;I<500&&S.InactiveWorkerCount()<2;++I)S.Tick(10);
     if(!TestTrue(TEXT("Finite starter inputs manufacture the requested real stored bodies"),S.InactiveWorkerCount()>=2))return false;
     TestTrue(TEXT("Manufacturing allocates new persistent IDs only when a paid batch completes"),S.Workers.Bodies.Num()>OriginalBodies);
     const int32 ActiveBefore=S.Population;TestFalse(TEXT("Reserve target protects stored identities from recycling"),S.DisassembleWorkers(CoreId,1,Error));
-    S.SetWorkerSurplusTarget(1,Error);FString Recycled;for(const auto& W:S.Workers.Bodies)if(W.State==TEXT("stored")&&W.ContainerId==CoreId){Recycled=W.Id;break;}
+    FString Recycled;for(const auto& W:S.Workers.Bodies)if(W.State==TEXT("stored")&&W.ContainerId==CoreId){Recycled=W.Id;break;}
     if(!S.DisassembleWorkers(CoreId,1,Error)){AddError(Error);return false;}const double EnergyBefore=S.Energy.ConsumedKWh;S.Tick(S.FixedStepSeconds());
     TestEqual(TEXT("Recycling commits the original stored identity"),S.Workers.Find(Recycled)->State,FString(TEXT("disassembling")));
     TestEqual(TEXT("No active worker is deleted by surplus recycling"),S.Population,ActiveBefore);
@@ -281,7 +281,7 @@ bool FSeigeWorkerIdentityLifecycleTest::RunTest(const FString&)
     for(int32 I=0;I<100&&S.Workers.Find(Recycled)->State!=TEXT("disassembled");++I){S.Tick(1);Loaded.Tick(1);}
     TestEqual(TEXT("The paid identity becomes terminal once, rather than being reused"),S.Workers.Find(Recycled)->State,FString(TEXT("disassembled")));TestEqual(TEXT("Restored paid recycling reaches the same identity state"),Loaded.Workers.Find(Recycled)->State,S.Workers.Find(Recycled)->State);
     TestTrue(TEXT("Recycling records the unrecovered physical mass"),S.Workers.RecyclingWasteKg>0&&FMath::IsNearlyEqual(S.Workers.RecyclingWasteKg,Loaded.Workers.RecyclingWasteKg,1.e-8));TestTrue(TEXT("Recycling consumes its externally configured energy"),S.Energy.ConsumedKWh-EnergyBefore>=S.DisassemblyEnergyKWh()-1.e-8);
-    S.SetWorkerSurplusTarget(0,Error);
+
     int32 PortId=0;for(int32 Side=-1;Side<=1;Side+=2)if(S.PlaceBuilding(TEXT("trading_port"),S.Buildings[0].Position+FVector2D(1500,Side*600),Error)){PortId=S.Buildings.Last().Id;break;}if(!PortId){AddError(Error);return false;}
     // This isolated transport fixture installs a port from the genuine remaining
     // paid starter bill; construction travel itself is covered by the first test.

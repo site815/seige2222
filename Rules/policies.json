@@ -116,7 +116,7 @@
     },
     "auto_disassemble_parts_shortage": false,
     "auto_disassemble_storage_full": false,
-    "default_inactive_worker_target": 0,
+    "inactive_worker_target_policy": "command_capacity",
     "default_port_worker_reserve_target": 0
   }
 }

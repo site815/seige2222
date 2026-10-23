@@ -31,10 +31,23 @@ def scalar(name, value):
     return node(u.MaterialExpressionScalarParameter, parameter_name=name, default_value=value)
 
 color = node(u.MaterialExpressionVectorParameter, parameter_name='WaterColor', default_value=u.LinearColor(.025, .075, .085, 1))
-output(color, u.MaterialProperty.MP_BASE_COLOR)
+shallow_color = node(u.MaterialExpressionVectorParameter, parameter_name='ShallowColor', default_value=u.LinearColor(.055, .090, .082, 1))
+vertex = node(u.MaterialExpressionVertexColor)
+world = node(u.MaterialExpressionWorldPosition)
+depth_tint = node(u.MaterialExpressionCustom, description='Continuous physical shoal tint without separate rectangular faces',
+    code='''float2 p=World.xy;
+float grain=.5+.25*sin(p.x*.063+p.y*.029)*sin(p.y*.071-p.x*.017)+.25*sin(p.x*.013-p.y*.023);
+return lerp(Deep.rgb,Shoal.rgb*(.88+.12*grain),saturate(Shallow));''',
+    output_type=u.CustomMaterialOutputType.CMOT_FLOAT3)
+depth_inputs=[]
+for name in ('World','Deep','Shoal','Shallow'):
+    item=u.CustomInput(); item.set_editor_property('input_name',name); depth_inputs.append(item)
+depth_tint.set_editor_property('inputs',depth_inputs)
+for source,source_pin,target in ((world,'','World'),(color,'','Deep'),(shallow_color,'','Shoal'),(vertex,'G','Shallow')):
+    assert ME.connect_material_expressions(source,source_pin,depth_tint,target)
+output(depth_tint, u.MaterialProperty.MP_BASE_COLOR)
 output(scalar('Roughness', .48), u.MaterialProperty.MP_ROUGHNESS)
 output(scalar('Specular', .12), u.MaterialProperty.MP_SPECULAR)
-world = node(u.MaterialExpressionWorldPosition)
 time = node(u.MaterialExpressionTime)
 wave = node(u.MaterialExpressionCustom, description='Irregular broad wind ripples with pixel-footprint filtering',
     code='''float2 p=World.xy;
@@ -64,8 +77,11 @@ geology={
     'water':(.25,.37,.39), 'hydrocarbons':(.14,.13,.12),
     'radioactive_ore':(.26,.31,.18), 'crystalline':(1.08,1.14,1.17),
 }
-geology_paths={}
-for resource,tint in geology.items():
+directory=ROOT/'Art/EnvironmentV09';directory.mkdir(parents=True, exist_ok=True)
+previous_report=directory/'water_import_report.json'
+water_only='-wateronly' in u.SystemLibrary.get_command_line().lower()
+geology_paths=json.loads(previous_report.read_text(encoding='utf-8')).get('deposit_materials',{}) if water_only and previous_report.exists() else {}
+for resource,tint in ({} if water_only else geology).items():
     name='M_Deposit_'+resource; path=DEST+'/'+name
     m=ED.load_asset(path) if ED.does_asset_exist(path) else u.AssetToolsHelpers.get_asset_tools().create_asset(name,DEST,u.Material,u.MaterialFactoryNew())
     assert m; ME.delete_all_material_expressions(m)
@@ -84,8 +100,7 @@ for resource,tint in geology.items():
     output(normal_sample,u.MaterialProperty.MP_NORMAL)
     ME.layout_material_expressions(m); assert not ME.recompile_material(m); assert ED.save_loaded_asset(m,False)
     geology_paths[resource]=m.get_path_name()
-report={'asset':DEST+'/'+NAME+'.'+NAME, 'original_material':True, 'opaque':True, 'world_space_ripple_normals':True,'filtered_irregular_ripples':True,'roughness':.48,'specular':.12,'deposit_materials':geology_paths,
+report={'asset':DEST+'/'+NAME+'.'+NAME, 'original_material':True, 'opaque':True, 'world_space_ripple_normals':True,'filtered_irregular_ripples':True,'continuous_shallow_vertex_tint':True,'roughness':.48,'specular':.12,'deposit_materials':geology_paths,
         'notes':'Surface geometry comes from shared physical river/lake profile. No refraction or wave displacement; ice simulation is not implemented.'}
-directory=ROOT/'Art/EnvironmentV09';directory.mkdir(parents=True, exist_ok=True)
 (directory/'water_import_report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
 u.log('V09_WATER_IMPORT_COMPLETE '+report['asset'])

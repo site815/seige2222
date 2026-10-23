@@ -5,6 +5,7 @@ import {readConfiguration, validateConfiguration} from './validate_configuration
 // runtime definitions and the user's saved games are never modified.
 const data = readConfiguration();
 assert.doesNotThrow(() => validateConfiguration(data), 'current interface must validate');
+assert.equal(data.ui.build_groups.flatMap(group => group.entries).some(entry => ['road','upgrade_road'].includes(entry.definition)), false, 'road construction is absent while roads are deferred');
 assert.deepEqual(data.ui.resource_groups.map(group => group.id), ['credits', 'energy', 'workers', 'raw', 'basic', 'advanced']);
 const mines = data.rules.buildings.buildings.filter(building => building.role === 'extractor');
 assert.equal(mines.length, 1, 'one Extraction Mine definition replaces the resource-specific catalog');
@@ -13,6 +14,11 @@ assert.equal(data.ui.build_groups.flatMap(group => group.entries).filter(entry =
 
 const group = (candidate, id) => candidate.ui.resource_groups.find(value => value.id === id);
 const cases = [
+  ['fractional speed', c => { c.ui.simulation_speeds = [1,10,20.5]; }, /speed/],
+  ['missing normal speed', c => { c.ui.simulation_speeds = [2,10,20]; }, /speed/],
+  ['duplicate fast speed', c => { c.ui.simulation_speeds = [1,10,10]; }, /speed/],
+  ['zero running speed', c => { c.ui.simulation_speeds = [0,1,20]; }, /speed/],
+  ['unsupported extreme speed', c => { c.ui.simulation_speeds = [1,10,101]; }, /speed/],
   ['wrong worker group order', candidate => { [candidate.ui.resource_groups[1],candidate.ui.resource_groups[2]]=[candidate.ui.resource_groups[2],candidate.ui.resource_groups[1]]; }, /resource group/],
   ['physical material in workers group', candidate => { group(candidate, 'workers').entries.push(structuredClone(group(candidate, 'raw').entries[0])); }, /resource group workers entries/],
   ['missing resource group', candidate => candidate.ui.resource_groups.pop(), /resource_groups must be an array/],

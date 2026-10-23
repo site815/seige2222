@@ -39,7 +39,7 @@ bool FSeigeReplicatorWorkforceTest::RunTest(const FString&)
     FString Error;FSeigeSimulation S,Loaded;if(!CoreFixture(S,Error)){AddError(Error);return false;}auto& Core=S.Buildings[0];
     FString Goods;for(const auto& Id:S.ProductionOptions(Core.Id))if(S.Recipes[Id].WorkerOutput==0){Goods=Id;break;}
     if(!TestFalse(TEXT("Universal core offers a physical-goods recipe"),Goods.IsEmpty()))return false;
-    const auto Recipe=S.Recipes[Goods];const auto Inputs=S.ProductionInputs(Core,Goods);Core.Inventory=Inputs;S.SetWorkerSurplusTarget(1,Error);
+    const auto Recipe=S.Recipes[Goods];const auto Inputs=S.ProductionInputs(Core,Goods);Core.Inventory=Inputs;
     if(!S.SetProductionRecipe(Core.Id,Goods,Error)){AddError(Error);return false;}const double Energy=S.Energy.ConsumedKWh;
     S.StepRecipe(Core,.01);
     TestTrue(TEXT("Missing worker parts do not block the selected goods recipe"),Core.ProductionCommitted&&Core.CommittedRecipe==Goods);
@@ -52,8 +52,8 @@ bool FSeigeReplicatorWorkforceTest::RunTest(const FString&)
     for(const auto& P:Recipe.Outputs){TestEqual(TEXT("Universal replicator yields every configured coproduct"),Core.Inventory.FindRef(P.Key),P.Value);TestEqual(TEXT("Reloaded paid batch yields identical output"),Loaded.Buildings[0].Inventory.FindRef(P.Key),P.Value);}
     TestFalse(TEXT("Completed batch releases escrow"),Core.ProductionCommitted);
     FSeigeSimulation Factory;if(!CoreFixture(Factory,Error)){AddError(Error);return false;}const int Id=FactoryFixture(Factory,Error);if(!Id){AddError(Error);return false;}
-    auto& Fast=*Factory.FindBuilding(Id);Fast.Inventory=Factory.ProductionInputs(Fast,Worker);Factory.SetWorkerSurplusTarget(1,Error);Factory.AllocateWorkers();Factory.Energy.Tick(Factory,0);
-    Core.Inventory=S.ProductionInputs(Core,Worker);S.SetWorkerSurplusTarget(1,Error);S.AllocateWorkers();S.Energy.Tick(S,0);
+    auto& Fast=*Factory.FindBuilding(Id);Fast.Inventory=Factory.ProductionInputs(Fast,Worker);Factory.AllocateWorkers();Factory.Energy.Tick(Factory,0);
+    Core.Inventory=S.ProductionInputs(Core,Worker);S.AllocateWorkers();S.Energy.Tick(S,0);
     TestTrue(TEXT("Worker factory has a shorter physical cycle than the core"),Factory.ProductionSeconds(Fast,Worker)<S.ProductionSeconds(Core,Worker));
     TestTrue(TEXT("Worker factory consumes less batch energy"),Factory.ProductionEnergy(Fast,Worker)<S.ProductionEnergy(Core,Worker));
     const double FastDuration=Factory.ProductionSeconds(Fast,Worker)/Factory.WorkFraction(Fast),BeforeEnergy=Factory.Energy.ConsumedKWh;
@@ -65,7 +65,7 @@ bool FSeigeReplicatorWorkforceTest::RunTest(const FString&)
     TestTrue(TEXT("Factory charges batch energy exactly once across partial steps"),FMath::IsNearlyEqual(Factory.Energy.ConsumedKWh-BeforeEnergy,Factory.ProductionEnergy(Fast,Worker),1.e-8));
     FSeigeSimulation CapacityTest;if(!CoreFixture(CapacityTest,Error)){AddError(Error);return false;}
     const int32 CapacityFactory=FactoryFixture(CapacityTest,Error);if(!CapacityFactory){AddError(Error);return false;}
-    auto& Limited=*CapacityTest.FindBuilding(CapacityFactory);CapacityTest.SetWorkerSurplusTarget(10,Error);
+    auto& Limited=*CapacityTest.FindBuilding(CapacityFactory);
     Limited.Inventory=CapacityTest.ProductionInputs(Limited,Worker);
     const double InputLitres=CapacityTest.InventoryLitres(Limited.Inventory),OutputLitres=CapacityTest.ProductionOutputLitres(CapacityTest.Recipes[Worker]);
     const FString Filler=TEXT("water"),Repair=CapacityTest.TextRule(TEXT("repair_resource"));
@@ -76,7 +76,7 @@ bool FSeigeReplicatorWorkforceTest::RunTest(const FString&)
     TestFalse(TEXT("A batch cannot occupy a promised incoming delivery berth"),Limited.ProductionCommitted);
     TestEqual(TEXT("Capacity-blocked assembly preserves its real local input bill"),CapacityTest.InventoryLitres(Limited.Inventory),InputsBefore);
     TestEqual(TEXT("Capacity-blocked assembly consumes no batch energy"),CapacityTest.Energy.ConsumedKWh,Uncharged);
-    FSeigeSimulation Reserved;if(!CoreFixture(Reserved,Error)){AddError(Error);return false;}auto& ReservedCore=Reserved.Buildings[0];Reserved.SetWorkerSurplusTarget(10,Error);
+    FSeigeSimulation Reserved;if(!CoreFixture(Reserved,Error)){AddError(Error);return false;}auto& ReservedCore=Reserved.Buildings[0];
     const auto WorkerInputs=Reserved.ProductionInputs(ReservedCore,Worker);const FString Parts=TEXT("components");const double Bill=Reserved.BuildingDefs[TEXT("worker_factory")].Cost.FindRef(Parts);
     const double Buffer=ReservedCore.Inventory.FindRef(Parts)-Reserved.ConstructionAvailable(Parts);ReservedCore.Inventory[Parts]=Bill+Buffer;
     if(!Reserved.PlaceBuilding(TEXT("worker_factory"),FVector2D(1300,0),Error)){AddError(Error);return false;}
@@ -84,11 +84,11 @@ bool FSeigeReplicatorWorkforceTest::RunTest(const FString&)
     TestTrue(TEXT("Successive paid worker batches never consume an accepted construction bill"),ProtectedCore.Inventory.FindRef(Parts)+1.e-8>=Bill);
     TestEqual(TEXT("Only genuinely unreserved whole worker batches may finish"),Reserved.Workers.StoredAt(ProtectedCore.Id)-StoredBefore,int32(FMath::FloorToInt((Buffer+1.e-8)/WorkerInputs.FindRef(Parts))));
     TestTrue(TEXT("The remaining protected parts cannot fund another assembly batch"),Reserved.Spendable(ProtectedCore,Parts)+1.e-8<WorkerInputs.FindRef(Parts));
-    const int32 PromisedSite=Reserved.Buildings.Last().Id;Reserved.SetWorkerSurplusTarget(0,Error);
+    const int32 PromisedSite=Reserved.Buildings.Last().Id;
     for(int32 I=0;I<1200&&Reserved.FindBuilding(PromisedSite)->IsConstructing;++I)Reserved.Tick(10);
     TestFalse(TEXT("Protected stock is physically delivered and installed by the finite crew"),Reserved.FindBuilding(PromisedSite)->IsConstructing);
     TestTrue(TEXT("The completed factory embodies its whole promised parts bill"),FMath::IsNearlyEqual(Reserved.FindBuilding(PromisedSite)->InstalledMaterials.FindRef(Parts),Bill,1.e-8));
-    FSeigeSimulation Distributed;if(!CoreFixture(Distributed,Error)){AddError(Error);return false;}const int32 DonorId=FactoryFixture(Distributed,Error);if(!DonorId){AddError(Error);return false;}Distributed.SetWorkerSurplusTarget(10,Error);
+    FSeigeSimulation Distributed;if(!CoreFixture(Distributed,Error)){AddError(Error);return false;}const int32 DonorId=FactoryFixture(Distributed,Error);if(!DonorId){AddError(Error);return false;}
     auto* Donor=Distributed.FindBuilding(DonorId);for(const auto& P:Distributed.ProductionInputs(*Donor,Worker)){const double Amount=P.Value*2;Distributed.Buildings[0].Inventory.FindOrAdd(P.Key)-=Amount;Donor->Inventory.FindOrAdd(P.Key)+=Amount;}
     const double SmallBill=Distributed.BuildingDefs[TEXT("sensor")].Cost.FindRef(Parts);
     Distributed.Buildings[0].Inventory[Parts]=Distributed.Demand(Distributed.Buildings[0],Parts,false);Donor->Inventory[Parts]=Distributed.Demand(*Donor,Parts,false)+SmallBill;
@@ -125,16 +125,16 @@ bool FSeigeStoredWorkerLifecycleTest::RunTest(const FString&)
 {
     FString Error;FSeigeSimulation S,Loaded;if(!CoreFixture(S,Error)){AddError(Error);return false;}auto& C=S.Buildings[0];const FString Body=S.TextRule(TEXT("inactive_worker_resource"));const int Jobs=S.TotalJobs;
     auto ManufactureStored=[](FSeigeSimulation& S,int32 Count,FString& Error)
-{auto& B=S.Buildings[0];S.SetWorkerSurplusTarget(Count,Error);const FString R=S.TextRule(TEXT("population_recipe"));for(int32 I=0;I<Count;++I){const int Before=S.Workers.StoredAt(B.Id);S.StepRecipe(B,S.ProductionSeconds(B,R)/S.WorkFraction(B)+.01);if(S.Workers.StoredAt(B.Id)!=Before+1){Error=TEXT("Finite paid worker fixture could not assemble a body");return false;}}return true;};
+{auto& B=S.Buildings[0];const FString R=S.TextRule(TEXT("population_recipe"));for(int32 I=0;I<Count;++I){const int Before=S.Workers.StoredAt(B.Id);S.StepRecipe(B,S.ProductionSeconds(B,R)/S.WorkFraction(B)+.01);if(S.Workers.StoredAt(B.Id)!=Before+1){Error=TEXT("Finite paid worker fixture could not assemble a body");return false;}}return true;};
     if(!ManufactureStored(S,3,Error)){AddError(Error);return false;}
-    S.SetWorkerSurplusTarget(2,Error);S.Time+=S.Number(TEXT("worker_reactivate_seconds"))*2;S.Calendar.Advance(S.Number(TEXT("worker_reactivate_seconds"))*2);S.Workers.Tick(S,S.Number(TEXT("worker_reactivate_seconds"))*2);S.Workers.RefreshMetrics(S);
+    S.Time+=S.Number(TEXT("worker_reactivate_seconds"))*2;S.Calendar.Advance(S.Number(TEXT("worker_reactivate_seconds"))*2);S.Workers.Tick(S,S.Number(TEXT("worker_reactivate_seconds"))*2);S.Workers.RefreshMetrics(S);
     TestEqual(TEXT("Existing stored body fills the real logistics vacancy"),S.Population,Jobs);TestEqual(TEXT("Two paid bodies remain in their physical berths"),C.Inventory.FindRef(Body),2.);
     TestTrue(TEXT("Stored bodies add their configured litres"),S.InventoryLitres({{Body,2}})==S.Resources[Body].LitresPerUnit*2);
     auto* Lost=S.Workers.Bodies.FindByPredicate([](const auto& W){return W.State==TEXT("active")&&W.Activity==TEXT("operate");});if(!Lost)return false;Lost->State=TEXT("destroyed");Lost->Activity=TEXT("terminal");Lost->Outdoor=false;Lost->BuildingId=0;Lost->Route.Empty();Lost->NextWaypoint=0;S.Workers.RefreshMetrics(S);
-    S.SetWorkerSurplusTarget(1,Error);S.Time+=S.Number(TEXT("worker_reactivate_seconds"));S.Calendar.Advance(S.Number(TEXT("worker_reactivate_seconds")));S.Workers.Tick(S,S.Number(TEXT("worker_reactivate_seconds")));S.Workers.RefreshMetrics(S);
+    S.Time+=S.Number(TEXT("worker_reactivate_seconds"));S.Calendar.Advance(S.Number(TEXT("worker_reactivate_seconds")));S.Workers.Tick(S,S.Number(TEXT("worker_reactivate_seconds")));S.Workers.RefreshMetrics(S);
     TestEqual(TEXT("Existing stored body fills a vacancy before manufacturing"),S.Population,Jobs);TestEqual(TEXT("Reactivation consumes exactly one stored body"),C.Inventory.FindRef(Body),1.);
-    S.SetWorkerSurplusTarget(1,Error);TestFalse(TEXT("Reserve target prevents recycling the last protected body"),S.DisassembleWorkers(C.Id,1,Error));
-    S.SetWorkerSurplusTarget(0,Error);const auto Returns=S.DisassemblyOutputs();TMap<FString,double> Before=C.Inventory;const double BeforeEnergy=S.Energy.ConsumedKWh;
+    TestFalse(TEXT("Reserve target prevents recycling the last protected body"),S.DisassembleWorkers(C.Id,1,Error));
+    const auto Returns=S.DisassemblyOutputs();TMap<FString,double> Before=C.Inventory;const double BeforeEnergy=S.Energy.ConsumedKWh;
     if(!S.DisassembleWorkers(C.Id,1,Error)){AddError(Error);return false;}S.StepWorkerDisassembly(.05);
     TestEqual(TEXT("Recycling never deletes an active worker"),S.Population,Jobs);TestEqual(TEXT("One body enters paid disassembly escrow"),C.Inventory.FindRef(Body),0.);
     TestTrue(TEXT("Disassembly charges the authored kWh exactly once"),FMath::IsNearlyEqual(S.Energy.ConsumedKWh-BeforeEnergy,S.DisassemblyEnergyKWh(),1.e-8));
@@ -153,7 +153,7 @@ bool FSeigeStoredWorkerLifecycleTest::RunTest(const FString&)
     Blocked.Time+=1;Blocked.Calendar.Advance(1);Blocked.Workers.Tick(Blocked,1);Blocked.Time+=1;Blocked.Calendar.Advance(1);Blocked.Workers.Tick(Blocked,1);
     TestFalse(TEXT("A real recovered-parts capacity shortage blocks recycling"),NoRoom.DisassemblyCommitted);TestEqual(TEXT("Capacity shortage preserves the unassigned worker"),Blocked.Population,Blocked.TotalJobs+1);TestEqual(TEXT("Blocked recycling charges no energy"),Blocked.Energy.ConsumedKWh,UnspentEnergy);
     FSeigeSimulation Trade,TradeLoaded;if(!CoreFixture(Trade,Error)){AddError(Error);return false;}const int Port=FactoryFixture(Trade,Error,TEXT("trading_port"));if(!Port){AddError(Error);return false;}
-    Trade.Buildings[0].Inventory.Add(Body,1);Trade.Workers.NewStored(Trade,Trade.Buildings[0].Id,1);Trade.FindBuilding(Port)->Inventory.Add(Body,3);Trade.Workers.NewStored(Trade,Port,3);Trade.SetWorkerSurplusTarget(1,Error);Trade.SetPortWorkerTarget(Port,3,Error);Trade.AllocateWorkers();Trade.Energy.Tick(Trade,0);
+    Trade.Buildings[0].Inventory.Add(Body,1);Trade.Workers.NewStored(Trade,Trade.Buildings[0].Id,1);Trade.FindBuilding(Port)->Inventory.Add(Body,3);Trade.Workers.NewStored(Trade,Port,3);Trade.SetPortWorkerTarget(Port,3,Error);Trade.AllocateWorkers();Trade.Energy.Tick(Trade,0);
     TestFalse(TEXT("Worker imports must be whole bodies"),Trade.CanTrade(Port,Body,.5,true,Error));TestFalse(TEXT("Worker exports must be whole bodies"),Trade.CanTrade(Port,Body,.5,false,Error));
     const int32 OverCapacity=FMath::FloorToInt(Trade.Trade.Definition(Trade.FindBuilding(Port)->DefId)->CapacityKg/Trade.Resources[Body].UnitMassKg)+1;
     TestFalse(TEXT("A shipment cannot carry more whole bodies than its authored mass capacity"),Trade.CanTrade(Port,Body,OverCapacity,false,Error));

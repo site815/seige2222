@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "version": "0.10.4",
+  "date": "2026-10-12",
+  "status": "focused_local_checks_passed",
+  "scope": "Audio cadence, building selection, scenario resources, automatic worker reserves, equal loaded/empty movement, 1/10/20 playback and build-menu resource hovers. Focused native regressions and bounded 10x packaged routes; not long-session balance or sustained FPS acceptance.",
+  "editor_build": "passed",
+  "shipping_package": "passed",
+  "native_tests": {
+    "succeeded": 54,
+    "failures": 0,
+    "warnings": 0,
+    "report": "v0.10.4/focused-native.json"
+  },
+  "packaged_checks": [
+    {
+      "resolution": [
+        1600,
+        900
+      ],
+      "report": "v0.10.4/packaged-1600x900.json",
+      "assertions": 146,
+      "stages": 34,
+      "failures": 0,
+      "elapsed_seconds": 46.692951299250126,
+      "simulation_speed": 10,
+      "socket_samples": 23,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 553,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    },
+    {
+      "resolution": [
+        3840,
+        1600
+      ],
+      "report": "v0.10.4/packaged-3840x1600.json",
+      "assertions": 146,
+      "stages": 34,
+      "failures": 0,
+      "elapsed_seconds": 46.89474520087242,
+      "simulation_speed": 10,
+      "socket_samples": 23,
+      "tcp_observed": 0,
+      "udp_observed": 0,
+      "source_runtime_files": 553,
+      "matching_staged_json": 25,
+      "inputs_unchanged": true
+    }
+  ],
+  "package_files": [
+    {
+      "path": "Builds/v0.10.4/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+      "bytes": 167315456,
+      "sha256": "587726DA978474A5DADCE4ADFF59A9059F2FD481C15ACFFF3DA1228003B27DA4"
+    },
+    {
+      "path": "Builds/v0.10.4/Windows/seige2222/Content/Paks/global.ucas",
+      "bytes": 3205888,
+      "sha256": "656F9CC750D6B9EA0B7B6FC221B8BFDC8BE20E737E66D5A18AF7CD7C118012D3"
+    },
+    {
+      "path": "Builds/v0.10.4/Windows/seige2222/Content/Paks/global.utoc",
+      "bytes": 782,
+      "sha256": "D4F99BC37B29DC911C8B2F0549314F2E4D974CB5B6D9B68EE5E9C5023A70CB6D"
+    },
+    {
+      "path": "Builds/v0.10.4/Windows/seige2222/Content/Paks/seige2222-Windows.pak",
+      "bytes": 11244862,
+      "sha256": "E9E77B93CF2375E08C103BCCFF08633CDF5EF2E248421129FD085CE36EEA3AC4"
+    },
+    {
+      "path": "Builds/v0.10.4/Windows/seige2222/Content/Paks/seige2222-Windows.ucas",
+      "bytes": 659061552,
+      "sha256": "0D72F36F3B56D4E8C0DDCEEFC983FB21FA9C878E9C108F55575442F7D546756B"
+    },
+    {
+      "path": "Builds/v0.10.4/Windows/seige2222/Content/Paks/seige2222-Windows.utoc",
+      "bytes": 436069,
+      "sha256": "B567D426CFBC74C9842750B95CBE100B1B1C912CBC8293314238AC86F029FCDC"
+    }
+  ],
+  "captures": [
+    {
+      "path": "v0.10.4/ui-1600x900/01_worker_and_hud.png",
+      "sha256": "8ccfe73c7a60ff70e7ba5454422178773c3aca5372e414e14f28c69bcf3ecc9b"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/02_map_chain.png",
+      "sha256": "1adc2e95049d96c5e3e021375861bd54642539fed991fc5fc03e87c56dc107f8"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/03_equipment_bill.png",
+      "sha256": "dc51f0a7db153634f69da9807796d65521a82f235d5affb7b0d22d58c66423de"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/04_night_trade.png",
+      "sha256": "2f57b730b3646ce987dc2f1106789e3d9a9b251af06f5f10f214020d9dddc9c5"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/05_credits.png",
+      "sha256": "1fde59a856af88a51496c538dd3c589473611c4186da9ba7f4f4369e55be948b"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/06_transport_inspection.png",
+      "sha256": "a969e53092bf9b7aa0a8b2ffeb00167f36f58f79f740a50a482047e950932a61"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/07_building_hover.png",
+      "sha256": "d4041c40491695dcf530376af520286a72edf0504c6c9d659e967bc370e34f16"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/08_rex_focus.png",
+      "sha256": "beb3fce0f2aa5f3c93d34991354c457c6db5f426d2ecf5eefdeaca5082f86fe1"
+    },
+    {
+      "path": "v0.10.4/ui-1600x900/09_build_and_resources.png",
+      "sha256": "86880c31edf84854ffe14be0c912215896c9b084ea7aaab53685f57a06ef103a"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/01_worker_and_hud.png",
+      "sha256": "9cf673bc922bbcab13a45eb37ff630aa125ba95f6b45e14a0e73a618b3805a80"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/02_map_chain.png",
+      "sha256": "ef1b9f0c81a7c0a4867d6ef4e01f0796e31040cdd29a049ea9c34266164f8e47"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/03_equipment_bill.png",
+      "sha256": "48e32b917f9c08aca52f5d71fa551bcb3515a9922135167ff890d327d72e183a"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/04_night_trade.png",
+      "sha256": "a4b33e7f5dab648b4571ec9e36a234805a16ecb32255bf1864b4fc06f4ffce47"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/05_credits.png",
+      "sha256": "35f70da73c47d093ea646ab64e973a1a1e354f010acd7172da58b5301473f47d"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/06_transport_inspection.png",
+      "sha256": "02889ee6f72f5c182fc86ae5cf76d219ac2e2f3f4e527b3ace461a56b9d596c9"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/07_building_hover.png",
+      "sha256": "1eaefdfb9fe126ff0cd3382ca5217cad9ef498c242b80656d06be7e3cbfb9a17"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/08_rex_focus.png",
+      "sha256": "5be24aab03d72abdd03444b4232c8aa908404ead0a081442bb2c5a097dadcace"
+    },
+    {
+      "path": "v0.10.4/ui-3840x1600/09_build_and_resources.png",
+      "sha256": "d39dea4de389f2f2a4a9f1680461cb34a50ec6835c582d2d253f7c52eead7158"
+    }
+  ],
+  "archive": {
+    "path": "Builds/seige2222-v0.10.4-win64.zip",
+    "bytes": 759021812,
+    "sha256": "320B32051C4F087003AB42311049FB53207C7966571FF83A4CFE6245233CA4AA",
+    "crc_check": "passed",
+    "all_runtime_bytes_match": true
+  },
+  "hud": {
+    "width_policy": "physical viewport height",
+    "control_rows": 1,
+    "verified_widths_px": {
+      "1600x900": 900,
+      "3840x1600": 1600
+    }
+  },
+  "rules_validation": {
+    "negative_cases": 139,
+    "passed": true
+  },
+  "save_compatibility": "Format9 plus changed Rules fingerprint. New scenario required; prior saves are preserved.",
+  "rex": {
+    "max_hp": 25,
+    "roam_m": 100,
+    "danger_m": 35,
+    "heal_hp_per_second": 5,
+    "safe_delay_seconds": 60,
+    "mourning_days": 30,
+    "worker_speed_during_mourning": 0.5,
+    "asset": "v0.10.2 mesh and coat unchanged; existing licence note remains in Credits."
+  },
+  "publication": "Local build only. No push or hosted release attempted at user request.",
+  "movement_kmh": {
+    "worker_empty": 10,
+    "worker_loaded": 10,
+    "transport_empty": 30,
+    "transport_loaded": 30,
+    "road_multipliers": [
+      2,
+      4,
+      8
+    ]
+  },
+  "worker_reserve": {
+    "policy": "command crew capacity",
+    "level_targets": [
+      5,
+      10,
+      15
+    ],
+    "manual_colony_target": false,
+    "port_targets": "independent, additive"
+  },
+  "playback_rates": [
+    0,
+    1,
+    10,
+    20
+  ],
+  "audio": {
+    "report": "v0.10.4/audio-validation.json",
+    "source_clips": 12,
+    "clipped_samples": 0,
+    "placement_silent": true,
+    "subjective_listening_performed": false
+  },
+  "ui_configuration_validation": {
+    "negative_cases": 14,
+    "passed": true
+  }
+}

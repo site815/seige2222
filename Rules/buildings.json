@@ -72,7 +72,7 @@
       "id": "extraction_mine",
       "name": "Extraction Mine",
       "role": "extractor",
-      "description": "Extracts the resource in its local deposit. One mine per deposit; workers, connected road-grid power and local cargo storage are required.",
+      "description": "Extracts the resource in its local deposit. One mine per deposit; workers, shared colony-grid power and local cargo storage are required.",
       "visual": "extractor",
       "cost": {
         "alloy": 500,
@@ -628,7 +628,7 @@
       "id": "solar_array",
       "name": "Solar array \u00b7 Level 1",
       "role": "generator",
-      "description": "Same-footprint solar installation; upgraded panels increase passive output on the connected road grid.",
+      "description": "Same-footprint solar installation; upgraded panels increase passive output on the shared colony grid.",
       "visual": "depot",
       "cost": {
         "alloy": 400,
@@ -689,7 +689,7 @@
       "id": "battery_bank",
       "name": "Grid battery bank",
       "role": "battery",
-      "description": "Stores electricity for its connected road grid; installed battery capacity is separate from cargo storage.",
+      "description": "Stores electricity for its shared colony grid; installed battery capacity is separate from cargo storage.",
       "visual": "depot",
       "cost": {
         "alloy": 100,
@@ -1250,7 +1250,7 @@
       "id": "fuel_generator",
       "name": "Fuel generator",
       "role": "generator",
-      "description": "Consumes delivered fuel to generate electricity on the connected road grid.",
+      "description": "Consumes delivered fuel to generate electricity on the shared colony grid.",
       "visual": "factory",
       "cost": {
         "alloy": 600,
@@ -1443,7 +1443,7 @@
       "id": "solar_array_2",
       "name": "Solar array \u00b7 Level 2",
       "role": "generator",
-      "description": "Same-footprint solar installation; upgraded panels increase passive output on the connected road grid.",
+      "description": "Same-footprint solar installation; upgraded panels increase passive output on the shared colony grid.",
       "visual": "depot",
       "cost": {
         "alloy": 900.0,
@@ -1505,7 +1505,7 @@
       "id": "solar_array_3",
       "name": "Solar array \u00b7 Level 3",
       "role": "generator",
-      "description": "Same-footprint solar installation; upgraded panels increase passive output on the connected road grid.",
+      "description": "Same-footprint solar installation; upgraded panels increase passive output on the shared colony grid.",
       "visual": "depot",
       "cost": {
         "alloy": 1600,
@@ -3027,7 +3027,7 @@
       "id": "fusion_power_plant",
       "name": "Fusion power plant \u00b7 Level 1",
       "role": "generator",
-      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Connect roads for shared power; output scales with actual operating crew time.",
+      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Uses the shared colony power grid; output scales with actual operating crew time.",
       "visual": "factory",
       "cost": {
         "alloy": 4000,
@@ -3095,7 +3095,7 @@
       "id": "fusion_power_plant_2",
       "name": "Fusion power plant \u00b7 Level 2",
       "role": "generator",
-      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Connect roads for shared power; output scales with actual operating crew time.",
+      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Uses the shared colony power grid; output scales with actual operating crew time.",
       "visual": "factory",
       "cost": {
         "alloy": 8000,
@@ -3163,7 +3163,7 @@
       "id": "fusion_power_plant_3",
       "name": "Fusion power plant \u00b7 Level 3",
       "role": "generator",
-      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Connect roads for shared power; output scales with actual operating crew time.",
+      "description": "Specialist fusion assemblies are installed as durable reactor equipment. Consumes water as operating coolant/feedstock, not additional reactor assemblies. Uses the shared colony power grid; output scales with actual operating crew time.",
       "visual": "factory",
       "cost": {
         "alloy": 12000,
@@ -3250,6 +3250,6 @@
     "fusion_power_plant"
   ],
   "balance_status": "Provisional costs, durations, staffing, capacities and health. Confirmed tier geometry and hardpoint constraints are validated separately. Upgrade bills are incremental and stored on the source level. prototype-9.2 adds progression gates: AI chip works, tank factory and battery works need tier-2 products beyond the landing kit; fusion works, mech factory and plasma towers need locally made AI chips; every level-3 upgrade needs AI chips and the core needs fusion reactors.",
-  "capacity_note": "Provisional closed storage in litres. Vehicle factories and cores hold the full largest permitted chassis plus a legal full weapon loadout, ammunition and local operating buffers; capacity adds no starting materials. Advanced assembly still needs enough charged batteries on the connected road grid.",
+  "capacity_note": "Provisional closed storage in litres. Vehicle factories and cores hold the full largest permitted chassis plus a legal full weapon loadout, ammunition and local operating buffers; capacity adds no starting materials. Advanced assembly still needs enough charged batteries on the shared colony grid.",
   "quantity_note": "Provisional v0.9 physical construction bills in native cargo units. Core level 1 is a preinstalled landed shuttle: its 20 kg bill is deployment consumables, not its unmodeled hull/reactor mass. Level 2/3 costs include expansion and installed upgrade equipment. Tower costs include equipped modules; replacements discard old modules without refund."
 }

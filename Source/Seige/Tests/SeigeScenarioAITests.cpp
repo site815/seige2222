@@ -44,8 +44,8 @@ bool FinishCoreDeployment(FSeigeSimulation& Colony,FString& Error,FSeigeScenario
 }
 bool InstallDecisionFixtureRoad(FSeigeSimulation& Colony,FVector2D A,FVector2D B,FString& Error)
 {
-    // Isolated funding tests install their existing grid explicitly. Survival
-    // tests still perform every physical construction step after initialization.
+    // Explicit legacy-road fixture; current scenarios deliberately omit roads.
+    Colony.SetRoadsEnabledForTest(true);
     if(!Colony.PlaceRoad(A,B,Error))return false;
     auto& Road=Colony.Roads.Last();Road.IsConstructing=false;Road.ConstructionProgress=1;Road.Tier=Road.TargetTier;
     Road.InstalledMaterials=Colony.RoadCost(A,B,Road.Tier);Road.ConstructionMaterials.Empty();Road.Builders=Road.BuildersOnSite=Road.TravellingBuilders=0;
@@ -166,7 +166,7 @@ bool FSeigeAIStartsTest::RunTest(const FString& Parameters)
     DevelopedAI.Tick(Developed,300);
     TestFalse(TEXT("Starting colony remains playable through bounded early growth"),Starting.Failed);
     TestTrue(TEXT("Starting AI grows through material-paid worker assembly"),Starting.Workers.Bodies.Num()>StartingBodies);
-    TestTrue(TEXT("Starting AI uses real deliveries and completed grid roads"),Starting.DeliveredUnits>0&&Starting.Roads.ContainsByPredicate([](const auto& R){return !R.IsConstructing&&R.Health>0;}));
+    TestTrue(TEXT("Starting AI uses real deliveries without road prerequisites"),Starting.DeliveredUnits>0&&Starting.Roads.IsEmpty());
     TestTrue(TEXT("Starting AI completes actual paid installations"),Starting.Buildings.ContainsByPredicate([&](const auto& B){return B.Id!=Starting.Buildings[0].Id&&!B.IsConstructing&&B.Health>0;}));
     TestTrue(TEXT("Established industry consumes real inputs and produces after loading"),Developed.ProducedUnits.FindRef(TEXT("components"))>0);
     TestTrue(TEXT("Established operation uses physical worker deliveries"),Developed.DeliveredUnits>0);
@@ -263,6 +263,7 @@ bool FSeigeAISupportRecoveryTest::RunTest(const FString& Parameters)
     if(!WriteAIConfig(Config,TEXT("colony_ai.json"),[](auto Object)
     {TArray<TSharedPtr<FJsonValue>> Targets;for(const TCHAR* Id:{TEXT("worker_factory"),TEXT("robot_service_bay")}){auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),Id);Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),Targets.Num());Targets.Add(MakeShared<FJsonValueObject>(Target));}Object->SetArrayField(TEXT("build_targets"),Targets);}))return false;
     if(!Brain.Initialize(Colony,AIRules(),Config,false,Error,false,false)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     if(!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
     const FVector2D Home=Colony.Buildings[0].Position;
     // Real paid construction overloads the initial support allowance. The
@@ -319,6 +320,7 @@ bool FSeigeAISupportTradeRecoveryTest::RunTest(const FString& Parameters)
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     FString FixtureRules;if(!RecoveryBufferRules(TEXT("support-trade"),TEXT("robot_service_bay"),3,FixtureRules)){AddError(TEXT("Cannot prepare isolated repair-buffer rules"));return false;}
     if(!Brain.Initialize(Colony,FixtureRules,AIDirectory(),false,Error,false,false)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     if(!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
     const FVector2D Home=Colony.Buildings[0].Position;
     if(!Colony.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)||!Colony.PlaceBuilding(TEXT("conductor_works"),Home+FVector2D(0,1400),Error)){AddError(Error);return false;}
@@ -383,6 +385,7 @@ bool FSeigeAIGenericTradeRecoveryTest::RunTest(const FString& Parameters)
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     FString FixtureRules;if(!RecoveryBufferRules(TEXT("construction-trade"),TEXT("alloy_refinery"),4,FixtureRules)){AddError(TEXT("Cannot prepare isolated repair-buffer rules"));return false;}
     if(!Brain.Initialize(Colony,FixtureRules,AIDirectory(),false,Error,false,false)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     if(!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
     const FVector2D Home=Colony.Buildings[0].Position;
     if(!Colony.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)||!Colony.PlaceBuilding(TEXT("conductor_works"),Home+FVector2D(0,1400),Error)||!Colony.PlaceBuilding(TEXT("robot_service_bay"),Home+FVector2D(0,-1400),Error)){AddError(Error);return false;}
@@ -517,6 +520,7 @@ bool FSeigeAISurplusExportTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation Base;FSeigeScenarioAI Brain;
     if(!Brain.Initialize(Base,AIRules(),AIDirectory(),false,Error,false,false)||!FinishCoreDeployment(Base,Error)){AddError(Error);return false;}
+    Brain.ExportReserveHorizon=TEXT("full_plan");
     const FVector2D Home=Base.Buildings[0].Position;
     if(!Base.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)){AddError(Error);return false;}
     const int32 PortId=Base.Buildings.Last().Id;
@@ -548,8 +552,8 @@ bool FSeigeAISurplusExportTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Destruction restores the complete planned replacement bill before another export"),FMath::IsNearlyEqual(BeforeLoss-Brain.ManufacturedExportSurplus(Replacement,Goods),Base.BuildingDefs[Site.DefId].Cost[Goods]+30,1.e-8));
     FSeigeSimulation WorkerReserve=Base;WorkerReserve.Buildings[0].Inventory.Add(TEXT("components"),1000);
     const double BeforeTarget=Brain.ManufacturedExportSurplus(WorkerReserve,TEXT("components"));
-    if(!WorkerReserve.SetWorkerSurplusTarget(2,Error)){AddError(Error);return false;}
-    TestTrue(TEXT("An explicit worker target retains its real assembly inputs"),BeforeTarget-Brain.ManufacturedExportSurplus(WorkerReserve,TEXT("components"))>=2*WorkerReserve.Recipes[TEXT("assemble_robot")].Inputs[TEXT("components")]-1.e-8);
+    WorkerReserve.Buildings[0].DefId=TEXT("command_core_2");WorkerReserve.CoreDefinition=TEXT("command_core_2");WorkerReserve.Workers.RefreshMetrics(WorkerReserve);
+    TestTrue(TEXT("A command upgrade retains assembly inputs for its larger automatic reserve"),BeforeTarget-Brain.ManufacturedExportSurplus(WorkerReserve,TEXT("components"))>=5*WorkerReserve.Recipes[TEXT("assemble_robot")].Inputs[TEXT("components")]-1.e-8);
     TestTrue(TEXT("Useful higher-value manufactured stock queues an ordinary sale"),Brain.ManageTrade(Base));
     const auto Order=Base.FindBuilding(PortId)->Shipment;
     TestTrue(TEXT("Shipment value chooses only the unreserved 500kg instead of the lower-value raw flight"),!Order.Buy&&Order.Resource==Goods&&FMath::IsNearlyEqual(Order.Quantity,500.,1.e-8));
@@ -577,6 +581,7 @@ bool FSeigeAIRoadTradePriorityTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     if(!Brain.Initialize(Colony,AIRules(),AIDirectory(),false,Error,false,false)||!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     const FVector2D Home=Colony.Buildings[0].Position;
     if(!Colony.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)){AddError(Error);return false;}
     // Isolate the next order at an existing port. No simulation tick, free
@@ -617,6 +622,7 @@ bool FSeigeAIConnectedPlacementTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     if(!Colony.Initialize(AIRules(),Error,false,false)||!Brain.LoadConfig(Colony,AIDirectory(),Error)||!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road preflight.
     const auto& Core=Colony.Buildings[0];const FVector2D Home=Core.Position,Start=Colony.BuildingAccessPoint(Core);
     const auto& Factory=Colony.BuildingDefs[TEXT("worker_factory")];
     FSeigeBuilding Preview;Preview.Id=INDEX_NONE;Preview.DefId=Factory.Id;Preview.Health=Factory.Health;
@@ -727,6 +733,7 @@ bool FSeigeAISelectedRecipeTradeTest::RunTest(const FString& Parameters)
     {
         FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
         if(!Brain.Initialize(Colony,AIRules(),AIDirectory(),false,Error,false,false)||!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
         const FVector2D Home=Colony.Buildings[0].Position;
         if(!Colony.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)||(WithFactory&&!Colony.PlaceBuilding(TEXT("worker_factory"),Home+FVector2D(0,-1400),Error))){AddError(Error);return false;}
         const int32 PortId=Colony.Buildings[1].Id;
@@ -747,7 +754,7 @@ bool FSeigeAISelectedRecipeTradeTest::RunTest(const FString& Parameters)
         }
         Colony.BuildingDefs[Colony.CoreDefinition].RecipeInputMultiplier=2;
         Brain.Targets.Empty();Brain.ReserveTargets.Empty();Brain.ImportBatch=10000;
-        if(!Colony.SetWorkerSurplusTarget(1,Error)){AddError(Error);return false;}
+        TestTrue(TEXT("Command capacity requires an automatic worker reserve"),Colony.WorkerSurplusTarget()>0);
         TestTrue(TEXT("Core worker selection has no fixed definition recipe"),Colony.Definition(Colony.Buildings[0])->Recipe.IsEmpty());
         TestEqual(TEXT("Core has a real selected worker batch to fund"),Colony.ActiveProductionRecipe(Colony.Buildings[0]),FString(TEXT("assemble_robot")));
         if(WithFactory)TestEqual(TEXT("Dedicated factory also exposes its selected worker batch"),Colony.ActiveProductionRecipe(Colony.Buildings[2]),FString(TEXT("assemble_robot")));
@@ -772,6 +779,7 @@ bool FSeigeAISupportPendingRoadTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     if(!Brain.Initialize(Colony,AIRules(),AIDirectory(),false,Error,false,false)||!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     const FVector2D Home=Colony.Buildings[0].Position,Port=Colony.BuildingAccessPoint(Colony.Buildings[0]);
     if(!Colony.PlaceBuilding(TEXT("worker_factory"),Home+FVector2D(1400,0),Error)||!Colony.PlaceRoad(Port,Port+FVector2D(0,500),Error)){AddError(Error);return false;}
     TestTrue(TEXT("Real queued construction exceeds current worker support"),Colony.TotalJobs>Colony.RobotSupportCapacity);
@@ -793,6 +801,7 @@ bool FSeigeAIImpossibleExportTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     if(!Brain.Initialize(Colony,AIRules(),AIDirectory(),false,Error,false,false)||!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
+    Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     const auto* Node=Brain.ExportNode(Colony);if(!Node)return false;const FString Resource=Node->Resource;const FVector2D NodePosition=Node->Position,Home=Colony.Buildings[0].Position;
     if(!Colony.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)||!Colony.PlaceBuilding(TEXT("extraction_mine"),NodePosition,Error)){AddError(Error);return false;}
     const int32 PortId=Colony.Buildings[1].Id,MineId=Colony.Buildings[2].Id;
@@ -850,7 +859,7 @@ bool FSeigeAIDevelopedNeighborRecoveryTest::RunTest(const FString& Parameters)
     TSet<FString> Identities;int32 Active=0,Stored=0;
     for(const auto& W:Colony.Workers.Bodies){TestFalse(TEXT("Established workers have unique identities"),Identities.Contains(W.Id));Identities.Add(W.Id);Active+=W.State==TEXT("active");Stored+=W.State==TEXT("stored");}
     TestEqual(TEXT("All 44 active bodies are present"),Active,44);TestEqual(TEXT("All four packed bodies are present"),Stored,4);
-    for(const auto& B:Colony.Buildings){TestFalse(TEXT("Initial structures are completed scenario assets"),B.IsConstructing);TestTrue(TEXT("Every initial facility has a connected real road grid"),Colony.IsRoadGridConnected(Colony.Buildings[0].Id,B.Id));TestTrue(TEXT("Cargo fits the local building"),Colony.StorageUsed(B)<=Colony.Definition(B)->StorageCapacity+1.e-8);}
+    for(const auto& B:Colony.Buildings){TestFalse(TEXT("Initial structures are completed scenario assets"),B.IsConstructing);TestTrue(TEXT("Every initial facility has its shared colony grid"),Colony.IsRoadGridConnected(Colony.Buildings[0].Id,B.Id));TestTrue(TEXT("Cargo fits the local building"),Colony.StorageUsed(B)<=Colony.Definition(B)->StorageCapacity+1.e-8);}
     const FString SavePath=AIOutput(TEXT("established-initial.json"));if(!Colony.Save(SavePath,Error)){AddError(Error);return false;}
     FSeigeSimulation Restored;FSeigeScenarioAI Resume;
     if(!Resume.Initialize(Restored,AIRules(),AIDirectory(),false,Error,true,true,-2027807669)||!Restored.Load(SavePath,Error)){AddError(Error);return false;}

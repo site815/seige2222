@@ -10,7 +10,7 @@ bool FSeigeWorkerSystem::Initialize(const TSharedPtr<FJsonObject>& Rules,FSeigeS
 {
     Policy=Rules;FString Selector;
     if(!Policy||!Policy->TryGetStringField(TEXT("scheduler_policy"),Selector)||Selector!=TEXT("owned_building_crews")){Error=TEXT("Unknown owned-crew worker scheduler");return false;}
-    for(const TCHAR* Key:{TEXT("haul_mass_kg"),TEXT("haul_volume_litres"),TEXT("logistics_workers"),TEXT("logistics_facilities_per_worker"),TEXT("logistics_max_workers"),TEXT("core_minimum_operators"),TEXT("loading_seconds"),TEXT("unloading_seconds"),TEXT("route_retry_seconds"),TEXT("deployment_ground_seconds"),TEXT("deployment_hatch_seconds"),TEXT("hatch_exit_spacing_seconds"),TEXT("core_hatch_fraction"),TEXT("idle_return_seconds"),TEXT("workstation_spacing_meters"),TEXT("body_radius_meters"),TEXT("battery_capacity_kwh"),TEXT("charge_minutes_per_day"),TEXT("charge_reserve_fraction"),TEXT("charge_reserve_stagger_fraction"),TEXT("initial_charge_stagger_fraction"),TEXT("core_recovery_fraction"),TEXT("core_charging_berths"),TEXT("station_charging_berths"),TEXT("charging_queue_spacing_meters")})
+    for(const TCHAR* Key:{TEXT("maximum_health"),TEXT("charging_repair_hp_per_second"),TEXT("haul_mass_kg"),TEXT("haul_volume_litres"),TEXT("logistics_workers"),TEXT("logistics_facilities_per_worker"),TEXT("logistics_max_workers"),TEXT("core_minimum_operators"),TEXT("loading_seconds"),TEXT("unloading_seconds"),TEXT("route_retry_seconds"),TEXT("deployment_ground_seconds"),TEXT("deployment_hatch_seconds"),TEXT("hatch_exit_spacing_seconds"),TEXT("core_hatch_fraction"),TEXT("idle_return_seconds"),TEXT("workstation_spacing_meters"),TEXT("body_radius_meters"),TEXT("battery_capacity_kwh"),TEXT("charge_minutes_per_day"),TEXT("charge_reserve_fraction"),TEXT("charge_reserve_stagger_fraction"),TEXT("initial_charge_stagger_fraction"),TEXT("core_recovery_fraction"),TEXT("core_charging_berths"),TEXT("station_charging_berths"),TEXT("charging_queue_spacing_meters")})
     {double V=0;if(!Policy->TryGetNumberField(Key,V)||!FMath::IsFinite(V)||V<=0){Error=FString(TEXT("Invalid worker policy: "))+Key;return false;}}
     for(const TCHAR* Key:{TEXT("logistics_workers"),TEXT("logistics_facilities_per_worker"),TEXT("logistics_max_workers"),TEXT("core_minimum_operators")})if(Number(Key)!=FMath::FloorToDouble(Number(Key))||Number(Key)>1000){Error=TEXT("Worker scheduling counts must be bounded integers");return false;}
     if(!Policy->TryGetStringField(TEXT("logistics_scaling_policy"),LogisticsScalingPolicy)||(LogisticsScalingPolicy!=TEXT("fixed")&&LogisticsScalingPolicy!=TEXT("completed_facilities"))||Number(TEXT("logistics_max_workers"))<Number(TEXT("logistics_workers")))
@@ -21,6 +21,7 @@ bool FSeigeWorkerSystem::Initialize(const TSharedPtr<FJsonObject>& Rules,FSeigeS
     {FString Role;if(!Value->TryGetString(Role)||LogisticsExcludedRoles.Contains(Role)){Error=TEXT("Invalid or repeated logistics excluded role");return false;}bool Known=false;for(const auto& Pair:S.BuildingDefs)Known|=Pair.Value.Role==Role;if(!Known){Error=TEXT("Unknown logistics excluded role: ")+Role;return false;}LogisticsExcludedRoles.Add(Role);}
     if(Number(TEXT("core_hatch_fraction"))>1){Error=TEXT("Worker hatch must be inside the level-one core body");return false;}
     if(BodyRadiusMeters()<.1||BodyRadiusMeters()>5){Error=TEXT("Worker body radius must be between 0.1 and 5 metres");return false;}
+    if(MaximumHealth()<1||MaximumHealth()>10000||Number(TEXT("charging_repair_hp_per_second"))<.01||Number(TEXT("charging_repair_hp_per_second"))>1000){Error=TEXT("Worker durability exceeds supported bounds");return false;}
     Origin=FString::Printf(TEXT("%08x"),uint32(S.GenerationSeed));NextSerial=1;DeploymentElapsed=RecyclingWasteKg=0;Bodies.Empty();DeploymentStock.Empty();
     auto* C=S.Core();if(!C){Error=TEXT("Worker landing requires a command core");return false;}
     DeploymentStock=MoveTemp(C->ConstructionMaterials);C->ConstructionMaterials.Empty();
@@ -124,13 +125,37 @@ void FSeigeWorkerSystem::RouteTo(FSeigeSimulation& S,FSeigeWorker& W,FVector2D D
     if(InsideConnector(To)){if(!S.Environment.SegmentDry(Port,To,0))return;Suffix.Add(Port);Suffix.Add(To);To=Port;}
     if(FVector2D::DistSquared(From,To)<1.e-10)Middle.Add(To);else if(!S.FindRoute(From,To,Middle))return;
     W.Route=MoveTemp(Prefix);for(const auto& P:Middle)if(W.Route.IsEmpty()||FVector2D::DistSquared(W.Route.Last(),P)>1.e-10)W.Route.Add(P);for(const auto& P:Suffix)if(W.Route.IsEmpty()||FVector2D::DistSquared(W.Route.Last(),P)>1.e-10)W.Route.Add(P);
+    if(!W.Route.IsEmpty()&&!W.Route.Last().Equals(Destination,1.e-8))W.Route.Add(Destination);
 }
 bool FSeigeWorkerSystem::Move(FSeigeSimulation& S,FSeigeWorker& W,FVector2D Destination,double Seconds)
 {
-    if(FVector2D::DistSquared(W.Position,Destination)<1.e-8)return true;
-    if((W.Route.IsEmpty()&&S.Time>=W.RetryAt)||W.RouteRevision!=S.TransportRevision)RouteTo(S,W,Destination);
-    const FVector2D Before=W.Position;const bool Arrived=S.WalkRoute(W.Position,W.Route,W.NextWaypoint,Seconds);
-    if(!W.Position.Equals(Before,1.e-8))W.Heading=(W.Position-Before).GetSafeNormal();return Arrived;
+    if(W.Position.Equals(Destination,1.e-6))return true;
+    const bool Retarget=!W.Route.IsEmpty()&&(!W.Route.Last().Equals(Destination,1.e-6)||!W.Route.IsValidIndex(W.NextWaypoint));
+    if(Retarget||(W.Route.IsEmpty()&&S.Time>=W.RetryAt)||W.RouteRevision!=S.TransportRevision)RouteTo(S,W,Destination);
+    // Preserve the original first-edge start as a waypoint. A finer physical
+    // step can invalidate an edge after the body has already entered it.
+    if(W.NextWaypoint==0&&!W.Route.IsEmpty()&&!W.Route[0].Equals(W.Position,1.e-8))W.Route.Insert(W.Position,0);
+    const auto* Core=S.Core();const FVector2D Port=Core?S.BuildingAccessPoint(*Core):FVector2D::ZeroVector;
+    auto InsideConnector=[&](FVector2D P){return Core&&FMath::Abs(P.Y-Core->Position.Y)<1.e-5&&P.X>=Core->Position.X-1.e-5&&P.X<=Port.X+1.e-5;};
+    while(W.Route.IsValidIndex(W.NextWaypoint)&&Seconds>1.e-9)
+    {
+        const FVector2D End=W.Route[W.NextWaypoint];const double Distance=FVector2D::Distance(W.Position,End);
+        if(Distance<1.e-6){++W.NextWaypoint;continue;}
+        const double Speed=S.Mobility.Speed(S,TEXT("drone"),W.Position,End)/S.MetersPerWorldUnit()*S.Companions.WorkerSpeedMultiplier(S);
+        if(Speed<=0)return false;const double Step=FMath::Min(Distance,Speed*Seconds);const FVector2D Next=W.Position+(End-W.Position)/Distance*Step;
+        if(!(InsideConnector(W.Position)&&InsideConnector(Next))&&!S.Mobility.MovementAllowed(S,TEXT("drone"),W.Position,Next))
+        {
+            // Worker FindRoute also honors the generic walking clearance.
+            const auto* Profile=S.Mobility.Profile(TEXT("drone"));
+            const double Radius=FMath::Max(Profile->BodyRadiusMeters,S.Transport->GetNumberField(TEXT("path_clearance"))*S.MetersPerWorldUnit()-Profile->ClearanceMeters);
+            S.RejectMobilityRouteEdge(TEXT("drone"),W.Position,End,Radius);
+            if(W.NextWaypoint>0)S.RejectMobilityRouteEdge(TEXT("drone"),W.Route[W.NextWaypoint-1],End,Radius);
+            W.Route.Empty();W.NextWaypoint=0;W.RetryAt=S.Time+Number(TEXT("route_retry_seconds"));return false;
+        }
+        W.Heading=(End-W.Position).GetSafeNormal();W.Position=Next;Seconds-=Step/Speed;
+        if(Distance-Step<1.e-6)++W.NextWaypoint;else break;
+    }
+    return !W.Route.IsEmpty()&&W.NextWaypoint>=W.Route.Num()&&W.Position.Equals(Destination,1.e-6);
 }
 FSeigeWorker* FSeigeWorkerSystem::IdleWorker(FSeigeSimulation& S,bool Borrow,bool IncludeIdle)
 {
@@ -158,34 +183,49 @@ void FSeigeWorkerSystem::Schedule(FSeigeSimulation& S)
     AssignCrews(S);
     auto Start=[&](FSeigeWorker& W,int32 Building,int32 Road,const TCHAR* Task)
     {
-        W.BuildingId=Building;W.RoadId=Road;W.Activity=Task;W.PhaseSeconds=0;W.StationSlot=0;
-        while(Bodies.ContainsByPredicate([&](const auto& Other){return Other.Id!=W.Id&&Other.State==TEXT("active")&&Other.BuildingId==Building&&Other.RoadId==Road&&Other.StationSlot==W.StationSlot;}))++W.StationSlot;
-        RouteTo(S,W,WorkPosition(S,W));
+        FSeigeWorker Candidate=W;Candidate.BuildingId=Building;Candidate.RoadId=Road;Candidate.Activity=Task;Candidate.PhaseSeconds=0;Candidate.StationSlot=0;
+        while(Bodies.ContainsByPredicate([&](const auto& Other){return Other.Id!=W.Id&&Other.State==TEXT("active")&&Other.BuildingId==Building&&Other.RoadId==Road&&Other.StationSlot==Candidate.StationSlot;}))++Candidate.StationSlot;
+        const FVector2D Destination=WorkPosition(S,Candidate);RouteTo(S,Candidate,Destination);
+        if(Candidate.Route.IsEmpty()&&!Candidate.Position.Equals(Destination,1.e-6))return false;
+        W=MoveTemp(Candidate);return true;
     };
+    // Bring a real builder back when the operating reserve goes to charge.
+    // Existing saves may also have lent every core body to a waiting worksite.
+    // Returning takes the ordinary physical route; no operator count is faked.
+    if(const auto* Core=S.Core())if(!Core->IsConstructing&&Core->Enabled)
+    {
+        const int32 Required=FMath::Min(S.Definition(*Core)->Jobs,int32(Number(TEXT("core_minimum_operators"))));
+        int32 Available=0;
+        for(const auto& W:Bodies)if(W.State==TEXT("active")&&W.CrewBuildingId==Core->Id&&W.BatteryKWh>0&&!W.ChargingBuildingId&&!W.TransportVehicleId&&!W.DeliveryId&&
+            (W.Activity==TEXT("idle")||W.Activity==TEXT("operate")||W.Activity==TEXT("to_job")))++Available;
+        for(auto& W:Bodies)if(Available<Required&&W.State==TEXT("active")&&W.CrewBuildingId==Core->Id&&W.BatteryKWh>0&&!W.ChargingBuildingId&&!W.TransportVehicleId&&!W.DeliveryId&&
+            (W.Activity==TEXT("build")||W.Activity==TEXT("to_build")||W.Activity==TEXT("road_build")||W.Activity==TEXT("to_road")))
+        {FSeigeWorker Previous=W;Release(W);if(Start(W,Core->Id,0,TEXT("to_job")))++Available;else W=MoveTemp(Previous);}
+    }
     for(auto& W:Bodies)
     {
         if(W.State!=TEXT("active")||W.ChargingBuildingId||W.BatteryKWh<=0||W.TransportVehicleId)continue;
         if(W.Activity!=TEXT("idle")&&W.Activity!=TEXT("operate")&&W.Activity!=TEXT("to_job"))continue;
         auto* Owner=S.FindBuilding(W.CrewBuildingId);if(!Owner||Owner->Health<=0)continue;
         const auto* Definition=S.Definition(*Owner);
-        if(Definition->Role==TEXT("core")||Definition->Role==TEXT("construction"))
+        if((Definition->Role==TEXT("core")&&CanLendCoreCrew(S,W))||Definition->Role==TEXT("construction"))
         {
             bool Assigned=false;
             // Stable automatic oldest-site order. Core/general construction
             // crews lend themselves only to a funded site or active delivery.
             for(const auto& B:S.Buildings)if(B.Health>0&&B.Enabled&&B.IsConstructing)
             {
-                int32 Have=0;for(const auto& Other:Bodies)if(Other.State==TEXT("active")&&Other.BuildingId==B.Id&&(Other.Activity==TEXT("to_build")||Other.Activity==TEXT("build")))++Have;
+                int32 Have=0;for(const auto& Other:Bodies)if(Other.State==TEXT("active")&&Other.BuildingId==B.Id&&(Other.Activity==TEXT("to_build")||Other.Activity==TEXT("build")||(Other.ChargingBuildingId&&(Other.SuspendedActivity==TEXT("build")||Other.SuspendedActivity==TEXT("to_build")))))++Have;
                 bool Material=false;for(const auto& P:B.ConstructionMaterials)Material|=P.Value>1.e-8;
                 Material|=S.Couriers.ContainsByPredicate([&](const auto& C){return C.TargetId==B.Id&&C.ForConstruction;});
-                if(Have<S.RequiredBuilders(B)&&Material){Start(W,B.Id,0,TEXT("to_build"));Assigned=true;break;}
+                if(Have<S.RequiredBuilders(B)&&Material&&Start(W,B.Id,0,TEXT("to_build"))){Assigned=true;break;}
             }
-            if(!Assigned)for(const auto& R:S.Roads)if(R.Health>0&&R.IsConstructing)
+            if(!Assigned&&S.RoadsEnabled())for(const auto& R:S.Roads)if(R.Health>0&&R.IsConstructing)
             {
-                int32 Have=0;for(const auto& Other:Bodies)if(Other.State==TEXT("active")&&Other.RoadId==R.Id&&(Other.Activity==TEXT("to_road")||Other.Activity==TEXT("road_build")))++Have;
+                int32 Have=0;for(const auto& Other:Bodies)if(Other.State==TEXT("active")&&Other.RoadId==R.Id&&(Other.Activity==TEXT("to_road")||Other.Activity==TEXT("road_build")||(Other.ChargingBuildingId&&(Other.SuspendedActivity==TEXT("road_build")||Other.SuspendedActivity==TEXT("to_road")))))++Have;
                 bool Material=false;for(const auto& P:R.ConstructionMaterials)Material|=P.Value>1.e-8;
                 Material|=S.Couriers.ContainsByPredicate([&](const auto& C){return C.RoadTargetId==R.Id;});
-                if(Have<S.TransportTiers[R.TargetTier].ConstructionWorkers&&Material){Start(W,0,R.Id,TEXT("to_road"));Assigned=true;break;}
+                if(Have<S.TransportTiers[R.TargetTier].ConstructionWorkers&&Material&&Start(W,0,R.Id,TEXT("to_road"))){Assigned=true;break;}
             }
             if(Assigned)continue;
         }
@@ -212,7 +252,24 @@ bool FSeigeWorkerSystem::Dispatch(FSeigeSimulation& S,int32 SourceId,int32 Targe
     Amount=FMath::Min(Amount,Self?1.:HaulUnits(S,Resource));if(S.Resources[Resource].Discrete)Amount=FMath::FloorToDouble(Amount+1.e-9);if(Amount<=1.e-8)return false;
     FSeigeWorker* W=nullptr;
     if(Self){int32 Active=0;for(auto& Body:Bodies){if(Body.State==TEXT("active"))++Active;if(!W&&Body.State==TEXT("stored")&&Body.ContainerKind==TEXT("building")&&Body.ContainerId==SourceId)W=&Body;}if(!W)return false;}
-    else W=TaskWorker(S,SourceId,Target,Construction||Deployment||Road!=0);if(!W)return false;
+    else
+    {
+        const auto* Receiver=S.FindBuilding(Target);const auto* Lane=S.FindRoad(Road);
+        if(Road&&(!S.RoadsEnabled()||!Lane))return false;
+        const FVector2D Pickup=Deployment||Source==S.Core()&&Source->IsConstructing?HatchPoint(S):S.BuildingAccessPoint(*Source);
+        const FVector2D Destination=Lane?S.RoadAccessPoint(*Lane):S.BuildingAccessPoint(*Receiver);
+        // Validate both physical legs before reserving inventory. Worker
+        // selection used to accept the first eligible but stranded body.
+        TSet<FString> Tried;
+        while((W=TaskWorker(S,SourceId,Target,Construction||Deployment||Road!=0,&Tried)))
+        {
+            Tried.Add(W->Id);FSeigeWorker Candidate=*W;RouteTo(S,Candidate,Pickup);
+            if(Candidate.Route.IsEmpty()&&!Candidate.Position.Equals(Pickup,1.e-6))continue;
+            Candidate.Position=Pickup;RouteTo(S,Candidate,Destination);
+            if(!Candidate.Route.IsEmpty()||Candidate.Position.Equals(Destination,1.e-6))break;
+        }
+    }
+    if(!W)return false;
     FSeigeCourier C;C.Id=S.NextId++;C.WorkerId=W->Id;C.SourceId=SourceId;C.TargetId=Target;C.RoadTargetId=Road;C.Resource=Resource;C.ReservedAmount=Amount;C.ForConstruction=Construction;C.SourceDeployment=Deployment;C.SelfTransfer=Self;C.Position=W->Position;
     if(Self){Source->Inventory.FindOrAdd(Resource)-=1;W->State=TEXT("active");W->Outdoor=false;C.Phase=TEXT("reactivate_transfer");C.ReservedAmount=0;}
     W->Activity=TEXT("delivery");W->DeliveryId=C.Id;W->BuildingId=W->RoadId=0;W->PhaseSeconds=0;W->Route.Empty();W->NextWaypoint=0;W->RetryAt=0;S.Couriers.Add(C);
@@ -269,7 +326,7 @@ void FSeigeWorkerSystem::Tick(FSeigeSimulation& S,double Seconds)
         if(W.Activity==TEXT("to_job")||W.Activity==TEXT("operate")||W.Activity==TEXT("to_build")||W.Activity==TEXT("build"))
         {auto* B=S.FindBuilding(W.BuildingId);const bool Build=W.Activity==TEXT("to_build")||W.Activity==TEXT("build");if(!B||B->Health<=0||!B->Enabled||B->IsConstructing!=Build){Release(W);continue;}if(W.Activity==TEXT("to_job")||W.Activity==TEXT("to_build")){if(Move(S,W,WorkPosition(S,W),Seconds))W.Activity=Build?TEXT("build"):TEXT("operate");}continue;}
         if(W.Activity==TEXT("to_road")||W.Activity==TEXT("road_build"))
-        {auto* R=S.FindRoad(W.RoadId);if(!R||R->Health<=0||!R->IsConstructing){Release(W);continue;}if(W.Activity==TEXT("to_road")&&Move(S,W,WorkPosition(S,W),Seconds))W.Activity=TEXT("road_build");continue;}
+        {auto* R=S.FindRoad(W.RoadId);if(!S.RoadsEnabled()||!R||R->Health<=0||!R->IsConstructing){Release(W);continue;}if(W.Activity==TEXT("to_road")&&Move(S,W,WorkPosition(S,W),Seconds))W.Activity=TEXT("road_build");continue;}
         if(W.Activity==TEXT("reactivate")){W.PhaseSeconds+=Seconds;if(W.PhaseSeconds>=S.Number(TEXT("worker_reactivate_seconds")))Release(W);continue;}
         if(W.Activity==TEXT("return")){const auto* C=S.Core();if(!C||C->Health<=0||Move(S,W,S.BuildingAccessPoint(*C),Seconds))Release(W);continue;}
         if(W.Activity==TEXT("to_store")||W.Activity==TEXT("store"))
@@ -303,9 +360,21 @@ void FSeigeWorkerSystem::Tick(FSeigeSimulation& S,double Seconds)
 }
 bool FSeigeWorkerSystem::BeginDisassembly(FSeigeSimulation& S,int32 Building)
 {for(auto& W:Bodies)if(W.State==TEXT("stored")&&W.ContainerKind==TEXT("building")&&W.ContainerId==Building){W.State=TEXT("disassembling");W.Activity=TEXT("disassembling");return true;}return false;}
-void FSeigeWorkerSystem::FinishDisassembly(FSeigeSimulation& S,int32 Building){for(auto& W:Bodies)if(W.State==TEXT("disassembling")&&W.ContainerId==Building){RecyclingWasteKg+=S.Resources[S.TextRule(TEXT("inactive_worker_resource"))].UnitMassKg-S.InventoryMassKg(S.DisassemblyOutputs());W.State=TEXT("disassembled");W.Activity=TEXT("terminal");return;}}
+void FSeigeWorkerSystem::FinishDisassembly(FSeigeSimulation& S,int32 Building){for(auto& W:Bodies)if(W.State==TEXT("disassembling")&&W.ContainerId==Building){RecyclingWasteKg+=S.Resources[S.TextRule(TEXT("inactive_worker_resource"))].UnitMassKg-S.InventoryMassKg(S.DisassemblyOutputs());W.Health=0;W.State=TEXT("disassembled");W.Activity=TEXT("terminal");return;}}
+void FSeigeWorkerSystem::Damage(FSeigeSimulation& S,const FString& Id,double Amount)
+{
+    auto* W=Find(Id);if(!W||!IsExposed(*W)||!FMath::IsFinite(Amount)||Amount<=0)return;
+    W->Health=FMath::Max(0.,W->Health-Amount);if(W->Health>0)return;
+    // A dead loader releases only its handler claim. Cargo remains with the
+    // transport; a dead hand courier loses its carried cargo once, as before.
+    if(W->TransportVehicleId)if(auto* V=S.TransportVehicles.Find(W->TransportVehicleId))V->HandlerWorkerId.Empty();
+    if(W->DeliveryId){KillCourier(S,W->DeliveryId);return;}
+    W->State=TEXT("destroyed");W->Activity=TEXT("terminal");W->Outdoor=false;
+    W->DeliveryId=W->CrewBuildingId=W->ChargingBuildingId=W->TransportVehicleId=W->BuildingId=W->RoadId=0;
+    W->SuspendedActivity.Empty();W->Route.Empty();W->NextWaypoint=0;RefreshMetrics(S);
+}
 void FSeigeWorkerSystem::KillCourier(FSeigeSimulation& S,int32 Id)
-{auto* C=S.Couriers.FindByPredicate([&](const auto& V){return V.Id==Id;});if(!C)return;if(auto* W=Find(C->WorkerId)){W->State=TEXT("destroyed");W->Activity=TEXT("terminal");W->Outdoor=false;W->DeliveryId=W->CrewBuildingId=W->ChargingBuildingId=W->TransportVehicleId=W->BuildingId=W->RoadId=0;W->SuspendedActivity.Empty();W->Route.Empty();W->NextWaypoint=0;}S.Couriers.RemoveAll([&](const auto& V){return V.Id==Id;});++S.LostCouriers;RefreshMetrics(S);}
+{auto* C=S.Couriers.FindByPredicate([&](const auto& V){return V.Id==Id;});if(!C)return;if(auto* W=Find(C->WorkerId)){W->Health=0;W->State=TEXT("destroyed");W->Activity=TEXT("terminal");W->Outdoor=false;W->DeliveryId=W->CrewBuildingId=W->ChargingBuildingId=W->TransportVehicleId=W->BuildingId=W->RoadId=0;W->SuspendedActivity.Empty();W->Route.Empty();W->NextWaypoint=0;}S.Couriers.RemoveAll([&](const auto& V){return V.Id==Id;});++S.LostCouriers;RefreshMetrics(S);}
 void FSeigeWorkerSystem::OnBuildingDestroyed(FSeigeSimulation& S,int32 Id)
 {
     for(auto& W:Bodies)
@@ -316,7 +385,7 @@ void FSeigeWorkerSystem::OnBuildingDestroyed(FSeigeSimulation& S,int32 Id)
         // Mark those same bodies destroyed, never leave an owned orphan export
         // or recreate them as local stock after the escrow has been lost.
         if(W.State==TEXT("shipment")&&W.ContainerKind==TEXT("shipment")&&W.ContainerId==Id)
-        {W.State=TEXT("destroyed");W.Activity=TEXT("terminal");W.Outdoor=false;W.CrewBuildingId=W.ChargingBuildingId=W.TransportVehicleId=W.DeliveryId=W.BuildingId=W.RoadId=0;W.SuspendedActivity.Empty();W.Route.Empty();W.NextWaypoint=0;continue;}
+        {W.Health=0;W.State=TEXT("destroyed");W.Activity=TEXT("terminal");W.Outdoor=false;W.CrewBuildingId=W.ChargingBuildingId=W.TransportVehicleId=W.DeliveryId=W.BuildingId=W.RoadId=0;W.SuspendedActivity.Empty();W.Route.Empty();W.NextWaypoint=0;continue;}
         // Structural damage alone does not kill a crew. Stored surviving bodies
         // emerge at the container access point; their inventory entry is removed
         // by the same building-destruction transaction, never duplicated.

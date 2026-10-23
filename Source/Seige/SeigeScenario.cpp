@@ -13,13 +13,14 @@
 #include "Misc/Parse.h"
 #include "Kismet/GameplayStatics.h"
 #include "HAL/PlatformTime.h"
+#include "Misc/Guid.h"
 
 struct FSeigeScenarioPreparation
 {
     TArray<FString> Slots;
     FString ReturnScreen;
     bool Background=true,Periodic=true,Observer=false,SlotActive=false;
-    int32 Cursor=0;
+    int32 Cursor=0,Seed=0;
     TArray<int32> Order={4,0,1,2,3,5,6,7,8};
     FSeigeSimulation Center;
     TSharedPtr<FSeigeScenarioAI> CenterBrain;
@@ -29,6 +30,15 @@ struct FSeigeScenarioPreparation
 
 namespace
 {
+int32 NewScenarioSeed(int32 Override)
+{
+    if(Override!=INDEX_NONE)return Override;
+    int32 CommandSeed=INDEX_NONE;
+    if(FParse::Value(FCommandLine::Get(),TEXT("ScenarioSeed="),CommandSeed)&&CommandSeed!=INDEX_NONE)return CommandSeed;
+    // Capture once per new scenario, independent of threat toggles. The chosen
+    // seed is saved with the simulation and salts every neighboring region.
+    return static_cast<int32>(GetTypeHash(FGuid::NewGuid())&0x7fffffffu);
+}
 bool CanApplyDisplayPreferences()
 {
     const TCHAR* Command=FCommandLine::Get();
@@ -112,12 +122,13 @@ bool ASeigeGameMode::InitializeScenario(FString& Reason)
     TSharedPtr<FSeigeScenarioAI> NewCenterBrain;
     TArray<FSeigeNeighbor> NewNeighbors;
     const bool NewObserver=ScenarioSlots[4]!=TEXT("player");
+    const int32 Seed=NewScenarioSeed(ScenarioSeedOverride);
     if(NewObserver)
     {
         NewCenterBrain=MakeShared<FSeigeScenarioAI>();
-        if(!NewCenterBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),ScenarioSlots[4]==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks)) return false;
+        if(!NewCenterBrain->Initialize(NewCenter,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),ScenarioSlots[4]==TEXT("developed"),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks,Seed)) return false;
     }
-    else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks)) return false;
+    else if(!NewCenter.Initialize(DataDirectory(TEXT("Rules")),Reason,ScenarioBackgroundBugs,ScenarioPeriodicAttacks,Seed)) return false;
     for(int32 Index=0;Index<9;Index++)
     {
         if(Index==4||ScenarioSlots[Index]==TEXT("empty")) continue;
@@ -148,7 +159,7 @@ void ASeigeGameMode::FinishScenarioStart()
     for(auto& Pair:Visuals) if(Pair.Value) Pair.Value->Destroy();
     Visuals.Empty();
     for(auto It=Materials.CreateIterator();It;++It)if(It.Key().StartsWith(TEXT("construction_original_")))It.RemoveCurrent();
-    CancelRoadTool();CancelWallTool();SelectedRoadId=0;
+    CancelRoadTool();CancelWallTool();SelectedRoadId=0;RegionViewHistory.Reset();
     Ready=true; SelectedId=0; SelectedBuild.Empty(); WinAcknowledged=false;
     Accumulator=0; Speed=1; Paused=false;MenuOpen=false;
     Screen=Observer?TEXT("playing"):TEXT("landing");
@@ -166,6 +177,7 @@ void ASeigeGameMode::BeginScenarioPreparation()
     {Notice=TEXT("Invalid scenario region choice");return;}
     ScenarioPreparation=MakeShared<FSeigeScenarioPreparation>();auto& P=*ScenarioPreparation;
     P.Slots=ScenarioSlots;P.Background=ScenarioBackgroundBugs;P.Periodic=ScenarioPeriodicAttacks;P.Observer=P.Slots[4]!=TEXT("player");P.ReturnScreen=Screen;
+    P.Seed=NewScenarioSeed(ScenarioSeedOverride);
     Screen=TEXT("preparing");Notice=TEXT("Loading established colonies and validating their supplies, workforce and defenses. You can cancel.");
 }
 void ASeigeGameMode::CancelScenarioPreparation()
@@ -210,11 +222,11 @@ void ASeigeGameMode::TickScenarioPreparation(double BudgetMilliseconds)
         {
             FString Reason;
             if(Index==4&&Type==TEXT("player"))
-            {if(!P.Center.Initialize(DataDirectory(TEXT("Rules")),Reason,P.Background,P.Periodic)){Fail(Reason);return;}++P.Cursor;continue;}
+            {if(!P.Center.Initialize(DataDirectory(TEXT("Rules")),Reason,P.Background,P.Periodic,P.Seed)){Fail(Reason);return;}++P.Cursor;continue;}
             if(Index==4)P.CenterBrain=MakeShared<FSeigeScenarioAI>();
             else{P.ActiveNeighbor=FSeigeNeighbor();P.ActiveNeighbor.Index=Index;P.ActiveNeighbor.Type=Type;P.ActiveNeighbor.Offset=FVector2D(Index%3-1,Index/3-1)*P.Center.WorldHalfSize*2;P.ActiveNeighbor.Brain=MakeShared<FSeigeScenarioAI>();}
             auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;
-            if(!Brain->BeginInitialize(Candidate,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),Type==TEXT("developed"),Reason,P.Background,P.Periodic,Index==4?INDEX_NONE:SeigeSectorResourceSeed(P.Center.GenerationSeed,Index),Index==4?FVector2D::ZeroVector:P.ActiveNeighbor.Offset)){Fail(Reason);return;}
+            if(!Brain->BeginInitialize(Candidate,DataDirectory(TEXT("Rules")),DataDirectory(TEXT("AIFILES")),Type==TEXT("developed"),Reason,P.Background,P.Periodic,Index==4?P.Seed:SeigeSectorResourceSeed(P.Center.GenerationSeed,Index),Index==4?FVector2D::ZeroVector:P.ActiveNeighbor.Offset)){Fail(Reason);return;}
             P.SlotActive=true;
         }
         auto Brain=Index==4?P.CenterBrain:P.ActiveNeighbor.Brain;auto& Candidate=Index==4?P.Center:P.ActiveNeighbor.Sim;bool Complete=!Brain->IsPreparing();FString Reason;
@@ -319,7 +331,7 @@ void ASeigeGameMode::CycleGameSpeed(int32 Direction)
 }
 bool ASeigeGameMode::IsSupportedGameSpeed(double Value) const
 {
-    return FMath::IsFinite(Value)&&Value>=1&&Value<=10&&Value==FMath::FloorToDouble(Value)&&GameSpeeds.Contains(static_cast<int32>(Value));
+    return FMath::IsFinite(Value)&&Value>=1&&Value<=100&&Value==FMath::FloorToDouble(Value)&&GameSpeeds.Contains(static_cast<int32>(Value));
 }
 
 void ASeigeGameMode::ResetScenarioCalendar()

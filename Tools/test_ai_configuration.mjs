@@ -24,12 +24,13 @@ for (const placementIndex of [undefined, -1, .5, 4097]) {
   else candidate.ai.build_targets[0].placement_index = placementIndex;
   ++negativeCases; assert.throws(() => validateConfiguration(candidate), /placement_index/);
 }
-for(const [key,values] of Object.entries({export_policy:[undefined,null,'sell_everything'],bulk_input_policy:[undefined,null,'unlimited_stock'],fuel_import_buffer_cycles:[undefined,0,101,'4'],fuel_import_refill_fraction:[undefined,0,1.01,'0.5'],core_replication_policy:[undefined,'free_goods','funded_shortage_first'],core_replication_recipes:[undefined,null,['unknown'],['assemble_robot'],['smelt_alloy','smelt_alloy']]})) {
+for(const [key,values] of Object.entries({export_reserve_horizon:[undefined,null,0,'sell_reserved_materials'],export_policy:[undefined,null,'sell_everything'],bulk_input_policy:[undefined,null,'unlimited_stock'],fuel_import_buffer_cycles:[undefined,0,101,'4'],fuel_import_refill_fraction:[undefined,0,1.01,'0.5'],core_replication_policy:[undefined,'free_goods','funded_shortage_first'],core_replication_recipes:[undefined,null,['unknown'],['assemble_robot'],['smelt_alloy','smelt_alloy']]})) {
   for(const value of values){const candidate=structuredClone(data);if(value===undefined)delete candidate.ai.economy[key];else candidate.ai.economy[key]=value;++negativeCases; assert.throws(()=>validateConfiguration(candidate),new RegExp(key));}
 }
 for(const fraction of [.001,1]){const candidate=structuredClone(data);candidate.ai.economy.fuel_import_refill_fraction=fraction;assert.doesNotThrow(()=>validateConfiguration(candidate));}
 for(const policy of ['remaining_output_bill','recipe_buffers']){const candidate=structuredClone(data);candidate.ai.economy.bulk_input_policy=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
 for(const policy of ['surplus_shipment_value','local_raw_only']){const candidate=structuredClone(data);candidate.ai.economy.export_policy=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
+for(const policy of ['next_prerequisite','full_plan']){const candidate=structuredClone(data);candidate.ai.economy.export_reserve_horizon=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
 for(const [key,value] of [['defense_coverage_policy',undefined],['defense_coverage_policy','ignore_walls'],['coverage_samples',0],['coverage_samples',8.5],['coverage_probe_distance_meters',-1],['coverage_excluded_roles',['unknown']]]) {
   const candidate=structuredClone(data);if(value===undefined)delete candidate.ai.placement[key];else candidate.ai.placement[key]=value;
   ++negativeCases; assert.throws(()=>validateConfiguration(candidate),new RegExp(key));

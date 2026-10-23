@@ -46,7 +46,7 @@ export function validateRules(d) {
   num(calendar.initial_elapsed_seconds,'calendar.initial_elapsed_seconds');if(calendar.initial_elapsed_seconds>9007199254||Math.abs(calendar.initial_elapsed_seconds*1e6-Math.round(calendar.initial_elapsed_seconds*1e6))>.001)fail('Calendar start is not a safe microsecond time');
   if(JSON.stringify(calendar.seasons)!==JSON.stringify(['spring','summer','autumn','winter'])||calendar.solar_curve!=='daylight_half_sine')fail('Unsupported season order or solar curve');
   const workers=object(d.workers,'workers');if(workers.scheduler_policy!=='owned_building_crews')fail('Worker scheduler must use permanent owned building crews');
-  const workerBounds={charging_queue_spacing_meters:[1,10],battery_capacity_kwh:[.001,100],charge_minutes_per_day:[1,1440],charge_reserve_fraction:[.01,.9],charge_reserve_stagger_fraction:[.001,.1],initial_charge_stagger_fraction:[.001,.5],core_recovery_fraction:[.001,1],core_charging_berths:[1,1,true],station_charging_berths:[1,1,true],body_radius_meters:[.1,5],haul_mass_kg:[.1,10000],haul_volume_litres:[.1,10000],logistics_workers:[1,1000,true],logistics_facilities_per_worker:[1,1000,true],logistics_max_workers:[1,1000,true],core_minimum_operators:[1,1000,true],loading_seconds:[.01,3600],unloading_seconds:[.01,3600],route_retry_seconds:[.01,3600],deployment_ground_seconds:[.01,3600],deployment_hatch_seconds:[.01,3600],hatch_exit_spacing_seconds:[.01,3600],core_hatch_fraction:[.01,1],workstation_spacing_meters:[.1,10],idle_return_seconds:[.01,3600]};
+  const workerBounds={maximum_health:[1,10000],charging_repair_hp_per_second:[.01,1000],charging_queue_spacing_meters:[1,10],battery_capacity_kwh:[.001,100],charge_minutes_per_day:[1,1440],charge_reserve_fraction:[.01,.9],charge_reserve_stagger_fraction:[.001,.1],initial_charge_stagger_fraction:[.001,.5],core_recovery_fraction:[.001,1],core_charging_berths:[1,1,true],station_charging_berths:[1,1,true],body_radius_meters:[.1,5],haul_mass_kg:[.1,10000],haul_volume_litres:[.1,10000],logistics_workers:[1,1000,true],logistics_facilities_per_worker:[1,1000,true],logistics_max_workers:[1,1000,true],core_minimum_operators:[1,1000,true],loading_seconds:[.01,3600],unloading_seconds:[.01,3600],route_retry_seconds:[.01,3600],deployment_ground_seconds:[.01,3600],deployment_hatch_seconds:[.01,3600],hatch_exit_spacing_seconds:[.01,3600],core_hatch_fraction:[.01,1],workstation_spacing_meters:[.1,10],idle_return_seconds:[.01,3600]};
   for(const [key,[min,max,integer]]of Object.entries(workerBounds)){num(workers[key],`workers.${key}`,min,!!integer);if(workers[key]>max)fail(`workers.${key} exceeds supported bound`);}
   if(!['fixed','completed_facilities'].includes(workers.logistics_scaling_policy))fail('Unsupported logistics scaling policy');
   if(workers.logistics_max_workers<workers.logistics_workers)fail('Logistics maximum cannot be below its base worker count');
@@ -55,7 +55,7 @@ export function validateRules(d) {
   const dog=object(d.companions.dog,'companions.dog');
   for(const key of ['name','food_resource','mesh','walk_animation','idle_animation'])str(dog[key],`dog.${key}`);
   if(!resources.has(dog.food_resource)||resources.get(dog.food_resource).unit!=='kg')fail('Companion food must be a kilogram cargo resource');
-  const dogRanges={initial_count:[0,1,true],seed:[0,2147483647,true],walk_kmh:[.1,20],walk_cycle_meters:[.05,5],roam_radius_meters:[1,1000],food_per_meal_kg:[.001,100],meal_interval_seconds:[1,86400],fed_duration_seconds:[1,172800],feed_radius_meters:[1,1000],morale_bonus:[0,.5],morale_radius_meters:[1,1000],rest_seconds:[0,300],eye_height_cm:[20,150],view_fov:[45,110],look_sensitivity:[.01,1],body_radius_meters:[.05,1],maximum_slope_grade:[.1,2]};
+  const dogRanges={maximum_health:[1,10000],danger_radius_meters:[1,1000],heal_per_second:[.01,1000],depression_days:[1,365,true],depression_speed_multiplier:[.01,1],initial_count:[0,1,true],seed:[0,2147483647,true],walk_kmh:[.1,20],walk_cycle_meters:[.05,5],roam_radius_meters:[1,1000],food_per_meal_kg:[.001,100],meal_interval_seconds:[1,86400],fed_duration_seconds:[1,172800],feed_radius_meters:[1,1000],morale_bonus:[0,.5],morale_radius_meters:[1,1000],rest_seconds:[0,300],eye_height_cm:[20,150],view_fov:[45,110],look_sensitivity:[.01,1],body_radius_meters:[.05,1],maximum_slope_grade:[.1,2]};
   for(const [key,[min,max,integer]] of Object.entries(dogRanges)){num(dog[key],`dog.${key}`,min,!!integer);if(dog[key]>max)fail(`dog.${key} exceeds supported bound`);}
   for(const key of ['territory_radius_meters','damage_alert_radius_meters','shelter_seconds','run_kmh'])num(dog[key],`dog.${key}`,.1);
   if(dog.roam_radius_meters>dog.territory_radius_meters||dog.run_kmh<dog.walk_kmh||dog.run_kmh>40||dog.territory_radius_meters>1000||dog.damage_alert_radius_meters>1000||dog.shelter_seconds>3600)fail('Invalid companion territory or shelter rules');
@@ -136,7 +136,9 @@ export function validateRules(d) {
   for(const k of ['maximum_joints','maximum_segments'])num(walls[k],`walls.${k}`,2,true);
   if(walls.minimum_edge_meters>walls.segment_length_meters||walls.maximum_joints>4096||walls.maximum_segments>4096)fail('Invalid wall construction limits');
   const t=object(d.transport.transport,'transport');
-  for(const k of ['meters_per_world_unit','worker_walk_kmh','access_clearance','path_clearance','snap_distance','minimum_segment_meters','maximum_segment_meters'])num(t[k],`transport.${k}`,0,false,true);
+  if(typeof t.roads_enabled!=='boolean')fail('transport.roads_enabled must be boolean');
+  if('worker_walk_kmh' in t)fail('Worker speed belongs only in mobility.drone.speed_kmh');
+  for(const k of ['meters_per_world_unit','access_clearance','path_clearance','snap_distance','minimum_segment_meters','maximum_segment_meters'])num(t[k],`transport.${k}`,0,false,true);
   if(!resources.has(t.repair_resource)||resources.get(t.repair_resource).discrete)fail('Road repairs require divisible physical material');
   for(const k of ['repair_service_range_meters','repair_health_per_second','repair_health_per_unit','repair_energy_kwh_per_health'])num(t[k],`transport.${k}`,0,false,true);
   num(t.repair_buffer_units,'transport.repair_buffer_units',0,false,true);
@@ -166,7 +168,8 @@ export function validateRules(d) {
   for(const k of ['worker_store_seconds','worker_reactivate_seconds','worker_disassemble_seconds'])num(p[k],k,0,false,true);
   num(p.worker_disassembly_kwh,'worker_disassembly_kwh',0,false,true);
   for(const k of ['auto_disassemble_parts_shortage','auto_disassemble_storage_full'])if(typeof p[k]!=='boolean')fail(`${k} must be boolean`);
-  for(const k of ['default_inactive_worker_target','default_port_worker_reserve_target'])num(p[k],k,0,true);
+  if(p.inactive_worker_target_policy!=='command_capacity'||'default_inactive_worker_target' in p)fail('Worker spare target must derive from command capacity');
+  num(p.default_port_worker_reserve_target,'default_port_worker_reserve_target',0,true);
   amounts(p.worker_disassembly_outputs,'worker_disassembly_outputs');if(p.worker_disassembly_outputs.stored_workers||sum(p.worker_disassembly_outputs)<=0||mass(p.worker_disassembly_outputs)>workerCargo.unit_mass_kg+1e-6)fail('Worker disassembly must return parts without creating mass');
   if(!buildings.has(p.objective_building)) fail('Objective building does not exist');
   amounts(p.core_reserves,'core_reserves');
@@ -199,7 +202,7 @@ export function validateRules(d) {
   for(const id of starters){if(!menu.includes(id))fail(`Missing bootstrap blueprint ${id}`);for(const [r,n] of Object.entries(buildings.get(id).cost))bootstrap[r]=(bootstrap[r]??0)+n;}
   const extractorMaximum={};for(const b of buildings.values())if(b.role==='extractor')for(const [r,n]of Object.entries(b.cost))extractorMaximum[r]=Math.max(extractorMaximum[r]??0,n);
   for(const [r,n]of Object.entries(extractorMaximum))bootstrap[r]=(bootstrap[r]??0)+n;
-  for(const [r,n]of Object.entries(tiers.get(t.initial_tier).cost_per_100_meters))bootstrap[r]=(bootstrap[r]??0)+n*start.road_length_meters/100;
+  if(t.roads_enabled)for(const [r,n]of Object.entries(tiers.get(t.initial_tier).cost_per_100_meters))bootstrap[r]=(bootstrap[r]??0)+n*start.road_length_meters/100;
   const newJobs=starters.reduce((n,id)=>n+buildings.get(id).jobs,0)+Math.max(...[...buildings.values()].filter(b=>b.role==='extractor').map(b=>b.jobs))+2;
   for(const [r,n] of Object.entries(recipes.get(p.population_recipe).inputs)) bootstrap[r]=(bootstrap[r]??0)+n*newJobs;
   // Each operating structure retains its local repair buffer; these units cannot fund sites.
@@ -305,10 +308,13 @@ function selfTest(source) {
     ['largest factory bill cannot fit',d=>d.buildings.buildings.find(b=>b.id==='vehicle_factory_3').storage_capacity=3600],
     ['universal core chassis cannot fit',d=>d.buildings.buildings.find(b=>b.id==='command_core').storage_capacity=1400],
     ['large tower refit cannot fit',d=>d.buildings.buildings.find(b=>b.id==='turret_3').storage_capacity=70],
+    ['missing road feature state',d=>delete d.transport.transport.roads_enabled],
+    ['nonboolean road feature state',d=>d.transport.transport.roads_enabled='false'],
     ['road repair has no material',d=>d.transport.transport.repair_resource='missing'],
     ['road repair has no energy',d=>d.transport.transport.repair_energy_kwh_per_health=0],
     ['worker disassembly creates matter',d=>d.policies.policies.worker_disassembly_outputs.components=100],
-    ['fractional reserve target',d=>d.policies.policies.default_inactive_worker_target=.5],
+    ['editable colony reserve target',d=>d.policies.policies.default_inactive_worker_target=5],
+    ['missing automatic reserve policy',d=>delete d.policies.policies.inactive_worker_target_policy],
     ['unknown selectable output',d=>d.buildings.buildings[0].allowed_recipes.push('missing')],
     ['core omits universal output',d=>d.buildings.buildings[0].allowed_recipes.pop()],
     ['instant factory multiplier',d=>d.buildings.buildings.find(b=>b.id==='worker_factory').recipe_time_multiplier=0],
@@ -324,6 +330,10 @@ function selfTest(source) {
     ['invalid wall family',d=>d.walls.walls.level_definitions[0]='solar_array'],
     ['zero wall length',d=>d.walls.walls.segment_length_meters=0],
     ['wall level height missing',d=>d.walls.walls.height_meters.pop()],
+    ['invalid dog health',d=>d.companions.dog.maximum_health=0],
+    ['invalid grief movement',d=>d.companions.dog.depression_speed_multiplier=0],
+    ['invalid grief days',d=>d.companions.dog.depression_days=.5],
+    ['invalid worker health',d=>d.workers.maximum_health=-1],
     ['missing companion food',d=>d.companions.dog.food_resource='not_a_resource'],
     ['invalid companion walking speed',d=>d.companions.dog.walk_kmh=0],
     ['unbounded companion morale',d=>d.companions.dog.morale_bonus=10],
@@ -333,7 +343,8 @@ function selfTest(source) {
     ['battery creates free charge',d=>d.energy.energy.buildings.solar_array.initial_battery_kwh=1],
     ['trade arbitrage',d=>d.trade.trade.prices.water.sell_credits=999],
     ['missing road energy',d=>delete d.transport.transport.tiers[0].idle_kw_per_100_meters],
-    ['missing walking speed', d=>delete d.transport.transport.worker_walk_kmh],
+    ['invalid automatic reserve policy', d=>d.policies.policies.inactive_worker_target_policy='manual'],
+    ['duplicate worker speed authority', d=>d.transport.transport.worker_walk_kmh=10],
     ['invalid core reserved footprint',d=>d.buildings.buildings[0].reserved_footprint=1],
     ['invalid port',d=>d.buildings.buildings[0].access_port=[0,0]],
     ['cyclic roads',d=>d.transport.transport.tiers[0].next_tier=d.transport.transport.initial_tier],

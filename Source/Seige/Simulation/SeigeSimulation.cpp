@@ -471,7 +471,7 @@ double FSeigeSimulation::ConstructionReserved(const FString& Resource) const
         double InTransit=0;for(const FSeigeCourier& C:Couriers)if(C.ForConstruction&&C.TargetId==B.Id&&C.Resource==Resource)InTransit+=C.Amount+C.ReservedAmount;
         Total+=FMath::Max(0.,ConstructionCost(B).FindRef(Resource)-B.InstalledMaterials.FindRef(Resource)-B.ConstructionMaterials.FindRef(Resource)-InTransit);
     }
-    for(const auto& R:Roads)if(R.Health>0&&R.IsConstructing)Total+=FMath::Max(0.,RoadCost(R.A,R.B,R.TargetTier).FindRef(Resource)-R.InstalledMaterials.FindRef(Resource)-R.ConstructionMaterials.FindRef(Resource)-IncomingRoad(R.Id,Resource));
+    if(RoadsEnabled())for(const auto& R:Roads)if(R.Health>0&&R.IsConstructing)Total+=FMath::Max(0.,RoadCost(R.A,R.B,R.TargetTier).FindRef(Resource)-R.InstalledMaterials.FindRef(Resource)-R.ConstructionMaterials.FindRef(Resource)-IncomingRoad(R.Id,Resource));
     return Total;
 }
 double FSeigeSimulation::Spendable(const FSeigeBuilding& B,const FString& Resource) const
@@ -578,11 +578,14 @@ bool FSeigeSimulation::CanPlaceBuildingGeometry(const FString& Id,FVector2D P,FS
     {Error=TEXT("Wait for the delivery worker to leave this reserved plot");return false;}
     for(const auto& B:Buildings)if(B.Health>0&&((B.TravellingBuilders>0&&OccupiesPlot(B.BuilderPosition,WorkerClearance))||(B.BuildersOnSite>0&&OccupiesPlot(BuildingAccessPoint(B),WorkerClearance))))
     {Error=TEXT("Wait for the construction crew to leave this reserved plot");return false;}
-    for(const auto& R:Roads)if(R.Health>0&&((R.TravellingBuilders>0&&OccupiesPlot(R.BuilderPosition,WorkerClearance))||(R.BuildersOnSite>0&&OccupiesPlot(RoadAccessPoint(R),WorkerClearance))))
+    if(RoadsEnabled())for(const auto& R:Roads)if(R.Health>0&&((R.TravellingBuilders>0&&OccupiesPlot(R.BuilderPosition,WorkerClearance))||(R.BuildersOnSite>0&&OccupiesPlot(RoadAccessPoint(R),WorkerClearance))))
     {Error=TEXT("Wait for the road crew to leave this reserved plot");return false;}
+    const double TransportRadius=FMath::Max(TransportVehicles.Definition().BodySizeMeters.X,TransportVehicles.Definition().BodySizeMeters.Y)*.5/MetersPerWorldUnit();
+    for(const auto& V:TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&OccupiesPlot(V.Position,TransportRadius))
+    {Error=TEXT("Wait for the cargo transport to leave this reserved plot");return false;}
     for(const auto& V:Combat.Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&OccupiesPlot(V.Position,Combat.Chassis[V.ChassisId].RadiusMeters/MetersPerWorldUnit()))
     {Error=TEXT("Move the vehicle outside this reserved plot first");return false;}
-    for(const auto& R:Roads)if(R.Health>0)
+    if(RoadsEnabled())for(const auto& R:Roads)if(R.Health>0)
     {const FString Tier=R.IsConstructing?R.TargetTier:R.Tier;const double Width=TransportTiers[Tier].WidthMeters*.5/MetersPerWorldUnit();const FVector2D Delta=R.B-R.A;const double T=FMath::Clamp(FVector2D::DotProduct(P-R.A,Delta)/Delta.SizeSquared(),0.,1.);const FVector2D Nearest=R.A+Delta*T;if(FMath::Abs(P.X-Nearest.X)<D->ReservedFootprint+Width && FMath::Abs(P.Y-Nearest.Y)<D->ReservedFootprint+Width){Error=TEXT("Reserved plot would obstruct a road corridor");return false;}}
     if (D->Role==TEXT("extractor"))
     {
@@ -686,6 +689,7 @@ void FSeigeSimulation::StepConstruction(double Seconds)
 }
 void FSeigeSimulation::StepRoadConstruction(double Seconds)
 {
+    if(!RoadsEnabled())return;
     for(auto& R:Roads)
     {
         if(!R.IsConstructing||R.Health<=0){R.BuildersOnSite=R.TravellingBuilders=0;continue;}
@@ -760,7 +764,7 @@ void FSeigeSimulation::StepProduction(double Seconds)
         }
         if (!B.Enabled) { B.Status = TEXT("Disabled (repairs remain automatic)"); continue; }
         const double Fraction = WorkFraction(B);
-        if (Fraction <= 0) { B.Status = Energy.Fraction(B.Id)<=0?TEXT("Waiting for road-grid power"):TEXT("Waiting for workers"); continue; }
+        if (Fraction <= 0) { B.Status = Energy.Fraction(B.Id)<=0?TEXT("Waiting for colony-grid power"):TEXT("Waiting for workers"); continue; }
         if (D.Role==TEXT("extractor"))
         {
             const FString Resource=ExtractionResource(B);
@@ -775,7 +779,7 @@ void FSeigeSimulation::StepProduction(double Seconds)
         else if(D.Role==TEXT("service"))B.Status=TEXT("Single physical charging berth; attendant shares its daily capacity");
         else if (D.Role == TEXT("storage")) B.Status = TEXT("Receiving, storing and shipping physical cargo");
         else if(D.Role==TEXT("construction"))B.Status=TEXT("Owned crew dispatched automatically to construction sites");
-        else if(D.Role==TEXT("generator"))B.Status=TEXT("Generating electricity for connected road grid");
+        else if(D.Role==TEXT("generator"))B.Status=TEXT("Generating electricity for the shared colony grid");
         else if(D.Role==TEXT("battery"))B.Status=TEXT("Shared grid battery storage online");
         else if(D.Role==TEXT("trade"))B.Status=TEXT("External trading port ready");
         else if (D.Role == TEXT("defense")) B.Status = TEXT("Automatic defense online");
@@ -805,7 +809,7 @@ double FSeigeSimulation::DeliveryDemand(const FSeigeBuilding& B,const FString& R
         double Need=TransportVehicles.Demand(*this,B.Id,Resource)+FMath::Max(0.,Combat.Demand(*this,B.Id,Resource)-Combat.AmmoDemand(*this,B.Id,Resource));
         if(B.Enabled){const FString R=ActiveProductionRecipe(B);if(!R.IsEmpty())Need+=ProductionInputBuffer(B,R,Resource);if(B.DefId==CoreDefinition&&WorkersNeeded()>0&&R!=TextRule(TEXT("population_recipe")))Need+=ProductionInputBuffer(B,TextRule(TEXT("population_recipe")),Resource);}return Need;
     }
-    if(Category==TEXT("trade"))return Trade.Demand(*this,B.Id,Resource)+(Resource==TextRule(TEXT("inactive_worker_resource"))?B.WorkerExportTarget+(B.DefId==CoreDefinition?WorkerSurplusTarget:0):0);
+    if(Category==TEXT("trade"))return Trade.Demand(*this,B.Id,Resource)+(Resource==TextRule(TEXT("inactive_worker_resource"))?B.WorkerExportTarget+(B.DefId==CoreDefinition?WorkerSurplusTarget():0):0);
     if(Category==TEXT("reserve"))return B.DefId==CoreDefinition?CoreReserves.FindRef(Resource):0;
     return 0;
 }
@@ -874,7 +878,7 @@ void FSeigeSimulation::StepLogistics(double Seconds)
         if(Category==TEXT("construction"))
         {
             for(auto& B:Buildings)if(B.Health>0&&B.IsConstructing&&B.Enabled)ConstructionDelivery(B.Id,0,ConstructionCost(B),B.ConstructionMaterials,B.InstalledMaterials,BuildingAccessPoint(B));
-            for(auto& R:Roads)if(R.IsConstructing&&R.Health>0)ConstructionDelivery(0,R.Id,RoadCost(R.A,R.B,R.TargetTier),R.ConstructionMaterials,R.InstalledMaterials,RoadAccessPoint(R));
+            if(RoadsEnabled())for(auto& R:Roads)if(R.IsConstructing&&R.Health>0)ConstructionDelivery(0,R.Id,RoadCost(R.A,R.B,R.TargetTier),R.ConstructionMaterials,R.InstalledMaterials,RoadAccessPoint(R));
             continue;
         }
         for(int TargetIndex:Targets)
@@ -900,21 +904,30 @@ void FSeigeSimulation::StepLogistics(double Seconds)
             const double Room=StorageRoom(Target)/Resources[Resource].LitresPerUnit;
             if(Category==TEXT("storage"))Need=Room;
             Need=FMath::Min(Need,Room);if(Need<=UE_DOUBLE_SMALL_NUMBER)continue;
-            FSeigeBuilding* Source=nullptr;double Closest=TNumericLimits<double>::Max(),Supply=0;
-            for(auto& Candidate:Buildings)
+            // A nearer disconnected stockpile must not starve reachable supply.
+            // Retain the existing distance rank, trying each failed source at
+            // most once; dispatch reserves cargo only after physical preflight.
+            TSet<int32> Unavailable;
+            while(Eligible(Resource))
             {
-                if(Candidate.Id==Target.Id||Candidate.Health<=0||Candidate.IsConstructing)continue;const auto& SD=*Definition(Candidate);
-                if(TD.Role==TEXT("storage")&&(SD.Role==TEXT("storage")||SD.Role==TEXT("core")))continue;
-                const double Available=Spendable(Candidate,Resource)-Demand(Candidate,Resource,false);
-                if(TD.Role==TEXT("storage"))
+                FSeigeBuilding* Source=nullptr;double Closest=TNumericLimits<double>::Max(),Supply=0;
+                for(auto& Candidate:Buildings)
                 {
-                    bool Outstanding=false;for(const auto& Other:Buildings)if(Other.Id!=Candidate.Id&&Other.Health>0&&Definition(Other)->Role!=TEXT("storage")&&Demand(Other,Resource,true)>Other.Inventory.FindRef(Resource)+Incoming(Other.Id,Resource)+UE_DOUBLE_SMALL_NUMBER){Outstanding=true;break;}
-                    if(Outstanding)continue;
+                    if(Candidate.Id==Target.Id||Candidate.Health<=0||Candidate.IsConstructing||Unavailable.Contains(Candidate.Id))continue;const auto& SD=*Definition(Candidate);
+                    if(TD.Role==TEXT("storage")&&(SD.Role==TEXT("storage")||SD.Role==TEXT("core")))continue;
+                    const double Available=Spendable(Candidate,Resource)-Demand(Candidate,Resource,false);
+                    if(TD.Role==TEXT("storage"))
+                    {
+                        bool Outstanding=false;for(const auto& Other:Buildings)if(Other.Id!=Candidate.Id&&Other.Health>0&&Definition(Other)->Role!=TEXT("storage")&&Demand(Other,Resource,true)>Other.Inventory.FindRef(Resource)+Incoming(Other.Id,Resource)+UE_DOUBLE_SMALL_NUMBER){Outstanding=true;break;}
+                        if(Outstanding)continue;
+                    }
+                    const double Distance=FVector2D::Distance(Candidate.Position,Target.Position);
+                    if(Available+UE_DOUBLE_SMALL_NUMBER>=FMath::Min(Need,Number(TEXT("courier_min_batch")))&&Available>UE_DOUBLE_SMALL_NUMBER&&Distance<Closest){Source=&Candidate;Closest=Distance;Supply=Available;}
                 }
-                const double Distance=FVector2D::Distance(Candidate.Position,Target.Position);
-                if(Available+UE_DOUBLE_SMALL_NUMBER>=FMath::Min(Need,Number(TEXT("courier_min_batch")))&&Available>UE_DOUBLE_SMALL_NUMBER&&Distance<Closest){Source=&Candidate;Closest=Distance;Supply=Available;}
+                if(!Source)break;
+                if(Dispatch(*Source,Target.Id,0,Resource,FMath::Min3(Need,Supply,Resource==TextRule(TEXT("inactive_worker_resource"))?1.:FMath::Max(Workers.HaulUnits(*this,Resource),TransportVehicles.Available(*this)?TransportVehicles.HaulUnits(*this,Resource):0.)),false,BuildingAccessPoint(Target)))break;
+                Unavailable.Add(Source->Id);
             }
-            if(Source)Dispatch(*Source,Target.Id,0,Resource,FMath::Min3(Need,Supply,Resource==TextRule(TEXT("inactive_worker_resource"))?1.:FMath::Max(Workers.HaulUnits(*this,Resource),TransportVehicles.Available(*this)?TransportVehicles.HaulUnits(*this,Resource):0.)),false,BuildingAccessPoint(Target));
         }
         }
     }
@@ -949,23 +962,29 @@ void FSeigeSimulation::StepCombat(double Seconds)
         FSeigeBuilding* Target = nullptr; double Closest = TNumericLimits<double>::Max();
         for (FSeigeBuilding& B : Buildings)
         { const double Distance = FVector2D::Distance(E.Position, B.Position); if (B.Health > 0 && Distance < Closest) { Target = &B; Closest = Distance; } }
-        E.TargetBuildingId=Target?Target->Id:0;
-        if (!Target) continue;
-        const double AttackDistance = Number(TEXT("enemy_attack_range")) + Definition(*Target)->Footprint;
-        // A clamped approach can finish a few floating-point ULPs outside the
-        // radius, where the next move is too small to change the position.
-        // Numerical contact tolerance is not an additional gameplay range.
-        if (Closest > AttackDistance + UE_DOUBLE_KINDA_SMALL_NUMBER)
-            E.Position += (Target->Position - E.Position).GetSafeNormal() * FMath::Min(Number(TEXT("enemy_speed")) * Seconds, Closest - AttackDistance);
+        FSeigeCompanion* DogTarget=nullptr;FSeigeWorker* WorkerTarget=nullptr;
+        for(auto& D:Companions.Dogs)if(Companions.IsOutside(D)&&FVector2D::Distance(E.Position,D.Position)<Closest){Closest=FVector2D::Distance(E.Position,D.Position);DogTarget=&D;WorkerTarget=nullptr;}
+        for(auto& W:Workers.Bodies)if(Workers.IsExposed(W)&&FVector2D::Distance(E.Position,W.Position)<Closest){Closest=FVector2D::Distance(E.Position,W.Position);WorkerTarget=&W;DogTarget=nullptr;}
+        E.TargetBuildingId=DogTarget||WorkerTarget?0:Target?Target->Id:0;
+        if(!Target&&!DogTarget&&!WorkerTarget)continue;
+        const FVector2D Aim=DogTarget?DogTarget->Position:WorkerTarget?WorkerTarget->Position:Target->Position;
+        const double Radius=DogTarget?Companions.BodyRadiusMeters/MetersPerWorldUnit():WorkerTarget?Workers.BodyRadiusMeters()/MetersPerWorldUnit():Definition(*Target)->Footprint;
+        const double AttackDistance=Number(TEXT("enemy_attack_range"))+Radius;
+        if(Closest>AttackDistance+UE_DOUBLE_KINDA_SMALL_NUMBER)
+            E.Position+=(Aim-E.Position).GetSafeNormal()*FMath::Min(Number(TEXT("enemy_speed"))*Seconds,Closest-AttackDistance);
         else
         {
             const double Damage=Number(TEXT("enemy_damage_per_second"))*Seconds;
-            Combat.DamageBuilding(*this,Target->Id,Damage);
+            if(DogTarget)Companions.Damage(*this,DogTarget->Id,Damage);
+            else if(WorkerTarget)Workers.Damage(*this,WorkerTarget->Id,Damage);
+            else Combat.DamageBuilding(*this,Target->Id,Damage);
             if(Damage>0)E.LastAttackTime=Time;
             if(Escaped||Failed)return;
         }
-        for (int32 I = Couriers.Num() - 1; I >= 0; --I)
-            if (FVector2D::Distance(E.Position, Couriers[I].Position) <= Number(TEXT("enemy_courier_attack_range"))) { if(Couriers[I].TransportVehicleId)TransportVehicles.Damage(*this,Couriers[I].TransportVehicleId,Number(TEXT("enemy_damage_per_second"))*Seconds);else Workers.KillCourier(*this,Couriers[I].Id); }
+        // Hand couriers are the same worker bodies, already included above;
+        // only independent transport hulls require a second contact check.
+        for(int32 I=Couriers.Num()-1;I>=0;--I)
+            if(Couriers[I].TransportVehicleId&&FVector2D::Distance(E.Position,Couriers[I].Position)<=Number(TEXT("enemy_courier_attack_range")))TransportVehicles.Damage(*this,Couriers[I].TransportVehicleId,Number(TEXT("enemy_damage_per_second"))*Seconds);
     }
 }
 void FSeigeSimulation::LaunchShuttle()
@@ -1017,10 +1036,10 @@ double FSeigeSimulation::FixedStepSeconds() const { return Policy ? Number(TEXT(
 bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
 {
     if (!Policy) { Error = TEXT("Cannot save before rules are initialized"); return false; }
-    FObject O = MakeShared<FJsonObject>(); O->SetNumberField(TEXT("save_format"), 8);
+    FObject O = MakeShared<FJsonObject>(); O->SetNumberField(TEXT("save_format"), 9);
     WritePoint(O,TEXT("environment_world_offset"),Environment.WorldOffset);
     O->SetNumberField(TEXT("generation_seed"),GenerationSeed);O->SetNumberField(TEXT("credits"),Credits);FObject Grid=MakeShared<FJsonObject>();Energy.Save(Grid);O->SetObjectField(TEXT("energy"),Grid);Companions.Save(O);Combat.Save(O);Walls.Save(O);TransportVehicles.Save(O);Workers.Save(O);O->SetNumberField(TEXT("calendar_elapsed_us"),double(Calendar.ElapsedMicroseconds()));
-    O->SetNumberField(TEXT("worker_surplus_target"),WorkerSurplusTarget);O->SetNumberField(TEXT("workers_disassembled"),WorkersDisassembled);O->SetNumberField(TEXT("worker_store_clock"),WorkerStoreClock);O->SetNumberField(TEXT("worker_reactivate_clock"),WorkerReactivateClock);
+    O->SetNumberField(TEXT("worker_surplus_target"),WorkerSurplusTarget());O->SetNumberField(TEXT("workers_disassembled"),WorkersDisassembled);O->SetNumberField(TEXT("worker_store_clock"),WorkerStoreClock);O->SetNumberField(TEXT("worker_reactivate_clock"),WorkerReactivateClock);
     O->SetStringField(TEXT("rules_version"), RulesVersion); O->SetStringField(TEXT("rules_fingerprint"), RulesFingerprint);
     O->SetNumberField(TEXT("time"),Time); O->SetNumberField(TEXT("next_wave_time"),NextWaveTime); O->SetNumberField(TEXT("next_roam_time"),NextRoamTime);
     O->SetBoolField(TEXT("background_bugs"),BackgroundBugsEnabled); O->SetBoolField(TEXT("periodic_attacks"),PeriodicAttacksEnabled);
@@ -1063,12 +1082,12 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
     if (!Policy) { Error = TEXT("Initialize rules before loading a colony"); return false; }
     FObject O; FString Raw, Version, Fingerprint; double Format = 0;
     if (!ReadJson(Filename,O,Raw,Error) || !Numeric(O,TEXT("save_format"),Format,1,Error,true) || !StringField(O,TEXT("rules_version"),Version,Error) || !StringField(O,TEXT("rules_fingerprint"),Fingerprint,Error)) return false;
-    if (Format != 8 || Version != RulesVersion || Fingerprint != RulesFingerprint) { Error = TEXT("Save is incompatible with crew and autonomous transport rules (save format 8) or edited rule files. The existing save was not changed; start a new colony."); return false; }
+    if (Format != 9 || Version != RulesVersion || Fingerprint != RulesFingerprint) { Error = TEXT("Save is incompatible with persistent unit health and companion life states (save format 9) or edited rule files. The existing save was not changed; start a new colony."); return false; }
     // Parse into a temporary simulation: a corrupt save must never damage the running colony.
     FSeigeSimulation Candidate = *this;
     FVector2D SavedOffset;
     if(!PositionField(O,TEXT("environment_world_offset"),SavedOffset,Error)||!SavedOffset.Equals(Environment.WorldOffset,.000001)){Error=TEXT("Saved geography belongs to a different world region");return false;}
-    // Version 8 construction and route state intentionally require a new-format save.
+    // Version 9 persists unit health and companion life state; old saves remain untouched.
     Candidate.BackgroundBugsEnabled = true; Candidate.PeriodicAttacksEnabled = true;
     if (true)
     {
@@ -1077,7 +1096,8 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
         { Error = TEXT("Invalid saved scenario threat settings"); return false; }
     }
     if (!Numeric(O,TEXT("time"),Candidate.Time,0,Error) || !Numeric(O,TEXT("next_wave_time"),Candidate.NextWaveTime,0,Error) || !Numeric(O,TEXT("next_roam_time"),Candidate.NextRoamTime,0,Error) || !Numeric(O,TEXT("population_clock"),Candidate.PopulationClock,0,Error) || !Numeric(O,TEXT("dispatch_clock"),Candidate.DispatchClock,0,Error) || !Numeric(O,TEXT("upkeep_clock"),Candidate.UpkeepClock,0,Error) || !Numeric(O,TEXT("workforce_efficiency"),Candidate.WorkforceEfficiency,0,Error) || !Numeric(O,TEXT("delivered_units"),Candidate.DeliveredUnits,0,Error) || !IntegerField(O,TEXT("population"),Candidate.Population,0,Error) || !IntegerField(O,TEXT("wave"),Candidate.Wave,0,Error) || !IntegerField(O,TEXT("lost_couriers"),Candidate.LostCouriers,0,Error) || !IntegerField(O,TEXT("next_id"),Candidate.NextId,1,Error)) return false;
-    if(!IntegerField(O,TEXT("worker_surplus_target"),Candidate.WorkerSurplusTarget,0,Error)||Candidate.WorkerSurplusTarget>100000||!IntegerField(O,TEXT("workers_disassembled"),Candidate.WorkersDisassembled,0,Error)||!Numeric(O,TEXT("worker_store_clock"),Candidate.WorkerStoreClock,0,Error)||!Numeric(O,TEXT("worker_reactivate_clock"),Candidate.WorkerReactivateClock,0,Error)||Candidate.WorkerStoreClock>Number(TEXT("worker_store_seconds"))+1.e-8||Candidate.WorkerReactivateClock>Number(TEXT("worker_reactivate_seconds"))+1.e-8){Error=TEXT("Invalid saved workforce targets or clocks");return false;}
+    int32 SavedWorkerSurplusTarget=0;
+    if(!IntegerField(O,TEXT("worker_surplus_target"),SavedWorkerSurplusTarget,0,Error)||SavedWorkerSurplusTarget>100000||!IntegerField(O,TEXT("workers_disassembled"),Candidate.WorkersDisassembled,0,Error)||!Numeric(O,TEXT("worker_store_clock"),Candidate.WorkerStoreClock,0,Error)||!Numeric(O,TEXT("worker_reactivate_clock"),Candidate.WorkerReactivateClock,0,Error)||Candidate.WorkerStoreClock>Number(TEXT("worker_store_seconds"))+1.e-8||Candidate.WorkerReactivateClock>Number(TEXT("worker_reactivate_seconds"))+1.e-8){Error=TEXT("Invalid saved workforce targets or clocks");return false;}
     double Seed = 0;
     if (!Numeric(O,TEXT("random_seed"),Seed,MIN_int32,Error) || Seed > MAX_int32 || Seed != FMath::FloorToDouble(Seed)) { Error = TEXT("Invalid saved random state"); return false; }
     Candidate.Random.Initialize(static_cast<int32>(Seed));
@@ -1126,6 +1146,7 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
         Candidate.Buildings.Add(B);
     }
     if (CoreCount != 1 || (!Candidate.Escaped && Candidate.Core()->Health <= 0)) { Error = TEXT("Save requires exactly one command core"); return false; }
+    if(SavedWorkerSurplusTarget!=Candidate.WorkerSurplusTarget()){Error=TEXT("Saved worker reserve disagrees with command capacity");return false;}
     if(!Candidate.Walls.Load(O,Candidate,Error))return false;
     if(!ArrayField(O,TEXT("roads"),A,Error)||A->Num()>Transport->GetNumberField(TEXT("max_segments")))return false;
     for(const auto& Value:*A)
@@ -1135,7 +1156,7 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
         const auto& D=TransportTiers[R.TargetTier];const double Length=FVector2D::Distance(R.A,R.B)*MetersPerWorldUnit();
         if(Length<Transport->GetNumberField(TEXT("minimum_segment_meters"))||Length>Transport->GetNumberField(TEXT("maximum_segment_meters"))||R.ConstructionProgress>1||(!R.IsConstructing&&(R.ConstructionProgress!=1||R.Tier!=R.TargetTier||Sum(R.ConstructionMaterials)>1.e-6))||(R.IsConstructing&&(R.ConstructionProgress>=1||(R.Tier.IsEmpty()?R.TargetTier!=Transport->GetStringField(TEXT("initial_tier")):R.TargetTier!=TransportTiers[R.Tier].NextTier)))){Error=TEXT("Invalid saved transport tier or construction progress");return false;}
         if(!Numeric(V,TEXT("health"),R.Health,0,Error)||!Numeric(V,TEXT("max_health"),R.MaxHealth,1.e-9,Error)||R.Health>R.MaxHealth||FMath::Abs(R.MaxHealth-Length*TransportTiers[R.Tier.IsEmpty()?R.TargetTier:R.Tier].HealthPerMeter)>1.e-6){Error=TEXT("Invalid road durability");return false;}
-        if(!ReadCrew(V,R,D.ConstructionWorkers,WorldHalfSize,Resources,Error)||(R.Health>0&&!ValidInstallation(RoadCost(R.A,R.B,R.TargetTier),R.ConstructionMaterials,R.InstalledMaterials,R.ConstructionProgress,Error))||(R.Health>0&&!Candidate.ClearWalkingLine(R.A,R.B,D.WidthMeters*.5/MetersPerWorldUnit())))return false;
+        if(!ReadCrew(V,R,D.ConstructionWorkers,WorldHalfSize,Resources,Error)||(R.Health>0&&!ValidInstallation(RoadCost(R.A,R.B,R.TargetTier),R.ConstructionMaterials,R.InstalledMaterials,R.ConstructionProgress,Error))||(R.Health>0&&(!Candidate.Environment.SegmentDry(R.A,R.B,D.WidthMeters*.5/MetersPerWorldUnit())||!Candidate.ClearWalkingLine(R.A,R.B,D.WidthMeters*.5/MetersPerWorldUnit()))))return false;
         TMap<FString,double> PreviousCost;FString Tier=Transport->GetStringField(TEXT("initial_tier"));while(Tier!=R.TargetTier&&!Tier.IsEmpty()){for(const auto& P:RoadCost(R.A,R.B,Tier))PreviousCost.FindOrAdd(P.Key)+=P.Value;Tier=TransportTiers[Tier].NextTier;}
         if(!ValidInstallation(PreviousCost,{},R.PreviousTierMaterials,1,Error))return false;
         Candidate.Roads.Add(R);

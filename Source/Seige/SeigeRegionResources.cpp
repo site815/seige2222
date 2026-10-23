@@ -38,7 +38,10 @@ bool ASeigeGameMode::IsRegionResourceVisible(int32 Index,const FSeigeNode& Node)
     if(Index<0||Index>8||Node.Position.ContainsNaN()||
         FMath::Abs(Node.Position.X)>Sim.WorldHalfSize||FMath::Abs(Node.Position.Y)>Sim.WorldHalfSize)return false;
     if(Observer)return true;
-    if(Index==4&&Screen==TEXT("landing"))return true;
+    // The landing survey already charts every deposit in the home region.
+    // Keep that static geological knowledge after landing; live sensor cover
+    // still controls units, threats, and deposits in neighboring regions.
+    if(Index==4)return true;
     const FVector2D Offset=FVector2D(Index%3-1,Index/3-1)*Sim.WorldHalfSize*2;
     // Coverage belongs to the player's colony in world coordinates. Looking at
     // an empty or AI region, or owning no local simulation there, reveals nothing.

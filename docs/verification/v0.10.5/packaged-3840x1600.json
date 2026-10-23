@@ -1,0 +1,3474 @@
+{
+  "schema_version": 2,
+  "version": "0.10.5",
+  "mode": "NextUpdateSmoke",
+  "resolution": [
+    3840,
+    1600
+  ],
+  "started": "2026-10-12T15:38:14.2215289+09:00",
+  "exit_code": 0,
+  "report": {
+    "scope": "Bounded UI playcheck at 10x using the established-colony preset, a review-only factory and construction site, and a visual-only night phase. No save files, full acceptance suite, balance proof or graphics parity claim.",
+    "passed": true,
+    "assertions": 146,
+    "failures": 0,
+    "completed_stages": 34,
+    "elapsed_seconds": 49.03781269863248,
+    "observed_frames": 3177,
+    "longest_frame_gap_seconds": 1.5268112011253834,
+    "stage_timings": [
+      {
+        "stage": 0,
+        "start_seconds": 1.0024398006498814,
+        "wait_seconds": 1.0024398006498814,
+        "execution_seconds": 1.2200572974979877,
+        "simulation_seconds": 0
+      },
+      {
+        "stage": 1,
+        "start_seconds": 5.223167199641466,
+        "wait_seconds": 3.000670101493597,
+        "execution_seconds": 3.5017728805541992E-06,
+        "simulation_seconds": 29.799999999998306
+      },
+      {
+        "stage": 2,
+        "start_seconds": 6.232077598571777,
+        "wait_seconds": 1.0089068971574306,
+        "execution_seconds": 1.2502074241638184E-05,
+        "simulation_seconds": 39.89999999999773
+      },
+      {
+        "stage": 3,
+        "start_seconds": 7.242715399712324,
+        "wait_seconds": 1.0106252990663052,
+        "execution_seconds": 0.00048230215907096863,
+        "simulation_seconds": 49.99999999999716
+      },
+      {
+        "stage": 4,
+        "start_seconds": 9.241711501032114,
+        "wait_seconds": 1.998513799160719,
+        "execution_seconds": 0.00018499791622161865,
+        "simulation_seconds": 55.99999999999682
+      },
+      {
+        "stage": 5,
+        "start_seconds": 10.242283798754215,
+        "wait_seconds": 1.0003872998058796,
+        "execution_seconds": 1.4502555131912231E-05,
+        "simulation_seconds": 63.89999999999637
+      },
+      {
+        "stage": 6,
+        "start_seconds": 11.25089929997921,
+        "wait_seconds": 1.0086009986698627,
+        "execution_seconds": 0.00021380186080932617,
+        "simulation_seconds": 73.9999999999975
+      },
+      {
+        "stage": 7,
+        "start_seconds": 12.255886398255825,
+        "wait_seconds": 1.0047732964158058,
+        "execution_seconds": 1.7002224922180176E-05,
+        "simulation_seconds": 82.59999999999945
+      },
+      {
+        "stage": 8,
+        "start_seconds": 13.25705049932003,
+        "wait_seconds": 1.001147098839283,
+        "execution_seconds": 1.2099742889404297E-05,
+        "simulation_seconds": 92.60000000000173
+      },
+      {
+        "stage": 9,
+        "start_seconds": 14.259110800921917,
+        "wait_seconds": 1.0020482018589973,
+        "execution_seconds": 0.000190097838640213,
+        "simulation_seconds": 102.65000000000401
+      },
+      {
+        "stage": 10,
+        "start_seconds": 15.26569090038538,
+        "wait_seconds": 1.0063900016248226,
+        "execution_seconds": 2.979859709739685E-05,
+        "simulation_seconds": 112.7000000000063
+      },
+      {
+        "stage": 11,
+        "start_seconds": 16.27807680144906,
+        "wait_seconds": 1.0123561024665833,
+        "execution_seconds": 1.4398247003555298E-05,
+        "simulation_seconds": 122.55000000000854
+      },
+      {
+        "stage": 12,
+        "start_seconds": 17.491042599081993,
+        "wait_seconds": 1.212951399385929,
+        "execution_seconds": 3.4399330615997314E-05,
+        "simulation_seconds": 134.50000000001125
+      },
+      {
+        "stage": 13,
+        "start_seconds": 18.495549898594618,
+        "wait_seconds": 1.0044729001820087,
+        "execution_seconds": 2.09026038646698E-05,
+        "simulation_seconds": 144.75000000001359
+      },
+      {
+        "stage": 14,
+        "start_seconds": 19.499311100691557,
+        "wait_seconds": 1.0037402994930744,
+        "execution_seconds": 1.9799917936325073E-05,
+        "simulation_seconds": 154.80000000001587
+      },
+      {
+        "stage": 15,
+        "start_seconds": 20.505046401172876,
+        "wait_seconds": 1.005715500563383,
+        "execution_seconds": 2.110004425048828E-05,
+        "simulation_seconds": 164.85000000001816
+      },
+      {
+        "stage": 16,
+        "start_seconds": 21.50854789838195,
+        "wait_seconds": 1.0034803971648216,
+        "execution_seconds": 0.00020860135555267334,
+        "simulation_seconds": 174.90000000002044
+      },
+      {
+        "stage": 17,
+        "start_seconds": 22.50922280177474,
+        "wait_seconds": 1.000466302037239,
+        "execution_seconds": 1.9896775484085083E-05,
+        "simulation_seconds": 183.1000000000223
+      },
+      {
+        "stage": 18,
+        "start_seconds": 30.55371230095625,
+        "wait_seconds": 1.0058136992156506,
+        "execution_seconds": 1.4200806617736816E-05,
+        "simulation_seconds": 261.15000000004005
+      },
+      {
+        "stage": 19,
+        "start_seconds": 31.55476050078869,
+        "wait_seconds": 1.0010339990258217,
+        "execution_seconds": 5.997717380523682E-07,
+        "simulation_seconds": 271.1500000000423
+      },
+      {
+        "stage": 20,
+        "start_seconds": 32.56375839933753,
+        "wait_seconds": 1.0089972987771034,
+        "execution_seconds": 0.00018589943647384644,
+        "simulation_seconds": 281.00000000004457
+      },
+      {
+        "stage": 21,
+        "start_seconds": 33.566272500902414,
+        "wait_seconds": 1.0023282021284103,
+        "execution_seconds": 2.310052514076233E-05,
+        "simulation_seconds": 288.7000000000463
+      },
+      {
+        "stage": 22,
+        "start_seconds": 34.57346599921584,
+        "wait_seconds": 1.0071703977882862,
+        "execution_seconds": 2.0001083612442017E-05,
+        "simulation_seconds": 288.7000000000463
+      },
+      {
+        "stage": 23,
+        "start_seconds": 35.58129680156708,
+        "wait_seconds": 1.007810801267624,
+        "execution_seconds": 0.0002025999128818512,
+        "simulation_seconds": 288.7000000000463
+      },
+      {
+        "stage": 24,
+        "start_seconds": 38.08919100090861,
+        "wait_seconds": 2.5076915994286537,
+        "execution_seconds": 5.997717380523682E-07,
+        "simulation_seconds": 288.7000000000463
+      },
+      {
+        "stage": 25,
+        "start_seconds": 39.09846929833293,
+        "wait_seconds": 1.0092776976525784,
+        "execution_seconds": 1.2103468179702759E-05,
+        "simulation_seconds": 288.7000000000463
+      },
+      {
+        "stage": 26,
+        "start_seconds": 40.10070899873972,
+        "wait_seconds": 1.00222759693861,
+        "execution_seconds": 4.140287637710571E-05,
+        "simulation_seconds": 298.7000000000486
+      },
+      {
+        "stage": 27,
+        "start_seconds": 41.102044098079205,
+        "wait_seconds": 1.001293696463108,
+        "execution_seconds": 0.0007209032773971558,
+        "simulation_seconds": 308.7500000000509
+      },
+      {
+        "stage": 28,
+        "start_seconds": 42.10810039937496,
+        "wait_seconds": 1.0053353980183601,
+        "execution_seconds": 1.5702098608016968E-05,
+        "simulation_seconds": 316.0000000000525
+      },
+      {
+        "stage": 29,
+        "start_seconds": 43.42543910071254,
+        "wait_seconds": 1.317322999238968,
+        "execution_seconds": 5.770102143287659E-05,
+        "simulation_seconds": 324.10000000005437
+      },
+      {
+        "stage": 30,
+        "start_seconds": 44.83253299817443,
+        "wait_seconds": 1.4070361964404583,
+        "execution_seconds": 0.00016910210251808167,
+        "simulation_seconds": 336.00000000005707
+      },
+      {
+        "stage": 31,
+        "start_seconds": 45.83728589862585,
+        "wait_seconds": 1.0045837983489037,
+        "execution_seconds": 1.8902122974395752E-05,
+        "simulation_seconds": 343.0500000000587
+      },
+      {
+        "stage": 32,
+        "start_seconds": 46.84566640108824,
+        "wait_seconds": 1.0083616003394127,
+        "execution_seconds": 0.00019880011677742004,
+        "simulation_seconds": 353.15000000006097
+      },
+      {
+        "stage": 33,
+        "start_seconds": 48.030014999210835,
+        "wait_seconds": 1.1841497980058193,
+        "execution_seconds": 5.997717380523682E-07,
+        "simulation_seconds": 360.05000000006254
+      }
+    ],
+    "cpu_frame_costs": {
+      "frames": 3177,
+      "fixed_simulation_total_seconds": 10.571414768695831,
+      "fixed_simulation_max_seconds": 1.3988189995288849,
+      "render_sync_total_seconds": 5.151857305318117,
+      "render_sync_max_seconds": 0.19724160060286522,
+      "preparation_total_seconds": 0.00031831860542297363,
+      "preparation_max_seconds": 1.300126314163208E-06
+    },
+    "scenario_ready": true,
+    "scenario_preparing": false,
+    "worker_bodies": 47,
+    "buildings": 26,
+    "couriers": 8,
+    "simulation_speed": 10,
+    "simulation_seconds_advanced": 372.5500000000654,
+    "assertion_failures": [],
+    "screenshots": [
+      "01_worker_and_hud",
+      "09_build_and_resources",
+      "02_map_chain",
+      "03_equipment_bill",
+      "04_night_trade",
+      "05_credits",
+      "06_transport_inspection",
+      "07_building_hover",
+      "08_rex_focus"
+    ]
+  },
+  "socket_samples": [
+    {
+      "seconds": 2.18,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 4.34,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 6.49,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 8.64,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 10.78,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 12.93,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 15.07,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 17.22,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 19.37,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 21.51,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 23.64,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 25.78,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 27.92,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 30.06,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 32.2,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 34.34,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 36.47,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 38.6,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 40.73,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 42.86,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 44.99,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 47.11,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 49.23,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    },
+    {
+      "seconds": 51.36,
+      "process_ids": [
+        19900,
+        29356
+      ],
+      "tcp": 0,
+      "udp": 0
+    }
+  ],
+  "inputs_unchanged": true,
+  "packaged_inputs": [
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe",
+      "bytes": 167349760,
+      "sha256": "BE9AD459EBF1C566689F9DE741FD0F8D5861FAAFCB7C289D8566D5C24812C168"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/global.ucas",
+      "bytes": 3205888,
+      "sha256": "656F9CC750D6B9EA0B7B6FC221B8BFDC8BE20E737E66D5A18AF7CD7C118012D3"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/global.utoc",
+      "bytes": 782,
+      "sha256": "D4F99BC37B29DC911C8B2F0549314F2E4D974CB5B6D9B68EE5E9C5023A70CB6D"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/seige2222-Windows.pak",
+      "bytes": 11244862,
+      "sha256": "29F2FA45E230DCEC8DD303D5285321C4F9B18413CE852CABCB830D7BB5A54C67"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/seige2222-Windows.ucas",
+      "bytes": 659079984,
+      "sha256": "ADAD90916FACBD6DED4C5B3F681BFD40E091554EDA4F3B2B2B2F01395E4F2A58"
+    },
+    {
+      "path": "Builds/v0.10.5/Windows/seige2222/Content/Paks/seige2222-Windows.utoc",
+      "bytes": 436069,
+      "sha256": "9A37367A95CB5462F4B269A4564DC0349EE4DDF47199AEE6EDF8B19FD6414B0A"
+    }
+  ],
+  "source_inputs": [
+    {
+      "path": "AIFILES/colony_ai.json",
+      "bytes": 4048,
+      "sha256": "99CEC73A256C25D0A1F65D232C89311EFBD8923BA1F5B6F38D1F79A4D820253C"
+    },
+    {
+      "path": "AIFILES/developed_start.json",
+      "bytes": 7622,
+      "sha256": "13FD2F68BC84A3890F80F03CD5417E7F5D8526A5707A5F09D443693E8079A2A4"
+    },
+    {
+      "path": "Config/DefaultEditor.ini",
+      "bytes": 276,
+      "sha256": "E9B58E3D161BA72E87E7480DC068BD467324CBB55BE6A169D14984E7EB012646"
+    },
+    {
+      "path": "Config/DefaultEditorSettings.ini",
+      "bytes": 310,
+      "sha256": "ED2BA15C663ADF598BE22158F600F9AC70F59B7008D7ECD7D67BDE0A26BE7FAD"
+    },
+    {
+      "path": "Config/DefaultEngine.ini",
+      "bytes": 1000,
+      "sha256": "D1A926889B37243A8199D4C6E90F2B3CB0C5309F2564F71C531348EC6D3366BD"
+    },
+    {
+      "path": "Config/DefaultGame.ini",
+      "bytes": 533,
+      "sha256": "43256A9F2DDA95616377DA38CE8BE360CB46BBC6AF7B90E2C5A7A8A28D28A562"
+    },
+    {
+      "path": "Config/DefaultGameUserSettings.ini",
+      "bytes": 552,
+      "sha256": "8C454DB4C5B5B7166341F1DB45CE2646191CBEC9DFBE7099F2CA90F957B6837A"
+    },
+    {
+      "path": "Config/DefaultInput.ini",
+      "bytes": 9535,
+      "sha256": "4A259529B3246F2ECBB948DF5D3AA2A08AB0215641F79A17B181D7AF26513D6E"
+    },
+    {
+      "path": "Content/Art/Audio/S_alert.uasset",
+      "bytes": 32659,
+      "sha256": "2B301B189841BFDC715ACCDA9BF11C267665362D97654027F901DAFBC692FDE7"
+    },
+    {
+      "path": "Content/Art/Audio/S_build.uasset",
+      "bytes": 13489,
+      "sha256": "FA0B89880B6A3A2551D2671EBEDCD9F5FFB44F9D2AC123C072E7C0604B31CF55"
+    },
+    {
+      "path": "Content/Art/Audio/S_cancel.uasset",
+      "bytes": 9039,
+      "sha256": "617D1A53119888577159A9F132A536F06437FB114AB7E79A8D60B8C65FB83F94"
+    },
+    {
+      "path": "Content/Art/Audio/S_complete.uasset",
+      "bytes": 32549,
+      "sha256": "3D2B5DAA48F1342ED6118EB3EE3FA7E033FA643F2BD8E7C794E5537E04F3C046"
+    },
+    {
+      "path": "Content/Art/Audio/S_confirm.uasset",
+      "bytes": 12711,
+      "sha256": "E9898AA9805D22CE58FB08EB359200963E2EE18B315BA09BF6BF323FA7032A4E"
+    },
+    {
+      "path": "Content/Art/Audio/S_error.uasset",
+      "bytes": 14370,
+      "sha256": "4EEFE35FE50719CEAA7F03310BC1AD984BA372C5FF5D2688E0D6F8390F95289A"
+    },
+    {
+      "path": "Content/Art/Audio/S_kinetic.uasset",
+      "bytes": 20473,
+      "sha256": "AEEAC4B98801A34D482BF012B092DB029DF3AAD9D48BEC0452AD3B10EFB62BBE"
+    },
+    {
+      "path": "Content/Art/Audio/S_laser.uasset",
+      "bytes": 15567,
+      "sha256": "A466D4414799F15D09613ECC921DB13AB8F74280AF3A9BCEFE91844387A29B8D"
+    },
+    {
+      "path": "Content/Art/Audio/S_missile.uasset",
+      "bytes": 43246,
+      "sha256": "530E9714D2C2DEE0441DC8BC2D318A65763E99B6A739672BB0DB517143591EE2"
+    },
+    {
+      "path": "Content/Art/Audio/S_plasma.uasset",
+      "bytes": 30755,
+      "sha256": "C8C6F8443AD2D394BC6057E3DFB2BFA32FA09C2B81BFE16F1FBA10A1C1E68106"
+    },
+    {
+      "path": "Content/Art/Audio/S_rex.uasset",
+      "bytes": 25800,
+      "sha256": "413A4749319AD542AF317CD661213552430012DBF2FD51FCA5F81BF715FD86D5"
+    },
+    {
+      "path": "Content/Art/Audio/S_select.uasset",
+      "bytes": 6561,
+      "sha256": "80076A2668465FF1032224CBE41BCE4230CCEBA9404E043BCE0E22FDFD96C6FE"
+    },
+    {
+      "path": "Content/Art/CompanionDog/A_DogIdle.uasset",
+      "bytes": 118806,
+      "sha256": "93CE3E9DA8DA0A6F23DCD061218EBF2C5DB14AD5BA459F2023070C9A75008762"
+    },
+    {
+      "path": "Content/Art/CompanionDog/A_DogWalk.uasset",
+      "bytes": 53398,
+      "sha256": "6A096A644530130F95A34A75587797741888904B62E448665D27D52C4E996D69"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Coat.uasset",
+      "bytes": 19959,
+      "sha256": "B77C3B3827A522ECA5CE8C2BA35678D8F1739541D17375E4AE9D0E5285E30C0D"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Collar.uasset",
+      "bytes": 7530,
+      "sha256": "B6609A9AB0F1F9506F40B0932EFF7A5DA20184873F65AB89B085DB6554763860"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_CollarEdge.uasset",
+      "bytes": 7550,
+      "sha256": "8EA435ACA9197A79CDFBE2E76901611075C35C65C20DE66594085A3ED7746BE8"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Eye.uasset",
+      "bytes": 7515,
+      "sha256": "D6842F5E4349ED7A913C2EED359B63B3ECDA4D1358FF3235543750D1EB20AC6C"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_FurCard.uasset",
+      "bytes": 14364,
+      "sha256": "524ED2E475F60D83C89238112911A103575395FAEB78B5AF19C6018931AF835B"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Iris.uasset",
+      "bytes": 7129,
+      "sha256": "844335441BF19D82B18C090C508B5AF0DF80C1B35FB199B12BB9E538AE087E75"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Metal.uasset",
+      "bytes": 7583,
+      "sha256": "6947EA07CD22523BCAFDC41F12D887A7807C3968AB5753AC51CEFF1847697EC9"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Mouth.uasset",
+      "bytes": 7525,
+      "sha256": "212597156F8C253DCAC1FF912222ECCE45F04F9F96CED2908EBF1F4F8BED2D2E"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Nose.uasset",
+      "bytes": 8344,
+      "sha256": "FE39F53AC1A3C00385F1532ED4CF27F6A3BBCA86417DE6C8B4E0E3103B03AB14"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Teeth.uasset",
+      "bytes": 7525,
+      "sha256": "0F4DDE3C31673AB7A4B53C2ADF5A0A5F5F4D3C8F8E0A4AFC2C511ABDF5B46215"
+    },
+    {
+      "path": "Content/Art/CompanionDog/M_Tongue.uasset",
+      "bytes": 7530,
+      "sha256": "80EAB34B2F39734108251BFAEB40BDA47505440C9126C2FDA9E841BA82CCB03A"
+    },
+    {
+      "path": "Content/Art/CompanionDog/SK_CompanionDog_Skeleton.uasset",
+      "bytes": 6884,
+      "sha256": "B04FC0644FD9F853AF941E55FCE8A1A802115998DBF2142D6EEC9198773F2E2E"
+    },
+    {
+      "path": "Content/Art/CompanionDog/SK_CompanionDog.uasset",
+      "bytes": 18561467,
+      "sha256": "BFE91672674FEDA6546BBFEACCD0F7582FADEA5960806FA4F66808AC491A20E0"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_Albedo.uasset",
+      "bytes": 12170818,
+      "sha256": "526212F731C7CE63A85C57843C4DC541F7BCF99A5E041942F734C08CBD5AE041"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_CoatDetail.uasset",
+      "bytes": 2652932,
+      "sha256": "CE7A698CBB252DCBCE00CE5CFB05B7E9B4D62AAF3F0CC9090D31773F2E8C9F0C"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_CoatNormal.uasset",
+      "bytes": 3988615,
+      "sha256": "70DFED17AFDC2904D1A1E0DDA83DE9DD16DF4E17438E0C2104FF3C0856B3BD3A"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_FurAlpha.uasset",
+      "bytes": 101777,
+      "sha256": "FA255140685C0AEB5BCF029C88907D9200FBEFF90294AB847523DD4F7DBE7B8D"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_FurAtlas.uasset",
+      "bytes": 378028,
+      "sha256": "663BBF03FBAE7D62C13DFD0CD62D3B962FCBD48BDBE74ED575026DF1ECB7E801"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_FurDetail.uasset",
+      "bytes": 375090,
+      "sha256": "06766EC8FEC12C7EC200035A7C9D8717EA059EA22EDA30B692186CB524EA43A1"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_FurNormal.uasset",
+      "bytes": 897448,
+      "sha256": "CBBAABE0BD9AF2B32AE0D147AC757CFFC4193AE54BA83B38787FFDC85AE7DA10"
+    },
+    {
+      "path": "Content/Art/CompanionDog/Textures/T_Dog_Nose.uasset",
+      "bytes": 130387,
+      "sha256": "3F6E4DFE88C350F6ED47EA585DB2494058E14BB76D560E390C55747A753461F7"
+    },
+    {
+      "path": "Content/Art/Construction/M_ConstructionHologram.uasset",
+      "bytes": 8920,
+      "sha256": "216CCC634A306DC7E779B34EA9C77975DD28C89CAB58ECF1BA4977151322EC0E"
+    },
+    {
+      "path": "Content/Art/Construction/M_ConstructionReveal.uasset",
+      "bytes": 39359,
+      "sha256": "D0D0F6141D9AED9363CE5530C40B36E1EFAC328620BDCF6029262DF65350C227"
+    },
+    {
+      "path": "Content/Art/Construction/M_DamageFire.uasset",
+      "bytes": 7989,
+      "sha256": "82E867D1092252FDE480FBC2D302069CD0D688D28E8264A0500530DB3FD37475"
+    },
+    {
+      "path": "Content/Art/Construction/M_DamageSmoke.uasset",
+      "bytes": 9179,
+      "sha256": "901317D357B1CD9051EB7913D3D5E3FD27378EE7FD08A523089519287473BB9A"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_carbon.uasset",
+      "bytes": 8958,
+      "sha256": "386F3DFFA1982038CF3B5CBE48F6D681C4FCBA72BB30CD685F9CAFE59A68647E"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_copper_ore.uasset",
+      "bytes": 8978,
+      "sha256": "3E0E3034A4C532FD5D92B5108CE03443BB97AAE1D9AEEF43CA1B051B7DB22696"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_crystalline.uasset",
+      "bytes": 8983,
+      "sha256": "0602610CA67C5C332062575E90727C61843511757EEACF0AD6055D7D222AA0D2"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_hydrocarbons.uasset",
+      "bytes": 8988,
+      "sha256": "E015F0A5E4E02871658A96104CCD40E9C1F9729FAEA4A6503EDA43628A3C5839"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_iron_ore.uasset",
+      "bytes": 8968,
+      "sha256": "0FC2851EB8E441599B79851D5CD9A2CD2503B1D19A56DDD7E24DD6EBE5CC0E11"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_radioactive_ore.uasset",
+      "bytes": 9003,
+      "sha256": "5DA5C9C72694A86EA59857064C634988FCD4AF72D757DF6CC887CAB8BFD4BC19"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_silica.uasset",
+      "bytes": 8958,
+      "sha256": "76A6E5C5269B77C9B127667989043A1F6E258FAF94EA3EE2D1E88F0CBC0B117A"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_Deposit_water.uasset",
+      "bytes": 8953,
+      "sha256": "68D9064C242815B2A6DD108FD0FAE8EBC12AD19E8D529B5FF02AAE2FCB0229B4"
+    },
+    {
+      "path": "Content/Art/EnvironmentV09/M_WaterV09.uasset",
+      "bytes": 10237,
+      "sha256": "51844013C15E3D4CE43426F4732FB57FFBF1F3FDEB0E96A4ADD371060B362765"
+    },
+    {
+      "path": "Content/Art/Industry/M_IndustrySurface.uasset",
+      "bytes": 37143,
+      "sha256": "D3563BB26CB1B8C2D5B29DFF26F83A13A8FC3338280BA5A22EBC434105596A8E"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Amber.uasset",
+      "bytes": 8593,
+      "sha256": "06BADA412B958A90AE0307837031C6EB0086CA78D1E1940CA86D955AB2B134EA"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Blue.uasset",
+      "bytes": 7272,
+      "sha256": "0A9B38F0F017376D86D7A8DB4800866002C415E2EE0F45F209E0D5485C2375D0"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Carbon.uasset",
+      "bytes": 7722,
+      "sha256": "1D33018087AA8292F419105376FF568738A938BF847429C86D20AED1E9460616"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Ceramic.uasset",
+      "bytes": 7287,
+      "sha256": "8BEE3FDC39E99624B3F9593987E457AEBBB494D6A654B24758ABB1AE87867535"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Concrete.uasset",
+      "bytes": 7750,
+      "sha256": "C068E9BF183B654A3016128E90E53B152985AA48173B0A62611E550079CF269D"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Copper.uasset",
+      "bytes": 7722,
+      "sha256": "F8EACB5F3DC59C917BD405AB57F35B476EDE732080D37C56ED029C7ADB91E20B"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Glass.uasset",
+      "bytes": 8591,
+      "sha256": "D6B487278C6B9C41DA48F7BC7906C8885FDBDA3BC15616A8EF0252D8A42CF8DB"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Light.uasset",
+      "bytes": 8593,
+      "sha256": "844D5EB2531B935996873F512A8A8584921E11372E8547FAEABD4B3A20F64CB9"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_PV.uasset",
+      "bytes": 8139,
+      "sha256": "5A2D0A38442C92F2418116F33B6E3C647CDE7923E5DE46A3296C2959A2D618D1"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Slate.uasset",
+      "bytes": 7277,
+      "sha256": "946587B21F6A3671B1A8D1385BD5EEE85301C37A901D6B390FFC38E3EFBA7FF5"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Steel.uasset",
+      "bytes": 7717,
+      "sha256": "BCCD05686A4E28303A064BDF16581FC37F72513450BB5A125FC3403347916FD5"
+    },
+    {
+      "path": "Content/Art/Industry/MI_Industry_Yellow.uasset",
+      "bytes": 7282,
+      "sha256": "CF662F630838A0014BFF1F93950189E24A8B88BC360A340E80BD17B25F433521"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Concrete_Color.uasset",
+      "bytes": 698170,
+      "sha256": "41278A9B6F0882B5B923C6E500C7C215C381DFB537BE04E884D8B34E4A3A0F3C"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Concrete_Normal.uasset",
+      "bytes": 2185545,
+      "sha256": "68AD07692F630310CE6582BCA868A4B2A5E702A091E0AC09FD3EB60B00D49118"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Concrete_Roughness.uasset",
+      "bytes": 281459,
+      "sha256": "595F584AAB00695F66C67C5B272231DCD7520D8249EF2D8499EDF67936782853"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Paint_Color.uasset",
+      "bytes": 526650,
+      "sha256": "5875B870213A460FD5622549C77F35BA1A0D7E2BAAC07111661531302830B106"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Paint_Normal.uasset",
+      "bytes": 1448964,
+      "sha256": "053591F06606E588151CF0968A4DF9F0E397B5DCB8128E617AC5A53E72E3EE1C"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Paint_Roughness.uasset",
+      "bytes": 283391,
+      "sha256": "88B9FA68BBFA192C39FB805BA7D46A21136FD740AA52D463B56D8F8A24B5704B"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Steel_Color.uasset",
+      "bytes": 1185829,
+      "sha256": "A896EADDE107F52B7437DC61BE4A08BFEA1A4C92DD82184DE37D9BD377FF72A0"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Steel_Normal.uasset",
+      "bytes": 332076,
+      "sha256": "C13B9652411C4417E923A796B49DA14C2C8829297AC3A79F0121849DEDB5BF07"
+    },
+    {
+      "path": "Content/Art/Industry/Textures/T_Industry_Steel_Roughness.uasset",
+      "bytes": 367634,
+      "sha256": "E6ADC7C94292B721FD3DB8DCB4560BD6B1F21CB12C7FC87BC5D27371C8870986"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_AmmunitionWorks.uasset",
+      "bytes": 115018,
+      "sha256": "293636A5720D56954C5BF938826076D7D13E30F379A655469FFA6F818877C522"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_BatteryBank.uasset",
+      "bytes": 140640,
+      "sha256": "56EA3631FD8E180CD7B81FBB76274F2EC727BC70506A03B2256118EB4B1A9DBA"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_BiofuelRefinery.uasset",
+      "bytes": 135508,
+      "sha256": "F344F55FDCAA3969EA3E0F7FBF1311FC269DB63FA242C85DE79F224C4EB5EC21"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_ChipWorks.uasset",
+      "bytes": 131313,
+      "sha256": "1EE01C6B8F8B32F1B14D74923B4C269003A606DEC42BCCF5F4148C9BE21AC228"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_CommandCampus2.uasset",
+      "bytes": 120029,
+      "sha256": "46955305887DF8610BE463211D9CDAFBF77E5C663BAD9F9F21A13691D7B722E8"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_CommandCampus3.uasset",
+      "bytes": 125896,
+      "sha256": "739F6F787E779C7C84B237188408C8D1E5ECDFB6232A32B20C7332A951BBEA3B"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Core.uasset",
+      "bytes": 128732,
+      "sha256": "599CCBC58CEE24B0037A8BB5E649474E9A55B6A4D5D0C60C99F147BB14C5C714"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Depot.uasset",
+      "bytes": 131163,
+      "sha256": "7A7797D884277DB49BBE1115FA3BD6BF75CBF6B4788F1553BF59295CF8154B54"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_DepotYard.uasset",
+      "bytes": 136930,
+      "sha256": "AF3C73C6F5895590D00848B9190A5D1FABDD0BC42988578EAC0FE1C4FBBEBE28"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_ExtractionRig.uasset",
+      "bytes": 130592,
+      "sha256": "64D6B7567E8E412F18F9D0EDA7C63DC5DA5FAB74E96F23A9DDEA70C3A306D0E1"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Extractor.uasset",
+      "bytes": 128628,
+      "sha256": "52F7D4B217FEC60DAB4563C03EEE8D886E40950F0280257714344F0E70837CE3"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Factory.uasset",
+      "bytes": 136590,
+      "sha256": "5EC0417A2113D7F1DD1CA4D739CB1E878D577C98AAAC56A9A2F0F4D4452E01C6"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_FuelGenerator.uasset",
+      "bytes": 123218,
+      "sha256": "D60EB70AB4498C2F5F6452B914EB2FFE3AF1DDE2C14EBE5D3ED2196C9E8939FB"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_FuelRefinery.uasset",
+      "bytes": 126305,
+      "sha256": "C0804DC01A1F699D44CFF2076BEB940E8752E32ED78A26BEFD4220B7B7E63136"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_FusionWorks.uasset",
+      "bytes": 122510,
+      "sha256": "5A7B587B12FAE768FFFAC55D20A4890EBE0B0E93721A38917AC4133461393CEF"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Greenhouse.uasset",
+      "bytes": 129606,
+      "sha256": "1FE91CBA91B9C6FA9ABC67E4D40BF454DABC413094F08759D28B589756C95C57"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Hangar.uasset",
+      "bytes": 128984,
+      "sha256": "11CCE5F34B9F6D36E50D241403EFDB796B92F3E0629334E4668AE5D9B7D9143F"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Hangar2.uasset",
+      "bytes": 130649,
+      "sha256": "BC638B1B25FA03A1EA3101774CF5E471279D911AD5AC909BEFBF6F4F6AE55266"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Hangar3.uasset",
+      "bytes": 132494,
+      "sha256": "E75B980E74F67EA4CD5204B7F88016334937F972F8DA941365B1231157D97CF9"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_HangarMech.uasset",
+      "bytes": 133741,
+      "sha256": "D7C5025088868D9E89D0753DC120553BC364AD440B61582FA230FD3661BDF88D"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_HangarMech2.uasset",
+      "bytes": 135787,
+      "sha256": "435F7221354E952DCDB26DAB21A252E24A0F104CA19B43F380ABE31B767E2329"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_HangarMech3.uasset",
+      "bytes": 136822,
+      "sha256": "B265B8753A364BFE4A64208F3871EDF2747282A586965F5578A009BE903F102E"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_HangarTracked.uasset",
+      "bytes": 127596,
+      "sha256": "557738731CE9EC14E5272431782A15DCFAFAFE4E0B3F7F6974F0A3A044723573"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_HangarTracked2.uasset",
+      "bytes": 128619,
+      "sha256": "477EDFA6FD490D3BBAFA55C85D810E761F249314657D55146105DF6D572451F8"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_HangarTracked3.uasset",
+      "bytes": 130174,
+      "sha256": "F16F1E48F07181D089D785FC930117EDCDB12F7CD4FCCCDFBF316E6F8BBBE0B0"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Refinery.uasset",
+      "bytes": 129353,
+      "sha256": "F0E3C4B8B5F1DB5C9385D80091594AC1F8C28E326205336B7EC8083E025AD46E"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Robot.uasset",
+      "bytes": 105796,
+      "sha256": "F56D0D421A7DBE59153AF55514142FA0328C75BC815753FA6DE5F49FEDD75358"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_RobotService.uasset",
+      "bytes": 147464,
+      "sha256": "7D10213313DA6A10F4E00C07C42DCF3BA828029DB4DDFC1973201CB5BE83756F"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Sensor.uasset",
+      "bytes": 111822,
+      "sha256": "7915660E11864009EE83EF8A50C757FFB5A7E92668C849A7D6AC863B44E9C58C"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_SensorMast.uasset",
+      "bytes": 125515,
+      "sha256": "F5E261D911F4A78438BA729030BAD26C20248B05CD3506C041EAE8DF0A9BB3D9"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_ServiceBay.uasset",
+      "bytes": 130823,
+      "sha256": "D23FC16C4282441D4D93747ABB0A4269BFC0B4610D7DEB81796EA64B768CDF40"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Shuttle.uasset",
+      "bytes": 97048,
+      "sha256": "4FF133B2CE980FA142E3F9E9D95C4D939A39F0DF2F5BCD703BDA86F92734B0E6"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_SolarArray.uasset",
+      "bytes": 119919,
+      "sha256": "9A19E26544CF45C95808D8B1342CD9078FD39E0E9C697A97B84C8B262369D645"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_SolarArray2.uasset",
+      "bytes": 126876,
+      "sha256": "D9F85A2D7E84492934CFCCA6C9B91188C5EA8CE11AE171D0A7449278CB8CD185"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_SolarArray3.uasset",
+      "bytes": 115897,
+      "sha256": "6E27755FBC296305B0F26B418241B498D5B26991CA48935708518458F06855C8"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerKinetic.uasset",
+      "bytes": 110890,
+      "sha256": "F1972AABB3F4D18E457059B673299737528DBB7E0E301853DEF1637F59608AC9"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerKinetic2.uasset",
+      "bytes": 131122,
+      "sha256": "D917C28EF8C6572132BDD01767904C85AE3285716352A60690F3922344BEBEAA"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerKinetic3.uasset",
+      "bytes": 132574,
+      "sha256": "9E3905A3682C7D7B0FF7184FB2F7E302AB99AB97F08D8DEC6CB7248D8841CF94"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerLaser.uasset",
+      "bytes": 110867,
+      "sha256": "6B32499B459C1346B3CD8A14B0C054F398F66DF6856C4D4C917E31B9B80C1C38"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerLaser2.uasset",
+      "bytes": 126264,
+      "sha256": "8544183F3E2013C770BF2BC2E8C45E86AB9732AC8846FFB66AE66FECD322AD4A"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerLaser3.uasset",
+      "bytes": 129617,
+      "sha256": "E148DA4EC8484D3807625EE2F3EA475FA43A43AE3714D72E3F1BDED2E8755EAA"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerMissile.uasset",
+      "bytes": 117411,
+      "sha256": "7DE81907A7AA954CFEAD219E1C810D89F820ABB4E0731470C807F3FE46C98CD5"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerMissile2.uasset",
+      "bytes": 138531,
+      "sha256": "8DAB67BD0468EDCF3EC92392834CEF232F0C7454AE03E37BD5078A466D398679"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerMissile3.uasset",
+      "bytes": 137129,
+      "sha256": "327EB34F8650AE0DD9FA1ECAB4383709E05A262CB68C5EA8EE874F122C706B61"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerPlasma.uasset",
+      "bytes": 117924,
+      "sha256": "39654E64FEB81AA3F83E5342CB02EDE604936594BAE0D485E274F7FA3C115A16"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerPlasma2.uasset",
+      "bytes": 128946,
+      "sha256": "46D925B51C58B9C66A01E801B71A63B8263F566B290D85A0A90FE3C32A9B69CA"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TowerPlasma3.uasset",
+      "bytes": 129552,
+      "sha256": "1A232CBA928EE3B9B563DE37FAE693A4E7AF1FE82997EAB665D208017D9E78EC"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TradingPort.uasset",
+      "bytes": 127441,
+      "sha256": "556DAB7573D786FEAF6CF9880ACA408655A7216A8B9285B52A51AAA60C3735B6"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TradingPort2.uasset",
+      "bytes": 127829,
+      "sha256": "CCEFDFC6433FE2BF6CC6C2F64DCD31BB156FF4FB3D20A66A507700D5AB3B17CC"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_TradingPort3.uasset",
+      "bytes": 128572,
+      "sha256": "843088EA614E867C843BCDF58FA8A690C5AB9F2AC76F227990F30D0F30344EE7"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Turret.uasset",
+      "bytes": 106947,
+      "sha256": "4EFC60CACAF5637DAAFDC9F6069CC4774EE71F9A5135A55BBCC9EDD720ECC9C0"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Wall.uasset",
+      "bytes": 101258,
+      "sha256": "F576F023B415745E074CBF93CA14C3944FA84940C4DEE3D4CDC4D94F0F88C9AB"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Wall2.uasset",
+      "bytes": 104380,
+      "sha256": "64EFA948515651C12CC3DF81388E6E5C408F8B24FC5C0C14546881BADB796E02"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_Wall3.uasset",
+      "bytes": 119686,
+      "sha256": "E35BB505CCA014CC79BA133E158F0104D5CF9DD43B501163590B93C2A7EF09FD"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_WorkerFactory.uasset",
+      "bytes": 134723,
+      "sha256": "A83B4FEB33D8F34B3B5DD903049E73944EA4436B5AB418F9EEB0BEEF44E162AB"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_WorksBattery.uasset",
+      "bytes": 145007,
+      "sha256": "D59173EFA5A1FB3EDB0976F4C9EB52A1339429F6CA8707E292D79A62E872C61C"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_WorksCircuit.uasset",
+      "bytes": 143375,
+      "sha256": "9F793BA9A2B7B3E85614B9CAE07450D5EE102BD8331150E7D7114C2412341EAF"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_WorksConductor.uasset",
+      "bytes": 141676,
+      "sha256": "E82A9AFC231C1CF34FCA1F383B226ACF426CE5F280C9DED278888081DB8FFE2D"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_WorksGlass.uasset",
+      "bytes": 129392,
+      "sha256": "FC22FA57E92DD94A949A2CE062397560895B06136135224EB025157149D4CDE3"
+    },
+    {
+      "path": "Content/Art/Interface/T_Building_WorksParts.uasset",
+      "bytes": 144556,
+      "sha256": "05D2C5A0084A022719F5DE7C1716816DA0A4E389F81458DA9EA4CFE7F8BDBB4C"
+    },
+    {
+      "path": "Content/Art/Interface/T_OrbitalHero.uasset",
+      "bytes": 508485,
+      "sha256": "4D1448C435406465CA6AF79F1A88BCEFE48BD25B1ED485C6C8F983EDAD420C8F"
+    },
+    {
+      "path": "Content/Art/M_BarkPBR.uasset",
+      "bytes": 11017,
+      "sha256": "98634B2C805FA62BCDBF4E18A103A95DA3A62268C88EE34335B1D7706DED7BB5"
+    },
+    {
+      "path": "Content/Art/M_Colony.uasset",
+      "bytes": 8072,
+      "sha256": "79A6CDFA7C99258321916A3BB83D138540B2700AC46369B1E8203C817064F3C3"
+    },
+    {
+      "path": "Content/Art/M_Foliage.uasset",
+      "bytes": 8868,
+      "sha256": "AD42814BDC4DF69A82659DB1C7410271815BD0EA4449FE541056D83FCE266D4F"
+    },
+    {
+      "path": "Content/Art/M_Industrial.uasset",
+      "bytes": 11154,
+      "sha256": "E337D59057CC0F4453951AE8D154837C4A5FF6690211ECC30D766D83D37F9B04"
+    },
+    {
+      "path": "Content/Art/M_RockPBR.uasset",
+      "bytes": 11017,
+      "sha256": "BA6FDEA921CA23B4AE6861D0D7C1B2CAB4FCF87F7B608C4BB6254407C9D4C864"
+    },
+    {
+      "path": "Content/Art/M_Terrain.uasset",
+      "bytes": 74902,
+      "sha256": "C9D32D9A9862A850655E398A422B750F3FADA43718415A8E594F8AAC351556CC"
+    },
+    {
+      "path": "Content/Art/MI_Bone.uasset",
+      "bytes": 4724,
+      "sha256": "B3AD1CBC3F1FB445D354E497F906CBEACDA93D0273F8446CF3CD8AA878023D03"
+    },
+    {
+      "path": "Content/Art/MI_BugEye.uasset",
+      "bytes": 4734,
+      "sha256": "DC79D9A87C2B38D72F8316D8772498DD61D8A7FBB8E37479BE514615CDD0FCA9"
+    },
+    {
+      "path": "Content/Art/MI_Chitin.uasset",
+      "bytes": 4734,
+      "sha256": "6F5041EE9B61D71472C8BF748CD964A60C5662AE26A1015A27A1F6307524789C"
+    },
+    {
+      "path": "Content/Art/MI_Coral.uasset",
+      "bytes": 4729,
+      "sha256": "25AABCD34D5746DB664D2D8D6C8C82E620D0FEA005537553B3E4F5ACA2CF8794"
+    },
+    {
+      "path": "Content/Art/MI_DeepTeal.uasset",
+      "bytes": 4744,
+      "sha256": "8D82AF18043E7B2CC26CBC54AFB13644F0370BCA64C503728EE7369B01CCE2E6"
+    },
+    {
+      "path": "Content/Art/MI_Gold.uasset",
+      "bytes": 4724,
+      "sha256": "E83FE3A457DF734019DF1692F2490016F1DF689CCC5243FB8E6DE37AE13F9359"
+    },
+    {
+      "path": "Content/Art/MI_Ivory.uasset",
+      "bytes": 4729,
+      "sha256": "B09EA9BBB7B291146DD07D9C656FB3802EA3B26F6EEC3511CD2B1E49AEB7277F"
+    },
+    {
+      "path": "Content/Art/MI_Lens.uasset",
+      "bytes": 4724,
+      "sha256": "3A5C42BEB672C5D9A81EACE1DDCFDA1D0FDBB1B2F576B3548347A57C072BEE77"
+    },
+    {
+      "path": "Content/Art/MI_Pearl.uasset",
+      "bytes": 4729,
+      "sha256": "77AA107ABF67669127EA91B0A3D133C9B89E16509D7DC922CEF52E5657B60663"
+    },
+    {
+      "path": "Content/Art/MI_Real_Amber.uasset",
+      "bytes": 4770,
+      "sha256": "BB33B4D32698E3E97D1A5677C5B66149DC1A1F37B557A021AC7AC7D12012AF30"
+    },
+    {
+      "path": "Content/Art/MI_Real_Bark.uasset",
+      "bytes": 3137,
+      "sha256": "C617E4AEE37F0635D096C17B91CA76F400BF7254906FD717A49A4FE91E6254A0"
+    },
+    {
+      "path": "Content/Art/MI_Real_Black.uasset",
+      "bytes": 4770,
+      "sha256": "1ADD433EC1FC753200289D8C70539C04127876C3A0E43B08FA294F5DBCD100EA"
+    },
+    {
+      "path": "Content/Art/MI_Real_Concrete.uasset",
+      "bytes": 4785,
+      "sha256": "DDDA82148C80580A6361E480687C1EA216761F6107AF0BC436228150667DE2ED"
+    },
+    {
+      "path": "Content/Art/MI_Real_DarkPaint.uasset",
+      "bytes": 4790,
+      "sha256": "D21356919E91DEEA65466BE02D5A2C161938C2A3957D9582B933228303468179"
+    },
+    {
+      "path": "Content/Art/MI_Real_Grass.uasset",
+      "bytes": 3341,
+      "sha256": "B89B244993D8BD145E5E181F9A5A3779FFF59BCA20B42E9A89E9D8844E48CADE"
+    },
+    {
+      "path": "Content/Art/MI_Real_Leaf.uasset",
+      "bytes": 3336,
+      "sha256": "6D1B3BDBB6DBE0C3A85FB4D86043348D2B6AB4E2BE7D74D55D9BD5AB2E2EC570"
+    },
+    {
+      "path": "Content/Art/MI_Real_Light.uasset",
+      "bytes": 4770,
+      "sha256": "5A3F8B6035522E8EAEB2B0FF893C3B4ED072A5D3A79D5EF30B509A92352A7834"
+    },
+    {
+      "path": "Content/Art/MI_Real_Ochre.uasset",
+      "bytes": 4770,
+      "sha256": "1C10C7C1A55C1EB8936BA4071FBE312E1B420872DA356439D8233C72BF250597"
+    },
+    {
+      "path": "Content/Art/MI_Real_Paint.uasset",
+      "bytes": 4770,
+      "sha256": "4E419E0D7A43CC5F84AD7559F7DCEECEA6EF42AEED087F5BC87630C19825A128"
+    },
+    {
+      "path": "Content/Art/MI_Real_Pine.uasset",
+      "bytes": 3336,
+      "sha256": "BF8A91B81AD793971B09D598A6699D79B9761749648845331268E8C13D22A164"
+    },
+    {
+      "path": "Content/Art/MI_Real_Rock.uasset",
+      "bytes": 3137,
+      "sha256": "5A010F5A2C6809C17DFBFE26EFFBA53250575CAEA7E5EC70FF38E4AC1504794C"
+    },
+    {
+      "path": "Content/Art/MI_Real_Rust.uasset",
+      "bytes": 4765,
+      "sha256": "0F21171616CC4AF1AFF683D6DA0589138B759E44D21D099B408461D7945C9800"
+    },
+    {
+      "path": "Content/Art/MI_Real_Steel.uasset",
+      "bytes": 4770,
+      "sha256": "D175693F8BDF545C10027CC9340E40AF5198A20DE9210432DA54922EF830D535"
+    },
+    {
+      "path": "Content/Art/MI_Real_Window.uasset",
+      "bytes": 4775,
+      "sha256": "9F10A7DC9816D682906F5F6B1375011984A495D0F5B0E845B82475D2CB25D714"
+    },
+    {
+      "path": "Content/Art/MI_RedChitin.uasset",
+      "bytes": 4749,
+      "sha256": "2DD39A873C156959ADDA4E89921525C0DF5BC1E923C17E146ED107F55BD1E219"
+    },
+    {
+      "path": "Content/Art/MI_Signal.uasset",
+      "bytes": 4734,
+      "sha256": "82D040578282F79DE8FF3E0145ED0476E01A2CF02501683DF33A7F613C8D380E"
+    },
+    {
+      "path": "Content/Art/MI_Steel.uasset",
+      "bytes": 4729,
+      "sha256": "831C135D861898001E857510C7AE72D7D6E7B3C9BF0B1A62B79C24C2521E956A"
+    },
+    {
+      "path": "Content/Art/MI_Teal.uasset",
+      "bytes": 4724,
+      "sha256": "07B0892159AED038E3F9C2DC90FA56FC15C330D88B5E3F8DC202CA5074C0E876"
+    },
+    {
+      "path": "Content/Art/MI_Violet.uasset",
+      "bytes": 4734,
+      "sha256": "2FFB6A8A9CB70E1C667F40A51DD0DD1858B0261FA10398D0CC55BBBDDFD97BEB"
+    },
+    {
+      "path": "Content/Art/Nature/M_NatureFoliage.uasset",
+      "bytes": 22772,
+      "sha256": "FDE719BAB9ADF43877F3263453B7FCADF3FE6D7A42D9D5A64D5246BC04B10174"
+    },
+    {
+      "path": "Content/Art/Nature/M_NatureSurface.uasset",
+      "bytes": 10351,
+      "sha256": "8C5EF61DD0A8339E28B19725C4D43B5CB4227E76EB87602AD89A20CA6265EBF5"
+    },
+    {
+      "path": "Content/Art/Nature/MI_fern_02_surface.uasset",
+      "bytes": 5084,
+      "sha256": "837F7C44E456216E6CB8C044EBDD2E6DFBFA5913B1349201F65839360D3DDD0D"
+    },
+    {
+      "path": "Content/Art/Nature/MI_fir_tree_01_bark.uasset",
+      "bytes": 4314,
+      "sha256": "B75A6E996B02CD7089E9E5456783C3D6D92B4919820684C492A68ADDD835933E"
+    },
+    {
+      "path": "Content/Art/Nature/MI_fir_tree_01_trunk_a.uasset",
+      "bytes": 4347,
+      "sha256": "1407A8FF728F56B7BF2A95F5BD27BFB18A89FF6F579FABF2089C2B6B81C0F1FA"
+    },
+    {
+      "path": "Content/Art/Nature/MI_fir_tree_01_trunk_b.uasset",
+      "bytes": 4347,
+      "sha256": "17C8CBFF7F4D8E469994A712CA3E6C457D18F589AF134EAA40924DD30D7AB7E5"
+    },
+    {
+      "path": "Content/Art/Nature/MI_fir_tree_01_trunk_c.uasset",
+      "bytes": 4347,
+      "sha256": "E396D087E1216E2DDCCE57DE6F2940959E3403D068A926A6C75935D596CE824F"
+    },
+    {
+      "path": "Content/Art/Nature/MI_fir_tree_01_twig.uasset",
+      "bytes": 5097,
+      "sha256": "3993364B0EDAC75479FAC1C3CB9B443EE46A16D2E3C58858EB065C37AB9D7255"
+    },
+    {
+      "path": "Content/Art/Nature/MI_rock_moss_set_01_surface.uasset",
+      "bytes": 4402,
+      "sha256": "CC8027484B477D843B1747DCF2CECD07D693A90C6326533744FE7CA74789F1E9"
+    },
+    {
+      "path": "Content/Art/Nature/MI_tree_small_02_branch.uasset",
+      "bytes": 4358,
+      "sha256": "0FC8CF2CFA64587478A6DED8A5392D4699A949037D69163BE6C451155DD9CD5B"
+    },
+    {
+      "path": "Content/Art/Nature/MI_tree_small_02_leaves.uasset",
+      "bytes": 5149,
+      "sha256": "C7A45FE1BCE9FF4B6676F32822A06D7FF2BC01E4A02311C9EEDCF111FA3D5B38"
+    },
+    {
+      "path": "Content/Art/Nature/MI_tree_small_02_surface.uasset",
+      "bytes": 4369,
+      "sha256": "8CA132D65C9CF8965A0789974E77E379127B4CC7ACA644342A2816BF9E020FAE"
+    },
+    {
+      "path": "Content/Art/Nature/SM_BroadleafA.uasset",
+      "bytes": 20662171,
+      "sha256": "131C20212220C561FC6A74F5F38CD04EAAADA08E7CE4413A9EB9B33C4E8A3F58"
+    },
+    {
+      "path": "Content/Art/Nature/SM_FernA.uasset",
+      "bytes": 97136,
+      "sha256": "8B44E90525A4F4670EEC152E659996BF43C69570EADCE9B32C6D8F0151EC4D9F"
+    },
+    {
+      "path": "Content/Art/Nature/SM_FernB.uasset",
+      "bytes": 154224,
+      "sha256": "6B61EC22950223E114BB51CFCF0E32D0F7187036736364552DD682D9EA1FE6AD"
+    },
+    {
+      "path": "Content/Art/Nature/SM_FirA.uasset",
+      "bytes": 6076958,
+      "sha256": "AB0A6A63240FB479FAD8B976622514C1AC185FABBAFBB2E669D139BE66F065BD"
+    },
+    {
+      "path": "Content/Art/Nature/SM_FirB.uasset",
+      "bytes": 4387758,
+      "sha256": "5FA2F9BC6786D6C7E77E5CE150C0FE11648C1104E3A6771D7D092E0FD29B0C66"
+    },
+    {
+      "path": "Content/Art/Nature/SM_FirC.uasset",
+      "bytes": 17998662,
+      "sha256": "6F8B8B6DB0B5610678475989BCF529A6CDF7320B56CB5102C57C3D1AECEB3082"
+    },
+    {
+      "path": "Content/Art/Nature/SM_MossRockA.uasset",
+      "bytes": 521499,
+      "sha256": "84C2DD8B877DBE6E1C7499EF0C56A003EDDD94AF4E7A822137D8699727E6A744"
+    },
+    {
+      "path": "Content/Art/Nature/SM_MossRockB.uasset",
+      "bytes": 277262,
+      "sha256": "958B42E9E5E391CBC56D9C7380A83C2E694D1EE4BCCEA2F41722101208E399AB"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fern_02_surface_alpha.uasset",
+      "bytes": 301189,
+      "sha256": "44D4C651AD5F2F648EF3BBE3462FCA8DAF59C71F0F55E77FEDDCFCA1581EEF04"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fern_02_surface_color.uasset",
+      "bytes": 1004353,
+      "sha256": "3EFD7180C7562F53761D389BC90A74CC51688167DE4ADCCF5F4E5017A28DD36E"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fern_02_surface_normal.uasset",
+      "bytes": 1376605,
+      "sha256": "2727CF2BB7BCC5F6AFCC1C01282B885743E8497ADA2D0046B01643ECD0819E02"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fern_02_surface_roughness.uasset",
+      "bytes": 219324,
+      "sha256": "87AF759389376037068DCAC503FB153F17EF46D292CCB4CD4995C911FB7EAE29"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_bark_color.uasset",
+      "bytes": 2849996,
+      "sha256": "62528139F32B8E9D0C49ED82326BD9D1C24FBE939250B8A58E921EDE56AA25D6"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_bark_normal.uasset",
+      "bytes": 3932119,
+      "sha256": "AB3CC296AF2D5FB3A92C545939366B015672B627B53B2368E4491663CCA5657A"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_bark_roughness.uasset",
+      "bytes": 517636,
+      "sha256": "0FCA23810D909ADA1F2BD19BDB1A1E6D597CC51550A1CC8DDACCB2D4281E0B9E"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_a_color.uasset",
+      "bytes": 3039485,
+      "sha256": "3E916BCD195B086CBCAF2200F80172EE9D861B82B4C9BB40DC0A3E1EC35B128D"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_a_normal.uasset",
+      "bytes": 3653263,
+      "sha256": "31796E2B24A30266D1491133144333CCFFCBC0D0DE504566B306BB693FA5C460"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_a_roughness.uasset",
+      "bytes": 593787,
+      "sha256": "DC9D68BCD7648D547F3AB6C612491C9692E67FE1B4B1CBB4858D106E210B95B8"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_b_color.uasset",
+      "bytes": 2559128,
+      "sha256": "DFA6B6336FF960A09F781B83E8299C8E2466FE5764E096F7345AAD161CB1738A"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_b_normal.uasset",
+      "bytes": 3280469,
+      "sha256": "0EC149FAA9077B95EB8DA53E2A790D0F328F483031A9C7E0B18CB39DAF3B0FBA"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_b_roughness.uasset",
+      "bytes": 567709,
+      "sha256": "7DAF92D0D566ECA3898FE943F906920DE65066A18AC9724797560725253D17D5"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_c_color.uasset",
+      "bytes": 2957055,
+      "sha256": "BD4F086C17A192138C2E2FF25472515D2BE3194F8241899AFAE93F80DC6F797D"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_c_normal.uasset",
+      "bytes": 3848540,
+      "sha256": "58FF05D190DE4884FFF8972562C6C2DF479C71CA7C5B2605405455CBBCF35324"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_trunk_c_roughness.uasset",
+      "bytes": 654959,
+      "sha256": "5D82A1AD8FB0A050032E1EA3676CD7952E735AA085395CDB6317A077B034B207"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_twig_alpha.uasset",
+      "bytes": 1868464,
+      "sha256": "5A5FB7E4F57A772BC3EDAD1D2C260472D8BEE9A6F5737C9262716A3356C283BD"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_twig_color.uasset",
+      "bytes": 1152712,
+      "sha256": "4C222ED3212C6ACDB73845B2FD135B18C98306F45F910B69AEC0F897967D3E6D"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_twig_normal.uasset",
+      "bytes": 1622614,
+      "sha256": "E4E6EE1CCBF2EF4111AD432A0C464B240C5B922A38CF1C3CF2128E0871B74B9D"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_fir_tree_01_twig_roughness.uasset",
+      "bytes": 321166,
+      "sha256": "899B8EF0D60D4A26CE5E16BF237B8820EECEC83DE4D2A7F9F579DCC90D96BCFC"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_rock_moss_set_01_surface_color.uasset",
+      "bytes": 660280,
+      "sha256": "FF64FE6E114EB7A73678A96411E4DABBD11735FEADD8F530C7EEC00F7170B159"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_rock_moss_set_01_surface_normal.uasset",
+      "bytes": 852086,
+      "sha256": "FE14123091543E0F0F22FDF6EAEE1D251B496C12FEC9D4A772C0C8746D566413"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_rock_moss_set_01_surface_roughness.uasset",
+      "bytes": 93589,
+      "sha256": "BFF25E3D29168A7C6BDDA725C43C45D0226F9FDECCD1A1379A02255507866A41"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_branch_color.uasset",
+      "bytes": 1436514,
+      "sha256": "A827453CAB5E25814F0A591BF94A4BD176343D0DA3AA64F140925A40AC76EEBA"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_branch_normal.uasset",
+      "bytes": 1793205,
+      "sha256": "EC298CD1D25F9C5B663FEAF43F4F445E454D769DA67982475A4FA2737F53E1D8"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_branch_roughness.uasset",
+      "bytes": 277435,
+      "sha256": "0F90B19224A8911F4E1E4BD1C79BDDD368004141E6B6CBC523C37CC37BB1C558"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_leaves_alpha.uasset",
+      "bytes": 546879,
+      "sha256": "EAA7444F0A27A78D26705E138A31A7E43DEF7B7CC22057236B6D516070C81570"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_leaves_color.uasset",
+      "bytes": 972692,
+      "sha256": "749B6D6C5444B9A272461FC9F8900993751DEB62832FA6B50D1CD74E6ADB262E"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_leaves_normal.uasset",
+      "bytes": 2407001,
+      "sha256": "2DFEC021C9BDB86C64B7E610D5AFE37BBB4B6A54A86BA0EE9341A5AADB61963B"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_leaves_roughness.uasset",
+      "bytes": 318478,
+      "sha256": "5FFB3B034FD63E188AE642C3773C5BB8CF48C6B9E34E5B6985C4C73EBCCEE0FC"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_surface_color.uasset",
+      "bytes": 3181384,
+      "sha256": "99979AA1AF94B7E2D2F255D80965872E784E55527E7E5FEEE62F79847D217A3E"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_surface_normal.uasset",
+      "bytes": 4566487,
+      "sha256": "C4DC67A16D57AE4617A3410FBD2DB081F9583AEF40D690921A9EF26E497E3D40"
+    },
+    {
+      "path": "Content/Art/Nature/Textures/T_tree_small_02_surface_roughness.uasset",
+      "bytes": 518863,
+      "sha256": "E6DDE7B250406DAC0B538426E859148251357021864424B9E606ED8E4DB07CBB"
+    },
+    {
+      "path": "Content/Art/NatureV04/M_TerrainV04.uasset",
+      "bytes": 261074,
+      "sha256": "5F65F392025D219647C04257C55BA31F3B605C7DFA9773092F9C170E87DEC426"
+    },
+    {
+      "path": "Content/Art/NatureV04/M_V04Bark.uasset",
+      "bytes": 11733,
+      "sha256": "02697C532DDADEA78D76EF2F1C65F7984CA9946305761B24C4F9029CAF280729"
+    },
+    {
+      "path": "Content/Art/NatureV04/M_V04Foliage.uasset",
+      "bytes": 24918,
+      "sha256": "AF14F2F19ABF1DE8BB88B80E456BFD40FDA3DC7F846BF26E31D33A49121E2C13"
+    },
+    {
+      "path": "Content/Art/NatureV04/M_V04Grass.uasset",
+      "bytes": 19235,
+      "sha256": "77A00EAC5B433E7ED87D464BBFC43FC05A51B4B99D77E92C20EB46B2CF948117"
+    },
+    {
+      "path": "Content/Art/NatureV04/M_V04Wildflowers.uasset",
+      "bytes": 17987,
+      "sha256": "FCB40B2254B597A697E94F701664603ADFC0A901C0F4646C2C891C62D75CBC35"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_grass_bermuda_01_surface.uasset",
+      "bytes": 7786,
+      "sha256": "0E417DB4E7E9075B72B71FAA335C292A96BDE6563CF6C0E5747A3EDF94DDB079"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_grass_medium_02_surface.uasset",
+      "bytes": 7771,
+      "sha256": "EE772DA59622C2303E1C6939C2E53EF80D17F5EE7FA00459DE98F4050B947DB1"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_jacaranda_tree_branches.uasset",
+      "bytes": 4870,
+      "sha256": "1678896E90E5AE48E4E51C595234AF309EF4205460B4CF792D10B3D71BACA00F"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_jacaranda_tree_leaves.uasset",
+      "bytes": 5652,
+      "sha256": "E164D6DA108D0340868B3CD44A860E4542EC54D841EFCF60FE66BCDC2D2403DA"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_jacaranda_tree_trunk.uasset",
+      "bytes": 4831,
+      "sha256": "3ECF161A3EAC166874A9BC591CEE399FE3E85E56275FB5F57C5D28EC356BFD8C"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_Original_Meadow_Cream.uasset",
+      "bytes": 3464,
+      "sha256": "FEAD032CD9C8B1EAE48E435FEE1FC924791A485A515B475301338FCEE2F72A27"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_Original_Meadow_Gold.uasset",
+      "bytes": 3459,
+      "sha256": "638E49C8506A6EC23AD85C1A65EA8EB75AE605AD63EC0C1682333AD7B19DDA4C"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_Original_Meadow_Leaf.uasset",
+      "bytes": 3459,
+      "sha256": "F7E3E613525C97C48E629AF15B9367DF067B1EE457985A6FC747618598955898"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_Original_Meadow_Stem.uasset",
+      "bytes": 3459,
+      "sha256": "36B81560C2D5B36EBB7D89C418664E898631C504D965EB4955D5613223F8B66C"
+    },
+    {
+      "path": "Content/Art/NatureV04/MI_Original_Meadow_Violet.uasset",
+      "bytes": 3469,
+      "sha256": "FDF84AA240ED34950CE2D5376117D0DD46D4F36E23DE1ECD5E90CFBDCA29A9C7"
+    },
+    {
+      "path": "Content/Art/NatureV04/SM_JacarandaA.uasset",
+      "bytes": 119244844,
+      "sha256": "66F7F1FA7D2C548DD68E4C00BD1169326BD06F3805B437721AD9030F8EB97CD8"
+    },
+    {
+      "path": "Content/Art/NatureV04/SM_MeadowGrassA.uasset",
+      "bytes": 536048,
+      "sha256": "FF74449E9228883C1896D81FA5BCEFF4A534D98CECDC9E3279D50847042CEB94"
+    },
+    {
+      "path": "Content/Art/NatureV04/SM_MeadowSwardA.uasset",
+      "bytes": 2475495,
+      "sha256": "2B539738FA9355AB25E7152415E9EF9518A5964F45C64345C328865814865B0C"
+    },
+    {
+      "path": "Content/Art/NatureV04/SM_MeadowSwardB.uasset",
+      "bytes": 2479493,
+      "sha256": "0FCC384B6E691F79FC8DD9747BA2046838334AF398379917343A30268B4578FA"
+    },
+    {
+      "path": "Content/Art/NatureV04/SM_WildflowerPatch.uasset",
+      "bytes": 167985,
+      "sha256": "AB6EA79900955CE745AD24A65C1424793EA64CF12889EEBF4D13AE7232304249"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_forest_leaves_02_surface_ao.uasset",
+      "bytes": 447416,
+      "sha256": "2DD08B182F48C5942021C08174A6F1E0AAE157F8F458CA26A543C07634DD7FD1"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_forest_leaves_02_surface_color.uasset",
+      "bytes": 1679127,
+      "sha256": "848FDE51BFF9AA2E9E12978F5212CEF0839FD81E24BFF84E26550E6E67859DCF"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_forest_leaves_02_surface_normal.uasset",
+      "bytes": 2335393,
+      "sha256": "4D8A899A9CE61727BD239E1D0A25BE65F7C5A1FC3B70EBC0E8DB85CBA7B80868"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_forest_leaves_02_surface_roughness.uasset",
+      "bytes": 203708,
+      "sha256": "84FEE3DF3486A494AA8CE8CAFBF24DA3B3403CA67A63E3886201058DB3CD4291"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_bermuda_01_surface_alpha.uasset",
+      "bytes": 127224,
+      "sha256": "8894B5A9EB558331200A9E90D70B813AA178310B779849C2D621F9950672778A"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_bermuda_01_surface_ao.uasset",
+      "bytes": 210041,
+      "sha256": "E088AEA9B9D2B2F45679D29DD6E920BAE5CA3A085804302E355073730BA0F9C1"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_bermuda_01_surface_color_padded.uasset",
+      "bytes": 867218,
+      "sha256": "E999C23A550659F4162607C183875652ADA970A3B591697971C6AA39A96326AD"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_bermuda_01_surface_color.uasset",
+      "bytes": 505718,
+      "sha256": "57F440B7A360EE26686248D5433724FFD970B336B9A428B51D8DC7D07B64B769"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_bermuda_01_surface_normal.uasset",
+      "bytes": 2568184,
+      "sha256": "235BAD10F1490642F7E442DFEDB2E9BF4599CEC9C83883F3218E97C4D53FAD24"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_bermuda_01_surface_roughness.uasset",
+      "bytes": 413331,
+      "sha256": "043C6F0C01D77C5FB61856F868000187F8A2F53F4020C5007EB7948484124D32"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_medium_02_surface_alpha.uasset",
+      "bytes": 298879,
+      "sha256": "6AE8714A34833AF5240DC27BC07BE03FBEB9565A630FF370EE117F81F94D9FE2"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_medium_02_surface_ao.uasset",
+      "bytes": 99242,
+      "sha256": "7E67136098119D75DE815AF12B0DAB8F3C27F4CE3FFC4BC4DE68A46B5853E860"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_medium_02_surface_color_padded.uasset",
+      "bytes": 868272,
+      "sha256": "088144221C3F4E9F08996F7E20711BC86663AF0EE6400B0A0262DE13B026B72F"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_medium_02_surface_color.uasset",
+      "bytes": 468001,
+      "sha256": "AE28BD3BBD0EC257B847AAA7773CB656A1FB5537F826E964EADA551AC0F22FFD"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_medium_02_surface_normal.uasset",
+      "bytes": 364823,
+      "sha256": "120D447ED49F290A4918E6EF2D574B182D5AA26DA6BCD61E1D6FAD2F76B770CB"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_grass_medium_02_surface_roughness.uasset",
+      "bytes": 196061,
+      "sha256": "8AF697D403F90FA9071116B2046BA504795E1F00B5285266D8F47C090948476A"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_Grass004_surface_ao.uasset",
+      "bytes": 3670950,
+      "sha256": "633986E031A75B7EDA18FE69AE237C0B67E7CB0EFC2B5573A15D5B5C3B2A6794"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_Grass004_surface_color.uasset",
+      "bytes": 7655195,
+      "sha256": "120571D6DB78E47D36996FACCFEC0D24A77A8C098B12A24009717FB1E28956DA"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_Grass004_surface_normal.uasset",
+      "bytes": 10026380,
+      "sha256": "5EB8C80FBB2D190AD5AB9E5F02ADDB97C92A6AC667D18CFBA01E97A119E47D15"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_Grass004_surface_roughness.uasset",
+      "bytes": 3424810,
+      "sha256": "71F343223944E8572E949D7413684740DA256BDDCA50C44C8E4082F721CB3EB2"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_branches_ao.uasset",
+      "bytes": 458059,
+      "sha256": "8DB9496C3EE553E21199C27E2560544F43CBACEBAE6EE513AA25224F5B3049D5"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_branches_color.uasset",
+      "bytes": 1494553,
+      "sha256": "079FAAEA2C93800B74C4E859FA6BCBAC49729F0B09615BBFF3BC1F2969ADA0E3"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_branches_normal.uasset",
+      "bytes": 2449235,
+      "sha256": "7D91B59ECA8959AAC27D16131CFD168E9C1FEE68567EB15409F9AB95D1C22BDA"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_branches_roughness.uasset",
+      "bytes": 307425,
+      "sha256": "254424FC583CC0581CB29A9081DA9AB8449535CE261E1EFB50550FB9A76514DD"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_leaves_alpha.uasset",
+      "bytes": 5787733,
+      "sha256": "8208B2F169033D655A363A79E2A4F9A6779713BE0C9BD97DBE95AB1CE79167AE"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_leaves_ao.uasset",
+      "bytes": 306366,
+      "sha256": "BD3EE2ED10274ECD2DA4B2D329801A0FE56EDF8DEFDF007FE2EB9449AE7C04C3"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_leaves_color.uasset",
+      "bytes": 4609300,
+      "sha256": "B90BA0869FA49DD8ADFA94E61A808909CD075773FFA6AF50B5AFC35B70401EEA"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_leaves_normal.uasset",
+      "bytes": 2173444,
+      "sha256": "AA1D67B916751290CF15AD21FE814AA7AFCB3108B7BA541727A7BB4DB079A68A"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_leaves_roughness.uasset",
+      "bytes": 272014,
+      "sha256": "EF98383E1BECB9A72053EEA6FA71E2ED5F2C43EBC326C2B4945D60039C84B3AF"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_trunk_ao.uasset",
+      "bytes": 853178,
+      "sha256": "B31BBD6D336B18B5FA6573D1A044071CD37485B16F06A9EE5510A75E38ADCF52"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_trunk_color.uasset",
+      "bytes": 3408116,
+      "sha256": "5D6CB2FEA82AA812A4802359D82B5200363B66A7D3A9C3678A83AE5C8E66FCF5"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_trunk_normal.uasset",
+      "bytes": 4061940,
+      "sha256": "4FA2CC359140ED97E04D13EAE9F99499875B922A63A8CF3C757A6EFE449EEC39"
+    },
+    {
+      "path": "Content/Art/NatureV04/Textures/T_jacaranda_tree_trunk_roughness.uasset",
+      "bytes": 583764,
+      "sha256": "C7DAAA5797B89897D1553A5823D527D6C1F733E8272AA6F440AC88718EE3F605"
+    },
+    {
+      "path": "Content/Art/NatureV07/M_CanopyProxy.uasset",
+      "bytes": 25802,
+      "sha256": "A5C91EB073854F4C0AA70A029C0FB7432EAC90E113366E730C9EC7DE3187D348"
+    },
+    {
+      "path": "Content/Art/NatureV07/M_ConiferProxy.uasset",
+      "bytes": 25547,
+      "sha256": "1AC3E24C234A35EBD1ADB7EC252B7E0CD128418D7E2F773F79C2FFBC36ACB0BE"
+    },
+    {
+      "path": "Content/Art/NatureV07/M_GrassProxy.uasset",
+      "bytes": 13314,
+      "sha256": "732E2FF98C127F8E6CB86EF4BEE8BA4760046536CF4DC3EBDEE220DC676D75D5"
+    },
+    {
+      "path": "Content/Art/NatureV07/M_TerrainV07.uasset",
+      "bytes": 48743,
+      "sha256": "0AEDAA08D85BCE1780699E6C7E8C382545BE06540ED89344B6CBC8A579B5827F"
+    },
+    {
+      "path": "Content/Art/NatureV07/MI_CanopyProxy.uasset",
+      "bytes": 3542,
+      "sha256": "54B4A9D39F3F0FA24B89EA1E761FA0F384B72655FE0E27FB3EDAEB4DC4144F06"
+    },
+    {
+      "path": "Content/Art/NatureV07/MI_ConiferProxy.uasset",
+      "bytes": 3551,
+      "sha256": "CFD28BFC0CDB7F468FDA0AA70F1D9E3B098176A65855A4000779A890FCB5EE6A"
+    },
+    {
+      "path": "Content/Art/NatureV07/MI_GrassProxy.uasset",
+      "bytes": 3731,
+      "sha256": "7D744CA899FD06802CE6716AC128480C37E67ECBEC5CD82147605CABE6BB8602"
+    },
+    {
+      "path": "Content/Art/NatureV07/SM_BroadleafProxy.uasset",
+      "bytes": 1337376,
+      "sha256": "552B9EA4E8FBEBEA0F4C98AE775F1866581FDCC119C0FC18A2FA3583A2E50424"
+    },
+    {
+      "path": "Content/Art/NatureV07/SM_ConiferProxy.uasset",
+      "bytes": 903076,
+      "sha256": "73BCDF4DA93E440F63B96CF37AE80C6B7D3DD9955E59C3B376BAE72E888AF495"
+    },
+    {
+      "path": "Content/Art/NatureV07/SM_GrassProxy.uasset",
+      "bytes": 109001,
+      "sha256": "A493B4290B3996EF20A1EC06CC6C111225531BCBFC9F0E5EE71638AF812C6A8E"
+    },
+    {
+      "path": "Content/Art/NatureV07/SM_JacarandaNearV07.uasset",
+      "bytes": 78687923,
+      "sha256": "3C42D7228E312CA4C5648BAF477F87B7722CCFB45AF8DBC384761C44B9672C1F"
+    },
+    {
+      "path": "Content/Art/NatureV08/M_BroadleafSpraysV08.uasset",
+      "bytes": 36140,
+      "sha256": "99120B82D12966245BE4C55638BB9FB0F15CFF63F868E4591A0E5B59CE8236F2"
+    },
+    {
+      "path": "Content/Art/NatureV08/M_ConiferSpraysV08.uasset",
+      "bytes": 36091,
+      "sha256": "6DEFBF71D0B136EA702994A6697556BF8B7FE36EE397B33186379178D533BAF7"
+    },
+    {
+      "path": "Content/Art/NatureV08/M_GrassProxyV08.uasset",
+      "bytes": 30488,
+      "sha256": "97DC9C33A3ACF8A78F6B7417D3C6097A888B000B301C3F49E203361AD0833ACD"
+    },
+    {
+      "path": "Content/Art/NatureV08/M_TerrainV08.uasset",
+      "bytes": 61408,
+      "sha256": "ACAD4D34F7474EF4ED47E90D05085E920ADC814EDC8CBB9D18E262D1A028BAD8"
+    },
+    {
+      "path": "Content/Art/NatureV08/MI_BroadleafSpraysV08.uasset",
+      "bytes": 3803,
+      "sha256": "23AEE24E9E87003F927C5D766DED84C8216C12FA9138CC55D55EB6E51BE5999F"
+    },
+    {
+      "path": "Content/Art/NatureV08/MI_ConiferSpraysV08.uasset",
+      "bytes": 3785,
+      "sha256": "92432BA84566A7561A6873C62CEE5C7E8DC566BDBCAF13CD2C857D40AF706047"
+    },
+    {
+      "path": "Content/Art/NatureV08/MI_GrassProxyV08.uasset",
+      "bytes": 4159,
+      "sha256": "1BCDBD8FF9D5136DD54E625A0A47B9F83B6CF0BB143363E7564F6FC7BFDD849B"
+    },
+    {
+      "path": "Content/Art/NatureV08/SM_BroadleafSpraysV08.uasset",
+      "bytes": 879085,
+      "sha256": "9F649C014D6861F5136E0446C1C599EF54A6D85BF2B5D53080C95F579334B486"
+    },
+    {
+      "path": "Content/Art/NatureV08/SM_ConiferSpraysV08.uasset",
+      "bytes": 583073,
+      "sha256": "7AA309F864AFBB1A2743BDD898F2C044FC03C710D7AD8DC68B8FCFE7D3B8745B"
+    },
+    {
+      "path": "Content/Art/NatureV08/SM_GrassProxyV08.uasset",
+      "bytes": 109025,
+      "sha256": "67B4E1D84C8EB1346DE42A5797650B95511F56460CAF0209B320312F0205E1FF"
+    },
+    {
+      "path": "Content/Art/NatureV081/SM_MeadowSwardV081A.uasset",
+      "bytes": 1260648,
+      "sha256": "DFFDB5D3F9866D68E9E454C0E38F6723B3EAE62F5691B841A0E1CBD271C2D743"
+    },
+    {
+      "path": "Content/Art/NatureV081/SM_MeadowSwardV081B.uasset",
+      "bytes": 1264153,
+      "sha256": "D308009A589D4FFB9A8EC169543B5D293169FA619288F13CA8C6918A1AED1DF3"
+    },
+    {
+      "path": "Content/Art/NatureV091/M_GrassCardV091.uasset",
+      "bytes": 48731,
+      "sha256": "5F18694AF81263DF3D326B348F43D0813BF827C38224E3DB692016CE986F0304"
+    },
+    {
+      "path": "Content/Art/NatureV091/MI_GrassCardV091.uasset",
+      "bytes": 2796,
+      "sha256": "7BC452FAD48D3945D159C8CDBF491514FE378D55365B18AD534523FA3FE0314C"
+    },
+    {
+      "path": "Content/Art/NatureV091/SM_GrassCardV091A.uasset",
+      "bytes": 13457,
+      "sha256": "512B5251BEBDC66ECA4CEE40311ECC6A1FBB9D5971FA4E7D6BF75B15189832DC"
+    },
+    {
+      "path": "Content/Art/NatureV091/SM_GrassCardV091B.uasset",
+      "bytes": 13469,
+      "sha256": "E027A4FB2D6BF66A494D0189E4633296B4AB260D2F586B3F96581F4165F2E74C"
+    },
+    {
+      "path": "Content/Art/NatureV091/Textures/T_GrassCardAtlasV091.uasset",
+      "bytes": 6610829,
+      "sha256": "C2D6FA6E04EC630D5E8B98CD0C31EF3B91E5B6D2F6E37D68D6AE4CD6797785F3"
+    },
+    {
+      "path": "Content/Art/SM_AmmunitionWorks.uasset",
+      "bytes": 353370,
+      "sha256": "C98E5E99C97445A92509E5996CF15456198458CB0589C91E887198AD68EAFD20"
+    },
+    {
+      "path": "Content/Art/SM_BatteryBank.uasset",
+      "bytes": 879205,
+      "sha256": "1AA193E8C91B13A778E1AA6712371CF666D50902D11AC4024B8D159F4CBB79A7"
+    },
+    {
+      "path": "Content/Art/SM_BiofuelRefinery.uasset",
+      "bytes": 445328,
+      "sha256": "252D84DE76CD91A70F510CF45FA53873F35206782F53DFA90DB6F203B3DCAB79"
+    },
+    {
+      "path": "Content/Art/SM_Bug.uasset",
+      "bytes": 219328,
+      "sha256": "E1C1B004F19AFDA5C9BB864F8691E45F23B3F897146345330378CB50F9E3A61E"
+    },
+    {
+      "path": "Content/Art/SM_ChipWorks.uasset",
+      "bytes": 375689,
+      "sha256": "B36643189E75B6B6D58FCEC81C606AA92B9AD4A3781A5EC3841AEF5D27DADB54"
+    },
+    {
+      "path": "Content/Art/SM_CommandCampus2.uasset",
+      "bytes": 899601,
+      "sha256": "9835ADE1EB5E87BFBE959C0500F2FC8D8DA30A7823120FD49173F62C20260B5B"
+    },
+    {
+      "path": "Content/Art/SM_CommandCampus3.uasset",
+      "bytes": 1311980,
+      "sha256": "BE7A615AF4F6E9C004B462A96FB0CED8BC1574139569486B164D20B2AD95F236"
+    },
+    {
+      "path": "Content/Art/SM_Core.uasset",
+      "bytes": 464257,
+      "sha256": "E828BCE95DBF664A99989D80BAA295BD801779F0B519D4A3CADD53E857F3454A"
+    },
+    {
+      "path": "Content/Art/SM_Depot.uasset",
+      "bytes": 656856,
+      "sha256": "3EB3A9E74AB11D83FD5DF2674F0F7020544DFF694EA1A2A8D2DE6AD9FF47EB94"
+    },
+    {
+      "path": "Content/Art/SM_DepotYard.uasset",
+      "bytes": 276849,
+      "sha256": "AAAD8C267CCF623AB8F964EDDDC4767863070C8380FF1A92C201F826B27A7CC7"
+    },
+    {
+      "path": "Content/Art/SM_ExtractionRig.uasset",
+      "bytes": 508908,
+      "sha256": "A502200CB0BC97139D0F6251A7055A8FA9CE6719036713EAED8454DC24152D70"
+    },
+    {
+      "path": "Content/Art/SM_Extractor.uasset",
+      "bytes": 832988,
+      "sha256": "5F5F4B1FECBD30B9077126A1AB9F77820984C8A787438E71E2ACF8D17D7A0CC7"
+    },
+    {
+      "path": "Content/Art/SM_Factory.uasset",
+      "bytes": 921475,
+      "sha256": "C9E95962F5828918142314BF78E469E68E279B147E08E5F1895DF00355EADAA0"
+    },
+    {
+      "path": "Content/Art/SM_FuelGenerator.uasset",
+      "bytes": 427795,
+      "sha256": "A75898F9239A0B87B052691C6930B9F1232634BBA4B256085C08A5A8CCE7C956"
+    },
+    {
+      "path": "Content/Art/SM_FuelRefinery.uasset",
+      "bytes": 572300,
+      "sha256": "5483ED42E2FCBAF195ED18E3FBFD1001464474CB5DF56F7F8CBFF9539369F7D7"
+    },
+    {
+      "path": "Content/Art/SM_FusionWorks.uasset",
+      "bytes": 267106,
+      "sha256": "8106B1F85D57D7268C1CFE7969C25BBC7CC2692232C34EFC78CADF9F3EAB9ED0"
+    },
+    {
+      "path": "Content/Art/SM_Grass.uasset",
+      "bytes": 84254,
+      "sha256": "726213815F1B8D9122ADE70C40E51EDDAF37FAA05263FE2CB278246B4E4C9E03"
+    },
+    {
+      "path": "Content/Art/SM_Greenhouse.uasset",
+      "bytes": 652868,
+      "sha256": "608AB650975FC46EAECAAE33FF61B6633C7684915A85ECF82CBE4A0FD774B96D"
+    },
+    {
+      "path": "Content/Art/SM_Hangar.uasset",
+      "bytes": 353818,
+      "sha256": "40F5B35FF13AF03A79052F98038C4658CE8BE344106B1DE67AA295E2785410DB"
+    },
+    {
+      "path": "Content/Art/SM_Hangar2.uasset",
+      "bytes": 465853,
+      "sha256": "7087FEE1DD84744C63BD51A97F045CA451194505D7BC5B59449C32B7509FB39E"
+    },
+    {
+      "path": "Content/Art/SM_Hangar3.uasset",
+      "bytes": 457022,
+      "sha256": "59A9476CB5D5E836AFFF7E3A4FEE9BF9273F43DBF0F9E67A51FFCE682A4C3D36"
+    },
+    {
+      "path": "Content/Art/SM_HangarMech.uasset",
+      "bytes": 414154,
+      "sha256": "BE7B5506A7F1EC39AB9F33C926F6DD3F3FAE07F5456ADD9617324AB7C2BA6F15"
+    },
+    {
+      "path": "Content/Art/SM_HangarMech2.uasset",
+      "bytes": 499459,
+      "sha256": "D1AF433D59EB2BB641A199593F7898427FD33BFB920CEFE84B59D1A0B138BD5B"
+    },
+    {
+      "path": "Content/Art/SM_HangarMech3.uasset",
+      "bytes": 596582,
+      "sha256": "6A5BD1796B0EFD5D47374F780C4FD4AAAF6E65D1D614364594E46A2FC7474785"
+    },
+    {
+      "path": "Content/Art/SM_HangarTracked.uasset",
+      "bytes": 374914,
+      "sha256": "4E5CFDD3F6EDB720ED81DA060D7F47ED0AD76A3E51064475807DB1A8CC76ED88"
+    },
+    {
+      "path": "Content/Art/SM_HangarTracked2.uasset",
+      "bytes": 455062,
+      "sha256": "8416E855563F898AD9DA534511C6349E8A4EE804597F5A49AE2F57BE3F3C9B52"
+    },
+    {
+      "path": "Content/Art/SM_HangarTracked3.uasset",
+      "bytes": 560588,
+      "sha256": "63F2A8E7BE5204E0BE017E314F67AF97D2218A57980C83022CFB007DE571D93F"
+    },
+    {
+      "path": "Content/Art/SM_OakA.uasset",
+      "bytes": 1167289,
+      "sha256": "5940A2E57AD6E2C4C83863B0CA0A6C1A9E4EEE1CBC340F05C1861830275CE4F6"
+    },
+    {
+      "path": "Content/Art/SM_OakB.uasset",
+      "bytes": 1167369,
+      "sha256": "4C574DD1B0494F4519D981F2D72D9C80B51AA7FC0CCD5B73C8F2A32B4128FA92"
+    },
+    {
+      "path": "Content/Art/SM_PineA.uasset",
+      "bytes": 1724817,
+      "sha256": "49282F00D0B20A56D5B3B43C30CCD699825DE9F8FD6003DA88282114D658E5D8"
+    },
+    {
+      "path": "Content/Art/SM_PineB.uasset",
+      "bytes": 1723876,
+      "sha256": "551B84C2928C746EF368A1FC590407BFFE382833ABA98C7AF2EC8C044CC20317"
+    },
+    {
+      "path": "Content/Art/SM_Refinery.uasset",
+      "bytes": 462752,
+      "sha256": "C1F74B3DE67C270836145610FA54392A35F51FF4186C2BEDB46AF186D8C0D6E8"
+    },
+    {
+      "path": "Content/Art/SM_Robot.uasset",
+      "bytes": 236685,
+      "sha256": "4952B2D593CBBC80D16C446DB944F18053CD07D89EB518D7A391F52D52FE06FB"
+    },
+    {
+      "path": "Content/Art/SM_RobotService.uasset",
+      "bytes": 554171,
+      "sha256": "3E371E30435760EFB4D05C119FBE14AB7C8F7FA2E247E25EEC2E395CB5F88C0F"
+    },
+    {
+      "path": "Content/Art/SM_RockA.uasset",
+      "bytes": 91838,
+      "sha256": "9347C2925BC32C06CF817F0FA55BC705389BD0DCCB11FE1A5A0B5BC6118FD7DB"
+    },
+    {
+      "path": "Content/Art/SM_RockB.uasset",
+      "bytes": 91879,
+      "sha256": "E0DBD98B60B22155AFB0E15B1F27AE26B10AC5D6B9AF9E66503A482962BF6FA0"
+    },
+    {
+      "path": "Content/Art/SM_Sensor.uasset",
+      "bytes": 653833,
+      "sha256": "5916A0E43DE5E877E71E9E7BFE6866B0193B9926BFC4AFF0DBB011D6B2ECB23B"
+    },
+    {
+      "path": "Content/Art/SM_SensorMast.uasset",
+      "bytes": 442212,
+      "sha256": "FF9DC1AC1B1E60DEE657E398864F2BE05F2C26F1A889F19E582B8C607A4F8C8A"
+    },
+    {
+      "path": "Content/Art/SM_ServiceBay.uasset",
+      "bytes": 532983,
+      "sha256": "47DF25250D90B18E29C46B6DEF656DD555AF9070C904F6C9805231EF7F46C723"
+    },
+    {
+      "path": "Content/Art/SM_Shrub.uasset",
+      "bytes": 175417,
+      "sha256": "B013D828F1BA9DCFE179BB24F0A9846126FAA4B561B3D29FC182209CB01863EB"
+    },
+    {
+      "path": "Content/Art/SM_Shuttle.uasset",
+      "bytes": 401988,
+      "sha256": "B6972439266EDC52195ABA5EC5F97B41A60FF0149CB986AAF53814681E244C91"
+    },
+    {
+      "path": "Content/Art/SM_SolarArray.uasset",
+      "bytes": 281140,
+      "sha256": "8D017F9BB4B6BDC6CC6631141F9AE9A4F69B0F36D8B7436FBB28B6F32AB53BF5"
+    },
+    {
+      "path": "Content/Art/SM_SolarArray2.uasset",
+      "bytes": 287896,
+      "sha256": "473A70C0007C5B1A877BAE83619FAC0895325E1F6775489EE3F4EC454A9148A7"
+    },
+    {
+      "path": "Content/Art/SM_SolarArray3.uasset",
+      "bytes": 273075,
+      "sha256": "6AFE28159C247651980C1AC7C54654C935B6E4734FD1168E65FC834B7B0A4F43"
+    },
+    {
+      "path": "Content/Art/SM_TowerKinetic.uasset",
+      "bytes": 60286,
+      "sha256": "9DAE915D6CE48D72EFAEA8EA5BE9B191AD8EB47D963EA5F40511BA44ED5BC0CB"
+    },
+    {
+      "path": "Content/Art/SM_TowerKinetic2.uasset",
+      "bytes": 166407,
+      "sha256": "A9205400A19A0356840855AB223EC870EDF13A4E6D76F3D67596BD47FD095294"
+    },
+    {
+      "path": "Content/Art/SM_TowerKinetic3.uasset",
+      "bytes": 175514,
+      "sha256": "90B4379CA6026496A56ED74620F3D063739069FE8C785E81C4B857A85981938B"
+    },
+    {
+      "path": "Content/Art/SM_TowerLaser.uasset",
+      "bytes": 159261,
+      "sha256": "BF633F82BBE971F742C4DE631BFF1FA3D1DF698B736001BB5A76749FF7951BB6"
+    },
+    {
+      "path": "Content/Art/SM_TowerLaser2.uasset",
+      "bytes": 255062,
+      "sha256": "3F784D3D93D0427E9F05C94AF393E34808BC8265672627F6FDEEF5211D7E61F9"
+    },
+    {
+      "path": "Content/Art/SM_TowerLaser3.uasset",
+      "bytes": 284505,
+      "sha256": "A1335B4611683A7BBF57CDDF4344E87EB53AFFD465115FA46FEECC595BCB0AB6"
+    },
+    {
+      "path": "Content/Art/SM_TowerMissile.uasset",
+      "bytes": 81195,
+      "sha256": "2A2D327EE97781555E3CFBE8149BB9594242E513286EC711E93425A07C122528"
+    },
+    {
+      "path": "Content/Art/SM_TowerMissile2.uasset",
+      "bytes": 143285,
+      "sha256": "DEA99BA8E62AA7CA8071C6F53CB45FFDA2F76CAAA6B5A379F7817DFF585136E9"
+    },
+    {
+      "path": "Content/Art/SM_TowerMissile3.uasset",
+      "bytes": 195295,
+      "sha256": "6C9391B75895A1B4A0ECEDA5A891A62BC3A7DF384DB5515294D8B28597FFEC71"
+    },
+    {
+      "path": "Content/Art/SM_TowerPlasma.uasset",
+      "bytes": 202683,
+      "sha256": "5B3C0DDCC7EE5A52C7D0F2430BA379F0DCE31BFB4474FBE2485A362A4F963D45"
+    },
+    {
+      "path": "Content/Art/SM_TowerPlasma2.uasset",
+      "bytes": 298973,
+      "sha256": "088E54ABD221C2A8A972BD050BAD129F3E5E0F0D634EF86E334AC7C7785D7B5B"
+    },
+    {
+      "path": "Content/Art/SM_TowerPlasma3.uasset",
+      "bytes": 334330,
+      "sha256": "8AECEC7D394014371EC375EC4E53DBAC84AB69E259F3C818B40961409BC3337D"
+    },
+    {
+      "path": "Content/Art/SM_TradingPort.uasset",
+      "bytes": 314819,
+      "sha256": "BCD8D27C50153058C57BC293B8608997543313E2DFAF05F0165CCEEBCA4905CB"
+    },
+    {
+      "path": "Content/Art/SM_TradingPort2.uasset",
+      "bytes": 323608,
+      "sha256": "D9F02800C8F20C73333075EEBAD33D29557B382CE36DAA769A32EB76BB976D14"
+    },
+    {
+      "path": "Content/Art/SM_TradingPort3.uasset",
+      "bytes": 286271,
+      "sha256": "2F49754EF678E89BD1C1C1B5FAE3ED91FB9E2B57AF5F9C323E4E3D0A10A620F1"
+    },
+    {
+      "path": "Content/Art/SM_Turret.uasset",
+      "bytes": 267880,
+      "sha256": "50398A54EEACCAA04F1271241515D29A97B1CE2C0BBEF0424F3DA3EAFCC55158"
+    },
+    {
+      "path": "Content/Art/SM_Wall.uasset",
+      "bytes": 40089,
+      "sha256": "32BF26A968A2F93EBCD1100B31FA1DD2CCEC4AE86EDBC62E40DFCB661DFE56BF"
+    },
+    {
+      "path": "Content/Art/SM_Wall2.uasset",
+      "bytes": 76645,
+      "sha256": "F4BF4FA849EB6DB09DFADEDF3FD384582266E098357253F95CF7ABBA1B452A29"
+    },
+    {
+      "path": "Content/Art/SM_Wall3.uasset",
+      "bytes": 106069,
+      "sha256": "FD68C5342430E1EA795010D29874721343EF398BEE38BDA331701B8277BB3DC8"
+    },
+    {
+      "path": "Content/Art/SM_WorkerFactory.uasset",
+      "bytes": 495262,
+      "sha256": "AE1B20CA6F87BE66ABA8B95FAADC80C381DD46A23839D9C7DC5047D9D519D50B"
+    },
+    {
+      "path": "Content/Art/SM_WorksBattery.uasset",
+      "bytes": 330203,
+      "sha256": "2BA8802282B5A824172F45C54E17209A67E1E669FC989C079DB3C61864386565"
+    },
+    {
+      "path": "Content/Art/SM_WorksCircuit.uasset",
+      "bytes": 490827,
+      "sha256": "8459284EC1CA85E6AE5B5D9F3D7EFEBAE66DA1D948DA49CD1E18B6CC39CC52FE"
+    },
+    {
+      "path": "Content/Art/SM_WorksConductor.uasset",
+      "bytes": 517582,
+      "sha256": "4FAFAF791BA2BF2C44D4C8803CAD86FE2EF0C275253CE839DD1FE4CD0E9DAE66"
+    },
+    {
+      "path": "Content/Art/SM_WorksGlass.uasset",
+      "bytes": 541938,
+      "sha256": "04470E16A637C7BC1A97F28485635F44F685150026252226F2A68F675FF9A353"
+    },
+    {
+      "path": "Content/Art/SM_WorksParts.uasset",
+      "bytes": 378024,
+      "sha256": "F319C87C30F5E153D524FEA33980F2E49DE6A243F4D92136D590447FEACF39BB"
+    },
+    {
+      "path": "Content/Art/Textures/T_Bark_Color.uasset",
+      "bytes": 2367132,
+      "sha256": "52FA2061517F5C6C6691364CE661E7496CC60AB1CFC4D0F9F5BA2920ABD688DF"
+    },
+    {
+      "path": "Content/Art/Textures/T_Bark_Normal.uasset",
+      "bytes": 3768691,
+      "sha256": "989AC33C307CEC55857F4AB24938F37E03483F8D645095D1450334623CD3995E"
+    },
+    {
+      "path": "Content/Art/Textures/T_Bark_Roughness.uasset",
+      "bytes": 1247276,
+      "sha256": "DA2F241C6BFECD6DAC042D75662D499441A9E3C33FB2D5256FD6E4A2762CAFEE"
+    },
+    {
+      "path": "Content/Art/Textures/T_Dirt_Color.uasset",
+      "bytes": 3530294,
+      "sha256": "2927FC10BC3FD5DFEFB5901CB93FFE33F501BDE9FF14F3F10C27BDA646B81757"
+    },
+    {
+      "path": "Content/Art/Textures/T_Dirt_Normal.uasset",
+      "bytes": 5208069,
+      "sha256": "B525BC096B97ED24F88ECBA86B7DC20F2F0EE04621D55DBE77BB5535936E8C2F"
+    },
+    {
+      "path": "Content/Art/Textures/T_Dirt_Roughness.uasset",
+      "bytes": 1565120,
+      "sha256": "8FC394274FBD1CD6DE977E8E9F540ECCD99B621F337B914EABD4A90930675B0B"
+    },
+    {
+      "path": "Content/Art/Textures/T_Grass_Color.uasset",
+      "bytes": 3797864,
+      "sha256": "AF7860347558938DF3039AF365C04930C32F028A10321F92A0821B96A3C289E1"
+    },
+    {
+      "path": "Content/Art/Textures/T_Grass_Normal.uasset",
+      "bytes": 5987033,
+      "sha256": "551BD36E8E5BEEEE722CA20CC870994467B753217F5DC26AB50352C0369F9E2F"
+    },
+    {
+      "path": "Content/Art/Textures/T_Grass_Roughness.uasset",
+      "bytes": 1535616,
+      "sha256": "9DC522AAEB955D90DB47EFF8EB1A1C3B764BD58C4260695C7C90A8D7B6C90A76"
+    },
+    {
+      "path": "Content/Art/Textures/T_Meadow_AO.uasset",
+      "bytes": 4186018,
+      "sha256": "C503BD1144D0589761F2D10D116C2F962FA84A4834C17891A5BC0F4AE6640A17"
+    },
+    {
+      "path": "Content/Art/Textures/T_Meadow_Color.uasset",
+      "bytes": 4776778,
+      "sha256": "3C9546B1AD9A0544E192FD1FB3AAA8FBF537F5A694E305692CCD9CAE5E94AB82"
+    },
+    {
+      "path": "Content/Art/Textures/T_Meadow_Normal.uasset",
+      "bytes": 6060426,
+      "sha256": "C28FAC310F331B9D67507ACF4892378854540253FFD33FCDF4763C1547A10CE3"
+    },
+    {
+      "path": "Content/Art/Textures/T_Meadow_Roughness.uasset",
+      "bytes": 2285314,
+      "sha256": "9DB235A6504D60A822354FC4CD9271F29A0D9EB25CA70E9C052AA72C4AA4695F"
+    },
+    {
+      "path": "Content/Art/Textures/T_Rock_Color.uasset",
+      "bytes": 3448249,
+      "sha256": "F0CDB0161039C58B7B9C6B2157928A7DAE07B3D2CF4D60A4215B454B92BB06D5"
+    },
+    {
+      "path": "Content/Art/Textures/T_Rock_Normal.uasset",
+      "bytes": 3319514,
+      "sha256": "C0552916808849F9250CA8ADB5D5B0116B4419E322DE5028D258DBB4758A554D"
+    },
+    {
+      "path": "Content/Art/Textures/T_Rock_Roughness.uasset",
+      "bytes": 2717434,
+      "sha256": "3E4B9EED57089343036CF7B78775439C902334C62B05D3FE429C81363D190EAC"
+    },
+    {
+      "path": "Content/Art/WeatherV09/M_Snowflake.uasset",
+      "bytes": 5014,
+      "sha256": "2E6F029BAF81915DAA2A4EA9856A777DD048831DCE9FFE98809236F579957A70"
+    },
+    {
+      "path": "Content/Art/WeatherV09/MPC_Weather.uasset",
+      "bytes": 3019,
+      "sha256": "AC3705B9F671A142F423724B655714793AE01E12247BBD24A840160DD6C2E3FC"
+    },
+    {
+      "path": "Content/Art/WeatherV09/T_AmbientDaylight.uasset",
+      "bytes": 718032,
+      "sha256": "80E1C021966FB016EEC014691A1D30727BA33D20B3513F29330B384C30F99611"
+    },
+    {
+      "path": "Content/Maps/Colony.umap",
+      "bytes": 6337,
+      "sha256": "C683AC6D37A2908DE8B8F7760CAA191D2775248408269146AA48049622388A1F"
+    },
+    {
+      "path": "Graphics/audio.json",
+      "bytes": 3723,
+      "sha256": "95739A13A141B3841BCA1839CEA8E58EDDA24E9AF562A1AFB9097059496706B4"
+    },
+    {
+      "path": "Graphics/building_visuals.json",
+      "bytes": 2970,
+      "sha256": "ADE978559ADD5EC57CB021C8D53627199D4D28738776A373E3B090BC043FB269"
+    },
+    {
+      "path": "Graphics/scene.json",
+      "bytes": 4898,
+      "sha256": "6622400966D948F142444AD8DCD2B4810317D244B9AA0ED393767BD2781AEEE7"
+    },
+    {
+      "path": "Graphics/weather.json",
+      "bytes": 1050,
+      "sha256": "A9CC0D184E580AFB52979A6074DE7B1F036038B4B36C26B8ECE8933E8DE11ECE"
+    },
+    {
+      "path": "Interface/ui.json",
+      "bytes": 9381,
+      "sha256": "A18198E04BB313625B172174603D5F8BA2CDEC294BF614150F6A5B0935BA9FB5"
+    },
+    {
+      "path": "Rules/buildings.json",
+      "bytes": 94540,
+      "sha256": "902CF3524B9F3DEC84A703774EB8006983C4074D87247181195463FF45396488"
+    },
+    {
+      "path": "Rules/calendar.json",
+      "bytes": 316,
+      "sha256": "69BDF2DFCED7D046595F61F3F434A209B560FBE64F93837B96FCBA037D929702"
+    },
+    {
+      "path": "Rules/chassis.json",
+      "bytes": 11193,
+      "sha256": "B4CFAF90B2A6E70C06B40E6408BF9F204AA253C42713CA645A7BCF62FD0872BB"
+    },
+    {
+      "path": "Rules/combat.json",
+      "bytes": 6164,
+      "sha256": "30DAAA838CCED03460F898601A17EE609EDE734BF8797727A00C194901DEC037"
+    },
+    {
+      "path": "Rules/companions.json",
+      "bytes": 1107,
+      "sha256": "D3BD32ED24A36CA94BE9D44550F2FFC73543C84E895C991ED2933E37276980FB"
+    },
+    {
+      "path": "Rules/energy.json",
+      "bytes": 22023,
+      "sha256": "E4CC59A7EFE27F6A62C01272DF257726877CA741D6C46AF74345E9290203824A"
+    },
+    {
+      "path": "Rules/environment.json",
+      "bytes": 1238,
+      "sha256": "D14BF6D8F2257E0C9F07B930DBB5E8B8BF8D9B811E972618D60DD579BACD8C35"
+    },
+    {
+      "path": "Rules/mobility.json",
+      "bytes": 1670,
+      "sha256": "D281A2BABD72148F2812030EBE142AA270DE0579EB8E9A1A97EECA3765B8B1AA"
+    },
+    {
+      "path": "Rules/policies.json",
+      "bytes": 3666,
+      "sha256": "7DE4347D8770715F4D8AFBA2F1AEAFC8A50496F8EBC54269942B3560284BC69C"
+    },
+    {
+      "path": "Rules/recipes.json",
+      "bytes": 4213,
+      "sha256": "AD4DBDF916FF1F2AF0F88E7772B281AB918789F1F47DC1D7546A41EAC5BA2FC3"
+    },
+    {
+      "path": "Rules/resources.json",
+      "bytes": 7724,
+      "sha256": "54C9C55EEC9D7BC3854405D8FB5AFB9E58400AB465FFC330C44A41299258A664"
+    },
+    {
+      "path": "Rules/scenario.json",
+      "bytes": 1509,
+      "sha256": "FFAC67DFE459F6F355945C80705CE563B2CC9F1799624958FF0D36F0ED7F14D8"
+    },
+    {
+      "path": "Rules/trade.json",
+      "bytes": 2875,
+      "sha256": "9055BC8AFC3CE8E4C7A2F1EFF3CE9DE523A1FC3A0551837CC38D0AA7B10D4311"
+    },
+    {
+      "path": "Rules/transport_vehicles.json",
+      "bytes": 893,
+      "sha256": "F07E299C7A96F3A502CF3EC760674FF9F292DC8FEB4EFFE24B8C86EAE26E83B5"
+    },
+    {
+      "path": "Rules/transport.json",
+      "bytes": 2245,
+      "sha256": "E33C9D5C5BDF81BA202D02881528D927F492D3E65BE573B9C0908BECF6AB4B61"
+    },
+    {
+      "path": "Rules/walls.json",
+      "bytes": 445,
+      "sha256": "210E2D447E8963025515E16172623D84B113B7F112D1B6B59FEA426E6DEE3535"
+    },
+    {
+      "path": "Rules/weapons.json",
+      "bytes": 9703,
+      "sha256": "631E3E4F3D00BB254E0DD01BB25E38567995000B5DF865E5704707A0B096E6EC"
+    },
+    {
+      "path": "Rules/workers.json",
+      "bytes": 1501,
+      "sha256": "10265A9278B408D5FE50E5923B70B7C8553DB56E6BCB6D04FDACC490EDC0664D"
+    },
+    {
+      "path": "seige2222.uproject",
+      "bytes": 1048,
+      "sha256": "43FC569F49B9E27F4F244F0297BFEC3119935D683754071FC7E7D90E9AA04F90"
+    },
+    {
+      "path": "Source/Seige.Target.cs",
+      "bytes": 360,
+      "sha256": "184646E22A915ECBC4DA8EE89D0F5204DDC4F3C7560C9FEEE7E6C2A7DCCAFD1F"
+    },
+    {
+      "path": "Source/Seige/AI/SeigeEstablishedScenario.cpp",
+      "bytes": 12910,
+      "sha256": "F325A144C6F88731A610980E68ADFB0970B79E5AC54B4B0BD4C2D77DBF13A831"
+    },
+    {
+      "path": "Source/Seige/AI/SeigeScenarioAI.cpp",
+      "bytes": 79168,
+      "sha256": "AA69ED0990C0922D4508CC49C0A959B901C66F2CE0F8E3CCD493A447C5CE1EBB"
+    },
+    {
+      "path": "Source/Seige/AI/SeigeScenarioAI.h",
+      "bytes": 7452,
+      "sha256": "5D0A0F9EABE398636F046DCDA100BAF70A146E3B92569B69C0250767819AEEDE"
+    },
+    {
+      "path": "Source/Seige/Seige.Build.cs",
+      "bytes": 1455,
+      "sha256": "1E4EEEE42DCF916F749535D40C8E0E5282725186E3DAC0282E2177AA7CCEFEA4"
+    },
+    {
+      "path": "Source/Seige/Seige.cpp",
+      "bytes": 106,
+      "sha256": "B5225666D2771FA6F117D9A0032073D28C4994592D934BB98D789F12B7613B72"
+    },
+    {
+      "path": "Source/Seige/SeigeActionFeedback.h",
+      "bytes": 811,
+      "sha256": "26DF8862764F75CB0A5780AAD26277899C5218D030BE577AAAD49CCB63D43A6B"
+    },
+    {
+      "path": "Source/Seige/SeigeAudioPolicy.h",
+      "bytes": 2670,
+      "sha256": "4AD9B9895719ADB82B7BA5286BFC57783AFBE1811B923CF3AAF33D30FE086E31"
+    },
+    {
+      "path": "Source/Seige/SeigeAudioSubsystem.cpp",
+      "bytes": 13182,
+      "sha256": "8B0EA3648C1CE6832C779E6E9398A881E1E978F4CD26A9C31EB3D92B93E46542"
+    },
+    {
+      "path": "Source/Seige/SeigeAudioSubsystem.h",
+      "bytes": 2193,
+      "sha256": "B16768596CF484F20A230A7F5754495B74731F09BBA82854951DF42BBA71B5F0"
+    },
+    {
+      "path": "Source/Seige/SeigeCamera.cpp",
+      "bytes": 23248,
+      "sha256": "985D6AFA611F6D16E9EA2E520264A510221545F1A9F385979EA5208466962989"
+    },
+    {
+      "path": "Source/Seige/SeigeCombatUI.cpp",
+      "bytes": 18087,
+      "sha256": "31EDC052C393129EC6FE81FED856B7B6FEFA8F7EA3C1463E9303172BF97791E1"
+    },
+    {
+      "path": "Source/Seige/SeigeCombatVisuals.cpp",
+      "bytes": 17411,
+      "sha256": "3A01BB5BF7D5233F689F2D7EEA2682F1CDD6CAAB595E96233D7A2DA470D40E9A"
+    },
+    {
+      "path": "Source/Seige/SeigeCommandUI.cpp",
+      "bytes": 10986,
+      "sha256": "E321B87736BED6C25C3B265B792B85887AF7FEF639CE717A9BCBE3FEA0C20052"
+    },
+    {
+      "path": "Source/Seige/SeigeCompanionVisuals.cpp",
+      "bytes": 8174,
+      "sha256": "34FA97E58E8B247D504F4E77BE4A14FC75ACD37337A3EE22B8CE226A61B8C7BE"
+    },
+    {
+      "path": "Source/Seige/SeigeConstructionVisuals.cpp",
+      "bytes": 16158,
+      "sha256": "122F96F3EC58ADC0F1C5F5B6369830C99809CA7716ED4CA2E3965119EAC70457"
+    },
+    {
+      "path": "Source/Seige/SeigeController.cpp",
+      "bytes": 9702,
+      "sha256": "3263D87530417A90752F81E5CD17B17FC21350C4E9E3DFB7A92001098FC8B58D"
+    },
+    {
+      "path": "Source/Seige/SeigeDamageVisuals.cpp",
+      "bytes": 7254,
+      "sha256": "8C9623ECCCC359E85BCE1F25CC000ADCC082151C8708694461B5DFDA92BBD586"
+    },
+    {
+      "path": "Source/Seige/SeigeDisplaySmoke.cpp",
+      "bytes": 4690,
+      "sha256": "1AE8BBA53A8E7208E3150C11AEDC371DF7F778EFF8ED426C2FE21C5BE502069E"
+    },
+    {
+      "path": "Source/Seige/SeigeEnvironmentWater.cpp",
+      "bytes": 4182,
+      "sha256": "B80AB3BE3CFBF6468627634C9C2AC8BC3F2257D4CD02BE358474A0B33C7A36B7"
+    },
+    {
+      "path": "Source/Seige/SeigeGameMode.cpp",
+      "bytes": 27705,
+      "sha256": "861497DA76E7FF8F5D68ADAEC095BD0B3C0574BD66C4DC1DCFD7296833EE8599"
+    },
+    {
+      "path": "Source/Seige/SeigeGameMode.h",
+      "bytes": 26891,
+      "sha256": "5655CED2F7E716EF9C1FF94D1C6A896D327F4A4EFC9A7F3E2EC372F8DB891B8C"
+    },
+    {
+      "path": "Source/Seige/SeigeGraphicsBenchmark.cpp",
+      "bytes": 53699,
+      "sha256": "D0E03BCD0809C550B470EF9F5250D6FEAA42A090CA55591B2C22CAF05B0C52A8"
+    },
+    {
+      "path": "Source/Seige/SeigeHardpointLayout.cpp",
+      "bytes": 1720,
+      "sha256": "AB7A6872681F5BE0B59B183A75A41056CCE5FC86C5D5C0ACBE35137706262656"
+    },
+    {
+      "path": "Source/Seige/SeigeHardpointLayout.h",
+      "bytes": 367,
+      "sha256": "FAC22C78BF09A886D098196E3A61751476C4FCA95FE595AA98BE4E83C486C8B4"
+    },
+    {
+      "path": "Source/Seige/SeigeHUD.cpp",
+      "bytes": 120571,
+      "sha256": "21CCED41D049275EE593A190D720E1206A4C6D8F4307313755082E04D85D1B32"
+    },
+    {
+      "path": "Source/Seige/SeigeNextUpdateSmoke.cpp",
+      "bytes": 22195,
+      "sha256": "D0F54F6040F6CFDE4DA768A92735D2385FF5051D159FE05C1D4B4A48B4263A55"
+    },
+    {
+      "path": "Source/Seige/SeigePersistence.cpp",
+      "bytes": 12618,
+      "sha256": "383D5B9A6E6C189BD27832A85FB51E4A958FAD53EA81536299F9ADD186F70683"
+    },
+    {
+      "path": "Source/Seige/SeigePresentationSmoke.cpp",
+      "bytes": 50421,
+      "sha256": "0896974A1A7D20EA1304CA9AC5B2078438DA053730DD7537648EE2BD3A3B624E"
+    },
+    {
+      "path": "Source/Seige/SeigeRegionResources.cpp",
+      "bytes": 2521,
+      "sha256": "F9318D82229F22C0DC14E56382EF886A3E8002BF703254CF8F839551E88CE87D"
+    },
+    {
+      "path": "Source/Seige/SeigeRegions.cpp",
+      "bytes": 4811,
+      "sha256": "BBF451AA1C86D6C0977B6A0A97AFA083EF1080D593404592178ACF0391681F7C"
+    },
+    {
+      "path": "Source/Seige/SeigeScenario.cpp",
+      "bytes": 20550,
+      "sha256": "10C94A6BD4AB7D271BBC70802B294D6601F3FF8845F9D67ABE853D5A27521169"
+    },
+    {
+      "path": "Source/Seige/SeigeSceneryContact.h",
+      "bytes": 1162,
+      "sha256": "B07007EF1B116D2B5AAED10F08FFD702EFFC2A2A10A192D3B379DCA5D0CAA4C9"
+    },
+    {
+      "path": "Source/Seige/SeigeSceneryPlacement.h",
+      "bytes": 967,
+      "sha256": "20485A3DB40FAC566A4F823F8A2735402AC8C42B5E4532893B91721B9D2C3D95"
+    },
+    {
+      "path": "Source/Seige/SeigeSceneryStreaming.h",
+      "bytes": 1160,
+      "sha256": "5E0130D3D85098DC9B239995E903748D9E80BCB8DF15CA0D3F9C55943A40BA85"
+    },
+    {
+      "path": "Source/Seige/SeigeTerrain.cpp",
+      "bytes": 130164,
+      "sha256": "4D34384B7612D9BF919227760F715CAA4F5B48FDA9E3BCB9A17DBC405CD9907F"
+    },
+    {
+      "path": "Source/Seige/SeigeTradeUI.cpp",
+      "bytes": 8762,
+      "sha256": "585A0FB87C230B39BC61C075DAE5357B466DDE334F729CC2D766B00DFF4AB73C"
+    },
+    {
+      "path": "Source/Seige/SeigeTransportVisuals.cpp",
+      "bytes": 13388,
+      "sha256": "2FDF4272DC3E5027950392439A78C440FB449D548178D45DC28BD7F62AA91EBF"
+    },
+    {
+      "path": "Source/Seige/SeigeUnitInspection.cpp",
+      "bytes": 20397,
+      "sha256": "558885FE019C9608D7CFC9B43CB19CB83EF887D5862A4BD8F3E97DC1A081F287"
+    },
+    {
+      "path": "Source/Seige/SeigeUnitInspection.h",
+      "bytes": 1717,
+      "sha256": "D0F946991F1664EED2A621700995942B4B2FAA63D3436B30A15F3174506C0D16"
+    },
+    {
+      "path": "Source/Seige/SeigeWallVisuals.cpp",
+      "bytes": 9478,
+      "sha256": "58943D8541C9F5B6C1DA76BF4D2F4EB2073110AA3B1BAA9207EEA43C238DB3D1"
+    },
+    {
+      "path": "Source/Seige/SeigeWeather.cpp",
+      "bytes": 13424,
+      "sha256": "9A87471FBB8CBB8D31E9D630FA2AA04361FEFA50AD29BAB39DFC2B33FCE46027"
+    },
+    {
+      "path": "Source/Seige/SeigeWindPresentation.h",
+      "bytes": 815,
+      "sha256": "712F5A0E895C851EB8CFE68FA2F9B1F7D11DBA970393E829B76FF4B44E6AE56A"
+    },
+    {
+      "path": "Source/Seige/SeigeWorkerVisuals.cpp",
+      "bytes": 9941,
+      "sha256": "3F4DF365D6860220846F9B9F153FC33ECCF36CD944D258BCDA0AA376C2C8D75D"
+    },
+    {
+      "path": "Source/Seige/SeigeWorldReview.cpp",
+      "bytes": 9561,
+      "sha256": "B3C9E99D26D73BEB52D87F6EC00EB588D3B8C7783F15725E2CCAE81946097F0C"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeAdaptiveLogisticsTests.cpp",
+      "bytes": 10356,
+      "sha256": "6B606D867148837460D410EF5AA452F3D9EBA03A8483F82B8322928B9036BA64"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeAutomaticReserveTests.cpp",
+      "bytes": 9343,
+      "sha256": "C041C3399F9FCAA2554179DF5E804BD429B49DA19A2BF7D992E40EFB1521A59A"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeBuildingInfo.cpp",
+      "bytes": 15934,
+      "sha256": "D401C96A411FFB1B244E497F923F1D670F4F0C31C7145A97806C51D93876A748"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCalendarRules.cpp",
+      "bytes": 2121,
+      "sha256": "37F7D3068CF8E50FCD80B603C480109A31E4AD9F467681015ADF4F02DD36D1F5"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCalendarRules.h",
+      "bytes": 204,
+      "sha256": "2B29E9B14085FF2A2F745AE2750BC7438083CD911A1375F531C3D256731081FD"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCanonicalJson.h",
+      "bytes": 653,
+      "sha256": "49BF0450A2E8D0CB0E51ABD4EE729DACCCE50BD7D0B5D6BA658117C307DAC415"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombat.cpp",
+      "bytes": 31454,
+      "sha256": "095361DAEDC41EFD57935706FE00796A21A09E658B2FD9BEA87CD254A7986884"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombat.h",
+      "bytes": 9960,
+      "sha256": "E33CF56041BDEA9AB05D591A8EB26BB967F8BE1316030B4642F357454771557C"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatActions.cpp",
+      "bytes": 17240,
+      "sha256": "397601D06EFDD7BAB6D8B75224F8376EAF284CDE7ACCF2C20D590F79F2535F55"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatJson.h",
+      "bytes": 2398,
+      "sha256": "82E2183909D43703601B9EB54351DE4764513670AF5392E3188ED2F5E95F86F1"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatRules.cpp",
+      "bytes": 12809,
+      "sha256": "0459843D9A91509972600E50D8E946417D5CE26810537C2575A9EDE7F0924B1E"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatState.cpp",
+      "bytes": 15283,
+      "sha256": "BADF538F892B945964629F2C88CBE587DF8DC97795E7DA26EDC0FB84E9011AF5"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCombatWorld.cpp",
+      "bytes": 25203,
+      "sha256": "4CD9DE8C22EF4A2DD31CF7B0C60D5E9DF3521BE1D1D3393DCBD036483844566A"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCompanions.cpp",
+      "bytes": 19669,
+      "sha256": "81BBF9E4345E0229115B87EEAD4F1E8BB2F14185322360289057027D387A74DB"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCompanions.h",
+      "bytes": 2655,
+      "sha256": "A293517604C02D279687233CDFC03001A32DD3D0DE8D41C97185CF656D28EE16"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeCompanionTests.cpp",
+      "bytes": 13417,
+      "sha256": "9CD2D6A0350AB3463657B72C14C50ABE44B39A011749485C619222A656131E0C"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeDependencyGraph.cpp",
+      "bytes": 8751,
+      "sha256": "17696B3DDDA1DB384F73650D23E562D22B87E2B9E869876751CC8F672B6794B1"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeDependencyGraph.h",
+      "bytes": 1929,
+      "sha256": "A9A2B8A0AD880BC82DBB1C59776C34D9BC5CCD77C61FA835E92EAB21D60A588D"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeDependencyGraphTests.cpp",
+      "bytes": 2087,
+      "sha256": "DCEE327B395A81906EC92DE4332D9B3FC27479D9ABD9C05629C19B31C263E26F"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEconomyTests.cpp",
+      "bytes": 20268,
+      "sha256": "4FB4B8AF66C0C30E2F824D798C0388F8F58E439656A425E4527342EA02526C99"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnergy.cpp",
+      "bytes": 12253,
+      "sha256": "B682A259D3CAA576975D1FB79F8C283B9A4CA0296C586C729DABFDF84C18FB7D"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnergy.h",
+      "bytes": 2794,
+      "sha256": "F85D45AE23A4386EB85FFC55EFFA76AE244BF3C18F1246142825225C747469CC"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnvironment.cpp",
+      "bytes": 8581,
+      "sha256": "1C5A4C290D8C47EFF6606529D50C59BEAA4EE3226245D1328072739C7F4A9C6E"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEnvironment.h",
+      "bytes": 1250,
+      "sha256": "178261791E89AFD7FE6F987157B6995385CDE18EB1466750D56DE4141BD2C28F"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeEstablishedWorkerTests.cpp",
+      "bytes": 8530,
+      "sha256": "03B85A7050E2D94B4A0C5131673AC6F68EBD0E6E73931BC9F9ABFD32D1D084C2"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeExtractionTests.cpp",
+      "bytes": 14613,
+      "sha256": "F58F246E5187CC6A76ED19517769902EE9F61B6FA3190B53E10F1FD5ACC2915F"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeLogisticsTests.cpp",
+      "bytes": 21526,
+      "sha256": "E106B2C34D75CB775CFC6C15755FACF8AEFAA8F35FAA4762D45B1AE3E1AF6915"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeMobility.cpp",
+      "bytes": 7023,
+      "sha256": "C8891DFDB73A0C4D23A69CDCD210F3EEC627D7848B3E0CE63EE602AA7958F482"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeMobility.h",
+      "bytes": 1535,
+      "sha256": "4EA3681A07BF68F1E2387713BE5713377F1731E9685CD99BAB46B50FF86C7FF1"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRenderInterpolation.h",
+      "bytes": 3804,
+      "sha256": "AB3CC603CCAA541110F1EF8592749B036CCBCA79EE07A36730A4E11C6DA467CC"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRenderInterpolationTests.cpp",
+      "bytes": 5846,
+      "sha256": "548E6FB8C0203E4E7A0DEC269A20E6036A9B50A4719CB8FD6DEB992E3A835EF1"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeResourceGeneration.cpp",
+      "bytes": 3170,
+      "sha256": "1FFC245EB679B57B9D45A604364FFBDEBC233D712FE3203EED2AE98C5C749AF1"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeResourceGeneration.h",
+      "bytes": 871,
+      "sha256": "2908121F45DD2FDBB18B9E79482D4DFDB324D048CF9CC5B43AC0517907CDC647"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeResourceGenerationTests.cpp",
+      "bytes": 3375,
+      "sha256": "EAFB71C17CEE89B7691A3D1C26101B8578EBCB5D0C0B4B8689A430BE2F592812"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRoadMovementTests.cpp",
+      "bytes": 27820,
+      "sha256": "CF32DBEB8E0F8213318AED4E426F52540167390642A91CC8E971DA9C2C1D077B"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeRoadRepairTests.cpp",
+      "bytes": 5292,
+      "sha256": "93F68BE30751109614F3CF087AA5F718A4FAC22E4974F825B54996407DA15956"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeSimulation.cpp",
+      "bytes": 124561,
+      "sha256": "54B65CACE1B10E3DD4A18230F7840EAF821F383E90FEFE7EE3F549E4C9C3A01E"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeSimulation.h",
+      "bytes": 19912,
+      "sha256": "7656D8F6005CCA6A6371492A408513A079F32D6DC2A5A98018AA27B1DA9A192E"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeSimulationTests.cpp",
+      "bytes": 39996,
+      "sha256": "25D47ED07EA0183943EB6AAC4769870D3B27C47A9CF79F01A6FE1367E6B3D5C4"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeThreatTests.cpp",
+      "bytes": 9419,
+      "sha256": "814491AA702B10C78675DD62341946ABE6BA0B1A7D23FEB58DD496482832E3B2"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTrade.cpp",
+      "bytes": 7583,
+      "sha256": "B01B14AD75679070D51F27B978DBE5033C3A4B48F1198A12DCC0E47EBD59F408"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTrade.h",
+      "bytes": 1469,
+      "sha256": "1516959981A0980AD68C503E932D123390F429A7D6CD4049D1205327248D5F9D"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransport.cpp",
+      "bytes": 34257,
+      "sha256": "015923740B94C8631C3F6647BF85D8E0DF539B42482D0BC66E90741CB6770688"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportTests.cpp",
+      "bytes": 14636,
+      "sha256": "5A8BFA0E3A1ADF96C99172713D1F31F48351E1CDE3309F07ACE35705C586E5BB"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportVehiclePersistence.cpp",
+      "bytes": 6693,
+      "sha256": "12DCE64E3B4DF360F0684E92219A93A738B5DA0A7A7996F625A9C30C41E847F2"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportVehicles.cpp",
+      "bytes": 26603,
+      "sha256": "9C6EC4C628669B9FB6C9387EAB8D2492D8057D9FB730C0D3E83A19DF249B4F2B"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeTransportVehicles.h",
+      "bytes": 3887,
+      "sha256": "D42931E1A88A9CB3B6A54CABB68A453680C759B7E2CDFAE0CCC4833D79B377B1"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeUnitHealthTests.cpp",
+      "bytes": 5920,
+      "sha256": "5E31EE88FE62A2F73B2B5D8844A8C471A15E2D13E82772F315CDB8CFD7795B46"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWalls.cpp",
+      "bytes": 13622,
+      "sha256": "A40A3B0728FE896F6ED71D278D389279A8993DEC8A948CB4B7E4F7B73FFA181F"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWalls.h",
+      "bytes": 1456,
+      "sha256": "D6DDDBABE822DBC552121B8E65FD43212BD23B0911AD626008B29192A2D95B47"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWallTests.cpp",
+      "bytes": 7125,
+      "sha256": "3897E83CC997B75972F2CB1040FFD45F3CC350552FBA4676FA0D7516F1E47EE9"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerAgentTests.cpp",
+      "bytes": 35291,
+      "sha256": "1A5E9CF8CD64F2A9A5C1AD3286AF19B4C475498255D186C0776502B9CE9F5B63"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerCrews.cpp",
+      "bytes": 21143,
+      "sha256": "E32DB27128CE828BB6B6983F1BA844430C52873E8D9C7DC0D73F35F370F4F9D6"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerLifecycleTests.cpp",
+      "bytes": 5025,
+      "sha256": "8E1725F8FFA7E4AC7E90FFA9FDDD8EDCECEBDDE7A47753CE5EF8AB1DE540B2EB"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerPersistence.cpp",
+      "bytes": 15231,
+      "sha256": "63EC2B31334E15BA0AF3F3BE8D30BF0EF75B96D1E9EB094055F6242352D2BE83"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkerReserveTests.cpp",
+      "bytes": 9784,
+      "sha256": "6D645F8C11F08DD5E178D327CAD6941CF65C0788DCC2CBB94248BA83D0AE0D39"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkers.cpp",
+      "bytes": 37998,
+      "sha256": "4BEC34A3871BD623615060EBC418312BF905A07D9336D3666600EA8E70B491F4"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkers.h",
+      "bytes": 6405,
+      "sha256": "FDE05F45D6702C2505E7A713048C1E7217E3CF04190F7CEDC649A58AE938C13A"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkforce.cpp",
+      "bytes": 14763,
+      "sha256": "43F11F547A5113F0B9630B8BED51B85EA495F70E03AD83306A4F8FA3FCFC2F3F"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorkforceTests.cpp",
+      "bytes": 26556,
+      "sha256": "307C470868A66C0B42EB27662310D08784456F3984C36470B82C1FEB9E887E98"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorksiteLayout.h",
+      "bytes": 1396,
+      "sha256": "77B44CC86122A0B14C3BC6467B33796BAEDB791085D6AAADDFC7332411A1C4F6"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorldCalendar.cpp",
+      "bytes": 3420,
+      "sha256": "265E58BF93C4FC626EF58B9AA12C60E9219A3E423C93842DE217C87946FCE111"
+    },
+    {
+      "path": "Source/Seige/Simulation/SeigeWorldCalendar.h",
+      "bytes": 1217,
+      "sha256": "0F6B922E75019853A2A7BD67994BF23230DBF0BDFF49E58C34284A1E27215B59"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAIPlacementTests.cpp",
+      "bytes": 9775,
+      "sha256": "71DDFA9B5DA12BC860503D095F60FAB08934A8CA149A9129263C1DB4C4F20C64"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAIPreparationDiagnostics.cpp",
+      "bytes": 11647,
+      "sha256": "20BC99609D2DE60CCFD9199D4AADDFE2D99DE138DC6E39AC3222BA5B923C255B"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAIUpgradeTests.cpp",
+      "bytes": 4670,
+      "sha256": "B4B19FA10436221C62532A39BA580D3D640D6F4D30DBCE43B4D6BC787ECA2F03"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeAudioTests.cpp",
+      "bytes": 4770,
+      "sha256": "97F0CCEE70C89A900A292E00DB2D4172494FB1B4D1CBC610C2E172AFD6999B0E"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCalendarEnergyTests.cpp",
+      "bytes": 3215,
+      "sha256": "365864FE023C0D09DCAF214D5D8E78EB00D0B254375FD34E6CB67425BFD485FC"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCalendarTests.cpp",
+      "bytes": 3043,
+      "sha256": "EB7BA4BDB8D499CE131E37914191804E1151A41AE559DF587316E7E5CA5080B1"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCameraTests.cpp",
+      "bytes": 49686,
+      "sha256": "9AE2BE53C035C1FB7EF6F3EE31B5584DC6F841179A6120BC1FC930B328BC2BBD"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatArrivalTests.cpp",
+      "bytes": 6120,
+      "sha256": "81222CBB0C2A3EB1675FCD41AA81E7E25EF1D213F01561F82CB33792E3F4C923"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatConfigurationTests.cpp",
+      "bytes": 7895,
+      "sha256": "552F4EBC2F7834644C464B18594D362B94F51948FB9831C76CFEC6B8007C333C"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatEnergyTests.cpp",
+      "bytes": 16991,
+      "sha256": "EBB0D5E685EB43DE4BA513B1EE76F618E55049FB235B17C52A3022449E22B3D1"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCombatTests.cpp",
+      "bytes": 39929,
+      "sha256": "4355A816E8440F3C25A858B28D4848447992AB921C33EACC97E4F6A77A0223FC"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeCompanionViewTests.cpp",
+      "bytes": 3558,
+      "sha256": "43B26CECA4BC26FE037061FE3F73BA7B43E5B7278FA337068001D5A4EAD2F198"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeEnvironmentTests.cpp",
+      "bytes": 6460,
+      "sha256": "BFDB951AEE07B0527B193D11F5E5CD3C8675EC10111F00B7915DCD7253904D78"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeFirstPlayableDiagnostic.cpp",
+      "bytes": 6218,
+      "sha256": "1428AA066ED41C6A31DE96501BDDC9828927960FB59914A4C01B90E98DA422EB"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeFrontendTests.cpp",
+      "bytes": 33622,
+      "sha256": "D60CE75E8A4D7338A8DEC9D8D2809BB6C445950257D78DEF5D6A483598F1791D"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeHardpointLayoutTests.cpp",
+      "bytes": 3126,
+      "sha256": "B78AAF1DB1ABAF03BEC6A576321A0072A625C4AA67296E592B118A946ECD1A87"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeInteractionTests.cpp",
+      "bytes": 45512,
+      "sha256": "C49FC17BED05A716193DE1A2957560471390CFF7E5E0DA72441B4F0D7C6B3BB1"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeOwnedCrewTests.cpp",
+      "bytes": 5883,
+      "sha256": "07180BB600E747513BC94E502AA15FAB737F2ECB8659C4A21729D48A4783E30C"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeRegionResourceTests.cpp",
+      "bytes": 6892,
+      "sha256": "7EED65F2FE0E181D91AEF62987748CB7AE486BB86DBBABB4852F23CF466F0940"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeScenarioAITests.cpp",
+      "bytes": 100597,
+      "sha256": "76EE8FFD3566BAC1849E06CE88A0DB90BAEB05BD6CCCAB21113508925767BD59"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeScenarioSurveyTests.cpp",
+      "bytes": 10176,
+      "sha256": "E822BA876A7BA225531CC51C1B589D0D97AB79E0357CC56F2DF7D3595127C2D7"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeStarterCombinationTests.cpp",
+      "bytes": 6390,
+      "sha256": "4D748EA4AF693CCFA35DBC9C820757547C1A4EE2386EBEAE6C4354F0CA391A92"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeStartingAIProgressTests.cpp",
+      "bytes": 42401,
+      "sha256": "38F1203BC28E0D96188145A12041C55135394739602ACFA86DF9C8DC7967C39F"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeTransportConservationTests.cpp",
+      "bytes": 7322,
+      "sha256": "0F8B15416779C24AB807B90BC973B72B665D4B516E3072EAE231BB112A864EA0"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeUnitInspectionTests.cpp",
+      "bytes": 8304,
+      "sha256": "B6DD5A1D7239AAD344F6F3B6C8DBAB378B9B508A6A0AFAA76BD7A0B461F6A67A"
+    },
+    {
+      "path": "Source/Seige/Tests/SeigeWindPresentationTests.cpp",
+      "bytes": 2145,
+      "sha256": "4F3C0CED5AE8148CE8E2EBB43DFA3B4036BA6E476704EB27482F5AAC383982E8"
+    },
+    {
+      "path": "Source/SeigeEditor.Target.cs",
+      "bytes": 374,
+      "sha256": "DB6B396A16A56BA38F42DE2D31BD491C441B827AA02F250FB02D8D1679DE6E46"
+    }
+  ],
+  "runtime_files": [
+    {
+      "path": "AIFILES/colony_ai.json",
+      "source_sha256": "99CEC73A256C25D0A1F65D232C89311EFBD8923BA1F5B6F38D1F79A4D820253C",
+      "staged_sha256": "99CEC73A256C25D0A1F65D232C89311EFBD8923BA1F5B6F38D1F79A4D820253C",
+      "match": true
+    },
+    {
+      "path": "AIFILES/developed_start.json",
+      "source_sha256": "13FD2F68BC84A3890F80F03CD5417E7F5D8526A5707A5F09D443693E8079A2A4",
+      "staged_sha256": "13FD2F68BC84A3890F80F03CD5417E7F5D8526A5707A5F09D443693E8079A2A4",
+      "match": true
+    },
+    {
+      "path": "Graphics/audio.json",
+      "source_sha256": "95739A13A141B3841BCA1839CEA8E58EDDA24E9AF562A1AFB9097059496706B4",
+      "staged_sha256": "95739A13A141B3841BCA1839CEA8E58EDDA24E9AF562A1AFB9097059496706B4",
+      "match": true
+    },
+    {
+      "path": "Graphics/building_visuals.json",
+      "source_sha256": "ADE978559ADD5EC57CB021C8D53627199D4D28738776A373E3B090BC043FB269",
+      "staged_sha256": "ADE978559ADD5EC57CB021C8D53627199D4D28738776A373E3B090BC043FB269",
+      "match": true
+    },
+    {
+      "path": "Graphics/scene.json",
+      "source_sha256": "6622400966D948F142444AD8DCD2B4810317D244B9AA0ED393767BD2781AEEE7",
+      "staged_sha256": "6622400966D948F142444AD8DCD2B4810317D244B9AA0ED393767BD2781AEEE7",
+      "match": true
+    },
+    {
+      "path": "Graphics/weather.json",
+      "source_sha256": "A9CC0D184E580AFB52979A6074DE7B1F036038B4B36C26B8ECE8933E8DE11ECE",
+      "staged_sha256": "A9CC0D184E580AFB52979A6074DE7B1F036038B4B36C26B8ECE8933E8DE11ECE",
+      "match": true
+    },
+    {
+      "path": "Interface/ui.json",
+      "source_sha256": "A18198E04BB313625B172174603D5F8BA2CDEC294BF614150F6A5B0935BA9FB5",
+      "staged_sha256": "A18198E04BB313625B172174603D5F8BA2CDEC294BF614150F6A5B0935BA9FB5",
+      "match": true
+    },
+    {
+      "path": "Rules/buildings.json",
+      "source_sha256": "902CF3524B9F3DEC84A703774EB8006983C4074D87247181195463FF45396488",
+      "staged_sha256": "902CF3524B9F3DEC84A703774EB8006983C4074D87247181195463FF45396488",
+      "match": true
+    },
+    {
+      "path": "Rules/calendar.json",
+      "source_sha256": "69BDF2DFCED7D046595F61F3F434A209B560FBE64F93837B96FCBA037D929702",
+      "staged_sha256": "69BDF2DFCED7D046595F61F3F434A209B560FBE64F93837B96FCBA037D929702",
+      "match": true
+    },
+    {
+      "path": "Rules/chassis.json",
+      "source_sha256": "B4CFAF90B2A6E70C06B40E6408BF9F204AA253C42713CA645A7BCF62FD0872BB",
+      "staged_sha256": "B4CFAF90B2A6E70C06B40E6408BF9F204AA253C42713CA645A7BCF62FD0872BB",
+      "match": true
+    },
+    {
+      "path": "Rules/combat.json",
+      "source_sha256": "30DAAA838CCED03460F898601A17EE609EDE734BF8797727A00C194901DEC037",
+      "staged_sha256": "30DAAA838CCED03460F898601A17EE609EDE734BF8797727A00C194901DEC037",
+      "match": true
+    },
+    {
+      "path": "Rules/companions.json",
+      "source_sha256": "D3BD32ED24A36CA94BE9D44550F2FFC73543C84E895C991ED2933E37276980FB",
+      "staged_sha256": "D3BD32ED24A36CA94BE9D44550F2FFC73543C84E895C991ED2933E37276980FB",
+      "match": true
+    },
+    {
+      "path": "Rules/energy.json",
+      "source_sha256": "E4CC59A7EFE27F6A62C01272DF257726877CA741D6C46AF74345E9290203824A",
+      "staged_sha256": "E4CC59A7EFE27F6A62C01272DF257726877CA741D6C46AF74345E9290203824A",
+      "match": true
+    },
+    {
+      "path": "Rules/environment.json",
+      "source_sha256": "D14BF6D8F2257E0C9F07B930DBB5E8B8BF8D9B811E972618D60DD579BACD8C35",
+      "staged_sha256": "D14BF6D8F2257E0C9F07B930DBB5E8B8BF8D9B811E972618D60DD579BACD8C35",
+      "match": true
+    },
+    {
+      "path": "Rules/mobility.json",
+      "source_sha256": "D281A2BABD72148F2812030EBE142AA270DE0579EB8E9A1A97EECA3765B8B1AA",
+      "staged_sha256": "D281A2BABD72148F2812030EBE142AA270DE0579EB8E9A1A97EECA3765B8B1AA",
+      "match": true
+    },
+    {
+      "path": "Rules/policies.json",
+      "source_sha256": "7DE4347D8770715F4D8AFBA2F1AEAFC8A50496F8EBC54269942B3560284BC69C",
+      "staged_sha256": "7DE4347D8770715F4D8AFBA2F1AEAFC8A50496F8EBC54269942B3560284BC69C",
+      "match": true
+    },
+    {
+      "path": "Rules/recipes.json",
+      "source_sha256": "AD4DBDF916FF1F2AF0F88E7772B281AB918789F1F47DC1D7546A41EAC5BA2FC3",
+      "staged_sha256": "AD4DBDF916FF1F2AF0F88E7772B281AB918789F1F47DC1D7546A41EAC5BA2FC3",
+      "match": true
+    },
+    {
+      "path": "Rules/resources.json",
+      "source_sha256": "54C9C55EEC9D7BC3854405D8FB5AFB9E58400AB465FFC330C44A41299258A664",
+      "staged_sha256": "54C9C55EEC9D7BC3854405D8FB5AFB9E58400AB465FFC330C44A41299258A664",
+      "match": true
+    },
+    {
+      "path": "Rules/scenario.json",
+      "source_sha256": "FFAC67DFE459F6F355945C80705CE563B2CC9F1799624958FF0D36F0ED7F14D8",
+      "staged_sha256": "FFAC67DFE459F6F355945C80705CE563B2CC9F1799624958FF0D36F0ED7F14D8",
+      "match": true
+    },
+    {
+      "path": "Rules/trade.json",
+      "source_sha256": "9055BC8AFC3CE8E4C7A2F1EFF3CE9DE523A1FC3A0551837CC38D0AA7B10D4311",
+      "staged_sha256": "9055BC8AFC3CE8E4C7A2F1EFF3CE9DE523A1FC3A0551837CC38D0AA7B10D4311",
+      "match": true
+    },
+    {
+      "path": "Rules/transport_vehicles.json",
+      "source_sha256": "F07E299C7A96F3A502CF3EC760674FF9F292DC8FEB4EFFE24B8C86EAE26E83B5",
+      "staged_sha256": "F07E299C7A96F3A502CF3EC760674FF9F292DC8FEB4EFFE24B8C86EAE26E83B5",
+      "match": true
+    },
+    {
+      "path": "Rules/transport.json",
+      "source_sha256": "E33C9D5C5BDF81BA202D02881528D927F492D3E65BE573B9C0908BECF6AB4B61",
+      "staged_sha256": "E33C9D5C5BDF81BA202D02881528D927F492D3E65BE573B9C0908BECF6AB4B61",
+      "match": true
+    },
+    {
+      "path": "Rules/walls.json",
+      "source_sha256": "210E2D447E8963025515E16172623D84B113B7F112D1B6B59FEA426E6DEE3535",
+      "staged_sha256": "210E2D447E8963025515E16172623D84B113B7F112D1B6B59FEA426E6DEE3535",
+      "match": true
+    },
+    {
+      "path": "Rules/weapons.json",
+      "source_sha256": "631E3E4F3D00BB254E0DD01BB25E38567995000B5DF865E5704707A0B096E6EC",
+      "staged_sha256": "631E3E4F3D00BB254E0DD01BB25E38567995000B5DF865E5704707A0B096E6EC",
+      "match": true
+    },
+    {
+      "path": "Rules/workers.json",
+      "source_sha256": "10265A9278B408D5FE50E5923B70B7C8553DB56E6BCB6D04FDACC490EDC0664D",
+      "staged_sha256": "10265A9278B408D5FE50E5923B70B7C8553DB56E6BCB6D04FDACC490EDC0664D",
+      "match": true
+    }
+  ]
+}

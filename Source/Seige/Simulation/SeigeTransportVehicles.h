@@ -60,10 +60,19 @@ public:
     bool Save(const TSharedPtr<FJsonObject>& Root) const;
     bool Load(const TSharedPtr<FJsonObject>& Root,FSeigeSimulation& Sim,FString& Error);
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FSeigeCargoMovementParityTest;
+    friend class FSeigeRoadMovementRegressionTest;
+    friend class FSeigeRoadlessCrewAccessTest;
+#endif
     FSeigeTransportVehicleDef Def;
     FString Fingerprint;
     int32 NextId=1,NextJobId=1;
+    TSet<FString> RejectedServices;
+    int32 ServiceGeometryRevision=INDEX_NONE,ServiceTerrainRevision=INDEX_NONE;
+    void RefreshServiceFailures(const FSeigeSimulation& Sim);
     void ReleaseHandler(FSeigeSimulation& Sim,FSeigeTransportVehicle& V);
+    bool FindServiceRoute(FSeigeSimulation& Sim,FVector2D From,FVector2D Port,FVector2D Heading,TArray<FVector2D>& Route) const;
     bool Move(FSeigeSimulation& Sim,FSeigeTransportVehicle& V,FVector2D Destination,double Seconds);
     void StepDelivery(FSeigeSimulation& Sim,FSeigeTransportVehicle& V,FSeigeCourier& C,double Seconds);
     void FinishDelivery(FSeigeSimulation& Sim,FSeigeTransportVehicle& V,int32 CourierId);

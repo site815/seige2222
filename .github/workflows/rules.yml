@@ -1,12 +1,26 @@
 name: Validate game configuration
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rules:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          lfs: true
+          # Configuration validation needs package names, not large binary data.
+          lfs: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -16,6 +30,7 @@ jobs:
       - run: node Tools/test_combat_configuration.mjs
       - run: node Tools/test_environment_configuration.mjs
       - run: node Tools/test_ui_configuration.mjs
+      - run: node Tools/test_wind_configuration.mjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

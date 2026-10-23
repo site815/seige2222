@@ -1,4 +1,5 @@
 #include "SeigeGameMode.h"
+#include "SeigeActionFeedback.h"
 namespace
 {
 const FLinearColor Text(.91f,.95f,.96f),Muted(.58f,.71f,.76f),Gold(.91f,.72f,.39f),Mint(.35f,.85f,.78f);
@@ -14,29 +15,32 @@ bool ASeigeHUD::HandleCombatAction(const FString& A,ASeigeGameMode& G)
 {
     if(!A.StartsWith(TEXT("combat:")))return false;if(!Ready(G)||Ui.BuildOpen)return true;auto& C=G.Sim.Combat;FString E;
     const bool BuildingAction=A==TEXT("combat:request")||A==TEXT("combat:queue")||A==TEXT("combat:refit-request")||A==TEXT("combat:hull-prev")||A==TEXT("combat:hull-next")||(A==TEXT("combat:refit")&&OutfitBuilding);
-    if(BuildingAction&&!HomeBuildingView(G)){G.Notice=TEXT("View and select your own factory or building to change its equipment or production.");return true;}
+    if(BuildingAction&&!HomeBuildingView(G)){SeigeAudio::PlayUi(GetWorld(),TEXT("error"));G.Notice=TEXT("View and select your own factory or building to change its equipment or production.");return true;}
     if(A!=TEXT("combat:open")&&A!=TEXT("combat:close")&&!CombatPanelOpen)return true;
+    const bool Navigate=A==TEXT("combat:open")||A==TEXT("combat:close")||A.StartsWith(TEXT("combat:tab:"))||A.EndsWith(TEXT("-next"))||A.EndsWith(TEXT("-prev"))||A==TEXT("combat:add")||A==TEXT("combat:remove")||A==TEXT("combat:clear")||A==TEXT("combat:outfit-platform")||A==TEXT("combat:move");
+    if(Navigate)SeigeAudio::PlayUi(GetWorld(),A==TEXT("combat:close")?TEXT("cancel"):TEXT("select"));
     if(A==TEXT("combat:open")){CombatPanelOpen=true;CombatTab=TEXT("fleet");Ui.CloseMenus();}
     else if(A==TEXT("combat:close")){CombatPanelOpen=false;G.FleetOrderActive=false;}
     else if(A.StartsWith(TEXT("combat:tab:"))){CombatTab=A.RightChop(11);LoadoutContext.Empty();}
     else if(A==TEXT("combat:fleet-next")||A==TEXT("combat:fleet-prev"))
     {if(C.Fleets.Num()){int32 I=C.Fleets.IndexOfByPredicate([&](const auto& F){return F.Id==G.SelectedFleetId;});I=(FMath::Max(0,I)+(A.EndsWith(TEXT("next"))?1:C.Fleets.Num()-1))%C.Fleets.Num();G.SelectedFleetId=C.Fleets[I].Id;}}
-    else if(A==TEXT("combat:create"))G.Notice=C.CreateFleet(G.Sim,FString::Printf(TEXT("Fleet %d"),C.Fleets.Num()+1),G.SelectedFleetId,E)?TEXT("Fleet created. Assign completed vehicles to it."):E;
-    else if(A==TEXT("combat:board"))G.Notice=C.BoardFleet(G.Sim,G.SelectedFleetId,E)?TEXT("Fleet aboard the parked command shuttle, ready for evacuation."):E;
+    else if(A==TEXT("combat:create"))G.Notice=SeigeActionNotice(GetWorld(),C.CreateFleet(G.Sim,FString::Printf(TEXT("Fleet %d"),C.Fleets.Num()+1),G.SelectedFleetId,E),TEXT("Fleet created. Assign completed vehicles to it."),E);
+    else if(A==TEXT("combat:board"))G.Notice=SeigeActionNotice(GetWorld(),C.BoardFleet(G.Sim,G.SelectedFleetId,E),TEXT("Fleet aboard the parked command shuttle, ready for evacuation."),E);
     else if(A==TEXT("combat:move")){G.FleetOrderActive=true;G.Notice=TEXT("Click terrain to move the selected fleet. Esc cancels. Individual units fight autonomously.");}
     else if(A==TEXT("combat:privateer"))
     {
         auto* Target=G.Neighbors.FindByPredicate([&](const auto& N){return N.Index==G.DetailedSectorIndex();});
         const FVector2D Destination=G.CursorOnWorld?G.CursorWorld-G.DetailedSectorOffset():FVector2D::ZeroVector;
-        G.Notice=Target?C.OrderPrivateer(G.Sim,Target->Sim,G.SelectedFleetId,Target->Index,Destination,E)?TEXT("Privateer mission dispatched. Transit, ammunition, combat and stolen cargo are physical."):E:TEXT("View a populated neighboring sector to dispatch a privateer mission.");
+        if(!Target)E=TEXT("View a populated neighboring sector to dispatch a privateer mission.");
+        G.Notice=SeigeActionNotice(GetWorld(),Target&&C.OrderPrivateer(G.Sim,Target->Sim,G.SelectedFleetId,Target->Index,Destination,E),TEXT("Privateer mission dispatched. Transit, ammunition, combat and stolen cargo are physical."),E);
     }
     else if(A==TEXT("combat:defense")||A==TEXT("combat:escort"))
-    {const auto* B=HomeBuildingView(G)?G.Sim.FindBuilding(G.SelectedId):nullptr;const auto* Core=G.Sim.Buildings.FindByPredicate([&](const auto& X){const auto* D=G.Sim.Definition(X);return X.Health>0&&D&&D->Role==TEXT("core");});const FVector2D Destination=B?G.Sim.BuildingAccessPoint(*B):Core?G.Sim.BuildingAccessPoint(*Core):G.HomePosition();G.Notice=C.OrderFleet(G.Sim,G.SelectedFleetId,A.EndsWith(TEXT("escort"))?TEXT("escort"):TEXT("defense"),Destination,B?B->Id:0,E)?TEXT("Fleet mission updated."):E;}
+    {const auto* B=HomeBuildingView(G)?G.Sim.FindBuilding(G.SelectedId):nullptr;const auto* Core=G.Sim.Buildings.FindByPredicate([&](const auto& X){const auto* D=G.Sim.Definition(X);return X.Health>0&&D&&D->Role==TEXT("core");});const FVector2D Destination=B?G.Sim.BuildingAccessPoint(*B):Core?G.Sim.BuildingAccessPoint(*Core):G.HomePosition();G.Notice=SeigeActionNotice(GetWorld(),C.OrderFleet(G.Sim,G.SelectedFleetId,A.EndsWith(TEXT("escort"))?TEXT("escort"):TEXT("defense"),Destination,B?B->Id:0,E),TEXT("Fleet mission updated."),E);}
     else if(A==TEXT("combat:aggression"))
-    {if(auto* F=C.Fleets.FindByPredicate([&](const auto& F){return F.Id==G.SelectedFleetId;})){const FString Next=F->Aggression==TEXT("passive")?TEXT("defensive"):F->Aggression==TEXT("defensive")?TEXT("aggressive"):TEXT("passive");G.Notice=C.SetAggression(F->Id,Next,E)?TEXT("Fleet aggression: ")+Next:E;}}
+    {if(auto* F=C.Fleets.FindByPredicate([&](const auto& F){return F.Id==G.SelectedFleetId;})){const FString Next=F->Aggression==TEXT("passive")?TEXT("defensive"):F->Aggression==TEXT("defensive")?TEXT("aggressive"):TEXT("passive");G.Notice=SeigeActionNotice(GetWorld(),C.SetAggression(F->Id,Next,E),TEXT("Fleet aggression: ")+Next,E);}}
     else if(A==TEXT("combat:vehicle-next")||A==TEXT("combat:vehicle-prev"))
     {TArray<int32> Ids;for(const auto& V:C.Vehicles)if(V.Health>0&&!V.Evacuated)Ids.Add(V.Id);if(Ids.Num()){int32 I=Ids.IndexOfByKey(OutfitVehicleId);I=(FMath::Max(I,0)+(A.EndsWith(TEXT("next"))?1:Ids.Num()-1))%Ids.Num();OutfitVehicleId=Ids[I];LoadoutContext.Empty();}}
-    else if(A==TEXT("combat:assign"))G.Notice=C.AssignVehicle(G.Sim,OutfitVehicleId,G.SelectedFleetId,E)?TEXT("Vehicle assigned within fleet capacity."):E;
+    else if(A==TEXT("combat:assign"))G.Notice=SeigeActionNotice(GetWorld(),C.AssignVehicle(G.Sim,OutfitVehicleId,G.SelectedFleetId,E),TEXT("Vehicle assigned within fleet capacity."),E);
     else if(A==TEXT("combat:hull-prev")||A==TEXT("combat:hull-next"))
     {Cycle(ChosenChassis,Hulls(G.Sim,G.SelectedId),A.EndsWith(TEXT("next"))?1:-1);DraftWeapons.Empty();LoadoutContext.Empty();}
     else if(A==TEXT("combat:weapon-prev")||A==TEXT("combat:weapon-next"))Cycle(ChosenWeapon,WeaponIds(G.Sim),A.EndsWith(TEXT("next"))?1:-1);
@@ -46,10 +50,10 @@ bool ASeigeHUD::HandleCombatAction(const FString& A,ASeigeGameMode& G)
     {const int32 I=DraftWeapons.FindLast(ChosenWeapon);if(I!=INDEX_NONE)DraftWeapons.RemoveAt(I);else if(DraftWeapons.Num())DraftWeapons.Pop();}
     else if(A==TEXT("combat:clear"))DraftWeapons.Empty();
     else if(A==TEXT("combat:outfit-platform")){OutfitBuilding=!OutfitBuilding;LoadoutContext.Empty();}
-    else if(A==TEXT("combat:request"))G.Notice=C.SetFabricationPlan(G.Sim,G.SelectedId,ChosenChassis,DraftWeapons,E)?TEXT("Factory supply plan set. Couriers will deliver the selected chassis and weapon bill."):E;
-    else if(A==TEXT("combat:queue"))G.Notice=C.QueueVehicle(G.Sim,G.SelectedId,ChosenChassis,DraftWeapons,E)?TEXT("Vehicle assembly started with paid local materials and energy."):E;
-    else if(A==TEXT("combat:refit-request"))G.Notice=C.SetRefitPlan(G.Sim,G.SelectedId,DraftWeapons,E)?TEXT("Refit supply plan set at the selected building. Couriers must deliver the parts before installation."):E;
-    else if(A==TEXT("combat:refit"))G.Notice=(OutfitBuilding?C.RefitBuilding(G.Sim,G.SelectedId,DraftWeapons,E):C.Refit(G.Sim,OutfitVehicleId,DraftWeapons,E))?TEXT("Equipment installed using local parts and energy."):E;
+    else if(A==TEXT("combat:request"))G.Notice=SeigeActionNotice(GetWorld(),C.SetFabricationPlan(G.Sim,G.SelectedId,ChosenChassis,DraftWeapons,E),TEXT("Factory supply plan set. Couriers will deliver the selected chassis and weapon bill."),E);
+    else if(A==TEXT("combat:queue"))G.Notice=SeigeActionNotice(GetWorld(),C.QueueVehicle(G.Sim,G.SelectedId,ChosenChassis,DraftWeapons,E),TEXT("Vehicle assembly started with paid local materials and energy."),E);
+    else if(A==TEXT("combat:refit-request"))G.Notice=SeigeActionNotice(GetWorld(),C.SetRefitPlan(G.Sim,G.SelectedId,DraftWeapons,E),TEXT("Refit supply plan set at the selected building. Couriers must deliver the parts before installation."),E);
+    else if(A==TEXT("combat:refit"))G.Notice=SeigeActionNotice(GetWorld(),(OutfitBuilding?C.RefitBuilding(G.Sim,G.SelectedId,DraftWeapons,E):C.Refit(G.Sim,OutfitVehicleId,DraftWeapons,E)),TEXT("Equipment installed using local parts and energy."),E);
     return true;
 }
 

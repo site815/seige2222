@@ -1,5 +1,11 @@
 # seige2222 — remaining work
 
+**Current v0.10.6 release is verified:** roadless routing/power, reachable worker and truck dispatch, ground-stock inspection, regional drainage and distant crown wind. All 73 focused native tests, the three fresh actual-terrain AI cases and 159 packaged assertions at each of two resolutions passed. [Current evidence](verification/v0.10.6.json). Start a new scenario for changed fingerprints. GitHub access is restored; the October 23 [delivery review](releases/GITHUB_DELIVERY_2026_10_23.md) and [release download](https://github.com/site815/seige2222/releases/tag/v0.10.6) supersede the earlier publication deferral.
+
+Remaining: full AI progression and hostile survival across more seeds; long-session economy/charging recovery; crowded colonies and eight-neighbor performance; sustained FPS; subjective sound review; and legacy tests assuming the retired universal replicator/worker factory. Terrain still uses authored drainage and opaque water, with further shoreline/material/vegetation polish and terrain-transition hitch work needed. Roads and their speed bonuses are deliberately deferred; restoring them requires a fresh access/grid design and tests. Existing Rex art and licence limitations remain recorded. Preserve historical verification under its actual version.
+
+## Previous v0.10.2 checkpoint
+
 Updated **2026-10-11**: **v0.10.2 final Shipping build and focused checks passed; actual Shipping Rex views reviewed**.
 
 - Completed: matching half-screen-height HUD casings, six compact resource cards, two-row bottom dock with the full timer, consistent spacing and the hover-padding fix. Width is 450 px at 1600×900 and 800 px at 3840×1600. Actual packaged HUD renders at both resolutions were reviewed.

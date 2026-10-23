@@ -31,5 +31,7 @@
   "core_charging_berths": 1,
   "station_charging_berths": 1,
   "balance_note": "Permanent building crews. No additional courier population reserve. 0.2 kWh battery has 23h50m nominal uncharged autonomy per 24-hour calendar day; physical travel/queue reserve starts trips earlier. A berth occupies a full 10 calendar minutes, including its own attendant. Core automatic fabrication at 10% speed is only a zero-crew recovery exception and still pays the full bill.",
-  "charging_queue_spacing_meters": 2
+  "charging_queue_spacing_meters": 2,
+  "maximum_health": 100,
+  "charging_repair_hp_per_second": 2
 }
