@@ -71,3 +71,11 @@ Multiple players combining forces was a desired possibility in the earlier discu
 - [Fleets, Physical Logistics, and Loot](FLEETS_AND_LOGISTICS.md)
 - [World, Visibility, and Relocation](WORLD_AND_RELOCATION.md)
 - [Multiplayer, Persistence, and Development](MULTIPLAYER_AND_DEVELOPMENT.md)
+
+## All-direction fixed defenses (v0.10.10)
+
+Every command-core and defense-tower tier acquires and fires in all horizontal directions. Real range, power, ammunition, target validity, projectile collision and intervening buildings still apply; an omni-directional mounting is not permission to shoot through solid objects. Each weapon module aims at its own target rather than copying the platform's last shot.
+
+The upright shuttle retains its two large hardpoint banks and starting one-large/two-medium/eight-small laser loadout. Exposed annular rails move each gun carrier around the pressure hull to face the target. Tower barrels and missile pods sit on raised, rotating bearings with elevation gimbals above the tower superstructure. These procedural additions retain the authored building meshes and their footprints.
+
+Remote passive fleets obey their passive engagement setting. Idle autonomous cargo vehicles use their actual physical bodies for direct-hit and splash collision, even when they are not attached to a delivery task.

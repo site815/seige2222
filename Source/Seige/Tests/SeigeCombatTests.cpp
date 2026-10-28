@@ -330,4 +330,29 @@ bool FSeigeCombatFriendlyFireTest::RunTest(const FString& Parameters)
     }
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigePrivateerDefensePolicyTest,"Seige.Combat.PrivateerPassiveDefenseAndTransportBodies",Flags)
+bool FSeigePrivateerDefensePolicyTest::RunTest(const FString&)
+{
+    FString Error;FSeigeSimulation Home,Target;
+    if(!Start(Home,Error)||!Start(Target,Error)){AddError(Error);return false;}
+    Home.Buildings[0].Enabled=false;Target.Buildings[0].Enabled=false;
+    ClearFixtureFiringLane(Target);
+    auto& Visitor=Home.Combat.Vehicles[0];Visitor.Embarked=false;Visitor.SectorIndex=5;Visitor.Position=FVector2D(1500,0);Visitor.Weapons.Empty();Visitor.Cooldowns.Empty();
+    auto& Defender=Target.Combat.Vehicles[0];Defender.Embarked=false;Defender.Position=FVector2D(1000,0);
+    Target.Combat.SetAggression(Defender.FleetId,TEXT("passive"),Error);
+    Home.Combat.TickExternalSector(Home,Target,5,.05);
+    TestEqual(TEXT("Passive defending fleet respects its policy against foreign raiders"),Home.Combat.ShotsFired,0.);
+    Target.Combat.SetAggression(Defender.FleetId,TEXT("defensive"),Error);
+    Home.Combat.TickExternalSector(Home,Target,5,.05);
+    TestTrue(TEXT("Defensive policy permits a real paid return shot"),Home.Combat.ShotsFired>0);
+    Defender.Weapons.Empty();Defender.Cooldowns.Empty();Home.Combat.Projectiles.Empty();
+    if(!TestTrue(TEXT("Manifest includes its physical transport body"),!Target.TransportVehicles.Bodies.IsEmpty()))return false;
+    auto& Transport=Target.TransportVehicles.Bodies[0];Transport.Embarked=false;Transport.Evacuated=false;Transport.Position=FVector2D(3500,5000);
+    Target.Couriers.Empty();const double Before=Transport.Health;
+    FSeigeProjectile Round;Round.Id=99000;Round.OwnerId=99001;Round.OwnerKind=TEXT("vehicle");Round.OwnerSector=4;Round.SectorIndex=5;Round.WeaponId=TEXT("kinetic_small");Round.Position=Round.PreviousPosition=FVector2D(3000,5000);Round.Velocity=FVector2D(Home.Combat.Weapons[Round.WeaponId].SpeedMetersSecond/Home.MetersPerWorldUnit(),0);Round.RemainingMeters=100;
+    Home.Combat.Projectiles.Add(Round);Home.Combat.TickExternalSector(Home,Target,5,.2);
+    TestTrue(TEXT("An idle transport is still a physical cross-sector projectile target without a delivery marker"),Transport.Health<Before);
+    TestTrue(TEXT("Actual transport collision consumes the round"),Home.Combat.Projectiles.IsEmpty());
+    return true;
+}
 #endif

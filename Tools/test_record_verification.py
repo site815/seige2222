@@ -87,6 +87,23 @@ class ValidatorEvidenceTests(unittest.TestCase):
                 self.assertEqual(gate.validator_result(text, 'rules', 'prototype-9.3')['status'], 'failed')
 
 
+class SavePolicyTests(unittest.TestCase):
+    def test_writer_and_loader_contracts_distinguish_colony_from_scenario(self):
+        with scratch_directory() as directory:
+            root = Path(directory)
+            (root / 'Source/Seige/Simulation').mkdir(parents=True)
+            colony = root / 'Source/Seige/Simulation/SeigeSimulation.cpp'
+            scenario = root / 'Source/Seige/SeigePersistence.cpp'
+            scenario.write_text('O->SetNumberField(TEXT("format"),7); if(Format!=7)return;')
+            colony.write_text('O->SetNumberField(TEXT("save_format"), 9); if (Format != 9)return;')
+            self.assertEqual(gate.current_save_formats(root), {'colony': 9, 'scenario': 7})
+            colony.write_text('O->SetNumberField(TEXT("save_format"), 10); if (Format != 10)return;')
+            self.assertEqual(gate.current_save_formats(root), {'colony': 10, 'scenario': 7})
+            colony.write_text('O->SetNumberField(TEXT("save_format"), 10); if (Format != 9)return;')
+            with self.assertRaises(ValueError):
+                gate.current_save_formats(root)
+
+
 class PackagedEvidenceTests(unittest.TestCase):
     def setUp(self):
         self.inputs = [{'path': 'Builds/v0.9.3/Windows/seige2222/Binaries/Win64/Seige-Win64-Shipping.exe', 'bytes': 12, 'sha256': 'A' * 64},
@@ -95,7 +112,9 @@ class PackagedEvidenceTests(unittest.TestCase):
         self.runtime = [{'path': 'Rules/buildings.json', 'source_sha256': 'D' * 64, 'staged_sha256': 'D' * 64, 'match': True}]
         self.data = {'schema_version': 2, 'version': '0.9.3', 'mode': 'UiSmoke', 'exit_code': 0,
                      'report': {'ready': True, 'failures': 0, 'assertion_failures': [], 'completed_stages': 117,
-                                'main_test_speed': 10, 'walking_probe_speed': 1},
+                                'main_test_speed': 10, 'walking_probe_speed': 1,
+                                'deployment_carry_observed': True, 'deployment_work_observed': True,
+                                'paid_defense_tower_completed': True, 'transport_segments': 0},
                      'socket_samples': [{'process_ids': [123], 'tcp': 0, 'udp': 0}], 'inputs_unchanged': True,
                      'packaged_inputs': copy.deepcopy(self.inputs), 'source_inputs': copy.deepcopy(self.source),
                      'runtime_files': copy.deepcopy(self.runtime)}
@@ -116,7 +135,9 @@ class PackagedEvidenceTests(unittest.TestCase):
 
     def test_exit_zero_does_not_hide_route_failures_or_missing_counters(self):
         for key, value in [('ready', False), ('completed_stages', 116), ('failures', 1), ('failures', None),
-                           ('assertion_failures', ['bad']), ('main_test_speed', 1)]:
+                           ('assertion_failures', ['bad']), ('main_test_speed', 1),
+                           ('deployment_carry_observed', False), ('deployment_work_observed', None),
+                           ('paid_defense_tower_completed', False), ('transport_segments', 1)]:
             data = copy.deepcopy(self.data)
             data['report'][key] = value
             with self.subTest(key=key):

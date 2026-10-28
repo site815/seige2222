@@ -62,10 +62,30 @@ bool FSeigeWallOccupancyTest::RunTest(const FString&)
     TestFalse(TEXT("Wall cannot trap travelling construction crew"),S.Walls.Plan(S,Joints,true,P,Error));S.Buildings[0].TravellingBuilders=0;
     FSeigeTransportSegment R;R.Health=1;R.TravellingBuilders=1;R.BuilderPosition=At;R.A=Core+FVector2D(1300,1200);R.B=Core+FVector2D(1400,1200);S.Roads.Add(R);
     TestFalse(TEXT("Wall cannot trap travelling road crew"),S.Walls.Plan(S,Joints,true,P,Error));S.Roads.Empty();
-    if(S.Combat.Vehicles.IsEmpty()){AddError(TEXT("Fixture requires the initial defense force"));return false;}
-    auto& V=S.Combat.Vehicles[0];V.Position=At;V.SectorIndex=4;V.Embarked=false;
+    // Isolated occupancy body: new colonies deliberately receive no armed vehicle.
+    TArray<FString> ChassisIds;S.Combat.Chassis.GetKeys(ChassisIds);ChassisIds.Sort();
+    if(!TestFalse(TEXT("Fixture has a configured chassis"),ChassisIds.IsEmpty()))return false;
+    FSeigeVehicle Fixture;Fixture.Id=9001;Fixture.ChassisId=ChassisIds[0];Fixture.Position=At;Fixture.SectorIndex=4;
+    S.Combat.Vehicles.Add(Fixture);auto& V=S.Combat.Vehicles.Last();
     TestFalse(TEXT("Wall cannot trap a deployed vehicle"),S.Walls.Plan(S,Joints,true,P,Error));V.Embarked=true;
     TestTrue(TEXT("Embarked vehicles do not block ground construction"),S.Walls.Plan(S,Joints,true,P,Error));
+    if(!TestFalse(TEXT("Fixture has the finite starting cargo transport"),S.TransportVehicles.Bodies.IsEmpty()))return false;
+    auto& Truck=S.TransportVehicles.Bodies[0];const auto OriginalTruck=Truck;
+    Truck.Position=At;Truck.Embarked=false;Truck.Evacuated=false;
+    TestFalse(TEXT("Wall cannot enclose an idle cargo transport without a courier"),S.Walls.Commit(S,Joints,true,Error));
+    TestEqual(TEXT("Blocked transport placement is atomic"),S.Buildings.Num(),Before);Truck=OriginalTruck;
+    if(!TestFalse(TEXT("Fixture has Rex"),S.Companions.Dogs.IsEmpty()))return false;
+    auto& Dog=S.Companions.Dogs[0];const auto OriginalDog=Dog;
+    Dog.Position=At;Dog.Aboard=Dog.Sheltered=Dog.Evacuated=Dog.Dead=false;Dog.Health=S.Companions.MaximumHealth;
+    TestFalse(TEXT("Wall cannot trap Rex"),S.Walls.Plan(S,Joints,true,P,Error));
+    TestFalse(TEXT("Ordinary reserved building plots also protect Rex"),S.CanPlaceBuilding(TEXT("sensor"),At,Error));
+    TestTrue(TEXT("Building rejection names the real companion obstruction"),Error.Contains(TEXT("Rex")));
+    Dog.Aboard=true;TestTrue(TEXT("A dog aboard does not occupy exterior wall ground"),S.Walls.Plan(S,Joints,true,P,Error));Dog=OriginalDog;
+    // The foundation must be dry even when builders could reach its approach.
+    S.Environment.Enabled=true;S.Environment.River.Empty();S.Environment.AdditionalRivers.Empty();S.Environment.Lakes.Empty();S.Environment.Fords.Empty();
+    FSeigeLake Lake;Lake.Center=At+S.Environment.WorldOffset;Lake.Radii=FVector2D(150,150);Lake.Depth=30;Lake.Height=0;Lake.BuildShoreline();S.Environment.Lakes.Add(Lake);
+    TestFalse(TEXT("Wall cannot be committed through a pond"),S.Walls.Commit(S,Joints,true,Error));
+    TestEqual(TEXT("Wet foundation rejection creates no walls"),S.Buildings.Num(),Before);
     return true;
 }
 #endif

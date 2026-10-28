@@ -9,7 +9,6 @@ $versionLine=Get-Content (Join-Path $projectRoot 'Config/DefaultGame.ini') | Whe
 $version=$versionLine.Substring('ProjectVersion='.Length)
 if($version -notmatch '^\d+\.\d+\.\d+$'){throw 'Invalid project version'}
 $packageRoot=Join-Path $projectRoot "Builds/v$version/Windows"
-$gameExe=Join-Path $packageRoot 'Seige.exe'
 $binaryDirectory=Join-Path $packageRoot 'seige2222/Binaries/Win64'
 $shippingExe=Join-Path $binaryDirectory 'Seige-Win64-Shipping.exe'
 $runtimeDirectories=@('Rules','AIFILES','Interface','Graphics')
@@ -56,22 +55,40 @@ $reportName=if($Mode -eq 'UiSmoke'){'PresentationSmoke.json'}elseif($Mode -eq 'N
 $timeoutSeconds=if($Mode -eq 'NextUpdateSmoke'){120}else{3600}
 $audioArgument=if($Mode -eq 'NextUpdateSmoke'){''}else{'-NoSound'}
 $started=Get-Date
-$launch=Start-Process -FilePath $gameExe -ArgumentList "-$Mode -RenderOffscreen -windowed -ForceRes -ResX=$Width -ResY=$Height -unattended -nosplash -NoSaveDisplay $audioArgument" -WindowStyle Hidden -PassThru
+# Own the actual runtime process so the result and endpoint observations cannot
+# accidentally refer to the bootstrap or another already-running player session.
+$launch=Start-Process -FilePath $shippingExe -WorkingDirectory $binaryDirectory -ArgumentList "-$Mode -RenderOffscreen -windowed -ForceRes -ResX=$Width -ResY=$Height -unattended -nosplash -NoSaveDisplay $audioArgument" -WindowStyle Hidden -PassThru
 $samples=[System.Collections.Generic.List[object]]::new()
-do {
-  Start-Sleep -Seconds 2
-  $gameProcesses=@(Get-Process -Name 'Seige','Seige-Win64-Shipping' -ErrorAction SilentlyContinue | Where-Object {$_.Path -and $_.Path.StartsWith($packageRoot,[StringComparison]::OrdinalIgnoreCase)})
-  if($gameProcesses.Count -gt 0){
-    $gameIds=@($gameProcesses.Id)
-    # A failed OS query is not evidence of zero endpoints. Keep this check
-    # fail-closed while the launch/child processes are actually alive.
-    $tcp=@(Get-NetTCPConnection -ErrorAction Stop | Where-Object {$_.OwningProcess -in $gameIds})
-    $udp=@(Get-NetUDPEndpoint -ErrorAction Stop | Where-Object {$_.OwningProcess -in $gameIds})
-    $samples.Add([pscustomobject]@{seconds=[math]::Round(((Get-Date)-$started).TotalSeconds,2);process_ids=$gameIds;tcp=$tcp.Count;udp=$udp.Count})
-  }
+try {
+  do {
+    Start-Sleep -Seconds 2
+    $launch.Refresh()
+    if(-not $launch.HasExited){
+      $gameIds=@($launch.Id)
+      # A failed OS query is not evidence of zero endpoints. Keep this check
+      # fail-closed while the verified runtime process is actually alive.
+      $tcp=@(Get-NetTCPConnection -ErrorAction Stop | Where-Object {$_.OwningProcess -eq $launch.Id})
+      $udp=@(Get-NetUDPEndpoint -ErrorAction Stop | Where-Object {$_.OwningProcess -eq $launch.Id})
+      $samples.Add([pscustomobject]@{seconds=[math]::Round(((Get-Date)-$started).TotalSeconds,2);process_ids=$gameIds;tcp=$tcp.Count;udp=$udp.Count})
+    }
+  } while(-not $launch.HasExited -and ((Get-Date)-$started).TotalSeconds -lt $timeoutSeconds)
+  if(-not $launch.HasExited){throw 'Packaged smoke did not finish before the verification timeout'}
+  $launch.WaitForExit()
+} finally {
+  # Clean up only the process launched here on a timeout or failed OS query.
+  # Unrelated game windows are never selected by name or terminated.
   $launch.Refresh()
-} while(($gameProcesses.Count -gt 0 -or -not $launch.HasExited) -and ((Get-Date)-$started).TotalSeconds -lt $timeoutSeconds)
-if($gameProcesses.Count -gt 0){throw 'Packaged smoke did not finish before the verification timeout'}
+  if(-not $launch.HasExited){
+    $launch.Kill()
+    $launch.WaitForExit(5000) | Out-Null
+  }
+}
+# The process outcome is authoritative. A crash often leaves an older successful
+# report on disk; report that crash before testing the report's age or presence.
+if($launch.ExitCode -ne 0){
+  $exitHex=[BitConverter]::ToUInt32([BitConverter]::GetBytes([int]$launch.ExitCode),0).ToString('X8')
+  throw "Packaged game exited abnormally with code $($launch.ExitCode) (0x$exitHex). Inspect $saveRoot/Crashes and $saveRoot/PresentationSmokeProgress.json; no prior smoke report is accepted."
+}
 $reportPath=Join-Path $saveRoot $reportName
 if(-not (Test-Path -LiteralPath $reportPath)){throw "Missing $reportName"}
 if((Get-Item -LiteralPath $reportPath).LastWriteTime -lt $started){throw 'Smoke report is stale'}
@@ -89,7 +106,6 @@ $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $recordPath -Encodi
 # Keep console logs small; the complete observations and hashes live in recordPath.
 [pscustomobject]@{record=$recordPath;exit_code=$launch.ExitCode;report=$result;socket_samples=$samples.Count;source_files=$sourceInputs.Count;runtime_files=$runtimeFiles.Count;inputs_unchanged=$inputsUnchanged} | ConvertTo-Json -Depth 5
 if(-not $inputsUnchanged){throw 'Source, cooked assets, executable or runtime JSON changed during verification'}
-if($launch.ExitCode -ne 0){throw "Packaged game exited with code $($launch.ExitCode)"}
 if($Mode -eq 'NextUpdateSmoke'){
   if(-not $result.passed -or $result.failures -ne 0 -or $result.completed_stages -ne 38){throw 'Bounded packaged check assertions failed'}
 }elseif(-not $result.ready -or ($Mode -eq 'UiSmoke' -and ($result.failures -ne 0 -or $result.completed_stages -ne 117))){throw 'Packaged smoke assertions failed'}

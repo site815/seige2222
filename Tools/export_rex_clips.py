@@ -15,14 +15,14 @@ manifest = json.loads(manifest_path.read_text())
 bpy.ops.wm.open_mainfile(filepath=str(ART / 'Source/CompanionDog.blend'))
 rig = bpy.data.objects['CompanionDogRig']
 scene = bpy.context.scene
-scene.render.fps = 30
 for name, definition in manifest['animations'].items():
     path = exports / (name + '.fbx')
     if path.exists() and '--replace' not in sys.argv:
         continue
     rig.animation_data.action = bpy.data.actions[name]
+    scene.render.fps = definition['fps']
     scene.frame_start = 1
-    scene.frame_end = 1 + round(definition['duration_seconds'] * 30)
+    scene.frame_end = 1 + round(definition['duration_seconds'] * definition['fps'])
     scene.frame_set(1)
     bpy.ops.object.select_all(action='DESELECT')
     rig.select_set(True)

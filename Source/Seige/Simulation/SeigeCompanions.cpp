@@ -42,14 +42,17 @@ bool FSeigeCompanionSystem::Initialize(const FString& Directory,const FSeigeSimu
     if(!Document->TryGetObjectField(TEXT("dog"),Object)||!Object||!Object->IsValid()){Error=TEXT("Missing dog companion definition");return false;}
     const auto D=*Object;double Count=0,Seed=0;
     if(!D->TryGetStringField(TEXT("name"),Name)||Name.IsEmpty()||!D->TryGetStringField(TEXT("food_resource"),FoodResource)||!Sim.Resources.Contains(FoodResource)||
-       !D->TryGetStringField(TEXT("mesh"),MeshPath)||!D->TryGetStringField(TEXT("walk_animation"),WalkAnimation)||!D->TryGetStringField(TEXT("idle_animation"),IdleAnimation)||
+       !D->TryGetStringField(TEXT("mesh"),MeshPath)||!D->TryGetStringField(TEXT("walk_animation"),WalkAnimation)||!D->TryGetStringField(TEXT("run_animation"),RunAnimation)||!D->TryGetStringField(TEXT("idle_animation"),IdleAnimation)||
        !Number(D,TEXT("initial_count"),Count,0,1)||Count!=FMath::FloorToDouble(Count)||!Number(D,TEXT("seed"),Seed,0,MAX_int32)||Seed!=FMath::FloorToDouble(Seed)||
        !Number(D,TEXT("maximum_health"),MaximumHealth,1,10000)||!Number(D,TEXT("danger_radius_meters"),DangerRadiusMeters,1,1000)||
        !Number(D,TEXT("heal_per_second"),HealPerSecond,.01,1000)||!Number(D,TEXT("depression_days"),DepressionDays,1,365)||DepressionDays!=FMath::FloorToDouble(DepressionDays)||
        !Number(D,TEXT("depression_speed_multiplier"),DepressionSpeedMultiplier,.01,1)||
-       !Number(D,TEXT("walk_kmh"),WalkKmh,.1,20)||!Number(D,TEXT("walk_cycle_meters"),WalkCycleMeters,.05,5)||!Number(D,TEXT("roam_radius_meters"),RoamRadiusMeters,1,1000)||
+       !Number(D,TEXT("walk_kmh"),WalkKmh,.1,20)||!Number(D,TEXT("walk_cycle_meters"),WalkCycleMeters,.05,5)||!Number(D,TEXT("run_cycle_meters"),RunCycleMeters,.05,8)||!Number(D,TEXT("roam_radius_meters"),RoamRadiusMeters,1,1000)||
        !Number(D,TEXT("territory_radius_meters"),TerritoryRadiusMeters,1,1000)||!Number(D,TEXT("damage_alert_radius_meters"),DamageAlertRadiusMeters,1,1000)||
        !Number(D,TEXT("shelter_seconds"),ShelterSeconds,1,3600)||!Number(D,TEXT("run_kmh"),RunKmh,WalkKmh,40)||RoamRadiusMeters>TerritoryRadiusMeters||
+       !Number(D,TEXT("acceleration_meters_per_second_squared"),AccelerationMetersPerSecondSquared,.1,30)||
+       !Number(D,TEXT("deceleration_meters_per_second_squared"),DecelerationMetersPerSecondSquared,.1,50)||
+       !Number(D,TEXT("turn_degrees_per_second"),TurnDegreesPerSecond,30,720)||
        !Number(D,TEXT("food_per_meal_kg"),FoodPerMealKg,.001,100)||!Number(D,TEXT("meal_interval_seconds"),MealIntervalSeconds,1,86400)||
        !Number(D,TEXT("fed_duration_seconds"),FedDurationSeconds,1,172800)||!Number(D,TEXT("feed_radius_meters"),FeedRadiusMeters,1,1000)||
        !Number(D,TEXT("morale_bonus"),MoraleBonus,0,.5)||!Number(D,TEXT("morale_radius_meters"),MoraleRadiusMeters,1,1000)||
@@ -57,7 +60,8 @@ bool FSeigeCompanionSystem::Initialize(const FString& Directory,const FSeigeSimu
        !Number(D,TEXT("view_fov"),ViewFov,45,110)||!Number(D,TEXT("look_sensitivity"),LookSensitivity,.01,1)||
        !Number(D,TEXT("body_radius_meters"),BodyRadiusMeters,.05,1)||!Number(D,TEXT("maximum_slope_grade"),MaximumSlopeGrade,.1,2))
     {Error=TEXT("Invalid companion rule or missing organic food resource");return false;}
-    MetresPerUnit=Sim.MetersPerWorldUnit();Dogs.Reset();ControlledId=0;ControlDirection=FVector2D::ZeroVector;Clock=0;DepressionUntilCalendarUs=0;Random.Initialize(int32(Seed));
+    LocomotionBlendSpace.Empty();D->TryGetStringField(TEXT("locomotion_blend_space"),LocomotionBlendSpace);
+    MetresPerUnit=Sim.MetersPerWorldUnit();Dogs.Reset();ResetControl();MovementConstraint={};Clock=0;DepressionUntilCalendarUs=0;Random.Initialize(int32(Seed));
     const auto* Command=Sim.Buildings.FindByPredicate([&](const auto& B){const auto* D=Sim.Definition(B);return D&&D->Role==TEXT("core");});
     if(Count>0&&Command)
     {
@@ -72,7 +76,7 @@ void FSeigeCompanionSystem::Alert(const FSeigeSimulation& Sim,FSeigeCompanion& D
     if(D.Dead||D.Evacuated)return;
     D.ShelterUntil=Sim.Time+ShelterSeconds;
     if(!D.Aboard&&!D.Sheltered&&!D.Retreating){D.Retreating=true;D.ExitingShuttle=false;D.Route.Empty();D.NextWaypoint=0;}
-    if(ControlledId==D.Id){ControlledId=0;ControlDirection=FVector2D::ZeroVector;}
+    if(ControlledId==D.Id)ResetControl();
 }
 void FSeigeCompanionSystem::NotifyBuildingDamaged(const FSeigeSimulation& Sim,FVector2D Position)
 {
@@ -85,7 +89,8 @@ void FSeigeCompanionSystem::Damage(FSeigeSimulation& Sim,int32 Id,double Amount)
     D->Health=FMath::Max(0.,D->Health-Amount);
     if(D->Health>0){Alert(Sim,*D);return;}
     D->Dead=true;D->Moving=D->Retreating=D->ExitingShuttle=false;D->Route.Empty();D->NextWaypoint=0;
-    if(ControlledId==Id){ControlledId=0;ControlDirection=FVector2D::ZeroVector;}
+    if(ControlledId==Id)ResetControl();
+    D->SpeedMetersPerSecond=D->MotionSpeedMetersPerSecond=0;
     const auto& R=Sim.Calendar.GetRules();
     const int64 Duration=int64(DepressionDays)*(R.DaylightMicroseconds+R.NightMicroseconds);
     DepressionUntilCalendarUs=FMath::Min<int64>(FSeigeWorldCalendar::MaximumElapsedMicroseconds,Sim.Calendar.ElapsedMicroseconds()+Duration);
@@ -96,9 +101,14 @@ double FSeigeCompanionSystem::WorkerSpeedMultiplier(const FSeigeSimulation& Sim)
 bool FSeigeCompanionSystem::SetControlled(int32 Id)
 {
     if(Id>0&&(!Find(Id)||!IsOutside(*Find(Id))||Find(Id)->Retreating||Find(Id)->Sheltered||Find(Id)->ExitingShuttle))return false;
-    ControlledId=Id;ControlDirection=FVector2D::ZeroVector;
-    if(auto* D=Find(Id)){D->Route.Empty();D->NextWaypoint=0;D->Moving=false;}
+    ResetControl();ControlledId=Id;
+    if(auto* D=Find(Id)){D->Route.Empty();D->NextWaypoint=0;D->Moving=false;D->SpeedMetersPerSecond=D->MotionSpeedMetersPerSecond=0;ControlFacing=D->Heading;}
     return true;
+}
+void FSeigeCompanionSystem::ResetControl()
+{
+    if(auto* D=Find(ControlledId)){D->SpeedMetersPerSecond=D->MotionSpeedMetersPerSecond=0;D->Moving=false;}
+    ControlledId=0;ControlDirection=FVector2D::ZeroVector;ControlSprint=false;ControlFacing=0;
 }
 double FSeigeCompanionSystem::EfficiencyAt(FVector2D P) const
 {
@@ -112,8 +122,8 @@ void FSeigeCompanionSystem::Tick(FSeigeSimulation& Sim,double Seconds)
     Clock=Sim.Time;const double Metres=Sim.MetersPerWorldUnit();if(Metres<=0)return;
     for(auto& D:Dogs)
     {
-        D.Moving=false;
-        if(Sim.Escaped||Sim.Failed){D.Evacuated=true;ControlledId=0;continue;}
+        D.Moving=false;D.SpeedMetersPerSecond=0;
+        if(Sim.Escaped||Sim.Failed){D.Evacuated=true;ResetControl();D.MotionSpeedMetersPerSecond=0;continue;}
         if(D.Evacuated||D.Dead)continue;
         const auto* Core=Sim.Buildings.FindByPredicate([&](const auto& B){const auto* D=Sim.Definition(B);return D&&D->Role==TEXT("core");});if(!Core)continue;
         D.Home=Core->Position;
@@ -155,13 +165,29 @@ void FSeigeCompanionSystem::Tick(FSeigeSimulation& Sim,double Seconds)
         const FVector2D Before=D.Position;
         if(ControlledId==D.Id)
         {
-            const FVector2D Desired=D.Position+ControlDirection*Step;const double Radius=BodyRadiusMeters/Metres,Limit=Sim.WorldHalfSize*3-Radius;
-            auto Allowed=[&](FVector2D P){return FVector2D::Distance(P,D.Home)*Metres<=TerritoryRadiusMeters&&FMath::Abs(P.X)<Limit&&FMath::Abs(P.Y)<Limit&&Clear(Sim,P,Radius)&&Sim.Environment.SegmentDry(D.Position,P,Radius);};
-            if(Allowed(Desired))D.Position=Desired;
-            else
+            const double Radius=BodyRadiusMeters/Metres,Limit=Sim.WorldHalfSize*3-Radius;
+            auto Allowed=[&](FVector2D P){return FVector2D::Distance(P,D.Home)*Metres<=TerritoryRadiusMeters&&FMath::Abs(P.X)<Limit&&FMath::Abs(P.Y)<Limit&&Clear(Sim,P,Radius)&&Sim.ClearWalkingLine(D.Position,P,Radius)&&Sim.Environment.SegmentDry(D.Position,P,Radius)&&(!MovementConstraint||MovementConstraint(D.Position,P,BodyRadiusMeters));};
+            const bool HasInput=!ControlDirection.IsNearlyZero();
+            const double DesiredHeading=HasInput?FMath::RadiansToDegrees(FMath::Atan2(ControlDirection.Y,ControlDirection.X)):ControlFacing;
+            // Integrate short physical strides so turning and collision stay stable
+            // at fixed simulation steps. Rex moves along his body, never sideways.
+            const int32 Substeps=FMath::Max(1,FMath::CeilToInt(Seconds/.025));
+            const double Dt=Seconds/Substeps;
+            for(int32 I=0;I<Substeps;++I)
             {
-                const FVector2D AlongX(Desired.X,D.Position.Y),AlongY(D.Position.X,Desired.Y);
-                if(Allowed(AlongX))D.Position=AlongX;else if(Allowed(AlongY))D.Position=AlongY;
+                const double Turn=FMath::FindDeltaAngleDegrees(D.Heading,DesiredHeading);
+                D.Heading=FMath::UnwindDegrees(D.Heading+FMath::Clamp(Turn,-TurnDegreesPerSecond*Dt,TurnDegreesPerSecond*Dt));
+                const double Alignment=FMath::Max(0.,FMath::Cos(FMath::DegreesToRadians(FMath::FindDeltaAngleDegrees(D.Heading,DesiredHeading))));
+                const double DesiredSpeed=HasInput?(ControlSprint?RunKmh:WalkKmh)/3.6*ControlDirection.Size()*Alignment*Alignment:0;
+                const double Rate=DesiredSpeed>D.MotionSpeedMetersPerSecond?AccelerationMetersPerSecondSquared:DecelerationMetersPerSecondSquared;
+                const double PreviousSpeed=D.MotionSpeedMetersPerSecond;
+                D.MotionSpeedMetersPerSecond+=FMath::Clamp(DesiredSpeed-D.MotionSpeedMetersPerSecond,-Rate*Dt,Rate*Dt);
+                const double Travel=(PreviousSpeed+D.MotionSpeedMetersPerSecond)*.5*Dt/Metres;
+                if(Travel<=1.e-9)continue;
+                const double Angle=FMath::DegreesToRadians(D.Heading);
+                const FVector2D Desired=D.Position+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Travel;
+                if(Allowed(Desired))D.Position=Desired;
+                else D.MotionSpeedMetersPerSecond=0;
             }
         }
         else
@@ -194,7 +220,12 @@ void FSeigeCompanionSystem::Tick(FSeigeSimulation& Sim,double Seconds)
             {D.Route.Empty();D.NextWaypoint=0;D.RestUntil=Clock+RestSeconds;if(D.Retreating){D.Retreating=false;D.Sheltered=true;}D.ExitingShuttle=false;}
         }
         const FVector2D Delta=D.Position-Before;D.Moving=Delta.SizeSquared()>1.e-9;
-        if(D.Moving){D.Heading=FMath::RadiansToDegrees(FMath::Atan2(Delta.Y,Delta.X));D.DistanceWalked+=Delta.Size()*Metres;}
+        if(D.Moving)
+        {
+            if(ControlledId!=D.Id)D.Heading=FMath::RadiansToDegrees(FMath::Atan2(Delta.Y,Delta.X));
+            D.DistanceWalked+=Delta.Size()*Metres;D.SpeedMetersPerSecond=Delta.Size()*Metres/Seconds;
+        }
+        if(ControlledId!=D.Id)D.MotionSpeedMetersPerSecond=D.SpeedMetersPerSecond;
     }
 }
 bool FSeigeCompanionSystem::Save(const TSharedPtr<FJsonObject>& Object) const
@@ -240,5 +271,5 @@ bool FSeigeCompanionSystem::Load(const TSharedPtr<FJsonObject>& Object,const FSe
         for(const auto& Waypoint:*Route){FVector2D P;auto W=Waypoint->AsObject();if(!W||!CompanionJsonPoint(W,TEXT("p"),P,Sim.WorldHalfSize*3)){Error=TEXT("Invalid companion route");return false;}D.Route.Add(P);}
         New.Add(D);
     }
-    Dogs=MoveTemp(New);Clock=Time;DepressionUntilCalendarUs=int64(Depression);Random.Initialize(int32(Seed));ControlledId=0;ControlDirection=FVector2D::ZeroVector;Error.Empty();return true;
+    Dogs=MoveTemp(New);Clock=Time;DepressionUntilCalendarUs=int64(Depression);Random.Initialize(int32(Seed));ResetControl();MovementConstraint={};Error.Empty();return true;
 }

@@ -106,10 +106,16 @@ void FSeigeWorkerSystem::Release(FSeigeWorker& W)
     if(W.ChargingBuildingId){W.SuspendedActivity=TEXT("idle");return;}
     W.Activity=TEXT("idle");W.Route.Empty();W.NextWaypoint=0;W.PhaseSeconds=0;W.RetryAt=0;W.SuspendedActivity.Empty();
 }
+FVector2D FSeigeWorkerSystem::WorkstationPosition(const FSeigeSimulation& S,const FSeigeBuilding& B,int32 Slot) const
+{
+    const double Separation=Number(TEXT("workstation_spacing_meters"))/S.MetersPerWorldUnit();
+    const auto& Port=S.Definition(B)->AccessPort;
+    return S.BuildingAccessPoint(B)+FVector2D(-Port.Y,Port.X)*((Slot+1)*Separation);
+}
 FVector2D FSeigeWorkerSystem::WorkPosition(const FSeigeSimulation& S,const FSeigeWorker& W) const
 {
     const double Separation=Number(TEXT("workstation_spacing_meters"))/S.MetersPerWorldUnit();
-    if(const auto* B=S.FindBuilding(W.BuildingId)){const auto& Port=S.Definition(*B)->AccessPort;return S.BuildingAccessPoint(*B)+FVector2D(-Port.Y,Port.X)*((W.StationSlot+1)*Separation);}
+    if(const auto* B=S.FindBuilding(W.BuildingId))return WorkstationPosition(S,*B,W.StationSlot);
     if(const auto* R=S.FindRoad(W.RoadId)){const FVector2D Along=(R->B-R->A).GetSafeNormal();return S.RoadAccessPoint(*R)+Along*((W.StationSlot+1)*Separation);}
     return W.Position;
 }

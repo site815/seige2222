@@ -7,7 +7,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
 {
-bool LogisticsFixture(FSeigeSimulation& S,int32& Port,int32& Generator,FString& Error,int32* EarlierSensor=nullptr)
+bool LogisticsFixture(FSeigeSimulation& S,int32& Port,int32& Generator,FString& Error,int32* EarlierSensor=nullptr,const FString& SecondDefinition=TEXT("fuel_generator"))
 {
     if(!S.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),Error,false,false))return false;
     for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
@@ -19,20 +19,65 @@ bool LogisticsFixture(FSeigeSimulation& S,int32& Port,int32& Generator,FString& 
         B.InstalledMaterials=Cost;B.ConstructionProgress=1;B.IsConstructing=false;B.Builders=B.BuildersOnSite=B.TravellingBuilders=0;Id=B.Id;return true;
     };
     if(EarlierSensor&&!Install(TEXT("sensor"),FVector2D(0,-1300),*EarlierSensor))return false;
-    if(!Install(TEXT("trading_port"),FVector2D(1300,0),Port)||!Install(TEXT("fuel_generator"),FVector2D(0,1300),Generator))return false;
+    if(!Install(TEXT("trading_port"),FVector2D(1300,0),Port)||!Install(SecondDefinition,FVector2D(0,1300),Generator))return false;
+    // Isolate worker-sized dispatch from autonomous cargo vehicles. Every
+    // active body remains a real core generalist; only one is available now.
+    for(auto& T:S.TransportVehicles.Bodies){T.Embarked=true;T.Status=TEXT("Aboard shuttle");}
     int32 Index=0;
     for(auto& W:S.Workers.Bodies)if(W.State==TEXT("active"))
     {
-        W.BuildingId=W.RoadId=W.DeliveryId=W.ContainerId=0;W.ContainerKind.Empty();W.Route.Empty();W.NextWaypoint=0;W.Outdoor=true;W.Position=S.BuildingAccessPoint(S.Buildings[0]);
+        W.CrewBuildingId=S.Buildings[0].Id;W.BuildingId=W.RoadId=W.DeliveryId=W.ContainerId=W.TransportVehicleId=W.ChargingBuildingId=0;W.ContainerKind.Empty();W.Route.Empty();W.NextWaypoint=0;W.Outdoor=true;W.Position=S.BuildingAccessPoint(S.Buildings[0]);
         if(Index==0){W.Activity=TEXT("operate");W.BuildingId=S.Buildings[0].Id;}
         else if(Index==1)W.Activity=TEXT("idle");
-        else if(Index==2){W.Activity=TEXT("operate");W.BuildingId=Port;}
-        else if(Index==3){W.Activity=TEXT("operate");W.BuildingId=Generator;}
         else W.Activity=TEXT("return");
         ++Index;
     }
     S.Workers.RefreshMetrics(S);return true;
 }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeClaimedProductionRefillTest,"Seige.Workers.ClaimedCargoDoesNotSuppressProductionRefill",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeClaimedProductionRefillTest::RunTest(const FString&)
+{
+    FSeigeSimulation S;FString Error;int32 Port=0,Generator=0;
+    if(!LogisticsFixture(S,Port,Generator,Error)){AddError(Error);return false;}
+    const int32 Core=S.Buildings[0].Id;const FString Alloy=TEXT("alloy");
+    if(!S.PlaceBuilding(TEXT("turret"),FVector2D(0,-1300),Error)){AddError(Error);return false;}
+    const int32 Site=S.Buildings.Last().Id;const double Bill=S.ConstructionCost(S.Buildings.Last()).FindRef(Alloy);
+    // Transfer only existing paid-kit stock. The truck promises the whole
+    // tower alloy bill; six additional kilograms remain at the core.
+    auto Move=[&](int32 Destination,const FString& Resource,double Amount)
+    {S.FindBuilding(Core)->Inventory.FindOrAdd(Resource)-=Amount;S.FindBuilding(Destination)->Inventory.FindOrAdd(Resource)+=Amount;};
+    const FString Fuel=S.Energy.Definition(S.FindBuilding(Generator)->DefId)->FuelResource;
+    Move(Generator,Fuel,S.Energy.FuelDemand(S.FindBuilding(Generator)->DefId,Fuel));
+    Move(Generator,Alloy,S.Number(TEXT("repair_buffer_units")));
+    const double Spare=S.FindBuilding(Core)->Inventory.FindRef(Alloy)-Bill-6.;
+    if(!TestTrue(TEXT("Finite starting stock covers the isolated construction and refill fixture"),Spare>=36.))return false;
+    Move(Port,Alloy,Spare);
+    for(auto& T:S.TransportVehicles.Bodies){T.Embarked=false;T.Position=S.BuildingAccessPoint(*S.FindBuilding(Core));}
+    if(!TestTrue(TEXT("The real cargo vehicle accepts the ordinary construction pickup"),S.TransportVehicles.Dispatch(S,Core,Site,0,Alloy,Bill,true)))return false;
+    const int32 ExistingDelivery=S.Couriers.Last().Id;const double Claim=S.Couriers.Last().ReservedAmount;
+    auto& Handler=S.Workers.Bodies[1];Handler.CrewBuildingId=Handler.BuildingId=Port;Handler.Activity=TEXT("operate");Handler.Position=S.BuildingAccessPoint(*S.FindBuilding(Port));
+    S.Workers.RefreshMetrics(S);
+    TestEqual(TEXT("The uncommitted core alloy is below a twelve-kilogram worker bill"),S.Spendable(*S.FindBuilding(Core),Alloy),6.);
+    TestTrue(TEXT("Gross stock falsely appears to exceed the complete production buffer"),S.FindBuilding(Core)->Inventory.FindRef(Alloy)>S.ProductionInputBuffer(*S.FindBuilding(Core),S.TextRule(TEXT("population_recipe")),Alloy));
+    const double Stock=S.TotalStock(Alloy);const int32 Bodies=S.Workers.Bodies.Num();const auto Before=Handler.Position;
+    S.StepLogistics(S.Number(TEXT("dispatch_interval")));
+    const auto* Refill=S.Couriers.FindByPredicate([&](const auto& C){return C.SourceId==Port&&C.TargetId==Core&&C.Resource==Alloy;});
+    TestTrue(TEXT("The port's real crew dispatches unreserved replacement-worker input"),Refill&&!Refill->WorkerId.IsEmpty()&&Refill->ReservedAmount>=6);
+    const auto* Pending=S.Couriers.FindByPredicate([&](const auto& C){return C.Id==ExistingDelivery;});
+    TestTrue(TEXT("Production refill never confiscates an existing construction pickup"),Pending&&Pending->ReservedAmount==Claim&&Pending->Amount==0);
+    TestTrue(TEXT("Dispatch neither creates material, bodies nor instant movement"),S.TotalStock(Alloy)==Stock&&S.Workers.Bodies.Num()==Bodies&&S.Workers.Bodies[1].Position.Equals(Before));
+    // A paid, existing core generalist is waiting at the empty worksite. The
+    // truck's source loader must retain construction intent to borrow it.
+    auto& Builder=S.Workers.Bodies[2];Builder.Activity=TEXT("build");Builder.BuildingId=Site;
+    Builder.Position=S.Workers.WorkstationPosition(S,*S.FindBuilding(Site),0);Builder.Route.Empty();Builder.NextWaypoint=0;
+    const auto BuilderPosition=Builder.Position;const FString BuilderId=Builder.Id;
+    S.TransportVehicles.Tick(S,.1);
+    TestEqual(TEXT("The waiting real builder can collect the construction load at its source"),S.TransportVehicles.Bodies[0].HandlerWorkerId,BuilderId);
+    TestTrue(TEXT("The builder must physically travel to the truck before any cargo loads"),S.Workers.Find(BuilderId)->Position.Equals(BuilderPosition)&&S.Couriers[0].Amount==0);
+    TestTrue(TEXT("Borrowing the builder retains the actual last core operator"),S.Workers.Bodies[0].Activity==TEXT("operate")&&S.Workers.Bodies[0].TransportVehicleId==0);
+    return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeLogisticsPriorityTest,"Seige.Workers.EssentialDispatchAndFiniteTails",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
@@ -79,6 +124,53 @@ bool FSeigeLogisticsPriorityTest::RunTest(const FString&)
     FSeigeSimulation Reordered=Base;Reordered.DeliveryPriorities.Swap(Reordered.DeliveryPriorities.Find(TEXT("fuel")),Reordered.DeliveryPriorities.Find(TEXT("trade")));
     Reordered.StepLogistics(Reordered.Number(TEXT("dispatch_interval")));
     TestTrue(TEXT("The validated editable category order controls actual scheduling"),Reordered.Couriers.Num()==1&&Reordered.Couriers[0].TargetId==Port);
+
+    // An accepted finite export must receive its final load before a standing
+    // refinery buffer consumes all new supply. Preserve a refinery delivery
+    // already accepted before the export; ordering applies only to free stock.
+    FSeigeSimulation Export;int32 ExportPort=0,Refinery=0;
+    if(!LogisticsFixture(Export,ExportPort,Refinery,Error,nullptr,TEXT("biofuel_refinery"))){AddError(Error);return false;}
+    Transfer(Export,ExportPort,Repair,RepairBuffer);Transfer(Export,Refinery,Repair,RepairBuffer);Transfer(Export,Refinery,TEXT("water"),80);
+    const FString Biomass=TEXT("carbon");const double Order=200,TailAmount=23.925,ExistingLoad=8;
+    Transfer(Export,ExportPort,Biomass,Order-TailAmount);
+    const double InitialCarbon=Export.TotalStock(Biomass),InitialCredit=Export.Credits,InitialFuel=Export.ProducedUnits.FindRef(TEXT("fuel"));
+    const double InitialEnergy=Export.Energy.ConsumedKWh;
+    if(!TestTrue(TEXT("A real worker already accepted one ordinary refinery input load"),Export.Workers.Dispatch(Export,Core,Refinery,0,Biomass,ExistingLoad,false)))return false;
+    const int32 PriorDelivery=Export.Couriers.Last().Id;const FString PriorWorker=Export.Couriers.Last().WorkerId;
+    if(!Export.Trade.TryTrade(Export,ExportPort,Biomass,Order,false,Error)){AddError(Error);return false;}
+    for(auto& W:Export.Workers.Bodies)if(W.Activity==TEXT("return")){W.Activity=TEXT("idle");break;}
+    FSeigeSimulation BufferFirst=Export;
+    BufferFirst.DeliveryPriorities.Swap(BufferFirst.DeliveryPriorities.Find(TEXT("trade")),BufferFirst.DeliveryPriorities.Find(TEXT("production")));
+    BufferFirst.StepLogistics(BufferFirst.Number(TEXT("dispatch_interval")));
+    TestFalse(TEXT("The former production-first order reproduces the unfilled export tail"),BufferFirst.Couriers.ContainsByPredicate([&](const auto& C){return C.TargetId==ExportPort&&C.Resource==Biomass;}));
+    Export.StepLogistics(Export.Number(TEXT("dispatch_interval")));
+    const auto* ExportLoad=Export.Couriers.FindByPredicate([&](const auto& C){return C.TargetId==ExportPort&&C.Resource==Biomass;});
+    const auto* PriorLoad=Export.Couriers.FindByPredicate([&](const auto& C){return C.Id==PriorDelivery;});
+    TestTrue(TEXT("Accepted export tail precedes a competing recurring production buffer"),ExportLoad&&FMath::IsNearlyEqual(ExportLoad->ReservedAmount,TailAmount,1.e-8));
+    TestTrue(TEXT("The earlier physical refinery pickup keeps its worker and exact cargo claim"),PriorLoad&&PriorLoad->WorkerId==PriorWorker&&PriorLoad->ReservedAmount==ExistingLoad);
+    TestEqual(TEXT("Scheduling the finite export creates no material or money"),Export.TotalStock(Biomass),InitialCarbon);
+    TestEqual(TEXT("Credit appears only after the real shipment settles"),Export.Credits,InitialCredit);
+    // Keep the actual core operator, generation and charging available. The
+    // ordinary simulation may assemble additional workers only by paying its
+    // normal finite material and energy bill; no bodies are granted here.
+    double FuelWhenPaid=-1;TArray<FString> InitialBodies;
+    for(const auto& W:Export.Workers.Bodies)InitialBodies.Add(W.Id);
+    for(int32 I=0;I<600;++I)
+    {
+        Export.Tick(2);
+        if(FuelWhenPaid<0&&Export.Credits>InitialCredit)FuelWhenPaid=Export.ProducedUnits.FindRef(TEXT("fuel"));
+        if(FuelWhenPaid>=0&&Export.ProducedUnits.FindRef(TEXT("fuel"))>InitialFuel+Export.Recipes[TEXT("refine_biofuel")].Outputs[TEXT("fuel")])break;
+    }
+    TestTrue(TEXT("Finite physical export finishes and receives its ordinary quoted payment"),Export.FindBuilding(ExportPort)->Shipment.Resource.IsEmpty()&&FMath::IsNearlyEqual(Export.Credits-InitialCredit,Export.TradeQuote(Biomass,Order,false),1.e-9));
+    // The remaining finite fifty kilograms can finish processing before the
+    // ship returns. Require further newly delivered batches beyond the one
+    // eight-kilogram pickup that predated the accepted export, not an extra
+    // impossible batch after that finite source has already been exhausted.
+    TestTrue(TEXT("Standing production receives further physical input while the finite export settles"),FuelWhenPaid>=0&&Export.ProducedUnits.FindRef(TEXT("fuel"))>InitialFuel+Export.Recipes[TEXT("refine_biofuel")].Outputs[TEXT("fuel")]);
+    const double Batches=(Export.ProducedUnits.FindRef(TEXT("fuel"))-InitialFuel)/Export.Recipes[TEXT("refine_biofuel")].Outputs[TEXT("fuel")];
+    TestTrue(TEXT("Exported and physically processed biomass exactly reconcile to finite source stock"),FMath::IsNearlyEqual(Export.TotalStock(Biomass)+Order+Batches*ExistingLoad,InitialCarbon,1.e-7));
+    for(const auto& Id:InitialBodies)TestNotNull(TEXT("Physical continuation retains every original worker body"),Export.Workers.Find(Id));
+    TestTrue(TEXT("Actual trading and processing consume stored grid energy"),Export.Energy.ConsumedKWh>InitialEnergy);
     return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeConstructionSourceTest,"Seige.Workers.ConstructionUsesBulkBeforeOperatingBuffers",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
@@ -181,7 +273,19 @@ bool FSeigeRawInputBufferTest::RunTest(const FString&)
     const FString Fuel=Base.Energy.Definition(Base.FindBuilding(Generator)->DefId)->FuelResource;
     if(!Transfer(Base,Core,Generator,Fuel,Base.Energy.FuelDemand(Base.FindBuilding(Generator)->DefId,Fuel)))return false;
     const FString Resource=TEXT("iron_ore"),Recipe=TEXT("smelt_alloy");
+    // Probe refinery buffers independently of the core's strategic raw reserve:
+    // that reserve is a valid nearer source, but is not a second full freight load.
+    Base.DeliveryPriorities={TEXT("production")};Base.FindBuilding(Core)->Enabled=false;
     if(!Transfer(Base,Core,Port,Resource,Base.FindBuilding(Core)->Inventory.FindRef(Resource)))return false;
+    // Freight between two specialist buildings belongs to their actual crews,
+    // rather than borrowing an unrelated core generalist as an invisible hauler.
+    bool ShippingCrew=false,ReceivingCrew=false;
+    for(auto& W:Base.Workers.Bodies)if(W.State==TEXT("active"))
+    {
+        if(!ShippingCrew&&W.Activity==TEXT("idle")){W.CrewBuildingId=Port;ShippingCrew=true;}
+        else if(!ReceivingCrew&&W.Activity==TEXT("return")){W.CrewBuildingId=Refinery;ReceivingCrew=true;}
+    }
+    if(!TestTrue(TEXT("Both endpoints have finite physical crew assigned"),ShippingCrew&&ReceivingCrew))return false;
     Base.Workers.RefreshMetrics(Base);const int32 BodyCount=Base.Workers.Bodies.Num();
     const double Haul=Base.Workers.HaulUnits(Base,Resource),Target=Base.ProductionInputBuffer(*B,Recipe,Resource);
     TestEqual(TEXT("The authored ore payload obeys the real forty-kilogram carrier limit"),Haul,40.);
@@ -230,28 +334,31 @@ bool FSeigeDispatchEligibilityTest::RunTest(const FString&)
     auto* Port=S.Buildings.FindByPredicate([&](const auto& B){return S.Definition(B)->Role==TEXT("trade");});
     if(!TestNotNull(TEXT("Established scenario supplies a real trade destination"),Port))return false;
     const int32 PortId=Port->Id;const FString Body=S.TextRule(TEXT("inactive_worker_resource"));
+    // Busy permanent crews cannot provide freight workers. Keep exactly one
+    // arrived core operator and leave every other existing body returning.
     bool KeptCoreOperator=false;TMap<FString,FVector2D> Positions;
+    for(auto& T:S.TransportVehicles.Bodies){T.Embarked=true;T.Status=TEXT("Aboard shuttle");}
     for(auto& W:S.Workers.Bodies)
     {
         Positions.Add(W.Id,W.Position);
         if(W.State!=TEXT("active"))continue;
-        if(W.Activity==TEXT("idle"))W.Activity=TEXT("return");
-        if(W.BuildingId==CoreId&&W.Activity==TEXT("operate"))
-        {if(KeptCoreOperator)W.Activity=TEXT("to_job");else KeptCoreOperator=true;}
+        W.Activity=TEXT("return");
+        if(W.CrewBuildingId==CoreId&&!KeptCoreOperator)
+        {W.Activity=TEXT("operate");W.BuildingId=CoreId;KeptCoreOperator=true;}
     }
     S.Workers.RefreshMetrics(S);
-    TestFalse(TEXT("Incoming replacements cannot be lent as arrived core operators"),S.Workers.HasDispatchWorker(S,TEXT("alloy")));
+    TestFalse(TEXT("Actual dispatch cannot lend the only arrived core operator"),S.Workers.Dispatch(S,CoreId,PortId,0,TEXT("alloy"),1,false));
     TestTrue(TEXT("An existing stored body may relocate when all ordinary haulers are busy"),S.Workers.HasDispatchWorker(S,Body));
     FSeigeSimulation Closed=S;Closed.DeploymentHatchOpen=false;
     TestFalse(TEXT("An unopened shuttle cannot dispatch ordinary freight"),Closed.Workers.HasDispatchWorker(Closed,TEXT("alloy")));
     TestFalse(TEXT("An unopened shuttle cannot dispatch a stored worker either"),Closed.Workers.HasDispatchWorker(Closed,Body));
     FSeigeSimulation Borrow=S;
-    auto* Incoming=Borrow.Workers.Bodies.FindByPredicate([&](const auto& W){return W.State==TEXT("active")&&W.BuildingId==CoreId&&W.Activity==TEXT("to_job");});
+    auto* Incoming=Borrow.Workers.Bodies.FindByPredicate([&](const auto& W){return W.State==TEXT("active")&&W.CrewBuildingId==CoreId&&W.Activity==TEXT("return");});
     if(!TestNotNull(TEXT("Fixture retains the actual incoming core replacement"),Incoming))return false;
-    Incoming->Activity=TEXT("operate");
+    Incoming->Activity=TEXT("operate");Incoming->BuildingId=CoreId;
     TestTrue(TEXT("A second arrived core operator becomes a legal hauler"),Borrow.Workers.HasDispatchWorker(Borrow,TEXT("alloy")));
     TestTrue(TEXT("Ordinary dispatch can borrow that body"),Borrow.Workers.Dispatch(Borrow,CoreId,PortId,0,TEXT("alloy"),1,false));
-    TestFalse(TEXT("Dispatch cannot lend the final arrived core operator"),Borrow.Workers.HasDispatchWorker(Borrow,TEXT("alloy")));
+    TestFalse(TEXT("Dispatch cannot lend the final arrived core operator"),Borrow.Workers.Dispatch(Borrow,CoreId,PortId,0,TEXT("alloy"),1,false));
     const int32 Count=S.Workers.Bodies.Num(),Active=S.Population;const double Before=S.TotalStock(Body);
     if(!S.SetPortWorkerTarget(PortId,1,Error)){AddError(Error);return false;}
     S.StepLogistics(S.Number(TEXT("dispatch_interval")));

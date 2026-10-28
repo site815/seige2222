@@ -44,6 +44,7 @@ bool FSeigeWorkerLandingLedgerTest::RunTest(const FString&)
         if(Active!=S.Population||S.Couriers.Num()>Active){AddError(TEXT("Delivery bodies exceed the authoritative active population"));return false;}LastTime=S.Time;
     }
     TestFalse(TEXT("Finite starter workers and delivered kit complete command deployment"),S.Buildings[0].IsConstructing);TestTrue(TEXT("Observed actual hatch exit, hauling and worksite construction"),SawExit&&SawCarry&&SawConstruction);
+    TestTrue(TEXT("Initial deployment finishes within three minutes including descent, hatch exit and physical material delivery"),S.Time<180.);
     for(const auto& Id:Ids)TestNotNull(TEXT("Role changes retain every original manufactured body ID"),S.Workers.Find(Id));
     TestTrue(TEXT("Core paid installation conserves its carried bill"),FMath::IsNearlyEqual(S.InventoryMassKg(S.Buildings[0].InstalledMaterials),S.InventoryMassKg(S.ConstructionCost(S.Buildings[0])),1.e-6));
     return true;
@@ -140,8 +141,8 @@ bool FSeigeWorkerCrewReservationTest::RunTest(const FString&)
     // complete bill. The separate pickup test covers physical hauling.
     auto* B=S.FindBuilding(Site);for(const auto& P:S.ConstructionCost(*B)){if(S.FindBuilding(CoreId)->Inventory.FindRef(P.Key)<P.Value){AddError(TEXT("Finite kit cannot pay scheduling fixture"));return false;}S.FindBuilding(CoreId)->Inventory.FindOrAdd(P.Key)-=P.Value;B->ConstructionMaterials.Add(P.Key,P.Value);}
     WorkerAgentStep(S,S.FixedStepSeconds());int32 Travelling=0,AvailableHaulers=0;bool Borrowed=false;
-    for(const auto& W:S.Workers.Bodies){if(W.BuildingId==Site&&W.Activity==TEXT("to_build")){++Travelling;Borrowed|=Operators.Contains(W.Id);}if(W.State==TEXT("active")&&W.Activity==TEXT("idle"))++AvailableHaulers;}
-    TestEqual(TEXT("A fully supplied site receives its authored finite crew"),Travelling,S.Definition(*B)->ConstructionWorkers);TestTrue(TEXT("Actual spare core operators walk to the new worksite"),Borrowed);TestTrue(TEXT("Construction preserves an available logistics worker"),AvailableHaulers>0);
+    for(const auto& W:S.Workers.Bodies){if(W.BuildingId==Site&&W.Activity==TEXT("to_build")){++Travelling;Borrowed|=Operators.Contains(W.Id);}if(W.State==TEXT("active")&&W.CrewBuildingId==CoreId&&W.Activity==TEXT("operate"))++AvailableHaulers;}
+    TestEqual(TEXT("A fully supplied site receives its authored finite crew"),Travelling,S.Definition(*B)->ConstructionWorkers);TestTrue(TEXT("Actual spare core operators walk to the new worksite"),Borrowed);TestTrue(TEXT("Construction leaves a real core generalist available for hauling"),AvailableHaulers>1);
     TestEqual(TEXT("Scheduling creates no additional bodies"),S.Workers.Bodies.Num(),Count);
     for(int32 I=0;I<90&&S.FindBuilding(Site)->IsConstructing;++I)S.Tick(10);
     TestFalse(TEXT("A paid site cannot deadlock behind surplus core operation"),S.FindBuilding(Site)->IsConstructing);
@@ -151,27 +152,28 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeWorkerBusyLogisticsReserveTest,"Seige.Wor
 bool FSeigeWorkerBusyLogisticsReserveTest::RunTest(const FString&)
 {
     FString Error;FSeigeSimulation S;if(!WorkerAgentDeploy(S,Error)){AddError(Error);return false;}
-    // Manufacture the seventh real body through the ordinary paid core recipe.
-    for(int32 I=0;I<300&&S.Population<7;++I)S.Tick(10);
-    if(!TestTrue(TEXT("The finite kit supplies one core operator and six real hauling bodies"),S.Population>=7)||!TestTrue(TEXT("Deployment has no outstanding deliveries"),S.Couriers.IsEmpty()))return false;
+    // Exercise the retained road scheduler explicitly; roads are deferred in
+    // normal scenarios. Five landed core generalists supply four real haulers.
+    S.SetRoadsEnabledForTest(true);S.Tick(30);
+    if(!TestEqual(TEXT("Five real permanent core workers form the fixture"),S.Population,5)||!TestTrue(TEXT("Deployment has no outstanding deliveries"),S.Couriers.IsEmpty()))return false;
     const int32 CoreId=S.Buildings[0].Id,BodyCount=S.Workers.Bodies.Num();const FVector2D Port=S.BuildingAccessPoint(S.Buildings[0]);
     if(!S.PlaceRoad(Port,Port+FVector2D(400,0),Error)){AddError(Error);return false;}
     const int32 RoadId=S.Roads.Last().Id;const FVector2D Worksite=S.RoadAccessPoint(S.Roads.Last());
     const auto Bill=S.RoadCost(S.Roads.Last().A,S.Roads.Last().B,S.Roads.Last().TargetTier);
     FString Resource;for(const auto& P:Bill)if(P.Value>0&&S.FindBuilding(CoreId)->Inventory.FindRef(P.Key)>=P.Value){Resource=P.Key;break;}
     if(Resource.IsEmpty()){AddError(TEXT("The road requires genuine material from the remaining finite kit"));return false;}
-    const double Quantity=Bill[Resource]/6,Before=S.FindBuilding(CoreId)->Inventory.FindRef(Resource);
+    const double Quantity=Bill[Resource]/4,Before=S.FindBuilding(CoreId)->Inventory.FindRef(Resource);
     if(!TestTrue(TEXT("Each physically carried load fits the configured capacity"),Quantity<=S.Workers.HaulUnits(S,Resource)))return false;
     TArray<FString> Haulers;
     for(auto& W:S.Workers.Bodies)if(W.State==TEXT("active"))
     {
         W.BuildingId=W.RoadId=W.DeliveryId=W.ContainerId=0;W.ContainerKind.Empty();W.Route.Empty();W.NextWaypoint=0;W.RetryAt=0;W.Outdoor=true;W.Position=Port;W.Activity=TEXT("idle");
-        if(Haulers.Num()<6)Haulers.Add(W.Id);else{W.BuildingId=CoreId;W.Activity=TEXT("operate");}
+        W.CrewBuildingId=CoreId;if(Haulers.Num()<4)Haulers.Add(W.Id);else{W.BuildingId=CoreId;W.Activity=TEXT("operate");}
     }
     S.Workers.RefreshMetrics(S);
     TSharedPtr<FJsonObject> Policy;if(!WorkerAgentRead(FPaths::Combine(WorkerAgentRules(),TEXT("workers.json")),Policy))return false;
-    // Isolate the real arrival boundary: six existing bodies carry portions of
-    // the accepted bill, with one unloading and five still en route. Inventory
+    // Isolate the real arrival boundary: four existing bodies carry portions of
+    // the accepted bill, with one unloading and three still en route. Inventory
     // is debited once, rather than granting cargo or completing the road.
     for(int32 I=0;I<Haulers.Num();++I)
     {
@@ -182,7 +184,7 @@ bool FSeigeWorkerBusyLogisticsReserveTest::RunTest(const FString&)
     }
     const FString Finished=S.Couriers[0].WorkerId;const FVector2D Arrival=S.Workers.Find(Finished)->Position;
     WorkerAgentStep(S,S.FixedStepSeconds());const auto* Assigned=S.Workers.Find(Finished);
-    TestEqual(TEXT("Only the arrived load finishes; five real haulers remain at work"),S.Couriers.Num(),5);
+    TestEqual(TEXT("Only the arrived load finishes; three real haulers remain at work"),S.Couriers.Num(),3);
     TestTrue(TEXT("The finished body fills the paid road vacancy while logistics is already staffed"),Assigned->RoadId==RoadId&&Assigned->Activity==TEXT("to_road"));
     TestTrue(TEXT("Changing task retains the actual unloading position"),Assigned->Position.Equals(Arrival,1.e-8));
     TestEqual(TEXT("Assigning construction creates no additional worker bodies"),S.Workers.Bodies.Num(),BodyCount);
@@ -211,16 +213,21 @@ bool FSeigeWorkerCoreMinimumTest::RunTest(const FString&)
     TestEqual(TEXT("Only the physically arrived worker operates the core"),S.FindBuilding(CoreId)->Workers,1);
     const auto Cost=S.ConstructionCost(*S.FindBuilding(Site));FString Resource;for(const auto& P:Cost)if(P.Value>0&&S.FindBuilding(CoreId)->Inventory.FindRef(P.Key)>0){Resource=P.Key;break;}
     if(Resource.IsEmpty()){AddError(TEXT("No genuine construction bill for the hauling probe"));return false;}
-    TestFalse(TEXT("A pickup cannot borrow the last operator merely because a replacement is travelling"),S.Workers.Dispatch(S,CoreId,Site,0,Resource,FMath::Min(Cost[Resource],S.Workers.HaulUnits(S,Resource)),true));
-    TestTrue(TEXT("Rejected hauling leaves the real operator at its station"),S.Workers.Find(OperatorId)->Activity==TEXT("operate")&&S.Workers.Find(OperatorId)->Position.Equals(OperatorPosition));
+    FSeigeSimulation NoSpare=S;NoSpare.Workers.Find(IncomingId)->Activity=TEXT("return");
+    TestFalse(TEXT("A pickup cannot borrow the last operator when every other body is unavailable"),NoSpare.Workers.Dispatch(NoSpare,CoreId,Site,0,Resource,FMath::Min(Cost[Resource],NoSpare.Workers.HaulUnits(NoSpare,Resource)),true));
+    FSeigeSimulation Pickup=S;
+    TestTrue(TEXT("A travelling spare may take a real delivery without first becoming an operator"),Pickup.Workers.Dispatch(Pickup,CoreId,Site,0,Resource,FMath::Min(Cost[Resource],Pickup.Workers.HaulUnits(Pickup,Resource)),true));
+    TestTrue(TEXT("Hauling preserves the final arrived core operator"),Pickup.Workers.Find(OperatorId)->Activity==TEXT("operate")&&Pickup.Workers.Find(OperatorId)->Position.Equals(OperatorPosition));
+    TestEqual(TEXT("The accepted carrier is the same travelling spare"),Pickup.Couriers.Last().WorkerId,IncomingId);
+    for(const auto& P:Cost){S.FindBuilding(CoreId)->Inventory.FindOrAdd(P.Key)-=P.Value;S.FindBuilding(Site)->ConstructionMaterials.Add(P.Key,P.Value);}
     WorkerAgentStep(S,S.FixedStepSeconds());
-    TestEqual(TEXT("Construction demand also retains the on-site core operator"),S.FindBuilding(CoreId)->Workers,1);
-    TestEqual(TEXT("Builders wait for an actually available body"),S.FindBuilding(Site)->Builders,0);
+    TestEqual(TEXT("Paid construction retains the on-site core operator"),S.FindBuilding(CoreId)->Workers,1);
     const auto* Moving=S.Workers.Find(IncomingId);const double Moved=FVector2D::Distance(IncomingPosition,Moving->Position);
-    TestTrue(TEXT("The replacement keeps walking rather than being counted as arrived"),Moving->Activity==TEXT("to_job")&&Moved>0&&Moved<=S.WalkingSpeed()*S.FixedStepSeconds()+1.e-6);
-    for(int32 I=0;I<400&&S.FindBuilding(Site)->Builders==0;++I)WorkerAgentStep(S,S.FixedStepSeconds());
+    TestTrue(TEXT("Reassigned spare moves physically without teleporting to the worksite"),Moved>0&&Moved<=S.WalkingSpeed()*S.FixedStepSeconds()+1.e-6);
+    TestTrue(TEXT("The spare receives a real walking construction assignment"),Moving->BuildingId==Site&&Moving->Activity==TEXT("to_build"));
+    for(int32 I=0;I<2000&&S.Workers.Find(IncomingId)->Activity!=TEXT("build");++I)WorkerAgentStep(S,S.FixedStepSeconds());
     const auto* Assigned=S.Workers.Find(IncomingId);
-    TestTrue(TEXT("Only after physical arrival may the spare operator join construction"),Assigned->BuildingId==Site&&Assigned->Activity==TEXT("to_build")&&S.FindBuilding(CoreId)->Workers>=1);
+    TestTrue(TEXT("The same spare physically arrives while the minimum operator remains"),Assigned->BuildingId==Site&&Assigned->Activity==TEXT("build")&&S.FindBuilding(CoreId)->Workers>=1);
     TestEqual(TEXT("The handover creates no additional worker bodies"),S.Workers.Bodies.Num(),BodyCount);
     return true;
 }
@@ -242,18 +249,20 @@ bool FSeigeWorkerTransferAdmissionTest::RunTest(const FString&)
     for(const auto& P:Bill){if(S.FindBuilding(CoreId)->Inventory.FindRef(P.Key)<P.Value){AddError(TEXT("Finite kit cannot pay the destination fixture"));return false;}S.FindBuilding(CoreId)->Inventory.FindOrAdd(P.Key)-=P.Value;}
     Port->InstalledMaterials=Bill;Port->ConstructionProgress=1;Port->IsConstructing=false;Port->Builders=Port->BuildersOnSite=Port->TravellingBuilders=0;
     S.Workers.RefreshMetrics(S);const int32 BeforePopulation=S.Population;
-    if(!TestEqual(TEXT("The authored core has exactly one free active support slot"),S.RobotSupportCapacity-BeforePopulation,1))return false;
     const double BeforeStock=S.FindBuilding(CoreId)->Inventory.FindRef(Resource);TArray<FString> Stored;
     for(const auto& W:S.Workers.Bodies)if(W.State==TEXT("stored")&&W.ContainerId==CoreId)Stored.Add(W.Id);
-    if(!TestTrue(TEXT("Both paid stored identities are available at the source"),Stored.Num()>=2))return false;
-    const FVector2D WaitingPosition=S.Workers.Find(Stored[1])->Position;
-    TestTrue(TEXT("First intact body may occupy the final support slot"),S.Workers.Dispatch(S,CoreId,PortId,0,Resource,1,false));
+    if(!TestEqual(TEXT("Exactly two paid stored identities are available at the source"),Stored.Num(),2))return false;
+    // Charging berths govern individual battery queues, not an artificial
+    // population ceiling. Two transfers reserve two physical cargo berths.
+    Port->Inventory.FindOrAdd(TEXT("water"))+=(S.StorageRoom(*Port)-2*S.Resources[Resource].LitresPerUnit)/S.Resources[TEXT("water")].LitresPerUnit;
+    TestTrue(TEXT("First intact body reserves a physical destination berth"),S.Workers.Dispatch(S,CoreId,PortId,0,Resource,1,false));
     TestEqual(TEXT("Activation updates population before another command or save"),S.Population,BeforePopulation+1);
-    TestFalse(TEXT("A second transfer in the same logistics pass cannot reuse that slot"),S.Workers.Dispatch(S,CoreId,PortId,0,Resource,1,false));
-    TestEqual(TEXT("Only one self-relocation task exists"),S.Couriers.Num(),1);
-    TestEqual(TEXT("Rejected activation leaves the other real body stored"),S.Workers.Find(Stored[1])->State,FString(TEXT("stored")));
-    TestEqual(TEXT("Rejected activation does not move the waiting body"),S.Workers.Find(Stored[1])->Position,WaitingPosition);
-    TestEqual(TEXT("Only the admitted body leaves packed inventory"),S.FindBuilding(CoreId)->Inventory.FindRef(Resource),BeforeStock-1);
+    TestTrue(TEXT("Second real body can use the remaining destination berth"),S.Workers.Dispatch(S,CoreId,PortId,0,Resource,1,false));
+    TestFalse(TEXT("A third transfer cannot reuse promised storage or invent a body"),S.Workers.Dispatch(S,CoreId,PortId,0,Resource,1,false));
+    TestEqual(TEXT("Two self-relocation tasks correspond to two real bodies"),S.Couriers.Num(),2);
+    TestEqual(TEXT("Both admitted bodies leave packed inventory once"),S.FindBuilding(CoreId)->Inventory.FindRef(Resource),BeforeStock-2);
+    TestEqual(TEXT("Both existing bodies become active"),S.Population,BeforePopulation+2);
+    TestEqual(TEXT("Accepted transfers reserve all destination volume"),S.StorageRoom(*Port),0.);
     TestEqual(TEXT("Admission never manufactures an extra body"),S.Workers.Bodies.Num(),BodyCount);
     if(!S.Save(WorkerAgentSave(TEXT("immediate-self-transfer")),Error)||!Loaded.Initialize(WorkerAgentRules(),Error,false,false)||!Loaded.Load(WorkerAgentSave(TEXT("immediate-self-transfer")),Error)){AddError(Error);return false;}
     TestEqual(TEXT("An immediate save preserves the admitted active population"),Loaded.Population,S.Population);
@@ -267,14 +276,21 @@ bool FSeigeWorkerIdentityLifecycleTest::RunTest(const FString&)
     FString Error;FSeigeSimulation S,Loaded;if(!WorkerAgentDeploy(S,Error)){AddError(Error);return false;}const int32 OriginalBodies=S.Workers.Bodies.Num(),CoreId=S.Buildings[0].Id;
     FString BodyResource;for(const auto& P:S.Resources)if(P.Value.Unit==TEXT("workers")){BodyResource=P.Key;break;}if(BodyResource.IsEmpty()){AddError(TEXT("No configured discrete worker cargo"));return false;}
     TestEqual(TEXT("Level-one command automatically protects five spare workers"),S.WorkerSurplusTarget(),5);
-    // Real paid core batches fill one operating vacancy and then the requested
-    // inactive reserve. No fixture writes inventories or assembly progress.
-    for(int32 I=0;I<500&&S.InactiveWorkerCount()<2;++I)S.Tick(10);
-    if(!TestTrue(TEXT("Finite starter inputs manufacture the requested real stored bodies"),S.InactiveWorkerCount()>=2))return false;
-    TestTrue(TEXT("Manufacturing allocates new persistent IDs only when a paid batch completes"),S.Workers.Bodies.Num()>OriginalBodies);
-    const int32 ActiveBefore=S.Population;TestFalse(TEXT("Reserve target protects stored identities from recycling"),S.DisassembleWorkers(CoreId,1,Error));
+    int32 PortId=0;for(int32 Side=-1;Side<=1;Side+=2)if(S.PlaceBuilding(TEXT("trading_port"),S.Buildings[0].Position+FVector2D(1500,Side*600),Error)){PortId=S.Buildings.Last().Id;break;}if(!PortId){AddError(Error);return false;}
+    // Install a paid port fixture, then manufacture its actual crew and reserve
+    // through ordinary core production. Lowering its target creates real surplus.
+    auto* Port=S.FindBuilding(PortId);const auto Cost=S.ConstructionCost(*Port);
+    for(const auto& P:Cost){if(S.FindBuilding(CoreId)->Inventory.FindRef(P.Key)<P.Value){AddError(TEXT("Finite kit cannot pay reserve-port fixture"));return false;}S.FindBuilding(CoreId)->Inventory.FindOrAdd(P.Key)-=P.Value;}
+    Port->InstalledMaterials=Cost;Port->ConstructionProgress=1;Port->IsConstructing=false;Port->Builders=Port->BuildersOnSite=Port->TravellingBuilders=0;
+    if(!S.SetPortWorkerTarget(PortId,1,Error)){AddError(Error);return false;}
+    for(int32 I=0;I<2000&&(S.Population<S.TotalJobs||S.InactiveWorkerCount()<S.WorkerReserveTarget());++I)S.Tick(10);
+    if(!TestEqual(TEXT("Paid manufacturing fills all actual permanent crew posts"),S.Population,S.TotalJobs)||!TestEqual(TEXT("Paid assembly fills both command and trade reserves"),S.InactiveWorkerCount(),S.WorkerReserveTarget()))return false;
+    TestTrue(TEXT("Manufacturing allocates new persistent IDs only when paid batches complete"),S.Workers.Bodies.Num()>OriginalBodies);
+    const int32 ActiveBefore=S.Population;TestFalse(TEXT("Command and trade reserves protect every stored identity"),S.DisassembleWorkers(CoreId,1,Error));
+    if(!S.SetPortWorkerTarget(PortId,0,Error)){AddError(Error);return false;}
+    TestTrue(TEXT("Reduced trade target exposes one real excess worker"),S.CanDisassembleWorkers(CoreId,1,Error));TestFalse(TEXT("Command reserve still protects a second worker"),S.CanDisassembleWorkers(CoreId,2,Error));
     FString Recycled;for(const auto& W:S.Workers.Bodies)if(W.State==TEXT("stored")&&W.ContainerId==CoreId){Recycled=W.Id;break;}
-    if(!S.DisassembleWorkers(CoreId,1,Error)){AddError(Error);return false;}const double EnergyBefore=S.Energy.ConsumedKWh;S.Tick(S.FixedStepSeconds());
+    const double EnergyBefore=S.Energy.ConsumedKWh;if(!S.DisassembleWorkers(CoreId,1,Error)){AddError(Error);return false;}S.Tick(S.FixedStepSeconds());
     TestEqual(TEXT("Recycling commits the original stored identity"),S.Workers.Find(Recycled)->State,FString(TEXT("disassembling")));
     TestEqual(TEXT("No active worker is deleted by surplus recycling"),S.Population,ActiveBefore);
     if(!S.Save(WorkerAgentSave(TEXT("recycle")),Error)||!Loaded.Initialize(WorkerAgentRules(),Error,false,false)||!Loaded.Load(WorkerAgentSave(TEXT("recycle")),Error)){AddError(Error);return false;}
@@ -282,23 +298,20 @@ bool FSeigeWorkerIdentityLifecycleTest::RunTest(const FString&)
     TestEqual(TEXT("The paid identity becomes terminal once, rather than being reused"),S.Workers.Find(Recycled)->State,FString(TEXT("disassembled")));TestEqual(TEXT("Restored paid recycling reaches the same identity state"),Loaded.Workers.Find(Recycled)->State,S.Workers.Find(Recycled)->State);
     TestTrue(TEXT("Recycling records the unrecovered physical mass"),S.Workers.RecyclingWasteKg>0&&FMath::IsNearlyEqual(S.Workers.RecyclingWasteKg,Loaded.Workers.RecyclingWasteKg,1.e-8));TestTrue(TEXT("Recycling consumes its externally configured energy"),S.Energy.ConsumedKWh-EnergyBefore>=S.DisassemblyEnergyKWh()-1.e-8);
 
-    int32 PortId=0;for(int32 Side=-1;Side<=1;Side+=2)if(S.PlaceBuilding(TEXT("trading_port"),S.Buildings[0].Position+FVector2D(1500,Side*600),Error)){PortId=S.Buildings.Last().Id;break;}if(!PortId){AddError(Error);return false;}
-    // This isolated transport fixture installs a port from the genuine remaining
-    // paid starter bill; construction travel itself is covered by the first test.
-    auto* Port=S.FindBuilding(PortId);const auto Cost=S.ConstructionCost(*Port);for(const auto& P:Cost)S.FindBuilding(CoreId)->Inventory.FindOrAdd(P.Key)-=P.Value;Port->InstalledMaterials=Cost;Port->ConstructionProgress=1;Port->IsConstructing=false;Port->Builders=Port->BuildersOnSite=Port->TravellingBuilders=0;
     if(!S.SetPortWorkerTarget(PortId,1,Error)){AddError(Error);return false;}S.Workers.RefreshMetrics(S);FString Relocated;for(const auto& W:S.Workers.Bodies)if(W.State==TEXT("stored")&&W.ContainerId==CoreId){Relocated=W.Id;break;}
     if(!TestFalse(TEXT("A real stored body remains for transfer"),Relocated.IsEmpty()))return false;
     TestEqual(TEXT("An intact worker cannot be hauled by a lower-capacity worker"),S.Workers.HaulUnits(S,BodyResource),0.);
+    const double PortStoredBefore=S.FindBuilding(PortId)->Inventory.FindRef(BodyResource);
     if(!S.Workers.Dispatch(S,CoreId,PortId,0,BodyResource,1,false)){AddError(TEXT("Intact worker must self-relocate within active support capacity"));return false;}
     const auto* Task=S.Couriers.FindByPredicate([&](const auto& C){return C.WorkerId==Relocated;});TestTrue(TEXT("Self-relocation uses its own body, not an extra hauler or oversized load"),Task&&Task->SelfTransfer&&Task->Amount==0&&S.Workers.Find(Relocated)->State==TEXT("active"));
     FSeigeSimulation Destroyed=S,DestroyedLoaded;Destroyed.OnBuildingDestroyed(CoreId);
-    TestTrue(TEXT("Destruction during indoor reactivation removes the actual carrier and its task together"),Destroyed.Workers.Find(Relocated)->State==TEXT("destroyed")&&Destroyed.Workers.Find(Relocated)->DeliveryId==0&&!Destroyed.Couriers.ContainsByPredicate([&](const auto& C){return C.WorkerId==Relocated;}));
+    TestTrue(TEXT("Structural destruction preserves the same surviving self-relocating body and its route task"),Destroyed.Workers.Find(Relocated)->State==TEXT("active")&&Destroyed.Couriers.ContainsByPredicate([&](const auto& C){return C.WorkerId==Relocated&&C.SelfTransfer;}));
     TestEqual(TEXT("Destroyed storage preserves earlier recycling history"),Destroyed.Workers.Find(Recycled)->State,FString(TEXT("disassembled")));
     if(!Destroyed.Save(WorkerAgentSave(TEXT("destroyed-reactivation")),Error)||!DestroyedLoaded.Initialize(WorkerAgentRules(),Error,false,false)||!DestroyedLoaded.Load(WorkerAgentSave(TEXT("destroyed-reactivation")),Error)){AddError(Error);return false;}
     FVector2D Previous=S.Workers.Find(Relocated)->Position;bool Moved=false;
     for(int32 I=0;I<20000&&S.Workers.Find(Relocated)->State!=TEXT("stored");++I)
     {WorkerAgentStep(S,S.FixedStepSeconds());const auto P=S.Workers.Find(Relocated)->Position;const double D=FVector2D::Distance(P,Previous);if(D>S.WalkingSpeed()*S.FixedStepSeconds()+1.e-6){AddError(TEXT("Stored body teleported during self-relocation"));return false;}Moved|=D>1.e-6;Previous=P;}
-    const auto* Arrived=S.Workers.Find(Relocated);TestTrue(TEXT("Same ID physically arrives and occupies the destination berth"),Moved&&Arrived->State==TEXT("stored")&&Arrived->ContainerId==PortId);TestEqual(TEXT("Port reserve prevents immediate reactivation despite an open job"),S.FindBuilding(PortId)->Inventory.FindRef(BodyResource),1.);
+    const auto* Arrived=S.Workers.Find(Relocated);TestTrue(TEXT("Same ID physically arrives and occupies the destination berth"),Moved&&Arrived->State==TEXT("stored")&&Arrived->ContainerId==PortId);TestEqual(TEXT("Self-relocation adds exactly one intact body to an already staffed port"),S.FindBuilding(PortId)->Inventory.FindRef(BodyResource),PortStoredBefore+1.);
     return true;
 }
 #endif

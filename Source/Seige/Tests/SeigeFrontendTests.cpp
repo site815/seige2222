@@ -195,7 +195,10 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     if(!TestTrue(TEXT("Scenario save completes successfully"),G.Notice.Contains(TEXT("Entire scenario saved")))){AddError(G.Notice);return false;}
     if(!TestTrue(TEXT("Scenario save metadata is written"),FFileHelper::LoadFileToString(MetadataText,*SaveGuard.Filename)))return false;
     G.Paused=false;G.Speed=1;for(int32 I=0;I<20;++I)G.Tick(.2f);G.CameraCenter=FVector::ZeroVector;G.Zoom=6500;G.CameraYaw=10;G.CameraPitch=30;G.ScenarioSlots[0]=TEXT("empty");
+    G.SelectedCompanionId=123;
+    G.RegionViewHistory.Add({FVector(200,300,0),6500,10,30,0,0,123});
     G.LoadGame();
+    TestTrue(TEXT("Direct load clears previous-world companion selection and region return bookmarks"),G.SelectedCompanionId==0&&G.RegionViewHistory.IsEmpty());
     TestEqual(TEXT("Center complete state restores exactly"),StateText(G.Sim,TEXT("center-restored"),*this),CenterBefore);
     TestEqual(TEXT("Saved neighbor count restores"),G.Neighbors.Num(),NeighborBefore.Num());
     for(const auto& N:G.Neighbors)TestEqual(TEXT("Neighbor full simulation snapshot restores"),StateText(N.Sim,TEXT("neighbor-restored-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
@@ -207,8 +210,13 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
     if(!TestTrue(TEXT("Metadata contains neighbor identities"),Fingerprints.Num()>0))return false;
     Fingerprints[0]->AsObject()->SetStringField(TEXT("ai"),TEXT("corrupted-fingerprint"));
     FString Corrupt;FJsonSerializer::Serialize(Metadata.ToSharedRef(),TJsonWriterFactory<>::Create(&Corrupt));FFileHelper::SaveStringToFile(Corrupt,*SaveGuard.Filename);
+    G.SelectedCompanionId=123;
+    G.RegionViewHistory.Add({FVector(200,300,0),6500,10,30,0,0,123});
     G.LoadGame();
+    TestTrue(TEXT("Rejected load preserves live navigation and companion selection"),G.SelectedCompanionId==123&&G.RegionViewHistory.Num()==1);
     TestTrue(TEXT("Corrupt AI metadata reports load rejection"),G.Notice.Contains(TEXT("AI files have changed")));
+    W.Hud->HandleShortcut(EKeys::F9);
+    TestTrue(TEXT("HUD load failure also retains the current region return view"),G.SelectedCompanionId==123&&G.RegionViewHistory.Num()==1);
     TestEqual(TEXT("Rejected metadata leaves center simulation unchanged"),StateText(G.Sim,TEXT("center-rejected"),*this),CenterBefore);
     TestEqual(TEXT("Rejected metadata leaves neighbors unchanged"),G.Neighbors.Num(),NeighborBefore.Num());
     for(const auto& N:G.Neighbors)TestEqual(TEXT("Rejected metadata preserves each neighbor"),StateText(N.Sim,TEXT("neighbor-rejected-")+FString::FromInt(N.Index),*this),NeighborBefore.FindRef(N.Index));
@@ -224,6 +232,16 @@ bool FSeigeNeighborhoodSaveTest::RunTest(const FString& Parameters)
         FString Json;
         return Value&&FJsonSerializer::Serialize(Value.ToSharedRef(),TJsonWriterFactory<>::Create(&Json))&&FFileHelper::SaveStringToFile(Json,*SaveGuard.Filename);
     };
+    for(int32 Case=0;Case<2;++Case)
+    {
+        auto Invalid=FreshMetadata();if(!Invalid)return false;
+        if(Case==0)Invalid->SetStringField(TEXT("calendar_elapsed_us"),FString::Printf(TEXT("%.0f"),Invalid->GetNumberField(TEXT("calendar_elapsed_us"))));
+        else Invalid->GetArrayField(TEXT("neighbor_ai"))[0]->AsObject()->SetStringField(TEXT("index"),TEXT("0"));
+        if(!TestTrue(TEXT("Wrong-type metadata fixture is written"),WriteMetadata(Invalid)))return false;
+        G.LoadGame();
+        TestTrue(TEXT("Numeric strings cannot impersonate typed calendar or sector indices"),G.Notice.Contains(Case==0?TEXT("calendar is invalid"):TEXT("AI metadata is invalid")));
+        TestEqual(TEXT("Wrong-type metadata rejection leaves the running colony unchanged"),StateText(G.Sim,TEXT("metadata-type-rejected"),*this),CenterBefore);
+    }
     for(int32 Case=0;Case<6;++Case)
     {
         auto Invalid=FreshMetadata();if(!Invalid)return false;

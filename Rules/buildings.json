@@ -29,7 +29,7 @@
       "reload_seconds": 1,
       "power_usage_kw": 0,
       "power_generation_kw": 0,
-      "construction_seconds": 900,
+      "construction_seconds": 30,
       "construction_workers": 3,
       "robot_support_capacity": 144,
       "staffing_priority": 0,

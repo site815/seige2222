@@ -57,7 +57,7 @@ bool FSeigeMobilityRouteCacheTest::RunTest(const FString&)
     FSeigeSimulation S;FString Error;
     if(!TestTrue(TEXT("Route-cache rules initialize"),S.Initialize(FPaths::ProjectDir()/TEXT("Rules"),Error,false,false,2201))){AddError(Error);return false;}
     // Isolate terrain/cache behavior from a colony's operating schedules.
-    S.Buildings.Empty();S.Roads.Empty();FVector2D A,B;bool Found=false;
+    S.Buildings.Empty();S.Roads.Empty();FVector2D A=FVector2D::ZeroVector,B=FVector2D::ZeroVector;bool Found=false;
     for(int X=-4;X<=4&&!Found;++X)for(int Y=-4;Y<=4&&!Found;++Y)
     {A=FVector2D(X*2000,Y*2000);B=A+FVector2D(500,0);Found=S.Environment.CanStand(A)&&S.Environment.CanStand(B)&&S.Environment.SegmentDry(A,B,25);}
     if(!TestTrue(TEXT("A dry test corridor exists"),Found))return false;

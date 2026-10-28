@@ -1,6 +1,8 @@
 #include "SeigeGameMode.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/World.h"
+#include "CollisionQueryParams.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Misc/FileHelper.h"
@@ -35,6 +37,16 @@ bool ASeigeGameMode::LoadGraphicsSettings()
        !Read(TEXT("camera_fov"),35,80,CameraFov)||!Read(TEXT("camera_pitch"),5,85,CameraPitch)||
        !Read(TEXT("minimum_camera_pitch"),5,25,MinimumCameraPitch)||!Read(TEXT("maximum_camera_pitch"),60,85,MaximumCameraPitch)||
        !Read(TEXT("camera_ground_clearance_cm"),100,500,CameraGroundClearance)||
+       !Read(TEXT("companion_camera_distance_cm"),150,600,CompanionCameraDistance)||
+       !Read(TEXT("companion_camera_target_height_cm"),30,120,CompanionCameraTargetHeight)||
+       !Read(TEXT("companion_camera_pitch"),-75,25,CompanionCameraDefaultPitch)||
+       !Read(TEXT("companion_camera_min_pitch"),-80,-30,CompanionCameraMinPitch)||
+       !Read(TEXT("companion_camera_max_pitch"),0,30,CompanionCameraMaxPitch)||
+       !Read(TEXT("companion_camera_clearance_cm"),15,60,CompanionCameraClearance)||
+       !Read(TEXT("companion_camera_probe_radius_cm"),5,25,CompanionCameraProbeRadius)||
+       !Read(TEXT("companion_camera_return_response"),1,20,CompanionCameraReturnResponse)||
+       !Read(TEXT("companion_ground_probe_cm"),20,100,CompanionGroundProbe)||
+       !Read(TEXT("companion_maximum_ground_tilt"),0,35,CompanionMaximumGroundTilt)||
        !Read(TEXT("sun_intensity"),.1,20,SunIntensity)||!Read(TEXT("sky_intensity"),.1,5,SkyIntensity)||
        !Read(TEXT("cloud_shadow_strength"),0,1,CloudShadowStrength)||
        !Read(TEXT("sun_source_angle"),.1,5,SunSourceAngle)||
@@ -99,12 +111,13 @@ bool ASeigeGameMode::LoadGraphicsSettings()
     if(!Root->TryGetStringField(TEXT("cloud_material"),CloudMaterialPath)||!(CloudMaterialPath.StartsWith(TEXT("/Game/"))||CloudMaterialPath==TEXT("/Engine/EngineSky/VolumetricClouds/m_SimpleVolumetricCloud_Inst.m_SimpleVolumetricCloud_Inst")))
     {Error=TEXT("Invalid cloud material path");return false;}
     if(CameraPitch<MinimumCameraPitch||CameraPitch>MaximumCameraPitch){Error=TEXT("Default camera pitch lies outside orbit limits");return false;}
+    if(CompanionCameraDefaultPitch<CompanionCameraMinPitch||CompanionCameraDefaultPitch>CompanionCameraMaxPitch||CompanionCameraClearance<CompanionCameraProbeRadius)
+    {Error=TEXT("Invalid companion camera orbit limits or clearance");return false;}
     if(MinimumZoom>DefaultZoom){Error=TEXT("Minimum camera zoom exceeds default zoom");return false;}
     if(RegionMapZoom-RegionMapTransitionWidth*.5f<60000||RegionMapZoom+RegionMapTransitionWidth*.5f>=MaximumZoom)
     {Error=TEXT("Region map transition must follow the sector overview and end before maximum zoom");return false;}
     if(NaniteSurveyPixelsPerEdge<NaniteMaxPixelsPerEdge||NaniteSurveyStartZoom<DefaultZoom||NaniteSurveyEndZoom<=NaniteSurveyStartZoom||NaniteSurveyEndZoom>RegionMapZoom-RegionMapTransitionWidth*.5f)
     {Error=TEXT("Invalid Nanite survey transition");return false;}
-    if(MinimumZoom>=DefaultZoom*.45f){Error=TEXT("Minimum camera zoom must lie below the close-view transition");return false;}
     if(FMath::FloorToFloat(Forest)!=Forest||FMath::FloorToFloat(NearForest)!=NearForest||FMath::FloorToFloat(GroundCandidates)!=GroundCandidates||FMath::FloorToFloat(NeighborForest)!=NeighborForest){Error=TEXT("Vegetation candidate counts must be integers");return false;}
     if(!Root->TryGetBoolField(TEXT("neighboring_forest_shadow"),NeighborForestShadows)){Error=TEXT("Invalid neighboring forest shadow flag");return false;}
     if(!Root->TryGetBoolField(TEXT("grass_distance_field_lighting"),GrassDistanceFieldLighting)){Error=TEXT("Invalid grass distance-field lighting flag");return false;}
@@ -215,25 +228,55 @@ float ASeigeGameMode::CameraViewZoom() const
 }
 FTransform ASeigeGameMode::CameraTransform(float ZoomOverride) const
 {
-    if(CompanionView)return FTransform(FRotator(CompanionPitch,CompanionYaw,0),RenderPosition(CompanionRenderPosition(),Sim.Companions.EyeHeightCm));
+    if(CompanionView)
+    {
+        const FVector Target=RenderPosition(CompanionRenderPosition(),CompanionCameraTargetHeight);
+        const FRotator Orbit(CompanionPitch,CompanionYaw,0);
+        FVector Position=Target-Orbit.Vector()*CompanionCameraDistance;
+        // Buildings block the follow arm. Rex and cosmetic foliage do not.
+        if(const UWorld* World=GetWorld())
+        {
+            FCollisionQueryParams Query(SCENE_QUERY_STAT(RexFollowCamera),false);
+            if(auto* Actor=Visuals.FindRef(FString::Printf(TEXT("companion_%d"),Sim.Companions.ControlledId)).Get())Query.AddIgnoredActor(Actor);
+            FHitResult Hit;
+            if(World->SweepSingleByChannel(Hit,Target,Position,FQuat::Identity,ECC_Visibility,FCollisionShape::MakeSphere(CompanionCameraProbeRadius),Query))
+                Position=Hit.Location;
+        }
+        // Terrain is procedural and has no collision mesh. Sample only this
+        // short camera arm, never trace across the entire region every frame.
+        const int32 Steps=FMath::Clamp(FMath::CeilToInt(FVector::Distance(Target,Position)/(CompanionCameraProbeRadius*2)),1,64);
+        FVector ClearPosition=Target;
+        for(int32 Step=1;Step<=Steps;++Step)
+        {
+            const FVector Candidate=FMath::Lerp(Target,Position,static_cast<double>(Step)/Steps);
+            if(Candidate.Z<GroundHeight(FVector2D(Candidate)/RenderScale)*RenderScale+CompanionCameraClearance)break;
+            ClearPosition=Candidate;
+        }
+        Position=ClearPosition;
+        const FVector Aim=Target-Position;
+        return FTransform(Aim.IsNearlyZero()?Orbit:Aim.Rotation(),Position);
+    }
     const FVector Target=RenderPosition(FVector2D(CameraCenter),70);
     const double ViewZoom=FMath::Clamp(double(ZoomOverride>=0?ZoomOverride:Zoom),double(MinimumZoom),double(MaximumZoom));
     const double Distance=ViewZoom*RenderScale/(2*FMath::Tan(FMath::DegreesToRadians(CameraFov*.5)));
-    // Close zoom lowers the view gradually to show actual ground detail. The
-    // chosen orbit angle remains intact, returning as the camera pulls back.
-    const double CloseBlend=FMath::SmoothStep(double(MinimumZoom),double(DefaultZoom)*.45,ViewZoom);
-    const double Pitch=FMath::Lerp(double(MinimumCameraPitch),double(FMath::Clamp(CameraPitch,MinimumCameraPitch,MaximumCameraPitch)),CloseBlend);
+    // Zoom changes distance only. Manual orbit owns the viewing angle at every
+    // scale, including when terrain clearance raises the camera position.
+    const double Pitch=FMath::Clamp(CameraPitch,MinimumCameraPitch,MaximumCameraPitch);
     const FRotator Aim(-Pitch,CameraYaw,0);
     FVector Position=Target-Aim.Vector()*Distance;
     const FVector2D Logical(Position.X/RenderScale,Position.Y/RenderScale);
     if(FMath::Abs(Logical.X)<=Sim.WorldHalfSize*3&&FMath::Abs(Logical.Y)<=Sim.WorldHalfSize*3)
         Position.Z=FMath::Max(Position.Z,GroundHeight(Logical)*RenderScale+CameraGroundClearance);
-    return FTransform((Target-Position).Rotation(),Position);
+    return FTransform(Aim,Position);
 }
 void ASeigeGameMode::UpdateCamera(float DeltaSeconds)
 {
     if(CompanionView)
     {
+        // Releasing free-look brings only the camera back. It never redirects
+        // Rex toward wherever the player happened to look while holding Alt.
+        if(!CompanionFreeLook&&DeltaSeconds>0)
+            CompanionYaw=FRotator::ClampAxis(CompanionYaw+FMath::FindDeltaAngleDegrees(CompanionYaw,CompanionSteeringYaw)*(1-FMath::Exp(-CompanionCameraReturnResponse*FMath::Min(DeltaSeconds,.25f))));
         CameraCenter=FVector(CompanionRenderPosition(),0);RenderedZoom=MinimumZoom;
         if(Camera){Camera->SetActorTransform(CameraTransform());Camera->GetCameraComponent()->SetFieldOfView(Sim.Companions.ViewFov);}
         return;

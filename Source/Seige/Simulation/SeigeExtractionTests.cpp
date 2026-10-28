@@ -21,7 +21,7 @@ bool LandBeside(FSeigeSimulation& S,const FSeigeNode& Node,FString& Error)
 {
     bool Landed=false;for(int32 I=0;I<16&&!Landed;++I){const double Angle=2*PI*I/16;Landed=S.SetInitialCorePosition(Node.Position+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*1500,Error);}if(!Landed)return false;
     for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
-    if(S.Buildings[0].IsConstructing){Error=TEXT("Finite crew did not deploy at dry mine fixture location");return false;}return true;
+    if(S.Buildings[0].IsConstructing){Error=TEXT("Finite crew did not deploy at dry mine fixture location");return false;}for(auto& Dog:S.Companions.Dogs){Dog.Position=Dog.Target=S.Buildings[0].Position+(S.Buildings[0].Position-Node.Position).GetSafeNormal()*1100;Dog.Route.Empty();Dog.NextWaypoint=0;Dog.Moving=false;Dog.RestUntil=S.Time;Dog.MotionSpeedMetersPerSecond=Dog.SpeedMetersPerSecond=0;S.Companions.SetControlled(Dog.Id);}return true;
 }
 void InstallMine(FSeigeSimulation& S,int32 Id)
 {
@@ -29,21 +29,14 @@ void InstallMine(FSeigeSimulation& S,int32 Id)
     for(const auto& P:B.InstalledMaterials)S.Buildings[0].Inventory.FindOrAdd(P.Key)-=P.Value;
     B.ConstructionMaterials.Empty();B.IsConstructing=false;B.ConstructionProgress=1;
     B.Builders=B.BuildersOnSite=B.TravellingBuilders=0;B.BuilderRoute.Empty();B.BuilderNextWaypoint=0;
-    int32 Need=S.Definition(B)->Jobs,Slot=0;for(auto& W:S.Workers.Bodies)if(W.State==TEXT("active")){W.Activity=TEXT("operate");W.BuildingId=Need-->0?Id:S.Buildings[0].Id;W.RoadId=W.DeliveryId=W.ContainerId=0;W.ContainerKind.Empty();W.Outdoor=true;W.Route.Empty();W.NextWaypoint=0;W.StationSlot=Slot++;W.Position=S.BuildingAccessPoint(*S.FindBuilding(W.BuildingId))+FVector2D(0,20+Slot*12);}S.Workers.RefreshMetrics(S);
+    int32 Need=S.Definition(B)->Jobs,Slot=0;for(auto& W:S.Workers.Bodies)if(W.State==TEXT("active")){W.Activity=TEXT("operate");W.BuildingId=Need-->0?Id:S.Buildings[0].Id;W.CrewBuildingId=W.BuildingId;W.RoadId=W.DeliveryId=W.ContainerId=W.ChargingBuildingId=W.TransportVehicleId=0;W.ContainerKind.Empty();W.Outdoor=true;W.Route.Empty();W.NextWaypoint=0;W.StationSlot=Slot++;W.Position=S.BuildingAccessPoint(*S.FindBuilding(W.BuildingId))+FVector2D(0,20+Slot*12);}S.Workers.RefreshMetrics(S);
 }
 bool ConnectMineFixture(FSeigeSimulation& S,int32 Id,FString& Error)
 {
-    FVector2D Last=S.BuildingAccessPoint(S.Buildings[0]);TArray<FVector2D> Route;
-    if(!S.FindRoadRoute(Last,S.BuildingAccessPoint(*S.FindBuilding(Id)),Route))return false;
-    for(const auto& End:Route)
-    {
-        if(FVector2D::Distance(Last,End)<.001)continue;if(!S.PlaceRoad(Last,End,Error))return false;
-        auto& R=S.Roads.Last();R.InstalledMaterials=S.RoadCost(R.A,R.B,R.TargetTier);
-        for(const auto& P:R.InstalledMaterials)S.Buildings[0].Inventory.FindOrAdd(P.Key)-=P.Value;
-        R.Tier=R.TargetTier;R.IsConstructing=false;R.ConstructionProgress=1;
-        R.Builders=R.BuildersOnSite=R.TravellingBuilders=0;R.BuilderRoute.Empty();R.BuilderNextWaypoint=0;Last=End;
-    }
-    S.Energy.Invalidate();S.Energy.Tick(S,0);return S.IsRoadGridConnected(S.Buildings[0].Id,Id);
+    // Roads are deferred; completed buildings share the colony's power grid.
+    S.Energy.Invalidate();S.Energy.Tick(S,0);
+    if(!S.IsRoadGridConnected(S.Buildings[0].Id,Id)){Error=TEXT("Roadless mine failed to join the shared grid");return false;}
+    return true;
 }
 }
 
@@ -68,8 +61,10 @@ bool FSeigeExtractionMineTest::RunTest(const FString&)
             TestEqual(TEXT("Generic mine resolves this deposit's output"),S.ExtractionResource(B),Node.Resource);
             TestFalse(TEXT("A living construction site reserves the deposit"),S.CanPlaceBuilding(Mine,Node.Position+FVector2D(40,40),Error));
             S.StepProduction(1);TestEqual(TEXT("Unfinished mine produces nothing"),B.Inventory.FindRef(Node.Resource),0.);
-            InstallMine(S,Id);S.AllocateWorkers();S.Energy.Invalidate();S.Energy.Tick(S,0);S.StepProduction(1);
-            TestEqual(TEXT("A completed mine without a powered road cannot extract"),B.Inventory.FindRef(Node.Resource),0.);
+            InstallMine(S,Id);S.AllocateWorkers();
+            S.Buildings[0].Enabled=false;S.Buildings[0].BatteryEnergyKWh=0;B.BatteryEnergyKWh=0;S.Energy.Invalidate();S.Energy.Tick(S,0);S.StepProduction(1);
+            TestEqual(TEXT("An unpowered mine cannot extract even with its permanent crew"),B.Inventory.FindRef(Node.Resource),0.);
+            S.Buildings[0].Enabled=true;S.Buildings[0].BatteryEnergyKWh=S.Energy.Definition(S.Buildings[0].DefId)->BatteryCapacityKWh;
             if(!ConnectMineFixture(S,Id,Error)){AddError(Error);return false;}S.AllocateWorkers();S.Energy.Tick(S,0);
             const double Rate=S.ExtractionRate(B)*S.WorkFraction(B);S.StepProduction(1);
             TestTrue(TEXT("The mine produces its configured deposit rate"),FMath::IsNearlyEqual(B.Inventory.FindRef(Node.Resource),Rate,1.e-8));
@@ -162,7 +157,7 @@ bool FSeigeMinePersistenceTest::RunTest(const FString&)
         }
         if(!WriteMineSave(Bad,Document))return false;
         TestFalse(TEXT("Invalid deposit binding or previous save format is rejected"),Loaded.Load(Bad,Error));
-        TestTrue(TEXT("Rejection identifies the binding or explicitly incompatible format"),Error.Contains(Case==2?TEXT("format 7"):TEXT("deposit binding")));
+        TestTrue(TEXT("Rejection identifies the binding or explicitly incompatible format"),Error.Contains(Case==2?TEXT("save format"):TEXT("deposit binding")));
         TestTrue(TEXT("Rejected load leaves the current mine and inventory untouched"),Loaded.Time==Before&&Loaded.FindBuilding(Id)->DepositId==Node.Id&&Loaded.FindBuilding(Id)->Inventory.FindRef(Node.Resource)==7.25);
     }
     FString After;if(!FFileHelper::LoadFileToString(After,*Bad))return false;

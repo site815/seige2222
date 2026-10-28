@@ -52,6 +52,21 @@ bool InstallDecisionFixtureRoad(FSeigeSimulation& Colony,FVector2D A,FVector2D B
     Colony.Energy.Invalidate();Colony.Energy.Tick(Colony,0);return true;
 }
 
+bool SeedAITacticalFixture(FSeigeSimulation& S,FString& Error)
+{
+    // Tactical tests author one guard explicitly. The shipped finite landing
+    // manifest carries an unarmed cargo vehicle and creates no combat fleet.
+    int32 Fleet=0;if(!S.Combat.CreateFleet(S,TEXT("AI tactical fixture"),Fleet,Error))return false;
+    auto Saved=MakeShared<FJsonObject>();S.Combat.Save(Saved);FSeigeVehicle V;
+    V.Id=int32(Saved->GetObjectField(TEXT("combat"))->GetNumberField(TEXT("next_id")));
+    V.ChassisId=TEXT("mech_small");const auto& D=S.Combat.Chassis[V.ChassisId];V.FleetId=Fleet;
+    V.Position=V.Destination=S.BuildingAccessPoint(S.Buildings[0])+FVector2D(0,100);
+    V.Health=D.Health;V.Armor=D.Armor;V.Shield=D.Shield;V.BatteryKWh=D.BatteryKWh;
+    V.Weapons={TEXT("laser_small")};V.Cooldowns={0};V.Embarked=true;V.Status=TEXT("Authored tactical guard aboard shuttle");
+    S.Combat.Vehicles.Add(V);S.Combat.Save(Saved);Saved->GetObjectField(TEXT("combat"))->SetNumberField(TEXT("next_id"),V.Id+1);
+    return S.Combat.Load(Saved,S,Error);
+}
+
 bool WriteAIConfig(const FString& Directory, const FString& Filename, const TFunction<void(TSharedPtr<FJsonObject>)>& Edit)
 {
     IFileManager::Get().MakeDirectory(*Directory, true);
@@ -106,7 +121,7 @@ bool FSeigeAIValidationTest::RunTest(const FString& Parameters)
         [](auto O){O->GetArrayField(TEXT("buildings"))[1]->AsObject()->SetArrayField(TEXT("offset_meters"),{MakeShared<FJsonValueNumber>(0),MakeShared<FJsonValueNumber>(0)});},
         [](auto O){O->GetArrayField(TEXT("buildings"))[0]->AsObject()->SetNumberField(TEXT("operators"),99);},
         [](auto O){O->GetArrayField(TEXT("buildings"))[0]->AsObject()->GetObjectField(TEXT("inventory"))->SetNumberField(TEXT("stored_workers"),.5);},
-        [](auto O){O->SetNumberField(TEXT("idle_workers"),0);},
+        [](auto O){O->SetNumberField(TEXT("idle_workers"),-1);},
         [](auto O){O->SetNumberField(TEXT("age_seconds"),0);}
     };
     for(const auto& Edit:BadManifests)
@@ -124,7 +139,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeAIStartsTest, "Seige.AI.StartingAndDevelo
 bool FSeigeAIStartsTest::RunTest(const FString& Parameters)
 {
     FString Error; FSeigeSimulation Starting, Developed; FSeigeScenarioAI StartAI, DevelopedAI;
-    if (!StartAI.Initialize(Starting, AIRules(), AIDirectory(), false, Error) || !DevelopedAI.Initialize(Developed, AIRules(), AIDirectory(), true, Error))
+    if (!StartAI.Initialize(Starting, AIRules(), AIDirectory(), false, Error,false,false) || !DevelopedAI.Initialize(Developed, AIRules(), AIDirectory(), true, Error,false,false))
     { AddError(Error); return false; }
     TestEqual(TEXT("Starting AI begins with only its command core"), Starting.Buildings.Num(), 1);
     TestTrue(TEXT("Developed preset starts with an established colony"), Developed.Buildings.Num() > Starting.Buildings.Num() + 8);
@@ -142,10 +157,10 @@ bool FSeigeAIStartsTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("AI cannot instantly finish a new site"),Starting.Buildings.Last().IsConstructing);
     TestTrue(TEXT("AI construction consumes real core inventory"), Starting.Buildings[0].Inventory.FindRef(TEXT("alloy")) < Alloy);
     TestEqual(TEXT("AI guarding creates no extra vehicles"),Starting.Combat.Vehicles.Num(),CarriedVehicles);
-    TestTrue(TEXT("AI deploys its actual carried guard fleet to defend the paid construction site"),Starting.Combat.Fleets.ContainsByPredicate([&](const auto& F){return F.Mission==TEXT("defense")&&F.Destination.Equals(Starting.BuildingAccessPoint(Starting.Buildings.Last()),.01);}));
-    TestTrue(TEXT("Living AI guards are physically deployed rather than firing from inside the shuttle"),Starting.Combat.Vehicles.ContainsByPredicate([](const auto& V){return V.Health>0&&!V.Embarked&&!V.Evacuated;}));
+    TestTrue(TEXT("The unarmed starting manifest does not invent a defensive combat fleet"),Starting.Combat.Fleets.IsEmpty()&&Starting.Combat.Vehicles.IsEmpty());
     // An isolated tactical fork keeps the no-grant economic viability run intact.
     FSeigeSimulation ThreatProbe=Starting;FSeigeScenarioAI ThreatBrain=StartAI;
+    if(!SeedAITacticalFixture(ThreatProbe,Error)){AddError(Error);return false;}
     const int32 ProtectedId=ThreatProbe.Buildings.Last().Id;
     bool NewSensor=false;
     for(int32 I=0;I<48&&!NewSensor;++I)
@@ -168,7 +183,7 @@ bool FSeigeAIStartsTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Starting AI grows through material-paid worker assembly"),Starting.Workers.Bodies.Num()>StartingBodies);
     TestTrue(TEXT("Starting AI uses real deliveries without road prerequisites"),Starting.DeliveredUnits>0&&Starting.Roads.IsEmpty());
     TestTrue(TEXT("Starting AI completes actual paid installations"),Starting.Buildings.ContainsByPredicate([&](const auto& B){return B.Id!=Starting.Buildings[0].Id&&!B.IsConstructing&&B.Health>0;}));
-    TestTrue(TEXT("Established industry consumes real inputs and produces after loading"),Developed.ProducedUnits.FindRef(TEXT("components"))>0);
+    TestTrue(TEXT("Established industry consumes real inputs and produces after loading"),Developed.ProducedUnits.FindRef(TEXT("alloy"))>0&&Developed.ProducedUnits.FindRef(TEXT("circuits"))>0&&Developed.ProducedUnits.FindRef(TEXT("substrates"))>0);
     TestTrue(TEXT("Established operation uses physical worker deliveries"),Developed.DeliveredUnits>0);
     TestFalse(TEXT("Bounded established continuation remains playable"),Developed.Failed);
     FString SnapshotError;
@@ -185,11 +200,12 @@ bool FSeigeAIGuardServiceTest::RunTest(const FString& Parameters)
     const FString Config=AIOutput(TEXT("compact-coverage"));
     // A one-sensor paid plan isolates placement from long industrial preparation.
     if(!WriteAIConfig(Config,TEXT("colony_ai.json"),[](auto Object)
-    {auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),TEXT("sensor"));Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),0);Object->SetArrayField(TEXT("build_targets"),{MakeShared<FJsonValueObject>(Target)});}))return false;
+    {auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),TEXT("sensor"));Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),0);Object->SetArrayField(TEXT("build_targets"),{MakeShared<FJsonValueObject>(Target)});Object->GetObjectField(TEXT("logistics"))->SetNumberField(TEXT("target_transports"),0);}))return false;
     if(!Brain.Initialize(Colony,AIRules(),Config,false,Error,false,false)){AddError(Error);return false;}
     FString Raw;TSharedPtr<FJsonObject> Plan;if(!FFileHelper::LoadFileToString(Raw,*FPaths::Combine(Config,TEXT("colony_ai.json")))||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Plan))return false;
     const double Cadence=Plan->GetNumberField(TEXT("decision_interval_seconds"));
     if(!FinishCoreDeployment(Colony,Error,&Brain)){AddError(Error);return false;}
+    if(!SeedAITacticalFixture(Colony,Error)){AddError(Error);return false;}
     Brain.Tick(Colony,3*Cadence+Colony.FixedStepSeconds());
     const auto* Sensor=Colony.Buildings.FindByPredicate([](const auto& B){return B.DefId==TEXT("sensor")&&B.Health>0;});
     if(!TestNotNull(TEXT("AI pays for a sensor site"),Sensor))return false;
@@ -261,26 +277,35 @@ bool FSeigeAISupportRecoveryTest::RunTest(const FString& Parameters)
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     const FString Config=AIOutput(TEXT("support-recovery"));
     if(!WriteAIConfig(Config,TEXT("colony_ai.json"),[](auto Object)
-    {TArray<TSharedPtr<FJsonValue>> Targets;for(const TCHAR* Id:{TEXT("worker_factory"),TEXT("robot_service_bay")}){auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),Id);Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),Targets.Num());Targets.Add(MakeShared<FJsonValueObject>(Target));}Object->SetArrayField(TEXT("build_targets"),Targets);}))return false;
+    {TArray<TSharedPtr<FJsonValue>> Targets;for(const TCHAR* Id:{TEXT("worker_factory"),TEXT("robot_service_bay")}){auto Target=MakeShared<FJsonObject>();Target->SetStringField(TEXT("definition"),Id);Target->SetNumberField(TEXT("count"),1);Target->SetNumberField(TEXT("placement_index"),Targets.Num());Targets.Add(MakeShared<FJsonValueObject>(Target));}Object->SetArrayField(TEXT("build_targets"),Targets);Object->GetObjectField(TEXT("logistics"))->SetNumberField(TEXT("target_transports"),0);}))return false;
     if(!Brain.Initialize(Colony,AIRules(),Config,false,Error,false,false)){AddError(Error);return false;}
     Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     if(!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
+    const int32 OrdinaryCoreJobs=Colony.BuildingDefs[Colony.CoreDefinition].Jobs,CoreBerthThroughput=Colony.RobotSupportCapacity;
+    // Installed decision fixture with real requested jobs beyond the one
+    // 144-worker charging berth. Support is throughput, not a population cap.
+    Colony.BuildingDefs[Colony.CoreDefinition].Jobs=Colony.RobotSupportCapacity+1;Colony.Workers.RefreshMetrics(Colony);
     const FVector2D Home=Colony.Buildings[0].Position;
     // Real paid construction overloads the initial support allowance. The
     // ordinary ordered plan would wait forever on its first factory target.
-    if(!Colony.PlaceBuilding(TEXT("worker_factory"),Home+FVector2D(1400,0),Error)||
-       !Colony.PlaceBuilding(TEXT("sensor"),Home+FVector2D(0,1400),Error)||
-       !Colony.PlaceBuilding(TEXT("sensor"),Home+FVector2D(0,-1400),Error)){AddError(Error);return false;}
+    if(!Colony.PlaceBuilding(TEXT("worker_factory"),Home+FVector2D(1400,0),Error)){AddError(Error);return false;}
     Colony.Tick(6000);
     const int32 FactoryId=Colony.Buildings[1].Id;
     TestTrue(TEXT("Fixture has genuine jobs exceeding service capacity"),Colony.TotalJobs>Colony.RobotSupportCapacity);
-    TestTrue(TEXT("Finite workers cannot fill every demanded job within starter support"),Colony.Population<=Colony.RobotSupportCapacity&&Colony.Employed<Colony.TotalJobs);
+    TestTrue(TEXT("Charging demand comes from real open jobs without fabricating fixture workers"),Colony.TotalJobs>Colony.Population&&Colony.Workers.OwnedCount()>0);
     const double PaidBefore=Colony.DeliveredUnits;
-    for(int I=0;I<1200;++I)
+    for(int32 I=0;I<128&&!Colony.Buildings.ContainsByPredicate([&](const auto& B){return B.Health>0&&Colony.Definition(B)->Role==TEXT("service");});++I)Brain.Tick(Colony,10);
+    if(!TestTrue(TEXT("Charging-load pressure queues its paid service prerequisite"),Colony.Buildings.ContainsByPredicate([&](const auto& B){return B.Health>0&&Colony.Definition(B)->Role==TEXT("service")&&B.IsConstructing;})))return false;
+    // The decision fixture's inflated future job demand has served its purpose.
+    // Restore normal core staffing before measuring physical construction, so
+    // we do not also impose a fictitious 1/145 fabrication-speed denominator.
+    Colony.BuildingDefs[Colony.CoreDefinition].Jobs=OrdinaryCoreJobs;Colony.Workers.RefreshMetrics(Colony);
+    for(int I=0;I<3600;++I)
     {
         Brain.Tick(Colony,10);
         const auto* Factory=Colony.FindBuilding(FactoryId);
-        if(!Factory->IsConstructing&&Factory->Workers==Colony.Definition(*Factory)->Jobs&&Colony.RobotSupportCapacity>=Colony.TotalJobs)break;
+        const auto* Bay=Colony.Buildings.FindByPredicate([&](const auto& B){return B.Health>0&&Colony.Definition(B)->Role==TEXT("service");});
+        if(!Factory->IsConstructing&&Factory->Workers==Colony.Definition(*Factory)->Jobs&&Bay&&!Bay->IsConstructing&&Bay->Workers==Colony.Definition(*Bay)->Jobs&&Colony.RobotSupportCapacity>=Colony.TotalJobs)break;
     }
     const auto* Service=Colony.Buildings.FindByPredicate([&](const auto& B){return B.Health>0&&Colony.Definition(B)->Role==TEXT("service");});
     TestTrue(TEXT("AI recovers by constructing its configured service bay ahead of the blocked target"),Service&&!Service->IsConstructing&&Service->Workers==Colony.Definition(*Service)->Jobs);
@@ -300,10 +325,11 @@ bool FSeigeAISupportRecoveryTest::RunTest(const FString& Parameters)
     if(!Service)return false;
     const int32 ServiceId=Service->Id;
     FSeigeSimulation Outage=Colony;FSeigeScenarioAI RecoveryBrain=Brain;
+    Outage.BuildingDefs[Outage.CoreDefinition].Jobs=CoreBerthThroughput+1;Outage.Workers.RefreshMetrics(Outage);
     FSeigeAIBuildTarget LaterExpansion;LaterExpansion.Definition=TEXT("robot_service_bay");LaterExpansion.Count=2;LaterExpansion.PlacementIndex=RecoveryBrain.Targets.Num();RecoveryBrain.Targets.Add(LaterExpansion);
     for(auto& Road:Outage.Roads)Outage.DamageRoad(Road.Id,Road.MaxHealth);
     Outage.Tick(Outage.FixedStepSeconds());
-    TestTrue(TEXT("Disconnected living support creates an actual operating-capacity outage"),Outage.RobotSupportCapacity<Outage.TotalJobs);
+    TestTrue(TEXT("A disconnected but intact charging berth retains its physical throughput allowance"),Outage.RobotSupportCapacity>=Outage.TotalJobs);
     const int32 Before=Outage.Buildings.Num();bool Waiting=false;
     TestFalse(TEXT("Temporary outage does not buy a later support expansion when intact capacity is sufficient"),RecoveryBrain.RecoverWorkerSupport(Outage,Waiting));
     TestEqual(TEXT("Outage recovery preserves finite construction reserves"),Outage.Buildings.Num(),Before);
@@ -322,6 +348,7 @@ bool FSeigeAISupportTradeRecoveryTest::RunTest(const FString& Parameters)
     if(!Brain.Initialize(Colony,FixtureRules,AIDirectory(),false,Error,false,false)){AddError(Error);return false;}
     Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
     if(!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
+    Colony.BuildingDefs[Colony.CoreDefinition].Jobs=Colony.RobotSupportCapacity+1;Colony.Workers.RefreshMetrics(Colony);
     const FVector2D Home=Colony.Buildings[0].Position;
     if(!Colony.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)||!Colony.PlaceBuilding(TEXT("conductor_works"),Home+FVector2D(0,1400),Error)){AddError(Error);return false;}
     // A decision-level recovery fixture: retain normal bills/reservations but
@@ -405,7 +432,7 @@ bool FSeigeAIGenericTradeRecoveryTest::RunTest(const FString& Parameters)
     Colony.Energy.Invalidate();double WorkerSeconds=0;
     for(const auto& Recipe:Colony.Recipes)if(Recipe.Value.WorkerOutput>0)WorkerSeconds=FMath::Max(WorkerSeconds,Recipe.Value.Seconds*Colony.Definition(Colony.Buildings[0])->RecipeTimeMultiplier);
     for(double Elapsed=0;Elapsed<WorkerSeconds*2+60;++Elapsed)
-    {Colony.Tick(1);if(Colony.RobotSupportCapacity>=Colony.TotalJobs)break;}
+    {Colony.Tick(1);if(Colony.Workers.Bodies.ContainsByPredicate([&](const auto& W){return W.State==TEXT("active")&&W.Activity==TEXT("operate")&&W.BuildingId==Colony.Buildings[3].Id;}))break;}
     TestTrue(TEXT("Service fixture is physically connected to the command power grid"),Colony.IsRoadGridConnected(Colony.Buildings[0].Id,Colony.Buildings[3].Id));
     TestTrue(TEXT("Service staffing belongs to a real on-site worker identity"),Colony.Workers.Bodies.ContainsByPredicate([&](const auto& Body){return Body.State==TEXT("active")&&Body.Activity==TEXT("operate")&&Body.BuildingId==Colony.Buildings[3].Id&&Body.Outdoor;}));
     for(int32 I=0;I<64;++I)
@@ -429,6 +456,7 @@ bool FSeigeAIGenericTradeRecoveryTest::RunTest(const FString& Parameters)
     const auto* Target=Brain.NextConstructionTarget(Colony);TestTrue(TEXT("The next missing refinery is the actual funding target"),Target&&Target->Definition==TEXT("alloy_refinery"));if(!Target)return false;
     TestTrue(TEXT("Local repair buffers cannot pay the refinery even when total stock covers it"),Colony.TotalStock(Material)>=Colony.BuildingDefs[Target->Definition].Cost[Material]&&Colony.ConstructionAvailable(Material)<Colony.BuildingDefs[Target->Definition].Cost[Material]);
     Colony.Credits=Colony.TradeQuote(Material,Brain.ImportBatch,true);
+    if(!SeedAITacticalFixture(Colony,Error)){AddError(Error);return false;}
     FSeigeSimulation IndependentCycle=Colony,SharedCycle=Colony;FSeigeScenarioAI IndependentBrain=Brain,SharedBrain=Brain;
     IndependentBrain.DecisionSchedulingPolicy=TEXT("independent_tactics_trade_construction");SharedBrain.DecisionSchedulingPolicy=TEXT("shared_action_budget");
     const int32 FleetId=IndependentCycle.Combat.Fleets[0].Id;
@@ -443,11 +471,11 @@ bool FSeigeAIGenericTradeRecoveryTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Upstream funding pays the full real quote without granting reconstruction goods"),FMath::IsNearlyEqual(PaidCredits-IndependentCycle.Credits,IndependentCycle.Buildings[1].Shipment.PriceCredits,1.e-8)&&IndependentCycle.Buildings[1].Inventory.FindRef(TEXT("iron_ore"))==0);
     TestEqual(TEXT("Independent tactical scheduling adds no defensive units"),IndependentCycle.Combat.Vehicles.Num(),ExistingVehicles);
     FSeigeSimulation ReserveProbe=Colony,RoutineProbe=Colony;FSeigeScenarioAI ReserveBrain=Brain,RoutineBrain=Brain;
-    ReserveBrain.Targets.Empty();ReserveBrain.ReserveTargets.Empty();ReserveBrain.ReserveTargets.Add(Material,ReserveProbe.TotalStock(Material));
+    ReserveProbe.Buildings[0].Enabled=false;ReserveProbe.Buildings[2].Enabled=false;ReserveBrain.Targets.Empty();ReserveBrain.UpgradeFamilies.Empty();ReserveBrain.ReserveTargets.Empty();ReserveBrain.ReserveTargets.Add(Material,ReserveProbe.TotalStock(Material));
     TestTrue(TEXT("Repair buffers meet the gross reserve number but provide no spare construction reserve"),ReserveProbe.TotalStock(Material)>=ReserveBrain.ReserveTargets[Material]&&ReserveProbe.ConstructionAvailable(Material)<ReserveBrain.ReserveTargets[Material]);
     TestTrue(TEXT("Idle-plan AI replenishes a genuine paid construction reserve"),ReserveBrain.ManageTrade(ReserveProbe));
     TestTrue(TEXT("Gross repair-buffer stock does not suppress the reserve import"),ReserveProbe.Buildings[1].Shipment.Buy&&ReserveProbe.Buildings[1].Shipment.Resource==Material);
-    RoutineBrain.Targets.Empty();RoutineBrain.ReserveTargets.Empty();RoutineProbe.Credits=RoutineProbe.TradeQuote(TEXT("iron_ore"),RoutineBrain.ImportBatch,true);
+    RoutineBrain.Targets.Empty();RoutineBrain.UpgradeFamilies.Empty();RoutineBrain.ReserveTargets.Empty();RoutineProbe.Credits=RoutineProbe.TradeQuote(TEXT("iron_ore"),RoutineBrain.ImportBatch,true);
     TestTrue(TEXT("Routine recipe inputs still use their ordinary physical shortage"),RoutineBrain.ManageTrade(RoutineProbe));
     TestTrue(TEXT("Reserve correction preserves the recipe-input import"),RoutineProbe.Buildings[1].Shipment.Buy&&RoutineProbe.Buildings[1].Shipment.Resource==TEXT("iron_ore"));
     FSeigeSimulation NoProducer=Colony;NoProducer.Buildings[2].Enabled=false;
@@ -469,6 +497,7 @@ bool FSeigeAIBulkFeedstockTest::RunTest(const FString& Parameters)
 {
     FString Error;FSeigeSimulation Base;FSeigeScenarioAI Brain;
     if(!Brain.Initialize(Base,AIRules(),AIDirectory(),false,Error,false,false)||!FinishCoreDeployment(Base,Error)){AddError(Error);return false;}
+    Base.SetRoadsEnabledForTest(true); // Explicit compatibility grid fixture.
     const FVector2D Home=Base.Buildings[0].Position;
     if(!Base.PlaceBuilding(TEXT("trading_port"),Home+FVector2D(1400,0),Error)||!Base.PlaceBuilding(TEXT("alloy_refinery"),Home+FVector2D(0,-1400),Error)){AddError(Error);return false;}
     for(auto& B:Base.Buildings)if(B.IsConstructing){B.IsConstructing=false;B.ConstructionProgress=1;B.InstalledMaterials=Base.Definition(B)->Cost;B.ConstructionMaterials.Empty();B.Builders=B.BuildersOnSite=B.TravellingBuilders=0;}
@@ -481,8 +510,11 @@ bool FSeigeAIBulkFeedstockTest::RunTest(const FString& Parameters)
         B.ProductionInputs.Empty();B.ProductionCommitted=false;B.CommittedRecipe.Empty();B.ProductionReservedLitres=0;B.Progress=0;
         B.Inventory.Remove(TEXT("iron_ore"));B.Inventory.Remove(TEXT("alloy"));
     }
-    if(!Base.SetProductionRecipe(Base.Buildings[0].Id,TEXT("smelt_alloy"),Error)){AddError(Error);return false;}
-    Brain.Targets.Empty();Brain.ReserveTargets.Empty();FSeigeAIBuildTarget Target;Target.Definition=TEXT("substrate_works");Target.Count=1;Brain.Targets.Add(Target);
+    if(!Base.SetProductionRecipe(Base.Buildings[2].Id,TEXT("smelt_alloy"),Error)){AddError(Error);return false;}
+    Brain.Targets.Empty();Brain.ReserveTargets.Empty();Brain.UpgradeFamilies.Empty();Brain.DesiredTransports=0;
+    // Isolate this refinery's real feedstock demand from worker reserve assembly.
+    Base.Buildings[0].Enabled=false;
+    FSeigeAIBuildTarget Target;Target.Definition=TEXT("substrate_works");Target.Count=1;Brain.Targets.Add(Target);
     const FString Ore=TEXT("iron_ore");const auto& Recipe=Base.Recipes[TEXT("smelt_alloy")];
     const double Capacity=Base.Trade.Definition(Base.FindBuilding(PortId)->DefId)->CapacityKg/Base.Resources[Ore].UnitMassKg;
     const double Bill=Base.BuildingDefs[Target.Definition].Cost.FindRef(TEXT("alloy"));
@@ -502,13 +534,13 @@ bool FSeigeAIBulkFeedstockTest::RunTest(const FString& Parameters)
     }
     // Small editable bills and a material without an installed producer must
     // not inherit an unrelated one-tonne replenishment target.
-    FSeigeSimulation Tail=Base;Tail.BuildingDefs[Target.Definition].Cost={{TEXT("alloy"),Recipe.Outputs.FindRef(TEXT("alloy"))}};
+    FSeigeSimulation Tail=Base;Tail.Buildings[0].Enabled=false;Tail.BuildingDefs[Target.Definition].Cost={{TEXT("alloy"),Recipe.Outputs.FindRef(TEXT("alloy"))}};
     TestTrue(TEXT("A final one-batch output bill can still be funded"),Brain.ManageTrade(Tail));
-    TestTrue(TEXT("Coproduct output is not counted twice across core and refinery"),Tail.FindBuilding(PortId)->Shipment.Resource==Ore&&FMath::IsNearlyEqual(Tail.FindBuilding(PortId)->Shipment.Quantity,Recipe.Inputs[Ore],1.e-8));
-    FSeigeSimulation Unsupported=Base;Unsupported.BuildingDefs[Target.Definition].Cost={{TEXT("crystalline"),2}};Unsupported.Credits=Unsupported.TradeQuote(TEXT("crystalline"),2,true);
+    TestTrue(TEXT("Coproduct output is not counted twice in the specialist refinery"),Tail.FindBuilding(PortId)->Shipment.Resource==Ore&&FMath::IsNearlyEqual(Tail.FindBuilding(PortId)->Shipment.Quantity,Recipe.Inputs[Ore],1.e-8));
+    FSeigeSimulation Unsupported=Base;Unsupported.Buildings[2].Enabled=false;Unsupported.BuildingDefs[Target.Definition].Cost={{TEXT("crystalline"),2}};Unsupported.Credits=Unsupported.TradeQuote(TEXT("crystalline"),2,true);
     TestTrue(TEXT("A legal material without a producing recipe retains its ordinary direct bill"),Brain.ManageTrade(Unsupported));
     TestTrue(TEXT("Unrelated raw material is neither overbought nor treated as ore feedstock"),Unsupported.FindBuilding(PortId)->Shipment.Resource==TEXT("crystalline")&&FMath::IsNearlyEqual(Unsupported.FindBuilding(PortId)->Shipment.Quantity,2.,1.e-8));
-    FSeigeSimulation Refill=Base;FSeigeScenarioAI RefillBrain=Brain;RefillBrain.Targets.Empty();RefillBrain.ReserveTargets.Empty();Refill.Buildings[0].Enabled=false;
+    FSeigeSimulation Refill=Base;FSeigeScenarioAI RefillBrain=Brain;RefillBrain.Targets.Empty();RefillBrain.UpgradeFamilies.Empty();RefillBrain.ReserveTargets.Empty();Refill.Buildings[0].Enabled=false;
     const auto& Factory=Refill.Buildings[2];const double RefillTarget=FMath::Max(Recipe.Inputs[Ore]*Brain.RecipeInputBuffer,Refill.ProductionInputBuffer(Factory,Recipe.Id,Ore));
     TestTrue(TEXT("The ordinary refill honors the actual two-haul raw buffer beyond the old four-cycle amount"),RefillTarget>Recipe.Inputs[Ore]*Brain.RecipeInputBuffer&&RefillBrain.ManageTrade(Refill));
     TestTrue(TEXT("With no outstanding output bill, paid trade funds the real raw operating buffer"),Refill.FindBuilding(PortId)->Shipment.Buy&&Refill.FindBuilding(PortId)->Shipment.Resource==Ore&&FMath::IsNearlyEqual(Refill.FindBuilding(PortId)->Shipment.Quantity,RefillTarget,1.e-8));
@@ -542,15 +574,15 @@ bool FSeigeAISurplusExportTest::RunTest(const FString& Parameters)
     Base.Credits=0;const double Stock=Base.TotalStock(Goods);const int32 Bodies=Base.Workers.Bodies.Num();
     TestTrue(TEXT("Repeated cumulative targets protect two final bills, not their sum"),FMath::IsNearlyEqual(Brain.ManufacturedExportSurplus(Base,Goods),500.,1.e-8));
     TestEqual(TEXT("Stored workers never enter the manufactured-surplus path"),Brain.ManufacturedExportSurplus(Base,TEXT("stored_workers")),0.);
-    FSeigeSimulation Producer=Base;if(!Producer.SetProductionRecipe(Producer.Buildings[0].Id,TEXT("make_circuits"),Error)){AddError(Error);return false;}
-    TestTrue(TEXT("Selected production inputs retain their operating and AI refill buffers"),Brain.ManufacturedExportSurplus(Producer,Goods)<=500-Producer.ProductionInputs(Producer.Buildings[0],TEXT("make_circuits"))[Goods]*Brain.RecipeInputBuffer);
+    FSeigeSimulation Producer=Base;const int32 Circuits=Producer.AddReviewBuilding(TEXT("circuit_works"),Home+FVector2D(0,2500));
+    TestTrue(TEXT("Specialist production inputs retain their operating and AI refill buffers"),Brain.ManufacturedExportSurplus(Producer,Goods)<=500-Producer.ProductionInputs(*Producer.FindBuilding(Circuits),TEXT("make_circuits"))[Goods]*Brain.RecipeInputBuffer);
     FSeigeSimulation Queued=Base;FSeigeBuilding Site;Site.Id=1000000;Site.DefId=TEXT("conductor_works");Site.Health=Queued.BuildingDefs[Site.DefId].Health;Site.IsConstructing=true;Site.Enabled=false;
     Site.InstalledMaterials.Add(Goods,20);Site.ConstructionMaterials.Add(Goods,30);Queued.Buildings[0].Inventory[Goods]-=50;Queued.Buildings.Add(Site);
     TestTrue(TEXT("Installed and on-site material retain the same protected total through a paused paid site"),FMath::IsNearlyEqual(Brain.ManufacturedExportSurplus(Queued,Goods),500.,1.e-8));
     FSeigeSimulation Replacement=Base;Site.IsConstructing=false;Site.Health=1;Site.Inventory.Add(Goods,30);Site.ConstructionMaterials.Empty();Replacement.Buildings.Add(Site);
     const double BeforeLoss=Brain.ManufacturedExportSurplus(Replacement,Goods);Replacement.Buildings.Last().Health=0;
     TestTrue(TEXT("Destruction restores the complete planned replacement bill before another export"),FMath::IsNearlyEqual(BeforeLoss-Brain.ManufacturedExportSurplus(Replacement,Goods),Base.BuildingDefs[Site.DefId].Cost[Goods]+30,1.e-8));
-    FSeigeSimulation WorkerReserve=Base;WorkerReserve.Buildings[0].Inventory.Add(TEXT("components"),1000);
+    FSeigeSimulation WorkerReserve=Base;WorkerReserve.Buildings[0].Inventory.Add(TEXT("components"),2000);
     const double BeforeTarget=Brain.ManufacturedExportSurplus(WorkerReserve,TEXT("components"));
     WorkerReserve.Buildings[0].DefId=TEXT("command_core_2");WorkerReserve.CoreDefinition=TEXT("command_core_2");WorkerReserve.Workers.RefreshMetrics(WorkerReserve);
     TestTrue(TEXT("A command upgrade retains assembly inputs for its larger automatic reserve"),BeforeTarget-Brain.ManufacturedExportSurplus(WorkerReserve,TEXT("components"))>=5*WorkerReserve.Recipes[TEXT("assemble_robot")].Inputs[TEXT("components")]-1.e-8);
@@ -561,9 +593,10 @@ bool FSeigeAISurplusExportTest::RunTest(const FString& Parameters)
     FSeigeSimulation LostStock=Base;LostStock.Buildings[0].Inventory.Remove(Goods);
     TestTrue(TEXT("A manufactured order with lost stock and no remaining producer is cancellable"),Brain.ManageTrade(LostStock));
     TestTrue(TEXT("Cancellation releases the blocked port without granting replacement goods or money"),LostStock.FindBuilding(PortId)->Shipment.Resource.IsEmpty()&&LostStock.Credits==0&&LostStock.TotalStock(Goods)==0);
-    FSeigeSimulation Replenishing=Base;Replenishing.Buildings[0].Inventory.Remove(Goods);Replenishing.Buildings[0].Inventory.Add(TEXT("iron_ore"),5);
-    if(!Replenishing.SetProductionRecipe(Replenishing.Buildings[0].Id,TEXT("draw_conductors"),Error)){AddError(Error);return false;}
-    TestTrue(TEXT("The surviving selected supplier can actually pay a replacement batch"),Replenishing.CanCommitProduction(Replenishing.Buildings[0],TEXT("draw_conductors")));
+    FSeigeSimulation Replenishing=Base;Replenishing.Buildings[0].Inventory.Remove(Goods);
+    const int32 Supplier=Replenishing.AddReviewBuilding(TEXT("conductor_works"),Home+FVector2D(0,2500));
+    Replenishing.FindBuilding(Supplier)->Inventory.Add(TEXT("iron_ore"),5);Replenishing.Energy.Invalidate();Replenishing.Energy.Tick(Replenishing,0);
+    TestTrue(TEXT("The surviving specialist supplier has its actual replacement feedstock"),Replenishing.FindBuilding(Supplier)->Inventory.FindRef(TEXT("iron_ore"))>=Replenishing.ProductionInputs(*Replenishing.FindBuilding(Supplier),TEXT("draw_conductors"))[TEXT("iron_ore")]);
     TestFalse(TEXT("A surviving selected producer keeps its ordinary waiting export"),Brain.ManageTrade(Replenishing));
     TestEqual(TEXT("A replenishable order is not silently replaced"),Replenishing.FindBuilding(PortId)->Shipment.Resource,Goods);
     FSeigeSimulation RawFallback=Base;RawFallback.CancelPendingExport(PortId,Error);RawFallback.Buildings[0].Inventory[Goods]=Future+SafeBuffer;
@@ -708,17 +741,16 @@ bool FSeigeAIReplicatorBootstrapTest::RunTest(const FString& Parameters)
     Core.ProductionInputs.Empty();Core.ProductionCommitted=false;Core.CommittedRecipe.Empty();Core.ProductionReservedLitres=0;Core.Progress=0;
     Core.Inventory.Remove(TEXT("alloy"));
     Brain.Targets.Empty();Brain.ReserveTargets.Empty();FSeigeAIBuildTarget Target;Target.Definition=TEXT("alloy_refinery");Target.Count=1;Brain.Targets.Add(Target);
+    Core.SelectedRecipe.Empty();
     const double Ore=Colony.TotalStock(TEXT("iron_ore")),Energy=Colony.Energy.ConsumedKWh,Credits=Colony.Credits,Time=Colony.Time;
-    TestTrue(TEXT("A genuine construction shortage selects a funded command recipe"),Brain.ManageCoreProduction(Colony));
-    TestEqual(TEXT("Finite starter metal becomes construction alloys before importing finished goods"),Core.SelectedRecipe,FString(TEXT("smelt_alloy")));
+    TestTrue(TEXT("An unset command producer selects its paid worker recipe"),Brain.ManageCoreProduction(Colony));
+    TestEqual(TEXT("A construction shortage does not invent universal command replication"),Core.SelectedRecipe,FString(TEXT("assemble_robot")));
     TestTrue(TEXT("Recipe selection grants no stock, energy, time or workers"),Colony.TotalStock(TEXT("alloy"))==0&&Colony.TotalStock(TEXT("iron_ore"))==Ore&&Colony.Energy.ConsumedKWh==Energy&&Colony.Time==Time&&Colony.Workers.Bodies.Num()==Bodies);
-    FSeigeSimulation NoEnergy=Colony;NoEnergy.Buildings[0].BatteryEnergyKWh=0;NoEnergy.Energy.Tick(NoEnergy,0);
-    TestFalse(TEXT("The batch cannot commit without its actual stored energy"),NoEnergy.CanCommitProduction(NoEnergy.Buildings[0],TEXT("smelt_alloy")));
-    const auto& Recipe=Colony.Recipes[TEXT("smelt_alloy")];const double OutputBefore=Colony.ProducedUnits.FindRef(TEXT("alloy"));
-    for(int32 I=0;I<20000&&Colony.ProducedUnits.FindRef(TEXT("alloy"))==OutputBefore;++I)Colony.Tick(Colony.FixedStepSeconds());
-    TestTrue(TEXT("Real operators finish the selected paid batch"),Colony.ProducedUnits.FindRef(TEXT("alloy"))>=OutputBefore+Recipe.Outputs.FindRef(TEXT("alloy")));
-    TestTrue(TEXT("Production consumes the authored ore and emits its coproduct"),FMath::IsNearlyEqual(Colony.TotalStock(TEXT("iron_ore")),Ore-Recipe.Inputs.FindRef(TEXT("iron_ore")),1.e-8)&&Colony.ProducedUnits.FindRef(TEXT("conductors"))>=Recipe.Outputs.FindRef(TEXT("conductors")));
-    TestTrue(TEXT("Core energy multiplier is actually paid without free credits or worker creation"),Colony.Energy.ConsumedKWh-Energy>=Colony.ProductionEnergy(*Colony.FindBuilding(CoreId),Recipe.Id)&&Colony.Credits==Credits&&Colony.Workers.Bodies.Num()==Bodies);
+    TestTrue(TEXT("The AI's core commodity recipe list is empty"),Brain.CoreReplicationRecipes.IsEmpty());
+    TestFalse(TEXT("Players and AI cannot select a specialist recipe on the command module"),Colony.SetProductionRecipe(CoreId,TEXT("smelt_alloy"),Error));
+    TestFalse(TEXT("An unpaid worker batch waits for specialist or trade alloy"),Colony.CanCommitProduction(Core,TEXT("assemble_robot")));
+    for(int32 I=0;I<100;++I)Colony.Tick(Colony.FixedStepSeconds());
+    TestTrue(TEXT("Waiting never converts ore into free goods or worker bodies"),Colony.TotalStock(TEXT("iron_ore"))==Ore&&Colony.ProducedUnits.FindRef(TEXT("alloy"))==0&&Colony.Credits==Credits&&Colony.Workers.Bodies.Num()==Bodies);
     FSeigeSimulation Committed=Colony;auto& Busy=Committed.Buildings[0];
     Busy.ProductionCommitted=true;Busy.CommittedRecipe=TEXT("assemble_robot");Busy.SelectedRecipe=TEXT("assemble_robot");
     TestFalse(TEXT("Planning never replaces an already committed worker batch"),Brain.ManageCoreProduction(Committed));
@@ -753,13 +785,13 @@ bool FSeigeAISelectedRecipeTradeTest::RunTest(const FString& Parameters)
             B.ProductionInputs.Empty();B.ProductionCommitted=false;B.CommittedRecipe.Empty();B.ProductionReservedLitres=0;B.Progress=0;B.Inventory.Remove(TEXT("components"));
         }
         Colony.BuildingDefs[Colony.CoreDefinition].RecipeInputMultiplier=2;
-        Brain.Targets.Empty();Brain.ReserveTargets.Empty();Brain.ImportBatch=10000;
+        Brain.Targets.Empty();Brain.UpgradeFamilies.Empty();Brain.ReserveTargets.Empty();Brain.ImportBatch=10000;
         TestTrue(TEXT("Command capacity requires an automatic worker reserve"),Colony.WorkerSurplusTarget()>0);
         TestTrue(TEXT("Core worker selection has no fixed definition recipe"),Colony.Definition(Colony.Buildings[0])->Recipe.IsEmpty());
         TestEqual(TEXT("Core has a real selected worker batch to fund"),Colony.ActiveProductionRecipe(Colony.Buildings[0]),FString(TEXT("assemble_robot")));
-        if(WithFactory)TestEqual(TEXT("Dedicated factory also exposes its selected worker batch"),Colony.ActiveProductionRecipe(Colony.Buildings[2]),FString(TEXT("assemble_robot")));
+        if(WithFactory)TestTrue(TEXT("Construction hub lends real builders and does not manufacture workers"),Colony.ActiveProductionRecipe(Colony.Buildings[2]).IsEmpty());
         const double PerBody=Colony.Recipes[TEXT("assemble_robot")].Inputs.FindRef(TEXT("components"));
-        const double Expected=PerBody*(2+(WithFactory?1:0))*Brain.RecipeInputBuffer;
+        const double Expected=PerBody*2*Brain.RecipeInputBuffer;
         Colony.Credits=Colony.TradeQuote(TEXT("components"),Expected,true);const double Before=Colony.Credits;
         FSeigeSimulation Unfunded=Colony;Unfunded.Credits=0;
         TestTrue(TEXT("AI orders selected worker inputs without a generic reserve target"),Brain.ManageTrade(Colony));
@@ -780,6 +812,7 @@ bool FSeigeAISupportPendingRoadTest::RunTest(const FString& Parameters)
     FString Error;FSeigeSimulation Colony;FSeigeScenarioAI Brain;
     if(!Brain.Initialize(Colony,AIRules(),AIDirectory(),false,Error,false,false)||!FinishCoreDeployment(Colony,Error)){AddError(Error);return false;}
     Colony.SetRoadsEnabledForTest(true); // Authored legacy road regression.
+    Colony.BuildingDefs[Colony.CoreDefinition].Jobs=Colony.RobotSupportCapacity+1;Colony.Workers.RefreshMetrics(Colony);
     const FVector2D Home=Colony.Buildings[0].Position,Port=Colony.BuildingAccessPoint(Colony.Buildings[0]);
     if(!Colony.PlaceBuilding(TEXT("worker_factory"),Home+FVector2D(1400,0),Error)||!Colony.PlaceRoad(Port,Port+FVector2D(0,500),Error)){AddError(Error);return false;}
     TestTrue(TEXT("Real queued construction exceeds current worker support"),Colony.TotalJobs>Colony.RobotSupportCapacity);
@@ -858,7 +891,7 @@ bool FSeigeAIDevelopedNeighborRecoveryTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("No simulated production history is fabricated"),Colony.ProducedUnits.IsEmpty());
     TSet<FString> Identities;int32 Active=0,Stored=0;
     for(const auto& W:Colony.Workers.Bodies){TestFalse(TEXT("Established workers have unique identities"),Identities.Contains(W.Id));Identities.Add(W.Id);Active+=W.State==TEXT("active");Stored+=W.State==TEXT("stored");}
-    TestEqual(TEXT("All 44 active bodies are present"),Active,44);TestEqual(TEXT("All four packed bodies are present"),Stored,4);
+    TestEqual(TEXT("All 43 authored active bodies are present"),Active,43);TestEqual(TEXT("All four packed bodies are present"),Stored,4);
     for(const auto& B:Colony.Buildings){TestFalse(TEXT("Initial structures are completed scenario assets"),B.IsConstructing);TestTrue(TEXT("Every initial facility has its shared colony grid"),Colony.IsRoadGridConnected(Colony.Buildings[0].Id,B.Id));TestTrue(TEXT("Cargo fits the local building"),Colony.StorageUsed(B)<=Colony.Definition(B)->StorageCapacity+1.e-8);}
     const FString SavePath=AIOutput(TEXT("established-initial.json"));if(!Colony.Save(SavePath,Error)){AddError(Error);return false;}
     FSeigeSimulation Restored;FSeigeScenarioAI Resume;

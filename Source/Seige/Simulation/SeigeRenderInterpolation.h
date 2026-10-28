@@ -9,6 +9,7 @@ struct FSeigeRenderSnapshot
     TMap<int32,FVector2D> Couriers, Enemies, Builders, RoadBuilders, Companions, Vehicles;
     TMap<int32,int32> VehicleSectors;
     TMap<int32,FVector2D> TransportPositions;
+    TMap<int32,double> CompanionHeadings,CompanionSpeeds,CompanionTravel;
     TMap<FString,FVector2D> WorkerPositions;
     TMap<int32,double> Construction;
     void Capture(const FSeigeSimulation& Sim)
@@ -19,7 +20,8 @@ struct FSeigeRenderSnapshot
         for(const auto& E:Sim.Enemies)Enemies.Add(E.Id,E.Position);
         for(const auto& B:Sim.Buildings){Construction.Add(B.Id,B.ConstructionProgress);Builders.Add(B.Id,B.BuilderPosition);}
         for(const auto& R:Sim.Roads)RoadBuilders.Add(R.Id,R.BuilderPosition);
-        Companions.Reset();for(const auto& D:Sim.Companions.Dogs)Companions.Add(D.Id,D.Position);
+        Companions.Reset();CompanionHeadings.Reset();CompanionSpeeds.Reset();CompanionTravel.Reset();
+        for(const auto& D:Sim.Companions.Dogs){Companions.Add(D.Id,D.Position);CompanionHeadings.Add(D.Id,D.Heading);CompanionSpeeds.Add(D.Id,D.SpeedMetersPerSecond);CompanionTravel.Add(D.Id,D.DistanceWalked);}
         Vehicles.Reset();VehicleSectors.Reset();for(const auto& V:Sim.Combat.Vehicles){Vehicles.Add(V.Id,V.Position);VehicleSectors.Add(V.Id,V.SectorIndex);}
         TransportPositions.Reset();for(const auto& V:Sim.TransportVehicles.Bodies)TransportPositions.Add(V.Id,V.Position);
     }
@@ -43,6 +45,12 @@ struct FSeigeRenderSnapshot
     {const auto* P=Enemies.Find(E.Id);return Valid&&P?FMath::Lerp(*P,E.Position,FMath::Clamp(Alpha,0.,1.)):E.Position;}
     FVector2D Companion(const FSeigeCompanion& D,double Alpha) const
     {const auto* P=Companions.Find(D.Id);return Valid&&P?FMath::Lerp(*P,D.Position,FMath::Clamp(Alpha,0.,1.)):D.Position;}
+    double CompanionHeading(const FSeigeCompanion& D,double Alpha) const
+    {const auto* H=CompanionHeadings.Find(D.Id);return Valid&&H?*H+FMath::FindDeltaAngleDegrees(*H,D.Heading)*FMath::Clamp(Alpha,0.,1.):D.Heading;}
+    double CompanionSpeed(const FSeigeCompanion& D,double Alpha) const
+    {const auto* S=CompanionSpeeds.Find(D.Id);return Valid&&S?FMath::Lerp(*S,D.SpeedMetersPerSecond,FMath::Clamp(Alpha,0.,1.)):D.SpeedMetersPerSecond;}
+    double CompanionDistance(const FSeigeCompanion& D,double Alpha) const
+    {const auto* T=CompanionTravel.Find(D.Id);return Valid&&T?FMath::Lerp(*T,D.DistanceWalked,FMath::Clamp(Alpha,0.,1.)):D.DistanceWalked;}
     FVector2D Vehicle(const FSeigeVehicle& V,double Alpha) const
     {const auto* P=Vehicles.Find(V.Id);return Valid&&P&&VehicleSectors.FindRef(V.Id)==V.SectorIndex?FMath::Lerp(*P,V.Position,FMath::Clamp(Alpha,0.,1.)):V.Position;}
     FVector2D Transport(const FSeigeTransportVehicle& V,double Alpha) const

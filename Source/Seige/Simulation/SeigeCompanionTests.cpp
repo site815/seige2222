@@ -41,8 +41,8 @@ bool FSeigeCompanionFoodTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCompanionMovementTest,"Seige.Companions.WalkingInterpolationAndPersistence",Flags)
 bool FSeigeCompanionMovementTest::RunTest(const FString& Parameters)
 {
-    FSeigeSimulation S;if(!Prepare(S,*this))return false;auto& Dog=S.Companions.Dogs[0];Dog.Position=FVector2D(1000,1000);
-    S.Companions.SetControlled(Dog.Id);S.Companions.SetControlDirection(FVector2D(1,1));const FVector2D Before=Dog.Position;
+    FSeigeSimulation S;if(!Prepare(S,*this))return false;auto& Dog=S.Companions.Dogs[0];Dog.Position=FVector2D(900,900);Dog.Heading=45;
+    S.Companions.SetControlled(Dog.Id);S.Companions.SetControlDirection(FVector2D(1,1));StepDog(S,1);const FVector2D Before=Dog.Position;
     StepDog(S,10);const double Kmh=FVector2D::Distance(Dog.Position,Before)*S.MetersPerWorldUnit()/10*3.6;
     TestTrue(TEXT("Diagonal input stays at configured walking speed"),FMath::IsNearlyEqual(Kmh,S.Companions.WalkKmh,.0001));
     FSeigeRenderSnapshot Snapshot;Snapshot.Capture(S);const FVector2D Previous=Dog.Position;StepDog(S,S.FixedStepSeconds());
@@ -52,12 +52,47 @@ bool FSeigeCompanionMovementTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Companion save reloads"),Loaded.Load(State,S,Error));
     TestTrue(TEXT("Reload retains position"),Loaded.Dogs[0].Position.Equals(Dog.Position));
     TestEqual(TEXT("Reload clears transient possession"),Loaded.ControlledId,0);
+    TestEqual(TEXT("Reload clears transient movement speed"),Loaded.Dogs[0].MotionSpeedMetersPerSecond,0.);
     TestTrue(TEXT("Reload retains food accounting"),FMath::IsNearlyEqual(Loaded.Dogs[0].FoodConsumedKg,Dog.FoodConsumedKg));
     const double Limit=S.Companions.TerritoryRadiusMeters/S.MetersPerWorldUnit();Dog.Position=FVector2D(Limit-1,0);S.Companions.SetControlDirection(FVector2D(1,0));StepDog(S,10);
     TestTrue(TEXT("Cannot walk beyond 100 m of the shuttle"),Dog.Position.Size()<=Limit);
     const auto DogJson=State->GetObjectField(TEXT("companions"))->GetArrayField(TEXT("dogs"))[0]->AsObject();DogJson->SetNumberField(TEXT("food_consumed_kg"),-1);
     TestFalse(TEXT("Invalid saved food ledger rejected"),Loaded.Load(State,S,Error));
     S.LaunchShuttle();TestTrue(TEXT("Rex evacuates with the colony"),S.Companions.Dogs[0].Evacuated);return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCompanionSteeringTest,"Seige.Companions.SprintAccelerationAndSteering",Flags)
+bool FSeigeCompanionSteeringTest::RunTest(const FString& Parameters)
+{
+    FSeigeSimulation S;if(!Prepare(S,*this))return false;auto& D=S.Companions.Dogs[0];
+    D.Position=FVector2D(1000,0);D.Heading=90;S.Companions.SetControlled(D.Id);S.Companions.SetControlFacing(90);S.Companions.SetControlDirection(FVector2D(0,1));
+    const FVector2D Start=D.Position;StepDog(S,S.FixedStepSeconds());
+    TestTrue(TEXT("Walk accelerates physically instead of instant full speed"),D.Moving&&D.SpeedMetersPerSecond>0&&D.SpeedMetersPerSecond<S.Companions.WalkKmh/3.6);
+    StepDog(S,1);TestTrue(TEXT("Walk settles at configured 5 km/h"),FMath::IsNearlyEqual(D.SpeedMetersPerSecond*3.6,S.Companions.WalkKmh,.001));
+    S.Companions.SetControlSprint(true);StepDog(S,2);
+    TestTrue(TEXT("Held sprint reaches configured 14 km/h"),FMath::IsNearlyEqual(D.SpeedMetersPerSecond*3.6,S.Companions.RunKmh,.001));
+    TestTrue(TEXT("Sprint travelled away from the real starting location"),FVector2D::Distance(Start,D.Position)*S.MetersPerWorldUnit()>6);
+    S.Companions.SetControlSprint(false);StepDog(S,1);
+    TestTrue(TEXT("Releasing sprint returns to walk"),FMath::IsNearlyEqual(D.SpeedMetersPerSecond*3.6,S.Companions.WalkKmh,.001));
+    S.Companions.SetControlDirection(FVector2D::ZeroVector);const FVector2D BeforeBrake=D.Position;StepDog(S,S.FixedStepSeconds());
+    TestTrue(TEXT("Releasing direction decelerates over a short stride"),D.SpeedMetersPerSecond>0&&D.SpeedMetersPerSecond<S.Companions.WalkKmh/3.6&&!D.Position.Equals(BeforeBrake));
+    StepDog(S,1);TestTrue(TEXT("Braking stops without continued drift"),D.MotionSpeedMetersPerSecond==0&&!D.Moving);
+    const FVector2D Stationary=D.Position;const double Heading=D.Heading;
+    S.Companions.SetControlFacing(-90);StepDog(S,S.FixedStepSeconds());
+    const double Turn=FMath::Abs(FMath::FindDeltaAngleDegrees(Heading,D.Heading));
+    TestTrue(TEXT("Mouse facing turns stationary Rex at a bounded rate"),Turn>0&&Turn<=S.Companions.TurnDegreesPerSecond*S.FixedStepSeconds()+.001&&Turn<180);
+    TestTrue(TEXT("Stationary turns do not slide the dog"),D.Position.Equals(Stationary));
+    StepDog(S,1);TestTrue(TEXT("Body reaches requested mouse heading"),FMath::Abs(FMath::FindDeltaAngleDegrees(D.Heading,-90))<.001);
+    S.Companions.SetControlDirection(FVector2D(0,1));StepDog(S,S.FixedStepSeconds());
+    TestTrue(TEXT("A reversal turns before accelerating forward"),D.SpeedMetersPerSecond<S.Companions.WalkKmh/3.6*.25);
+    S.Companions.SetControlSprint(true);S.Companions.SetControlled(0);S.Companions.SetControlled(D.Id);S.Companions.SetControlDirection(FVector2D(0,1));StepDog(S,2);
+    TestTrue(TEXT("Re-entering does not retain a stale sprint input"),FMath::IsNearlyEqual(D.SpeedMetersPerSecond*3.6,S.Companions.WalkKmh,.001));
+    const FVector2D BeforeBlocked=D.Position;int32 PhysicalChecks=0;
+    S.Companions.SetMovementConstraint([&](FVector2D A,FVector2D B,double Radius){++PhysicalChecks;return false;});
+    StepDog(S,1);TestTrue(TEXT("Actual curved strides respect external terrain and neighbor constraints"),PhysicalChecks>0&&D.Position.Equals(BeforeBlocked)&&D.SpeedMetersPerSecond==0);
+    S.Companions.SetMovementConstraint({});
+    S.Companions.SetControlSprint(true);S.Companions.Damage(S,D.Id,1);
+    TestTrue(TEXT("Injury clears player control and locomotion state"),S.Companions.ControlledId==0&&D.MotionSpeedMetersPerSecond==0&&D.Retreating);
+    return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeCompanionShelterTest,"Seige.Companions.DamageTriggeredShelter",Flags)
 bool FSeigeCompanionShelterTest::RunTest(const FString& Parameters)

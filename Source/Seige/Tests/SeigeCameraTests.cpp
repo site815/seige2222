@@ -211,7 +211,7 @@ bool FSeigePerspectiveCameraTest::RunTest(const FString& Parameters)
         const FVector Target=G.RenderPosition(FVector2D(G.CameraCenter),70);
         const FVector Aim=Transform.GetRotation().GetForwardVector();
         TestFalse(TEXT("Camera transform stays finite across supported orbit and overview limits"),Transform.ContainsNaN());
-        TestTrue(TEXT("Camera remains aimed at its terrain focus"),FVector::DotProduct(Aim,(Target-Position).GetSafeNormal())>1-1.e-8);
+        TestTrue(TEXT("Zoom and terrain clearance retain the selected pitch and yaw"),Transform.GetRotation().Equals(FRotator(-Pitch,Yaw,0).Quaternion(),1.e-6));
         const double MinimumDistance=Width*G.RenderScale/(2*FMath::Tan(FMath::DegreesToRadians(G.CameraFov*.5)));
         TestTrue(TEXT("Perspective zoom has the requested width-equivalent camera distance or extra ground clearance"),FVector::Distance(Position,Target)>=MinimumDistance-.02);
         const FVector2D Local(Position.X/G.RenderScale,Position.Y/G.RenderScale);
@@ -232,8 +232,7 @@ bool FSeigePerspectiveCameraTest::RunTest(const FString& Parameters)
     G.CameraPitch=52;G.Zoom=G.MinimumZoom;const FTransform Closest=G.CameraTransform();
     G.Zoom=0;TestTrue(TEXT("Camera transform clamps distance below the minimum"),G.CameraTransform().Equals(Closest,.02));
 
-    // Home's level foundation isolates the deliberate close-zoom pitch change
-    // from the separate clearance correction required on a nearby hillside.
+    // Zoom through the former automatic-tilt range at the user's chosen angle.
     G.CameraCenter=FVector(G.HomePosition(),0);G.CameraYaw=135;G.CameraPitch=67;G.Zoom=G.DefaultZoom;
     const FTransform OriginalOrbit=G.CameraTransform();const float StoredPitch=G.CameraPitch;
     TestTrue(TEXT("Normal zoom uses the chosen orbit angle"),FMath::Abs(OriginalOrbit.Rotator().Pitch+StoredPitch)<.001);
@@ -241,14 +240,16 @@ bool FSeigePerspectiveCameraTest::RunTest(const FString& Parameters)
     const FVector GroundPosition=GroundView.GetLocation();
     const double Clearance=GroundPosition.Z-G.GroundHeight(FVector2D(GroundPosition)/G.RenderScale)*G.RenderScale;
     TestTrue(TEXT("Closest zoom keeps the configured camera ground clearance"),Clearance>=G.CameraGroundClearance-.02);
-    TestTrue(TEXT("Closest zoom reaches a near-ground view rather than remaining high above the colony"),Clearance<=G.CameraGroundClearance+100);
-    TestTrue(TEXT("Closest zoom lowers the viewing angle toward the configured minimum"),FMath::Abs(GroundView.Rotator().Pitch+G.MinimumCameraPitch)<1);
-    TestEqual(TEXT("Automatic close-zoom tilt preserves the user's stored orbit angle"),G.CameraPitch,StoredPitch);
+    TestTrue(TEXT("Closest zoom retains the selected viewing angle"),FMath::Abs(GroundView.Rotator().Pitch+StoredPitch)<.001);
+    TestEqual(TEXT("Zoom never modifies the user's orbit angle"),G.CameraPitch,StoredPitch);
     FVector GroundHit;
     if(TestTrue(TEXT("Near-ground center ray still finds the forward terrain surface"),G.TraceGroundRay(GroundPosition,GroundView.GetRotation().GetForwardVector(),GroundHit)))
         TestTrue(TEXT("Near-ground selection agrees with the cached visible surface"),FMath::Abs(GroundHit.Z-G.GroundHeight(FVector2D(GroundHit)/G.RenderScale)*G.RenderScale)<.05);
     G.Zoom=G.DefaultZoom*.45f;
-    TestTrue(TEXT("Zooming beyond the close-view transition restores the stored orbit angle"),FMath::Abs(G.CameraTransform().Rotator().Pitch+StoredPitch)<.001);
+    TestTrue(TEXT("Intermediate zoom retains the same viewing angle"),FMath::Abs(G.CameraTransform().Rotator().Pitch+StoredPitch)<.001);
+    const float OriginalClearance=G.CameraGroundClearance;G.CameraGroundClearance=10000;
+    TestTrue(TEXT("A forced terrain clearance correction cannot tilt the camera"),FMath::Abs(G.CameraTransform(G.MinimumZoom).Rotator().Pitch+StoredPitch)<.001);
+    G.CameraGroundClearance=OriginalClearance;
     G.Zoom=G.DefaultZoom;
     TestTrue(TEXT("Zooming back out restores the original orbit transform"),G.CameraTransform().Equals(OriginalOrbit,.02));
     return true;
@@ -492,6 +493,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRoadTerrainTest,"Seige.Camera.RoadGradeAn
 bool FSeigeRoadTerrainTest::RunTest(const FString& Parameters)
 {
     FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    G.Sim.SetRoadsEnabledForTest(true); // Isolated retained-road grading regression; normal scenarios remain roadless.
     const double Half=G.Sim.WorldHalfSize,CoarseStep=Half*2/128,Step=Half*2/G.DetailedTerrainResolution,Epsilon=.001;
     if(!G.Sim.SetInitialCorePosition(FVector2D(Half-2000,CoarseStep),G.Error)){AddError(G.Error);return false;}
     if(!DeployCameraFixture(G.Sim,G.Error)){AddError(G.Error);return false;}
@@ -533,9 +535,12 @@ bool FSeigeRoadTerrainPrivacyTest::RunTest(const FString& Parameters)
     const double Half=G.Sim.WorldHalfSize;const FVector2D Offset(Half*2,0);
     FSeigeNeighbor Neighbor;Neighbor.Index=5;Neighbor.Offset=Offset;Neighbor.Type=TEXT("starting");
     if(!Neighbor.Sim.Initialize(FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules")),G.Error,false,false,INDEX_NONE,Offset)){AddError(G.Error);return false;}
+    Neighbor.Sim.SetRoadsEnabledForTest(true);
     G.Neighbors.Add(MoveTemp(Neighbor));
     // Isolated visibility fixture: two live home sensors reveal the endpoints
     // across the boundary while the middle of the neighboring route stays dark.
+    // Only the neighbor opts into legacy road rendering. Home sensors use the
+    // current shared colony grid so road upkeep cannot invalidate this fixture.
     G.Sim.BuildingDefs[TEXT("sensor")].SensorRange=600;
     int32 SensorWorker=0;
     for(double Y:{-1600.,1600.})
@@ -546,11 +551,8 @@ bool FSeigeRoadTerrainPrivacyTest::RunTest(const FString& Parameters)
         if(!G.Sim.Workers.Bodies.IsValidIndex(SensorWorker)){AddError(TEXT("Visibility fixture lacks a physical sensor worker"));return false;}
         auto& Worker=G.Sim.Workers.Bodies[SensorWorker++];Worker.State=TEXT("active");Worker.Activity=TEXT("operate");Worker.BuildingId=Sensor.Id;
         Worker.RoadId=Worker.DeliveryId=Worker.ContainerId=0;Worker.ContainerKind.Empty();Worker.Route.Empty();Worker.NextWaypoint=0;Worker.Outdoor=false;Worker.Position=G.Sim.BuildingAccessPoint(Sensor);
-        FSeigeBuilding Solar;Solar.Id=Sensor.Id+1000;Solar.DefId=TEXT("solar_array");Solar.Position=Sensor.Position-FVector2D(1000,0);Solar.Health=G.Sim.BuildingDefs[Solar.DefId].Health;G.Sim.Buildings.Add(Solar);
-        FSeigeTransportSegment Wire;Wire.Id=Sensor.Id+2000;Wire.A=G.Sim.BuildingAccessPoint(Solar);Wire.B=G.Sim.BuildingAccessPoint(Sensor);Wire.Tier=TEXT("road");Wire.IsConstructing=false;Wire.ConstructionProgress=1;G.Sim.Roads.Add(Wire);
     }
-    // This is a powered visibility fixture, not a night-energy test. Use actual
-    // midday solar and the existing body identities rather than free Workers.
+    // Use the landed core's shared power and existing body identities.
     G.Sim.Calendar.SetElapsedMicroseconds(G.Sim.Calendar.GetRules().DaylightMicroseconds/2);
     G.Sim.Workers.RefreshMetrics(G.Sim);G.Sim.Energy.Invalidate();G.Sim.Energy.Tick(G.Sim,0);G.Sim.Workers.RefreshMetrics(G.Sim);
     G.FocusSector(5);G.RebuildTerrainHeights();
@@ -576,6 +578,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeTransportClearanceTest,"Seige.Camera.Tran
 bool FSeigeTransportClearanceTest::RunTest(const FString& Parameters)
 {
     FCameraWorld World;if(!World.Prepare(*this))return false;auto& G=*World.Game;
+    G.Sim.SetRoadsEnabledForTest(true);
     auto* Mesh=LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Cube.Cube"));
     if(!TestNotNull(TEXT("Clearance fixture can load an engine mesh"),Mesh))return false;
     auto* Actor=World.GetTestWorld()->SpawnActor<AActor>();auto* Root=NewObject<USceneComponent>(Actor);

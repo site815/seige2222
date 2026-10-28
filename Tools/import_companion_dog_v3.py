@@ -232,7 +232,7 @@ for name, definition in DATA['animations'].items():
     options.override_animation_name = name
     data = options.anim_sequence_import_data
     for key, value in {'convert_scene': True, 'convert_scene_unit': True, 'animation_length': u.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME,
-                       'import_bone_tracks': True, 'use_default_sample_rate': False, 'custom_sample_rate': 30, 'remove_redundant_keys': False}.items():
+                       'import_bone_tracks': True, 'use_default_sample_rate': False, 'custom_sample_rate': definition['fps'], 'remove_redundant_keys': False}.items():
         data.set_editor_property(key, value)
     task = task_for(name + '.fbx', name); task.options = options; AT.import_asset_tasks([task])
     clip = ED.load_asset(DEST + '/' + name)

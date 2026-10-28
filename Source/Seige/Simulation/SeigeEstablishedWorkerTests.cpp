@@ -88,8 +88,8 @@ bool FSeigeEstablishedWorkerAtomicTest::RunTest(const FString&)
     TestEqual(TEXT("Rejected assignments do not partially replace the body ledger"),EstablishedLedger(S.Workers),Before);
     Core->Inventory.Add(TEXT("stored_workers"),.5);TestFalse(TEXT("Packed body manifests require whole identities"),S.Workers.SeedEstablished(S,Assignment,1,Error));Core->Inventory.Remove(TEXT("stored_workers"));
     TestEqual(TEXT("A fractional packed-worker error retains the original ledger"),EstablishedLedger(S.Workers),Before);
-    TestFalse(TEXT("Explicit active bodies still require sufficient staffed support"),S.Workers.SeedEstablished(S,Assignment,100,Error));
-    TestEqual(TEXT("Support rejection creates no partial worker population"),EstablishedLedger(S.Workers),Before);
+    Assignment[CoreId]=0;TestFalse(TEXT("An established colony must retain its real core operator"),S.Workers.SeedEstablished(S,Assignment,1,Error));Assignment[CoreId]=Operators;
+    TestEqual(TEXT("Missing-operator rejection creates no partial worker population"),EstablishedLedger(S.Workers),Before);
     if(!S.Workers.SeedEstablished(S,Assignment,1,Error)){AddError(Error);return false;}
     const FString Established=EstablishedLedger(S.Workers);
     TestFalse(TEXT("An established worker ledger cannot be reset after entering play"),S.Workers.SeedEstablished(S,Assignment,1,Error));

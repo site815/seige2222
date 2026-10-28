@@ -39,6 +39,62 @@ int32 FSeigeWorkerSystem::ChargerBerths(const FSeigeSimulation& S,int32 Id) cons
     if(!D||B->Health<=0||!B->Enabled||(B->IsConstructing&&D->Role!=TEXT("core")))return 0;
     return D->Role==TEXT("core")?int32(Number(TEXT("core_charging_berths"))):D->Role==TEXT("service")?int32(Number(TEXT("station_charging_berths"))):0;
 }
+FVector2D FSeigeWorkerSystem::ChargingQueuePosition(const FSeigeSimulation& S,const FSeigeBuilding& Charger,int32 Slot) const
+{
+    const auto Access=S.Definition(Charger)->AccessPort;
+    const double Side=(Slot%2?1.:-1.)*((Slot+1)/2)*Number(TEXT("charging_queue_spacing_meters"))/S.MetersPerWorldUnit();
+    return S.BuildingAccessPoint(Charger)+FVector2D(-Access.Y,Access.X)*Side;
+}
+double FSeigeWorkerSystem::ChargingTravelSeconds(const FSeigeSimulation& S,FVector2D From,FVector2D To,double Limit,const FSeigeBuilding* ProspectivePlot) const
+{
+    if(From.Equals(To,1.e-5))return 0.;
+    const auto* Profile=S.Mobility.Profile(TEXT("drone"));if(!Profile)return DBL_MAX;
+    const double SampleLength=Profile->SampleMeters/S.MetersPerWorldUnit();
+    TArray<FVector2D> Route;if(!S.FindRoute(From,To,Route,-1,false,ProspectivePlot))return DBL_MAX;
+    double Seconds=0.;int32 Samples=0;
+    for(const auto& Point:Route)
+    {
+        while(!From.Equals(Point,1.e-5))
+        {
+            // Mobility.Speed deliberately samples only the next authored
+            // interval. Walk each interval here too, with a bounded search
+            // budget; treating a whole long edge as flat is optimistic.
+            if(++Samples>4096)return DBL_MAX;
+            const double Distance=FVector2D::Distance(From,Point);
+            const double Step=FMath::Min(Distance,SampleLength);
+            const FVector2D Next=From+(Point-From)*(Step/Distance);
+            const double Speed=S.Mobility.Speed(S,TEXT("drone"),From,Next)/S.MetersPerWorldUnit()*S.Companions.WorkerSpeedMultiplier(S);
+            if(Speed<=0)return DBL_MAX;
+            Seconds+=Step/Speed;if(Seconds>Limit)return DBL_MAX;
+            From=Next;
+        }
+        From=Point;
+    }
+    return Seconds;
+}
+bool FSeigeWorkerSystem::WorkstationHasChargingAccess(const FSeigeSimulation& S,FVector2D Position,const FSeigeBuilding* ProspectivePlot,int32 AdditionalQueued) const
+{
+    const double DaySeconds=double(S.Calendar.GetRules().DaylightMicroseconds+S.Calendar.GetRules().NightMicroseconds)/1.e6;
+    const double Session=ChargeSessionSeconds(S);
+    const double ReserveSeconds=Number(TEXT("charge_reserve_fraction"))*FMath::Max(1.,DaySeconds-Session);
+    for(const auto& B:S.Buildings)if(ChargerBerths(S,B.Id)>0)
+    {
+        // The core's automatic berth is available during bootstrap. Ordinary
+        // charging stations require their existing, real permanent attendant.
+        if(S.Definition(B)->Role==TEXT("service")&&AssignedCount(B.Id)<1)continue;
+        if(!S.Energy.CanConsume(S,B.Id,BatteryCapacity()/Session))continue;
+        int32 Queue=0;for(const auto& W:Bodies)if(W.ChargingBuildingId==B.Id)++Queue;
+        int32 Slot=0;
+        for(int32 Candidate=0;Candidate<=AdditionalQueued;++Candidate)
+        {do{++Slot;}while(Bodies.ContainsByPredicate([&](const auto& W){return W.ChargingBuildingId==B.Id&&W.ChargeQueueSlot==Slot;}));}
+        const FVector2D Waiting=ChargingQueuePosition(S,B,Slot),Port=S.BuildingAccessPoint(B);
+        const double Walk=ChargingTravelSeconds(S,Position,Waiting,ReserveSeconds,ProspectivePlot),Dock=ChargingTravelSeconds(S,Waiting,Port,ReserveSeconds,ProspectivePlot);
+        // Use actual terrain travel plus a conservative serial queue. No
+        // stagger bonus, future charger, road or energy grant is assumed.
+        if(Walk!=DBL_MAX&&Dock!=DBL_MAX&&Walk+Dock+(Queue+AdditionalQueued+1)*Session<ReserveSeconds)return true;
+    }
+    return false;
+}
 void FSeigeWorkerSystem::AssignCrews(FSeigeSimulation& S)
 {
     auto FreeTask=[](const FSeigeWorker& W){return W.Activity==TEXT("idle")||W.Activity==TEXT("return")||W.Activity==TEXT("operate")||W.Activity==TEXT("to_job")||W.Activity==TEXT("to_store")||W.Activity==TEXT("store");};
@@ -191,21 +247,81 @@ bool FSeigeWorkerSystem::StepBattery(FSeigeSimulation& S,FSeigeWorker& W,double 
             }
     if(!Charging)
     {
+        // Planning is derived state, so losing its cache during load must not
+        // shift the next recharge decision. Use the authored retry cadence on
+        // the saved simulation clock, not time since this cache was created.
+        // Exact routes below still confirm every actual charging departure.
+        const double Cadence=Number(TEXT("route_retry_seconds"));
+        const double ClockTolerance=1.e-7;
+        if(FMath::FloorToDouble((S.Time+ClockTolerance)/Cadence)==FMath::FloorToDouble((S.Time-Seconds+ClockTolerance)/Cadence))return W.BatteryKWh<=0;
         const double Threshold=Number(TEXT("charge_reserve_fraction"))+Number(TEXT("charge_reserve_stagger_fraction"))*(GetTypeHash(W.Id)%101)/100.;
-        // Begin planning before the normal reserve is spent on travel and the
-        // existing queue. This cheap lower bound avoids route searches on
-        // every fixed step while a healthy battery is nowhere near due.
-        const double Speed=FMath::Max(S.WalkingSpeed(),UE_DOUBLE_SMALL_NUMBER);
-        double Earliest=DBL_MAX;
-        for(const auto& B:S.Buildings)if(ChargerBerths(S,B.Id)>0)
+        auto Eligible=[&](const FSeigeBuilding& B)
         {
-            if(!S.Energy.CanConsume(S,B.Id,ChargeSlice))continue;
-            if(S.Definition(B)->Role==TEXT("service")&&B.Id!=W.CrewBuildingId&&!HasAttendant(B.Id))continue;
-            int32 Queue=0;for(const auto& Other:Bodies)if(Other.ChargingBuildingId==B.Id)++Queue;
-            Earliest=FMath::Min(Earliest,FVector2D::Distance(W.Position,S.BuildingAccessPoint(B))/Speed+(Queue+1)*Session);
+            return ChargerBerths(S,B.Id)>0&&S.Energy.CanConsume(S,B.Id,ChargeSlice)&&
+                (S.Definition(B)->Role!=TEXT("service")||B.Id==W.CrewBuildingId||HasAttendant(B.Id));
+        };
+        auto FreeSlot=[&](int32 Id)
+        {int32 Slot=1;while(Bodies.ContainsByPredicate([&](const auto& Other){return Other.Id!=W.Id&&Other.ChargingBuildingId==Id&&Other.ChargeQueueSlot==Slot;}))++Slot;return Slot;};
+        auto QueueSeconds=[&](int32 Id)
+        {int32 Queue=0;for(const auto& Other:Bodies)if(Other.Id!=W.Id&&Other.ChargingBuildingId==Id)++Queue;return (Queue+1)*Session;};
+        const double SpeedScale=S.Companions.WorkerSpeedMultiplier(S);
+        const bool SameWorld=W.ChargePlanTime>=0&&W.ChargePlanTime<=S.Time&&W.ChargePlanTopology==S.TransportRevision&&W.ChargePlanTerrain==S.Mobility.GetTerrainRevision()&&W.ChargePlanCrew==W.CrewBuildingId&&W.ChargePlanSpeed==SpeedScale;
+        const auto* Cached=SameWorld?S.FindBuilding(W.ChargePlanBuilding):nullptr;
+        bool Valid=Cached&&Eligible(*Cached)&&FreeSlot(Cached->Id)==W.ChargePlanSlot;
+        auto Plan=[&]()
+        {
+            W.ChargePlanBuilding=W.ChargePlanSlot=0;W.ChargePlanTravelSeconds=DBL_MAX;
+            double BestCost=DBL_MAX;
+            for(const auto& B:S.Buildings)if(Eligible(B))
+            {
+                const bool OwnStation=B.Id==W.CrewBuildingId&&S.Definition(B)->Role==TEXT("service");
+                const int32 Slot=FreeSlot(B.Id);const auto Waiting=ChargingQueuePosition(S,B,Slot);
+                const double Limit=W.BatteryCapacityKWh/Drain;
+                const double Walk=ChargingTravelSeconds(S,W.Position,Waiting,Limit),Dock=ChargingTravelSeconds(S,Waiting,S.BuildingAccessPoint(B),Limit);
+                if(Walk==DBL_MAX||Dock==DBL_MAX)continue;
+                const double Cost=Walk+Dock+QueueSeconds(B.Id);if(Cost>Limit)continue;
+                if(OwnStation||Cost<BestCost){W.ChargePlanBuilding=B.Id;W.ChargePlanSlot=Slot;W.ChargePlanTravelSeconds=Walk+Dock;BestCost=Cost;}
+                // Retain the attendant's existing self-service preference.
+                if(OwnStation)break;
+            }
+            W.ChargePlanPosition=W.Position;W.ChargePlanTime=S.Time;W.ChargePlanRetryAt=(FMath::FloorToDouble((S.Time+ClockTolerance)/Cadence)+1)*Cadence;
+            W.ChargePlanTopology=S.TransportRevision;W.ChargePlanTerrain=S.Mobility.GetTerrainRevision();W.ChargePlanCrew=W.CrewBuildingId;W.ChargePlanSpeed=SpeedScale;
+            return W.ChargePlanBuilding>0;
+        };
+        bool Fresh=false;
+        if(!Valid)
+        {
+            // Failed/unavailable plans retry on the existing authored cadence,
+            // never running terrain searches for every fixed-step body update.
+            if(SameWorld&&S.Time+ClockTolerance<W.ChargePlanRetryAt)return W.BatteryKWh<=0;
+            Valid=Plan();Fresh=true;
+            if(!Valid)return W.BatteryKWh<=0;
         }
-        if(Earliest==DBL_MAX)Earliest=0;
-        if(W.BatteryKWh>W.BatteryCapacityKWh*Threshold+Drain*Earliest)return false;
+        else
+        {
+            // Without topology changes the body can retrace its actual walk.
+            // This conservative bound makes moving bodies return early; a new
+            // exact route is needed only as they approach their charge reserve.
+            if(!W.Position.Equals(W.ChargePlanPosition,1.e-5))
+            {
+                const auto* P=S.Mobility.Profile(TEXT("drone"));
+                W.ChargePlanTravelSeconds+=FMath::Max(0.,S.Time-W.ChargePlanTime)/FMath::Max(.0001,P?FMath::Min(1.,P->RoughMultiplier):1.);
+            }
+            W.ChargePlanPosition=W.Position;W.ChargePlanTime=S.Time;
+        }
+        double ReturnSeconds=W.ChargePlanTravelSeconds+QueueSeconds(W.ChargePlanBuilding);
+        if(W.BatteryKWh>W.BatteryCapacityKWh*Threshold+Drain*ReturnSeconds)return false;
+        if(!Fresh)
+        {
+            if(S.Time+ClockTolerance<W.ChargePlanRetryAt)return W.BatteryKWh<=0;
+            if(!Plan())return W.BatteryKWh<=0;
+            ReturnSeconds=W.ChargePlanTravelSeconds+QueueSeconds(W.ChargePlanBuilding);
+            if(W.BatteryKWh>W.BatteryCapacityKWh*Threshold+Drain*ReturnSeconds)return false;
+        }
+        // Terrain changes or a genuinely out-of-range job can make departure
+        // unaffordable. Do not commit a charging trip or promise a berth; the
+        // body retains its task/cargo and needs a nearer powered charger.
+        if(W.BatteryKWh<=Drain*ReturnSeconds)return W.BatteryKWh<=0;
         // Finish attending the current short session before taking this same
         // berth. Otherwise the sole attendant and its customer can deadlock.
         if(W.Activity==TEXT("operate")&&W.BatteryKWh>0)
@@ -214,33 +330,7 @@ bool FSeigeWorkerSystem::StepBattery(FSeigeSimulation& S,FSeigeWorker& W,double 
         // Never abandon an accepted vehicle load/unload in place; relinquish
         // the temporary handler so a different physical crew member can help.
         if(W.TransportVehicleId){W.TransportVehicleId=0;Release(W);}
-        int32 Best=0,BestSlot=0;double Distance=TNumericLimits<double>::Max();
-        for(const auto& B:S.Buildings)if(ChargerBerths(S,B.Id)>0)
-        {
-            // A finished station may still be awaiting its grid road. Never
-            // park that road's material carrier at an unpowered charger.
-            if(!S.Energy.CanConsume(S,B.Id,ChargeSlice))continue;
-            const bool OwnStation=B.Id==W.CrewBuildingId&&S.Definition(B)->Role==TEXT("service");
-            if(S.Definition(B)->Role==TEXT("service")&&!OwnStation&&!HasAttendant(B.Id))continue;
-            const auto Port=S.BuildingAccessPoint(B),Access=S.Definition(B)->AccessPort;
-            int32 Slot=1;while(Bodies.ContainsByPredicate([&](const auto& Other){return Other.Id!=W.Id&&Other.ChargingBuildingId==B.Id&&Other.ChargeQueueSlot==Slot;}))++Slot;
-            const double Side=(Slot%2?1.:-1.)*((Slot+1)/2)*Number(TEXT("charging_queue_spacing_meters"))/S.MetersPerWorldUnit();
-            const FVector2D QueuePosition=Port+FVector2D(-Access.Y,Access.X)*Side;
-            TArray<FVector2D> Route,DockRoute;
-            // The actual queue offset can sit on a different bank than the
-            // access port. Both physical legs must be traversable.
-            if((!S.FindRoute(W.Position,QueuePosition,Route)&&!W.Position.Equals(QueuePosition,1.e-5))||(!S.FindRoute(QueuePosition,Port,DockRoute)&&!QueuePosition.Equals(Port,1.e-5)))continue;
-            double Length=0;FVector2D Previous=W.Position;for(const auto& Point:Route){Length+=FVector2D::Distance(Previous,Point);Previous=Point;}
-            Previous=QueuePosition;for(const auto& Point:DockRoute){Length+=FVector2D::Distance(Previous,Point);Previous=Point;}
-            int32 Queue=0;for(const auto& Other:Bodies)if(Other.ChargingBuildingId==B.Id)++Queue;
-            const double Cost=Length+(Queue+1)*Session*Speed;
-            if(OwnStation||Cost<Distance){Best=B.Id;BestSlot=Slot;Distance=Cost;}
-            // A station attendant uses its own self-service berth. Sending it
-            // to a neighbor creates cyclic dependencies between attendants.
-            if(OwnStation)break;
-        }
-        if(!Best)return W.BatteryKWh<=0;
-        W.ChargingBuildingId=Best;W.ChargeQueueSlot=BestSlot;
+        W.ChargingBuildingId=W.ChargePlanBuilding;W.ChargeQueueSlot=W.ChargePlanSlot;W.ChargePlanTime=-1;
         W.SuspendedActivity=W.Activity;W.Activity=TEXT("to_charge");W.Route.Empty();W.NextWaypoint=0;W.RetryAt=0;
     }
     auto* Charger=S.FindBuilding(W.ChargingBuildingId);
@@ -249,9 +339,7 @@ bool FSeigeWorkerSystem::StepBattery(FSeigeSimulation& S,FSeigeWorker& W,double 
     if(W.BatteryKWh>0&&!S.Energy.CanConsume(S,Charger->Id,ChargeSlice))
     {ResumeAfterCharging(S,W);return true;}
     const auto Port=S.BuildingAccessPoint(*Charger);
-    const auto Access=S.Definition(*Charger)->AccessPort;
-    const double Side=(W.ChargeQueueSlot%2?1.:-1.)*((W.ChargeQueueSlot+1)/2)*Number(TEXT("charging_queue_spacing_meters"))/S.MetersPerWorldUnit();
-    const FVector2D QueuePosition=Port+FVector2D(-Access.Y,Access.X)*Side;
+    const FVector2D QueuePosition=ChargingQueuePosition(S,*Charger,W.ChargeQueueSlot);
     if(W.Activity==TEXT("to_charge"))
     {
         if(W.BatteryKWh>0&&Move(S,W,QueuePosition,Seconds)){W.Activity=TEXT("charge_queue");W.PhaseSeconds=0;}

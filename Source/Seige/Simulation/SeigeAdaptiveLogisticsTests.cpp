@@ -18,33 +18,29 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeAdaptiveLogisticsPolicyTest,"Seige.Worker
 bool FSeigeAdaptiveLogisticsPolicyTest::RunTest(const FString&)
 {
     FString Error;FSeigeSimulation S;if(!S.Initialize(AdaptiveRules(),Error,false,false)){AddError(Error);return false;}
-    TestEqual(TEXT("The authored initial shuttle retains one logistics job"),S.Workers.LogisticsJobs(S),1);
-    // Classification-only records exercise the rule without manufacturing any
-    // population. The separate paid-growth test covers actual colony admission.
+    const int32 InitialBodies=S.Workers.Bodies.Num();
+    TestEqual(TEXT("Building crews add no separate hauling jobs"),S.Workers.LogisticsJobs(S),0);
+    // Classification-only records exercise current demand without pretending to
+    // manufacture workers. The paid-growth test below covers real admission.
     auto Facility=[&](const FString& Definition)
     {FSeigeBuilding B;B.Id=100+S.Buildings.Num();B.DefId=Definition;B.Health=S.BuildingDefs[Definition].Health;B.IsConstructing=false;B.Enabled=true;S.Buildings.Add(B);};
-    for(int32 I=0;I<3;++I)Facility(TEXT("solar_array"));
-    TestEqual(TEXT("Three completed facilities do not cross the first scaling boundary"),S.Workers.LogisticsJobs(S),1);
-    Facility(TEXT("solar_array"));TestEqual(TEXT("Four completed facilities fund a second real logistics job"),S.Workers.LogisticsJobs(S),2);
-    auto& Boundary=S.Buildings.Last();Boundary.Enabled=false;
-    TestEqual(TEXT("A disabled facility stops contributing logistics demand"),S.Workers.LogisticsJobs(S),1);
-    Boundary.Enabled=true;Boundary.IsConstructing=true;
-    TestEqual(TEXT("An unfinished facility does not request permanent hauling staff"),S.Workers.LogisticsJobs(S),1);
-    Boundary.IsConstructing=false;Boundary.Health=0;
-    TestEqual(TEXT("Destroyed facilities do not retain permanent hauling demand"),S.Workers.LogisticsJobs(S),1);
-    Boundary.Health=S.BuildingDefs[Boundary.DefId].Health;
+    for(int32 I=0;I<40;++I)Facility(TEXT("solar_array"));
     for(int32 I=0;I<12;++I)Facility(TEXT("wall_segment"));
-    TestEqual(TEXT("The authored wall exclusion prevents segment-count inflation"),S.Workers.LogisticsJobs(S),2);
-    TestEqual(TEXT("Unpowered but completed facilities still need physical logistics"),S.Workers.LogisticsJobs(S),2);
-    for(int32 I=0;I<36;++I)Facility(TEXT("solar_array"));
-    TestEqual(TEXT("Large colonies obey the authored maximum rather than growing without bound"),S.Workers.LogisticsJobs(S),8);
+    Facility(TEXT("robot_service_bay"));
+    S.Workers.RefreshMetrics(S);
+    TestEqual(TEXT("Large installations retain only authored workplace vacancies"),S.TotalJobs,S.Definition(S.Buildings[0])->Jobs+40*S.BuildingDefs[TEXT("solar_array")].Jobs+12*S.BuildingDefs[TEXT("wall_segment")].Jobs+S.BuildingDefs[TEXT("robot_service_bay")].Jobs);
+    TestEqual(TEXT("Facility counts do not synthesize logistics staff"),S.Workers.LogisticsJobs(S),0);
+    TestEqual(TEXT("Deriving demand never creates physical bodies"),S.Workers.Bodies.Num(),InitialBodies);
+    S.Buildings.Last().Enabled=false;S.Workers.RefreshMetrics(S);
+    TestEqual(TEXT("Disabling a workplace removes its open demand"),S.TotalJobs,S.Definition(S.Buildings[0])->Jobs+40*S.BuildingDefs[TEXT("solar_array")].Jobs+12*S.BuildingDefs[TEXT("wall_segment")].Jobs);
+    TestEqual(TEXT("Disabling a workplace never removes a physical body"),S.Workers.Bodies.Num(),InitialBodies);
     TSharedPtr<FJsonObject> Policy;if(!AdaptiveWorkerPolicy(Policy)){AddError(TEXT("Cannot read worker policy fixture"));return false;}
     Policy->SetStringField(TEXT("logistics_scaling_policy"),TEXT("fixed"));
     if(!S.Workers.Initialize(Policy,S,Error)){AddError(Error);return false;}
-    TestEqual(TEXT("The external fixed policy retains its base allocation"),S.Workers.LogisticsJobs(S),1);
+    TestEqual(TEXT("Legacy fixed-policy data cannot reintroduce phantom hauling staff"),S.Workers.LogisticsJobs(S),0);
     Policy->SetStringField(TEXT("logistics_scaling_policy"),TEXT("completed_facilities"));Policy->SetNumberField(TEXT("logistics_max_workers"),3);
     if(!S.Workers.Initialize(Policy,S,Error)){AddError(Error);return false;}
-    TestEqual(TEXT("An edited bounded maximum changes the derived demand"),S.Workers.LogisticsJobs(S),3);
+    TestEqual(TEXT("Legacy scaling bounds cannot override permanent building crews"),S.Workers.LogisticsJobs(S),0);
     Policy->SetNumberField(TEXT("logistics_facilities_per_worker"),0);
     TestFalse(TEXT("Native loading rejects a zero scaling divisor"),S.Workers.Initialize(Policy,S,Error));
     Policy->SetNumberField(TEXT("logistics_facilities_per_worker"),4);Policy->SetNumberField(TEXT("logistics_max_workers"),.5);
@@ -56,9 +52,10 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeAdaptiveLogisticsGrowthTest,"Seige.Worker
 bool FSeigeAdaptiveLogisticsGrowthTest::RunTest(const FString&)
 {
     FString Error;FSeigeSimulation S,Loaded;if(!S.Initialize(AdaptiveRules(),Error,false,false)){AddError(Error);return false;}
-    for(int32 I=0;I<1000&&(S.Buildings[0].IsConstructing||S.Population<S.TotalJobs||S.Buildings[0].ProductionCommitted);++I)S.Tick(10);
+    for(int32 I=0;I<1000&&(S.Buildings[0].IsConstructing||S.Population<S.TotalJobs||S.InactiveWorkerCount()<S.WorkerReserveTarget()||S.Buildings[0].ProductionCommitted);++I)S.Tick(10);
     if(!TestFalse(TEXT("Finite landed workers finish actual core deployment"),S.Buildings[0].IsConstructing)||!TestEqual(TEXT("The isolated core has its actual paid workforce"),S.Population,S.TotalJobs))return false;
     const int32 Core=S.Buildings[0].Id;
+    for(auto& Dog:S.Companions.Dogs){Dog.Position=Dog.Target=S.Buildings[0].Position+FVector2D(-1500,-1500);Dog.Route.Empty();Dog.NextWaypoint=0;Dog.Moving=false;Dog.RestUntil=S.Time;Dog.MotionSpeedMetersPerSecond=Dog.SpeedMetersPerSecond=0;S.Companions.SetControlled(Dog.Id);}
     // Install isolated demand fixtures from the genuine starter kit. This skips
     // only their already-covered construction duration, never worker production,
     // cargo cost, support admission, energy or movement.
@@ -72,39 +69,29 @@ bool FSeigeAdaptiveLogisticsGrowthTest::RunTest(const FString&)
     };
     int32 Service=0,A=0,B=0,C=0;
     if(!Install(TEXT("robot_service_bay"),FVector2D(1300,0),Service)||!Install(TEXT("solar_array"),FVector2D(0,1300),A)||!Install(TEXT("solar_array"),FVector2D(0,-1300),B)||!Install(TEXT("solar_array"),FVector2D(-1300,0),C)){AddError(Error);return false;}
-    FVector2D Last=S.BuildingAccessPoint(*S.FindBuilding(Core));TArray<FVector2D> Route;
-    if(!S.FindRoadRoute(Last,S.BuildingAccessPoint(*S.FindBuilding(Service)),Route)){AddError(TEXT("Paid support fixture needs a legal road route"));return false;}
-    for(const auto& Point:Route)
-    {
-        if(!S.PlaceRoad(Last,Point,Error)){AddError(Error);return false;}
-        auto& Road=S.Roads.Last();const auto Cost=S.RoadCost(Road.A,Road.B,Road.TargetTier);
-        for(const auto& P:Cost)if(S.FindBuilding(Core)->Inventory.FindRef(P.Key)<P.Value){AddError(TEXT("Finite kit cannot fund the support road"));return false;}
-        for(const auto& P:Cost)S.FindBuilding(Core)->Inventory.FindOrAdd(P.Key)-=P.Value;
-        Road.InstalledMaterials=Cost;Road.Tier=Road.TargetTier;Road.IsConstructing=false;Road.ConstructionProgress=1;Last=Point;
-    }
     S.Energy.Invalidate();S.Energy.Tick(S,0);S.Workers.RefreshMetrics(S);
     const int32 Before=S.Workers.Bodies.Num(),PopulationBefore=S.Population,Goal=S.TotalJobs;
     const double CircuitsBefore=S.TotalStock(TEXT("circuits")),BatteriesBefore=S.TotalStock(TEXT("batteries"));
     const auto WorkerInputs=S.ProductionInputs(*S.FindBuilding(Core),TEXT("assemble_robot"));
-    TestEqual(TEXT("Four completed facilities contribute two logistics jobs"),S.Workers.LogisticsJobs(S),2);
+    TestEqual(TEXT("Four completed facilities share owned crews without extra logistics jobs"),S.Workers.LogisticsJobs(S),0);
     TestEqual(TEXT("Derived vacancies do not create a worker instantly"),S.Population,PopulationBefore);
-    TestEqual(TEXT("Operator and logistics vacancies use the same total job ledger"),Goal,S.Definition(*S.FindBuilding(Core))->Jobs+S.Definition(*S.FindBuilding(Service))->Jobs+2);
-    for(int32 I=0;I<1200&&(S.Population<Goal||S.FindBuilding(Core)->ProductionCommitted);++I)S.Tick(10);
+    TestEqual(TEXT("Every vacancy belongs to an actual workplace"),Goal,S.Definition(*S.FindBuilding(Core))->Jobs+S.Definition(*S.FindBuilding(Service))->Jobs+3*S.BuildingDefs[TEXT("solar_array")].Jobs);
+    for(int32 I=0;I<1200&&(S.Population<S.TotalJobs||S.InactiveWorkerCount()<S.WorkerReserveTarget()||S.FindBuilding(Core)->ProductionCommitted);++I)S.Tick(10);
     if(!TestEqual(TEXT("Paid manufacture and physical reactivation fill the expanded job ledger"),S.Population,Goal))return false;
     const int32 Added=S.Workers.Bodies.Num()-Before;
-    TestEqual(TEXT("New physical bodies exactly match admitted vacancies"),Added,Goal-PopulationBefore);
+    TestEqual(TEXT("Refilling the used reserve manufactures exactly the new workplace demand"),Added,Goal-PopulationBefore);
     TestTrue(TEXT("Assembly debits the authored circuits for every new body"),FMath::IsNearlyEqual(CircuitsBefore-S.TotalStock(TEXT("circuits")),Added*WorkerInputs.FindRef(TEXT("circuits")),1.e-6));
     TestTrue(TEXT("Assembly debits the authored batteries for every new body"),FMath::IsNearlyEqual(BatteriesBefore-S.TotalStock(TEXT("batteries")),Added*WorkerInputs.FindRef(TEXT("batteries")),1.e-6));
     TestTrue(TEXT("Additional active workers remain inside real serviced capacity"),S.Population<=S.RobotSupportCapacity);
     const int32 BodyCount=S.Workers.Bodies.Num();
     if(!S.Workers.Dispatch(S,Core,A,0,TEXT("alloy"),1,false)){AddError(TEXT("A physically available worker must accept the reduction probe"));return false;}
     const int32 Delivery=S.Couriers.Last().Id;const FString Identity=S.Couriers.Last().WorkerId;const FVector2D Position=S.Workers.Find(Identity)->Position;
-    S.FindBuilding(C)->Enabled=false;S.Workers.RefreshMetrics(S);
-    TestEqual(TEXT("Disabling the fourth eligible facility reduces demand by one"),S.Workers.LogisticsJobs(S),1);
+    S.FindBuilding(Service)->Enabled=false;S.Workers.RefreshMetrics(S);
+    TestEqual(TEXT("A disabled facility does not create hidden hauling demand"),S.Workers.LogisticsJobs(S),0);
     TestEqual(TEXT("A demand reduction cannot delete a manufactured body"),S.Workers.Bodies.Num(),BodyCount);
     TestTrue(TEXT("A demand reduction cannot cancel or teleport an accepted pickup"),S.Workers.Find(Identity)->DeliveryId==Delivery&&S.Workers.Find(Identity)->Position.Equals(Position)&&S.Couriers.Last().ReservedAmount==1);
     S.Tick(S.FixedStepSeconds());
-    TestTrue(TEXT("Existing live hauling continues even when the reserve count falls"),S.Workers.Find(Identity)->Activity==TEXT("delivery")&&S.Workers.Find(Identity)->DeliveryId==Delivery);
+    TestTrue(TEXT("Existing live hauling continues during a workplace disable"),S.Workers.Find(Identity)->Activity==TEXT("delivery")&&S.Workers.Find(Identity)->DeliveryId==Delivery);
     const FString Save=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Automation/WorkerAgents/adaptive-logistics.json"));
     if(!S.Save(Save,Error)||!Loaded.Initialize(AdaptiveRules(),Error,false,false)||!Loaded.Load(Save,Error)){AddError(Error);return false;}
     TestEqual(TEXT("Reload derives the same logistics demand from saved facilities"),Loaded.Workers.LogisticsJobs(Loaded),S.Workers.LogisticsJobs(S));

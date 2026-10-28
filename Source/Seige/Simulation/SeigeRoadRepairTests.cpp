@@ -12,7 +12,9 @@ bool FSeigeRoadRepairTest::RunTest(const FString&)
     // Deploy the real finite crew; only the roads are focused installed fixtures.
     for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);
     if(!TestFalse(TEXT("Physical starter deployment completes"),S.Buildings[0].IsConstructing))return false;
-    S.Tick(20);auto& Core=S.Buildings[0];
+    S.Tick(20);S.SetRoadsEnabledForTest(true);auto& Core=S.Buildings[0];
+    // Park Rex away from this isolated retained-road repair fixture.
+    for(auto& Dog:S.Companions.Dogs){Dog.Position=Dog.Target=Core.Position+FVector2D(-1500,-1500);Dog.Route.Empty();Dog.NextWaypoint=0;Dog.Moving=false;Dog.RestUntil=S.Time;Dog.MotionSpeedMetersPerSecond=Dog.SpeedMetersPerSecond=0;S.Companions.SetControlled(Dog.Id);}
     S.AllocateWorkers();S.Energy.Invalidate();S.Energy.Tick(S,0);
     const FVector2D Port=S.BuildingAccessPoint(Core);
     auto InstallRoad=[&](FVector2D A,FVector2D B)->int32

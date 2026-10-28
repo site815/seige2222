@@ -45,8 +45,9 @@ bool FSeigeAICoveredPlacementTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("The normal authored alloy bill is reserved"),FMath::IsNearlyEqual(BeforeAvailable-Preferred.ConstructionAvailable(TEXT("alloy")),Solar.Cost.FindRef(TEXT("alloy")),1.e-6));
     TestEqual(TEXT("Placement neither grants nor teleports alloy"),Preferred.TotalStock(TEXT("alloy")),BeforeAlloy);
     TestEqual(TEXT("Placement adds no worker bodies"),Preferred.Workers.Bodies.Num(),BeforeBodies);
-    FVector2D A,B;bool NeedsSegment=false;
-    TestTrue(TEXT("The selected building has a feasible ordinary road connection"),Brain.FindPowerConnection(Preferred,Built,nullptr,A,B,NeedsSegment,Error));
+    TArray<FVector2D> AccessRoute;
+    TestTrue(TEXT("The selected building has physical worker access on the shared roadless grid"),Preferred.FindRoute(Preferred.BuildingAccessPoint(Preferred.Buildings[0]),Preferred.BuildingAccessPoint(Built),AccessRoute));
+    TestTrue(TEXT("Placement does not invent a road connection"),Preferred.Roads.IsEmpty());
 
     // Prospective buildings must screen their own far approaches. Without this
     // check a range-only planner incorrectly credits the core with full cover.
@@ -79,6 +80,41 @@ bool FSeigeAICoveredPlacementTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("A tower turns toward the far side a building screens from the core"),FMath::Cos(Bearing)<-.3);
         FSeigeScenarioAI LegacyBearing=Brain;LegacyBearing.DefenseCoveragePolicy=TEXT("first_legal");
         TestTrue(TEXT("first_legal keeps the authored tower bearing"),FMath::IsNearlyEqual(LegacyBearing.DefenseBearing(Screened,Tower,Home,East,Brain.DefenseDistance),East));
+    }
+
+    // An inner ring cannot see every outward face of a distant port. Compare
+    // physical firing coverage, not one particular compass angle.
+    {
+        FSeigeSimulation Perimeter=Colony;Perimeter.Buildings.SetNum(1);Perimeter.Combat.BuildingState.Empty();Perimeter.Combat.BuildingState.Add(CoreGun.Id,CoreGun);
+        const auto& PortDef=Perimeter.BuildingDefs[TEXT("trading_port")];
+        FSeigeBuilding Port;Port.Id=100030;Port.DefId=PortDef.Id;Port.Position=Home+FVector2D(1400,0);Port.Health=PortDef.Health;Perimeter.Buildings.Add(Port);
+        FSeigeScenarioAI Expanded=Brain;Expanded.RingStart=Expanded.DefenseDistance=1100;Expanded.RingStep=300;Expanded.RingLimit=2400;
+        FSeigeScenarioAI InnerOnly=Expanded;InnerOnly.RingLimit=1100;
+        const auto& TowerDef=Perimeter.BuildingDefs[TEXT("turret")];double Radius=Expanded.DefenseDistance,InnerRadius=Radius;
+        const double Bearing=Expanded.DefenseBearing(Perimeter,TowerDef,Home,0,Radius,&Radius);
+        const double InnerBearing=InnerOnly.DefenseBearing(Perimeter,TowerDef,Home,0,InnerRadius,&InnerRadius);
+        auto CoverageWithTower=[&](const FSeigeSimulation& Before,double Angle,double Distance,const FSeigeBuildingDef& Protected,FVector2D Position)
+        {
+            FSeigeSimulation After=Before;FSeigeBuilding Gun;Gun.Id=100031;Gun.DefId=TowerDef.Id;Gun.Health=TowerDef.Health;
+            Gun.Position=Home+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Distance;After.Buildings.Add(Gun);
+            FSeigeBuildingCombatState State;State.Id=Gun.Id;State.Definition=Gun.DefId;State.Weapons={TEXT("laser_small")};After.Combat.BuildingState.Add(Gun.Id,State);
+            return Expanded.PlotDefenseCoverage(After,Protected,Position);
+        };
+        const int32 Baseline=Expanded.PlotDefenseCoverage(Perimeter,PortDef,Port.Position);
+        TestTrue(TEXT("Outer authored rings expose legal firing positions beyond the port"),Radius>InnerRadius);
+        TestTrue(TEXT("The outer plot adds more real marginal coverage than every inner-ring plot"),CoverageWithTower(Perimeter,Bearing,Radius,PortDef,Port.Position)>CoverageWithTower(Perimeter,InnerBearing,InnerRadius,PortDef,Port.Position));
+        TestTrue(TEXT("The selected tower covers approaches the actual core cannot shoot"),CoverageWithTower(Perimeter,Bearing,Radius,PortDef,Port.Position)>Baseline);
+        const FVector2D Plot=Home+FVector2D(FMath::Cos(Bearing),FMath::Sin(Bearing))*Radius;
+        TestTrue(TEXT("The winning coverage plot respects normal placement and visibility"),Perimeter.CanPlaceBuilding(TowerDef.Id,Plot,Error));
+
+        // An unoccupied deposit still predicts the future mine's physical body.
+        // Treating it as transparent made the old planner credit the core with
+        // shooting straight through the mine and leave its far face undefended.
+        Perimeter.Buildings.SetNum(1);FSeigeNode MineNode;MineNode.Id=100032;MineNode.Resource=TEXT("iron_ore");MineNode.Position=Home+FVector2D(-1100,0);Perimeter.Nodes.Add(MineNode);
+        const auto& MineDef=Perimeter.BuildingDefs[TEXT("extraction_mine")];double MineRadius=Expanded.DefenseDistance;
+        const double MineBearing=Expanded.DefenseBearing(Perimeter,TowerDef,Home,0,MineRadius,&MineRadius);
+        TestTrue(TEXT("The future mine screens approaches even before its foundation is placed"),CoverageWithTower(Perimeter,MineBearing,MineRadius,MineDef,MineNode.Position)>Expanded.PlotDefenseCoverage(Perimeter,MineDef,MineNode.Position));
+        TestTrue(TEXT("Defensive siting preserves the deposit's construction clearance"),FVector2D::Distance(Home+FVector2D(FMath::Cos(MineBearing),FMath::Sin(MineBearing))*MineRadius,MineNode.Position)>=Expanded.NodeClearance+TowerDef.ReservedFootprint);
     }
 
     FSeigeSimulation Unarmed=Colony;Unarmed.Combat.BuildingState.Empty();FSeigeSimulation UnarmedLegacy=Unarmed;

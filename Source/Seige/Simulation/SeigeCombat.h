@@ -38,6 +38,8 @@ struct FSeigeBuildingCombatState
     double Shield=0,Armor=0,LastDamageTime=-1;
     TArray<double> Cooldowns;
     TArray<FString> Weapons;
+    // Transient, per-module aim. Never substitutes for authoritative targeting.
+    TMap<int32,FVector2D> WeaponAim;
 };
 struct FSeigeVehicle
 {
@@ -103,6 +105,8 @@ public:
     double CargoStock(const FString& Resource) const;
     bool IsVisible(FVector2D Position) const;
     FString BuildingFireStatus(const FSeigeSimulation& Sim,int32 BuildingId) const;
+    double EnemyBodyRadiusMeters() const{return EnemyRadiusMeters;}
+    bool BuildingWeaponAim(const FSeigeSimulation& Sim,int32 BuildingId,int32 Slot,FVector2D& Aim) const;
     void CollectPendingShotEnergy(const FSeigeSimulation& Sim,double Seconds,TMap<int32,double>& ByGrid) const;
     void Save(const TSharedPtr<FJsonObject>& Root) const;
     bool Load(const TSharedPtr<FJsonObject>& Root,FSeigeSimulation& Sim,FString& Error);

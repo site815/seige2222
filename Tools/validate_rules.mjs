@@ -53,13 +53,15 @@ export function validateRules(d) {
   const resources = catalog(d.resources.resources,'resources');
   if (!resources.size) fail('Resource catalog cannot be empty');
   const dog=object(d.companions.dog,'companions.dog');
-  for(const key of ['name','food_resource','mesh','walk_animation','idle_animation'])str(dog[key],`dog.${key}`);
+  for(const key of ['name','food_resource','mesh','walk_animation','run_animation','idle_animation'])str(dog[key],`dog.${key}`);
   if(!resources.has(dog.food_resource)||resources.get(dog.food_resource).unit!=='kg')fail('Companion food must be a kilogram cargo resource');
   const dogRanges={maximum_health:[1,10000],danger_radius_meters:[1,1000],heal_per_second:[.01,1000],depression_days:[1,365,true],depression_speed_multiplier:[.01,1],initial_count:[0,1,true],seed:[0,2147483647,true],walk_kmh:[.1,20],walk_cycle_meters:[.05,5],roam_radius_meters:[1,1000],food_per_meal_kg:[.001,100],meal_interval_seconds:[1,86400],fed_duration_seconds:[1,172800],feed_radius_meters:[1,1000],morale_bonus:[0,.5],morale_radius_meters:[1,1000],rest_seconds:[0,300],eye_height_cm:[20,150],view_fov:[45,110],look_sensitivity:[.01,1],body_radius_meters:[.05,1],maximum_slope_grade:[.1,2]};
   for(const [key,[min,max,integer]] of Object.entries(dogRanges)){num(dog[key],`dog.${key}`,min,!!integer);if(dog[key]>max)fail(`dog.${key} exceeds supported bound`);}
+  for(const [key,min,max] of [['run_cycle_meters',.05,8],['acceleration_meters_per_second_squared',.1,30],['deceleration_meters_per_second_squared',.1,50],['turn_degrees_per_second',30,720]]){num(dog[key],`dog.${key}`,min);if(dog[key]>max)fail(`dog.${key} exceeds supported bound`);}
   for(const key of ['territory_radius_meters','damage_alert_radius_meters','shelter_seconds','run_kmh'])num(dog[key],`dog.${key}`,.1);
   if(dog.roam_radius_meters>dog.territory_radius_meters||dog.run_kmh<dog.walk_kmh||dog.run_kmh>40||dog.territory_radius_meters>1000||dog.damage_alert_radius_meters>1000||dog.shelter_seconds>3600)fail('Invalid companion territory or shelter rules');
-  for(const key of ['mesh','walk_animation','idle_animation'])if(!dog[key].startsWith('/Game/Art/'))fail(`dog.${key} must refer to a cooked game asset`);
+  for(const key of ['mesh','walk_animation','run_animation','idle_animation'])if(!dog[key].startsWith('/Game/Art/'))fail(`dog.${key} must refer to a cooked game asset`);
+  if(dog.locomotion_blend_space!==undefined){str(dog.locomotion_blend_space,'dog.locomotion_blend_space');if(!dog.locomotion_blend_space.startsWith('/Game/Art/'))fail('dog.locomotion_blend_space must refer to a cooked game asset');}
   for (const r of resources.values()) { str(r.name,`${r.id}.name`); num(r.tier,`${r.id}.tier`,0,true); color(r.color,`${r.id}.color`); if(!['bulk','ingots','crates'].includes(r.stockpile_visual)) fail(`${r.id}: invalid stockpile_visual`); if(!['standard','rare','manufactured'].includes(r.class)||!['kg','L','workers'].includes(r.unit))fail(`${r.id}: invalid resource class or unit`);num(r.unit_mass_kg,`${r.id}.unit_mass_kg`,0,false,true);num(r.litres_per_unit,`${r.id}.litres_per_unit`,0,false,true);if(r.unit==='kg'&&r.unit_mass_kg!==1)fail(`${r.id}: kilogram quantities must weigh one kilogram per unit`);if(typeof r.discrete!=='boolean'||r.discrete!==(r.unit==='workers')||(r.unit==='workers'&&(r.id!=='stored_workers'||r.class!=='manufactured')))fail(`${r.id}: invalid discrete cargo metadata`); }
   const expectedRaw={water:'standard',iron_ore:'standard',silica:'standard',carbon:'standard',copper_ore:'rare',radioactive_ore:'rare',crystalline:'rare',hydrocarbons:'rare'};
   for(const [id,classification] of Object.entries(expectedRaw))if(resources.get(id)?.class!==classification)fail(`Confirmed raw resource pool is missing or misclassified: ${id}`);
@@ -336,6 +338,8 @@ function selfTest(source) {
     ['invalid worker health',d=>d.workers.maximum_health=-1],
     ['missing companion food',d=>d.companions.dog.food_resource='not_a_resource'],
     ['invalid companion walking speed',d=>d.companions.dog.walk_kmh=0],
+    ['invalid companion acceleration',d=>d.companions.dog.acceleration_meters_per_second_squared=0],
+    ['invalid companion turning rate',d=>d.companions.dog.turn_degrees_per_second=10000],
     ['unbounded companion morale',d=>d.companions.dog.morale_bonus=10],
     ['invalid first-person camera',d=>d.companions.dog.eye_height_cm=-1],
     ['invalid companion count',d=>d.companions.dog.initial_count=.5],

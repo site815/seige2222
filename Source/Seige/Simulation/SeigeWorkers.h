@@ -25,6 +25,11 @@ struct FSeigeWorker
     double PhaseSeconds=0, RetryAt=0;
     double DepartureAt=0;
     bool Outdoor=false;
+    // Derived charging estimate only; deliberately absent from saved ledgers.
+    // A restored/new body starts without a cached path or charging promise.
+    double ChargePlanTime=-1,ChargePlanRetryAt=0,ChargePlanTravelSeconds=DBL_MAX,ChargePlanSpeed=0;
+    FVector2D ChargePlanPosition=FVector2D::ZeroVector;
+    int32 ChargePlanTopology=INDEX_NONE,ChargePlanTerrain=INDEX_NONE,ChargePlanCrew=INDEX_NONE,ChargePlanBuilding=0,ChargePlanSlot=0;
 };
 
 class SEIGE_API FSeigeWorkerSystem
@@ -50,6 +55,11 @@ public:
     void RefreshMetrics(FSeigeSimulation& Sim) const;
     void ShiftHome(FVector2D Delta);
     FVector2D HatchPoint(const FSeigeSimulation& Sim) const;
+    // Shared read-only geometry for operating bodies and AI plot preflight.
+    FVector2D WorkstationPosition(const FSeigeSimulation& Sim,const FSeigeBuilding& Building,int32 Slot) const;
+    // AI plot preflight only: a reachable worksite must also have a charger
+    // return trip that fits the smallest authored worker charge reserve.
+    bool WorkstationHasChargingAccess(const FSeigeSimulation& Sim,FVector2D Position,const FSeigeBuilding* ProspectivePlot,int32 AdditionalQueued=0) const;
     double HaulUnits(const FSeigeSimulation& Sim,const FString& Resource) const;
     double PickupReserved(const FSeigeSimulation& Sim,int32 Source,const FString& Resource,bool Deployment=false) const;
     // Read-only eligibility check for logistics search. Dispatch still validates
@@ -76,6 +86,7 @@ public:
     double RecoveryFraction() const;
     int32 ChargerBerths(const FSeigeSimulation& Sim,int32 BuildingId) const;
     double ChargeSessionSeconds(const FSeigeSimulation& Sim) const;
+    FVector2D ChargingQueuePosition(const FSeigeSimulation& Sim,const FSeigeBuilding& Charger,int32 Slot) const;
     FString AcquireTransportHandler(FSeigeSimulation& Sim,int32 VehicleId,int32 BuildingId,int32 RoadId,FVector2D Position,bool Construction);
     bool TransportHandlingReady(const FString& WorkerId,int32 VehicleId) const;
     void ReleaseTransportHandler(const FString& WorkerId,int32 VehicleId);
@@ -90,6 +101,7 @@ private:
     friend class FSeigeCargoMovementParityTest;
     friend class FSeigeRoadMovementRegressionTest;
     friend class FSeigeRoadlessCrewAccessTest;
+    friend class FSeigeChargeDetourTest;
 #endif
     TSharedPtr<FJsonObject> Policy;
     FString LogisticsScalingPolicy;
@@ -101,6 +113,7 @@ private:
     void Schedule(FSeigeSimulation& Sim);
     void AssignCrews(FSeigeSimulation& Sim);
     bool StepBattery(FSeigeSimulation& Sim,FSeigeWorker& Worker,double Seconds);
+    double ChargingTravelSeconds(const FSeigeSimulation& Sim,FVector2D From,FVector2D To,double Limit,const FSeigeBuilding* ProspectivePlot=nullptr) const;
     bool CanLendCoreCrew(const FSeigeSimulation& Sim,const FSeigeWorker& Worker) const;
     void ResumeAfterCharging(FSeigeSimulation& Sim,FSeigeWorker& Worker);
     FSeigeWorker* TaskWorker(FSeigeSimulation& Sim,int32 Source,int32 Target,bool Construction,const TSet<FString>* Excluded=nullptr);

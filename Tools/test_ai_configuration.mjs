@@ -31,6 +31,10 @@ for(const fraction of [.001,1]){const candidate=structuredClone(data);candidate.
 for(const policy of ['remaining_output_bill','recipe_buffers']){const candidate=structuredClone(data);candidate.ai.economy.bulk_input_policy=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
 for(const policy of ['surplus_shipment_value','local_raw_only']){const candidate=structuredClone(data);candidate.ai.economy.export_policy=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
 for(const policy of ['next_prerequisite','full_plan']){const candidate=structuredClone(data);candidate.ai.economy.export_reserve_horizon=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
+for(const policy of [undefined,null,0,'free_materials']){const candidate=structuredClone(data);if(policy===undefined)delete candidate.ai.economy.production_priority_policy;else candidate.ai.economy.production_priority_policy=policy;++negativeCases;assert.throws(()=>validateConfiguration(candidate),/production_priority_policy/);}
+for(const policy of ['protect_development_inputs','continuous']){const candidate=structuredClone(data);candidate.ai.economy.production_priority_policy=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
+for(const policy of [undefined,null,0,'free_defenders']){const candidate=structuredClone(data);if(policy===undefined)delete candidate.ai.defense_recovery_policy;else candidate.ai.defense_recovery_policy=policy;++negativeCases;assert.throws(()=>validateConfiguration(candidate),/defense_recovery_policy/);}
+for(const policy of ['first_planned_tower_before_exposure','first_planned_tower_after_civilian_loss','ordered_plan_only']){const candidate=structuredClone(data);candidate.ai.defense_recovery_policy=policy;assert.doesNotThrow(()=>validateConfiguration(candidate));}
 for(const [key,value] of [['defense_coverage_policy',undefined],['defense_coverage_policy','ignore_walls'],['coverage_samples',0],['coverage_samples',8.5],['coverage_probe_distance_meters',-1],['coverage_excluded_roles',['unknown']]]) {
   const candidate=structuredClone(data);if(value===undefined)delete candidate.ai.placement[key];else candidate.ai.placement[key]=value;
   ++negativeCases; assert.throws(()=>validateConfiguration(candidate),new RegExp(key));
@@ -62,6 +66,14 @@ const invalidEstablished = [
   d => { d.developed.buildings[1].inventory.stored_workers = 1; },
   d => { d.developed.buildings[0].inventory.unknown_resource = 1; },
 ];
+for (const edit of [
+  d => { delete d.ai.logistics; },
+  d => { d.ai.logistics.factory_definition='turret'; },
+  d => { d.ai.logistics.target_transports=-1; },
+  d => { d.ai.logistics.target_transports=2.5; },
+  d => { d.ai.logistics.target_transports=17; },
+  d => { d.ai.build_targets=d.ai.build_targets.filter(t=>t.definition!==d.ai.logistics.factory_definition); },
+]) {const candidate=structuredClone(data);edit(candidate);++negativeCases;assert.throws(()=>validateConfiguration(candidate),/logistics/);}
 for (const edit of invalidEstablished) { const candidate=structuredClone(data); edit(candidate); ++negativeCases; assert.throws(()=>validateConfiguration(candidate), /[Ee]stablished|developed_initialization|Core and bound deposit/); }
 for (const mode of ['established_manifest','simulated_history']) { const candidate=structuredClone(data);candidate.ai.developed_initialization=mode;assert.doesNotThrow(()=>validateConfiguration(candidate)); }
 console.log(`AI configuration validation: worker-only economy, placement and established manifest passed (${negativeCases} negative cases).`);

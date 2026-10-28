@@ -29,4 +29,22 @@ bool FSeigeRoadlessGridTest::RunTest(const FString&)
     TestFalse(TEXT("Destroyed consumer leaves the grid"),S.Energy.Info(S,Depot.Id).Connected);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeFuelReservationTest,"Seige.Energy.GeneratorRespectsPhysicalPickupReservations",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeFuelReservationTest::RunTest(const FString&)
+{
+    FString Error;FSeigeSimulation S;
+    if(!S.Initialize(FPaths::ProjectDir()/TEXT("Rules"),Error,false,false)){AddError(Error);return false;}
+    const int32 Generator=S.AddReviewBuilding(TEXT("fuel_generator"),FVector2D(1500,1500));
+    auto* B=S.FindBuilding(Generator);B->Workers=S.BuildingDefs[B->DefId].Jobs;B->Inventory.Add(TEXT("fuel"),3.);
+    // Isolate the energy consumer from routing: an accepted pickup promise
+    // must remain physically collectible until the courier arrives.
+    FSeigeCourier Promise;Promise.Id=999991;Promise.SourceId=Generator;Promise.TargetId=S.Buildings[0].Id;Promise.Resource=TEXT("fuel");Promise.ReservedAmount=2.5;Promise.Phase=TEXT("to_pickup");S.Couriers.Add(Promise);
+    S.Energy.Invalidate();S.Energy.Tick(S,600);
+    TestTrue(TEXT("Generator can burn only unreserved fuel"),FMath::IsNearlyEqual(S.FindBuilding(Generator)->Inventory.FindRef(TEXT("fuel")),2.5,1.e-9));
+    S.Energy.Tick(S,600);
+    TestTrue(TEXT("Further ticks preserve the entire promised pickup"),FMath::IsNearlyEqual(S.FindBuilding(Generator)->Inventory.FindRef(TEXT("fuel")),2.5,1.e-9));
+    S.Couriers.Empty();S.Energy.Tick(S,600);
+    TestTrue(TEXT("Released pickup fuel becomes usable again"),S.FindBuilding(Generator)->Inventory.FindRef(TEXT("fuel"))<2.5);
+    return true;
+}
 #endif

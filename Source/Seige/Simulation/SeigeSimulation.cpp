@@ -583,8 +583,12 @@ bool FSeigeSimulation::CanPlaceBuildingGeometry(const FString& Id,FVector2D P,FS
     const double TransportRadius=FMath::Max(TransportVehicles.Definition().BodySizeMeters.X,TransportVehicles.Definition().BodySizeMeters.Y)*.5/MetersPerWorldUnit();
     for(const auto& V:TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&OccupiesPlot(V.Position,TransportRadius))
     {Error=TEXT("Wait for the cargo transport to leave this reserved plot");return false;}
+    for(const auto& Dog:Companions.Dogs)if(FSeigeCompanionSystem::IsOutside(Dog)&&OccupiesPlot(Dog.Position,Companions.BodyRadiusMeters/MetersPerWorldUnit()))
+    {Error=TEXT("Wait for Rex to leave this reserved plot");return false;}
     for(const auto& V:Combat.Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&OccupiesPlot(V.Position,Combat.Chassis[V.ChassisId].RadiusMeters/MetersPerWorldUnit()))
     {Error=TEXT("Move the vehicle outside this reserved plot first");return false;}
+    for(const auto& Enemy:Enemies)if(Enemy.Health>0&&IsVisible(Enemy.Position)&&OccupiesPlot(Enemy.Position,Combat.EnemyBodyRadiusMeters()/MetersPerWorldUnit()))
+    {Error=TEXT("Clear the enemy from this reserved plot first");return false;}
     if(RoadsEnabled())for(const auto& R:Roads)if(R.Health>0)
     {const FString Tier=R.IsConstructing?R.TargetTier:R.Tier;const double Width=TransportTiers[Tier].WidthMeters*.5/MetersPerWorldUnit();const FVector2D Delta=R.B-R.A;const double T=FMath::Clamp(FVector2D::DotProduct(P-R.A,Delta)/Delta.SizeSquared(),0.,1.);const FVector2D Nearest=R.A+Delta*T;if(FMath::Abs(P.X-Nearest.X)<D->ReservedFootprint+Width && FMath::Abs(P.Y-Nearest.Y)<D->ReservedFootprint+Width){Error=TEXT("Reserved plot would obstruct a road corridor");return false;}}
     if (D->Role==TEXT("extractor"))
@@ -647,6 +651,14 @@ FString FSeigeSimulation::ConstructionStage(const FSeigeBuilding& B) const
     if(!B.IsConstructing)return TEXT("Complete");
     for(const auto& V:Policy->GetArrayField(TEXT("construction_stages")))if(B.ConstructionProgress<V->AsObject()->GetNumberField(TEXT("end")))return V->AsObject()->GetStringField(TEXT("name"));
     return TEXT("Complete");
+}
+bool FSeigeSimulation::BuildingBlocksProjectiles(const FSeigeBuilding& B) const
+{
+    // Foundations and open scaffolding reserve physical ground space, but do
+    // not create the finished shell's opaque cover. Match the authored phase
+    // used by SyncConstructionVisuals; the intact shuttle/upgraded hull stays.
+    const auto* D=Definition(B);
+    return B.Health>0&&D&&(!B.IsConstructing||D->DeploymentDefense||!B.UpgradeTarget.IsEmpty()||ConstructionPhaseProgress(B,2)>0);
 }
 double FSeigeSimulation::ConstructionPhaseProgress(const FSeigeBuilding& B,int32 Index) const
 {
@@ -894,7 +906,11 @@ void FSeigeSimulation::StepLogistics(double Seconds)
             if(!Eligible(Resource))continue;
             const double Desired=DeliveryDemand(Target,Resource,Category);if(Category!=TEXT("storage")&&Desired<=UE_DOUBLE_SMALL_NUMBER)continue;
             double Prior=0;for(const auto& Earlier:DeliveryPriorities){if(Earlier==Category)break;Prior+=DeliveryDemand(Target,Resource,Earlier);}
-            const double ClassStock=Target.Inventory.FindRef(Resource)+Incoming(Target.Id,Resource)-Prior;
+            // Promised outbound cargo is not an input buffer. Otherwise a
+            // construction pickup can reserve the core's alloy while its gross
+            // inventory suppresses the refill needed to manufacture a loader.
+            const double LocalStock=Category==TEXT("production")?Spendable(Target,Resource):Target.Inventory.FindRef(Resource);
+            const double ClassStock=LocalStock+Incoming(Target.Id,Resource)-Prior;
             // Finite orders must receive their exact final fraction. Standing
             // buffers wait for their low-water mark instead of sending a body
             // across the colony after every tiny consumption tick.
@@ -957,8 +973,38 @@ void FSeigeSimulation::StepCombat(double Seconds)
     Combat.Tick(*this,Seconds,true);
     if(Escaped||Failed)return;
     Enemies.RemoveAll([](const FSeigeEnemy& E){return E.Health <= 0;});
+    const double EnemyClearance=Combat.EnemyBodyRadiusMeters()/MetersPerWorldUnit();
+    auto BuildingEntry=[](FVector2D A,FVector2D B,FVector2D Center,double Radius)
+    {
+        double Lo=0,Hi=1;
+        for(int32 Axis=0;Axis<2;++Axis)
+        {
+            const double Start=A[Axis]-Center[Axis],Delta=B[Axis]-A[Axis];
+            if(FMath::Abs(Delta)<1.e-12){if(FMath::Abs(Start)>Radius)return 2.;continue;}
+            double First=(-Radius-Start)/Delta,Last=(Radius-Start)/Delta;if(First>Last)Swap(First,Last);
+            Lo=FMath::Max(Lo,First);Hi=FMath::Min(Hi,Last);if(Lo>Hi)return 2.;
+        }
+        return Hi>1.e-9?Lo:2.;
+    };
     for (FSeigeEnemy& E : Enemies)
     {
+        // Old saves (or a newly revealed occupied plot) can contain an embedded
+        // enemy. Walk to its nearest physical face at the ordinary speed; never
+        // teleport it, leave it invulnerable inside a body, or attack through it.
+        FSeigeBuilding* Embedded=nullptr;
+        for(auto& B:Buildings)if(B.Health>0)
+        {
+            const double Radius=Definition(B)->Footprint+EnemyClearance;
+            if(FMath::Abs(E.Position.X-B.Position.X)<Radius-1.e-5&&FMath::Abs(E.Position.Y-B.Position.Y)<Radius-1.e-5){Embedded=&B;break;}
+        }
+        if(Embedded)
+        {
+            const double Radius=Definition(*Embedded)->Footprint+EnemyClearance+.001;
+            const FVector2D Offset=E.Position-Embedded->Position;
+            const int32 Axis=FMath::Abs(Offset.X)>=FMath::Abs(Offset.Y)?0:1;
+            E.Position[Axis]+=(Offset[Axis]>=0?1.:-1.)*FMath::Min(Number(TEXT("enemy_speed"))*Seconds,Radius-FMath::Abs(Offset[Axis]));
+            E.TargetBuildingId=0;continue;
+        }
         FSeigeBuilding* Target = nullptr; double Closest = TNumericLimits<double>::Max();
         for (FSeigeBuilding& B : Buildings)
         { const double Distance = FVector2D::Distance(E.Position, B.Position); if (B.Health > 0 && Distance < Closest) { Target = &B; Closest = Distance; } }
@@ -968,12 +1014,37 @@ void FSeigeSimulation::StepCombat(double Seconds)
         E.TargetBuildingId=DogTarget||WorkerTarget?0:Target?Target->Id:0;
         if(!Target&&!DogTarget&&!WorkerTarget)continue;
         const FVector2D Aim=DogTarget?DogTarget->Position:WorkerTarget?WorkerTarget->Position:Target->Position;
-        const double Radius=DogTarget?Companions.BodyRadiusMeters/MetersPerWorldUnit():WorkerTarget?Workers.BodyRadiusMeters()/MetersPerWorldUnit():Definition(*Target)->Footprint;
+        const FVector2D Direction=(E.Position-Aim).GetSafeNormal();
+        const double Radius=DogTarget?Companions.BodyRadiusMeters/MetersPerWorldUnit():WorkerTarget?Workers.BodyRadiusMeters()/MetersPerWorldUnit():Definition(*Target)->Footprint/FMath::Max(.000001,FMath::Max(FMath::Abs(Direction.X),FMath::Abs(Direction.Y)));
         const double AttackDistance=Number(TEXT("enemy_attack_range"))+Radius;
         if(Closest>AttackDistance+UE_DOUBLE_KINDA_SMALL_NUMBER)
-            E.Position+=(Aim-E.Position).GetSafeNormal()*FMath::Min(Number(TEXT("enemy_speed"))*Seconds,Closest-AttackDistance);
+        {
+            const FVector2D End=E.Position+(Aim-E.Position).GetSafeNormal()*FMath::Min(Number(TEXT("enemy_speed"))*Seconds,Closest-AttackDistance);
+            double Entry=2;FSeigeBuilding* Blocker=nullptr;
+            for(auto& B:Buildings)if(B.Health>0)
+            {
+                const double Hit=BuildingEntry(E.Position,End,B.Position,Definition(B)->Footprint+EnemyClearance);
+                if(Hit<Entry){Entry=Hit;Blocker=&B;}
+            }
+            if(Blocker&&Entry<=1)
+            {
+                E.Position=FMath::Lerp(E.Position,End,FMath::Max(0.,Entry-1.e-6));E.TargetBuildingId=Blocker->Id;
+                const double Damage=Number(TEXT("enemy_damage_per_second"))*Seconds*(1-Entry);
+                Combat.DamageBuilding(*this,Blocker->Id,Damage);
+                if(Damage>0)E.LastAttackTime=Time;
+                if(Escaped||Failed)return;
+            }
+            else E.Position=End;
+        }
         else
         {
+            if(DogTarget||WorkerTarget)
+            {
+                double Entry=2;FSeigeBuilding* Blocker=nullptr;
+                for(auto& B:Buildings)if(B.Health>0)
+                {const double Hit=BuildingEntry(E.Position,Aim,B.Position,Definition(B)->Footprint+EnemyClearance);if(Hit<Entry){Entry=Hit;Blocker=&B;}}
+                if(Blocker&&Entry<=1){Target=Blocker;DogTarget=nullptr;WorkerTarget=nullptr;E.TargetBuildingId=Blocker->Id;}
+            }
             const double Damage=Number(TEXT("enemy_damage_per_second"))*Seconds;
             if(DogTarget)Companions.Damage(*this,DogTarget->Id,Damage);
             else if(WorkerTarget)Workers.Damage(*this,WorkerTarget->Id,Damage);
@@ -1069,7 +1140,7 @@ bool FSeigeSimulation::Save(const FString& Filename, FString& Error) const
     O->SetArrayField(TEXT("roads"),A);A.Empty();
     for (const FSeigeNode& N : Nodes) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),N.Id); V->SetStringField(TEXT("resource"),N.Resource); WritePosition(V,N.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
     O->SetArrayField(TEXT("nodes"),A); A.Empty();
-    for (const FSeigeCourier& C : Couriers) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),C.Id); V->SetNumberField(TEXT("source"),C.SourceId); V->SetNumberField(TEXT("target"),C.TargetId); V->SetStringField(TEXT("resource"),C.Resource); V->SetNumberField(TEXT("amount"),C.Amount);V->SetNumberField(TEXT("transport_vehicle_id"),C.TransportVehicleId);V->SetStringField(TEXT("worker_id"),C.WorkerId);V->SetStringField(TEXT("phase"),C.Phase);V->SetNumberField(TEXT("reserved_amount"),C.ReservedAmount);V->SetNumberField(TEXT("phase_seconds"),C.PhaseSeconds);V->SetBoolField(TEXT("source_deployment"),C.SourceDeployment);V->SetBoolField(TEXT("self_transfer"),C.SelfTransfer); V->SetBoolField(TEXT("for_construction"),C.ForConstruction); V->SetNumberField(TEXT("road_target"),C.RoadTargetId);V->SetNumberField(TEXT("next_waypoint"),C.NextWaypoint);WriteRoute(V,TEXT("route"),C.Route); WritePosition(V,C.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
+    for (const FSeigeCourier& C : Couriers) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),C.Id); V->SetNumberField(TEXT("source"),C.SourceId); V->SetNumberField(TEXT("target"),C.TargetId); V->SetStringField(TEXT("resource"),C.Resource); V->SetNumberField(TEXT("amount"),C.Amount);V->SetNumberField(TEXT("transport_vehicle_id"),C.TransportVehicleId);V->SetStringField(TEXT("worker_id"),C.WorkerId);V->SetStringField(TEXT("phase"),C.Phase);V->SetNumberField(TEXT("reserved_amount"),C.ReservedAmount);V->SetNumberField(TEXT("phase_seconds"),C.PhaseSeconds);V->SetBoolField(TEXT("source_deployment"),C.SourceDeployment);V->SetBoolField(TEXT("self_transfer"),C.SelfTransfer);V->SetBoolField(TEXT("recovery_cargo"),C.RecoveryCargo); V->SetBoolField(TEXT("for_construction"),C.ForConstruction); V->SetNumberField(TEXT("road_target"),C.RoadTargetId);V->SetNumberField(TEXT("next_waypoint"),C.NextWaypoint);WriteRoute(V,TEXT("route"),C.Route); WritePosition(V,C.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
     O->SetArrayField(TEXT("couriers"),A); A.Empty();
     for (const FSeigeEnemy& E : Enemies) { FObject V = MakeShared<FJsonObject>(); V->SetNumberField(TEXT("id"),E.Id); V->SetNumberField(TEXT("health"),E.Health); WritePosition(V,E.Position); A.Add(MakeShared<FJsonValueObject>(V)); }
     O->SetArrayField(TEXT("enemies"),A); A.Empty();
@@ -1183,6 +1254,13 @@ bool FSeigeSimulation::Load(const FString& Filename, FString& Error)
         // Empty + waypoint zero is a real waiting state: retain its physical
         // cargo and let StepLogistics retry, rather than making saves unloadable.
         if ((Resources[C.Resource].Discrete&&C.Amount!=FMath::FloorToDouble(C.Amount))||!V->TryGetBoolField(TEXT("for_construction"),C.ForConstruction)||!IntegerField(V,TEXT("road_target"),C.RoadTargetId,0,Error)||!IntegerField(V,TEXT("next_waypoint"),C.NextWaypoint,0,Error)||!ReadRoute(V,TEXT("route"),C.Route,WorldHalfSize,Error)||C.NextWaypoint>C.Route.Num()||C.Amount+C.ReservedAmount>(C.TransportVehicleId?Candidate.TransportVehicles.HaulUnits(Candidate,C.Resource):Candidate.Workers.HaulUnits(Candidate,C.Resource))+UE_DOUBLE_SMALL_NUMBER||!Candidate.FindBuilding(C.SourceId)||(C.RoadTargetId?C.TargetId!=0||!Candidate.FindRoad(C.RoadTargetId):!Candidate.FindBuilding(C.TargetId))) { Error=TEXT("Invalid courier route, capacity or endpoint");return false; }
+        // Older saves represented a truck's return load only by source == target.
+        // Preserve that meaning while keeping recovery accounting explicit for
+        // alternate depots. Worker parcels cannot claim this transport-only state.
+        C.RecoveryCargo=C.TransportVehicleId>0&&C.Amount>0&&C.SourceId==C.TargetId&&!C.ForConstruction&&C.RoadTargetId==0;
+        if(V->HasField(TEXT("recovery_cargo"))&&(!V->HasTypedField<EJson::Boolean>(TEXT("recovery_cargo"))||!V->TryGetBoolField(TEXT("recovery_cargo"),C.RecoveryCargo))){Error=TEXT("Invalid cargo recovery flag");return false;}
+        if(C.RecoveryCargo&&(C.TransportVehicleId<=0||C.Amount<=0||C.ReservedAmount>1.e-9||C.ForConstruction||C.RoadTargetId!=0||C.SourceDeployment||C.SelfTransfer||
+            (C.Phase!=TEXT("carrying")&&C.Phase!=TEXT("unloading")))){Error=TEXT("Invalid transport cargo recovery state");return false;}
         if(C.RoadTargetId)
         {const auto& R=*Candidate.FindRoad(C.RoadTargetId);if(!C.ForConstruction||(R.Health>0&&(!R.IsConstructing||R.ConstructionMaterials.FindRef(C.Resource)+R.InstalledMaterials.FindRef(C.Resource)+Candidate.IncomingRoad(R.Id,C.Resource)+C.Amount+C.ReservedAmount>RoadCost(R.A,R.B,R.TargetTier).FindRef(C.Resource)+1.e-6))){Error=TEXT("Invalid road construction delivery");return false;}}
         else

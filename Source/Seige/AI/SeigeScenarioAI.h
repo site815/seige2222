@@ -56,6 +56,14 @@ private:
     friend class FSeigeAIUpgradeTest;
     friend class FSeigeAIPermanentCrewReadinessTest;
     friend class FSeigeAIBootstrapExportHorizonTest;
+    friend class FSeigeAIDevelopmentFundingTest;
+    friend class FSeigeAITransportGrowthTest;
+    friend class FSeigeAIProductionBudgetTest;
+    friend class FSeigeAIGeneratorFundingTest;
+    friend class FSeigeAICivilianLossDefenseTest;
+    friend class FSeigeAITransportEnergyTest;
+    friend class FSeigeAITransportFundingPriorityTest;
+    friend class FSeigeAIExtractorAccessTest;
 #endif
     bool Ready = false;
     bool Preparing=false;
@@ -64,7 +72,10 @@ private:
     double PreparationLastReportTime=0;
     FString ConfigFingerprint, Status, SensorDefinition, DecisionSchedulingPolicy;
     double DecisionInterval = 1, RingStart = 0, RingStep = 1, RingLimit = 1, NodeClearance = 0, SensorOverlap = 0, DefenseDistance = 0;
-    FString DefenseCoveragePolicy;
+    FString DefenseCoveragePolicy,DefenseRecoveryPolicy;
+    // Derived from owned losses and authored milestones on every query; no
+    // unsaved decision history or additional defense entitlement.
+    mutable FSeigeAIBuildTarget DefenseRecoveryPlan;
     int32 CoverageSamples=0;
     double CoverageProbeMeters=0;
     TSet<FString> CoverageExcludedRoles;
@@ -83,12 +94,14 @@ private:
     double RecipeInputBuffer=4,CreditBufferBatches=3;
     double FuelImportBufferCycles=1,FuelImportRefillFraction=1;
     TArray<FString> CoreReplicationRecipes;
-    FString BulkInputPolicy,SurplusExportPolicy,ExportReserveHorizon;
+    FString BulkInputPolicy,SurplusExportPolicy,ExportReserveHorizon,ProductionPriorityPolicy;
     double GuardRechargeBelow=0,GuardResumeAbove=0;
     TMap<FString,double> ReserveTargets;
     TArray<FString> UpgradeFamilies;
     int32 MaxConcurrentUpgrades=0;
     double UpgradeQuietRadius=0;
+    FString TransportFactoryDefinition;
+    int32 DesiredTransports=0;
     bool LoadConfig(const FSeigeSimulation& Colony, const FString& Directory, FString& Error);
     bool MakeDecision(FSeigeSimulation& Colony);
     void RunDecisionCycle(FSeigeSimulation& Colony);
@@ -97,8 +110,9 @@ private:
     int32 PlotDefenseCoverage(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Position) const;
     // Bearing on the defense ring for an armed perimeter plot: the one reaching
     // the most building approaches no existing fixed gun covers (ties: Authored).
-    double DefenseBearing(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Origin,double Authored,double Radius) const;
+    double DefenseBearing(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Origin,double Authored,double Radius,double* SelectedRadius=nullptr) const;
     bool PlaceConnectedBuilding(FSeigeSimulation& Colony,const FString& Definition,FVector2D Position,FString& Error);
+    bool PlaceExtractorNear(FSeigeSimulation& Colony,const FString& Definition,const FSeigeNode& Node,FString& Error);
     bool FindPowerConnection(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuilding* ProspectivePlot,FVector2D& OutA,FVector2D& OutB,bool& NeedsSegment,FString& Error) const;
     bool ExtendSensors(FSeigeSimulation& Colony, FVector2D Destination);
     int32 CountLive(const FSeigeSimulation& Colony, const FString& Definition) const;
@@ -106,17 +120,27 @@ private:
     // so an upgraded building still satisfies its plan entry.
     bool Meets(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FString& Definition) const;
     bool ManageUpgrades(FSeigeSimulation& Colony);
+    TArray<int32> UpgradeCandidates(const FSeigeSimulation& Colony) const;
+    bool ConstructionPlanReady(const FSeigeSimulation& Colony) const;
+    TMap<FString,double> NextDevelopmentBill(const FSeigeSimulation& Colony) const;
+    TMap<FString,double> TransportMaterialGoals(const FSeigeSimulation& Colony) const;
+    double DevelopmentAvailable(const FSeigeSimulation& Colony,const FString& Resource) const;
+    int32 TransportEnergyPriority(const FSeigeSimulation& Colony) const;
+    bool ManageTransport(FSeigeSimulation& Colony);
     const FSeigeNode* ExportNode(const FSeigeSimulation& Colony) const;
     bool NextPowerRoad(const FSeigeSimulation& Colony,FVector2D& OutA,FVector2D& OutB,FString& TargetName,FString& Error) const;
     bool ConnectPowerRoad(FSeigeSimulation& Colony,bool& Waiting);
     bool ManageTrade(FSeigeSimulation& Colony);
     bool ManageCoreProduction(FSeigeSimulation& Colony);
+    bool BudgetedProcessor(const FSeigeSimulation& Colony,const FSeigeBuilding& Building) const;
+    bool ManageIndustryProduction(FSeigeSimulation& Colony);
     TMap<FString,double> ProductionGoals(const FSeigeSimulation& Colony) const;
     TMap<FString,double> UsefulFeedstockTargets(const FSeigeSimulation& Colony,const TMap<FString,double>& Goals) const;
     double ManufacturedExportSurplus(const FSeigeSimulation& Colony,const FString& Resource,double NextRoadBill=0) const;
     bool GuardWorksite(FSeigeSimulation& Colony);
     bool RecoverWorkerSupport(FSeigeSimulation& Colony,bool& Waiting);
     const FSeigeAIBuildTarget* SupportRecoveryTarget(const FSeigeSimulation& Colony) const;
+    const FSeigeAIBuildTarget* DefenseRecoveryTarget(const FSeigeSimulation& Colony) const;
     const FSeigeAIBuildTarget* NextConstructionTarget(const FSeigeSimulation& Colony) const;
     bool DevelopmentComplete(const FSeigeSimulation& Colony) const;
     bool FinishPreparation(FSeigeSimulation& Colony,FString& Error);

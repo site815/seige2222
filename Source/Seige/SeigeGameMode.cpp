@@ -181,7 +181,7 @@ void ASeigeGameMode::Tick(float DeltaSeconds)
         return;
     }
     const double PreparationDone=ProfileNextUpdate?FPlatformTime::Seconds():0;
-    if(CompanionView&&(Sim.Escaped||Sim.Failed||Observer))ExitCompanionView();
+    if(CompanionView&&(Sim.Escaped||Sim.Failed))ExitCompanionView();
     if(CompanionView)Speed=1;
     if(Screen==TEXT("playing")&&!Paused)
     {

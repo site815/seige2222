@@ -1,6 +1,60 @@
 # seige2222 — Development and verification
 
-Updated: **2026-10-23** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
+Updated: **2026-10-29** (Asia/Seoul). Unreal Engine **5.8.3**, Windows x64.
+
+## Verification scope for routine changes
+
+At the user's request, routine fixes use compilation and checks directly relevant to the changed behavior. Major test suites, broad audits, multi-resolution acceptance runs and extended performance reviews run when explicitly requested. Historical release evidence remains attached to its original build; a focused check does not imply that the full suite was rerun.
+
+## v0.10.10 — locally verified release
+
+The requested code-first audit, fixes, full native suite and fresh-colony Shipping playthrough are complete. The [verification record](verification/v0.10.10.json) reports **`locally_verified`**. Source and archive are prepared for a single GitHub push; hosted publication and remote CI status are separate from these local test results. The [audit report](releases/CODE_AUDIT_2026_10_28.md) retains the reviewed scope, concrete findings, failed intermediate runs and corrections.
+
+**All 218 native cases passed**, with zero failures, test warnings, not-run or in-process cases, in **1589.97644043 seconds** (`Saved/Automation/v01010-publish/index.json`). The single complete suite includes all 24 starter-resource combinations, three fresh real-terrain colonies, long autonomous development and hostile progression. No redundant separate three-colony run is required. Long development completed at **52.72368 simulation hours**, with 14 buildings, two healthy haulers, 113 loaded truck deliveries, 2528 kg of components and strict reload. The second hauler came from ordinary paid factory assembly.
+
+The final Shipping playthrough passed **117 stages with zero assertion failures and exit 0 at 1600×900**, in **1107.23500044 presentation seconds / 9596.6 simulation seconds**. Real deployment, paid tower construction and trade were observed at 10×, with a separate 1× worker/Rex probe. That probe recorded **1388 motion frames between ticks**, averaging **9.835616 km/h** with a **10 km/h maximum**. All **515 endpoint observations were zero**; **570 source files and 25 staged runtime JSON files** matched with unchanged inputs. Evidence is in `Saved/packaged-v0.10.10-UiSmoke-verification.json` and `Saved/v01010-packaged-publish.log`.
+
+Current-run deployment, placement ghost, build/resources overlay, command-core weapons, front/reverse tower, Rex run and import-received captures were visually reviewed. Independent zoom/tilt and Rex's third-person mouse steering, Shift sprint and Alt + mouse free look are retained and verified with the current controls. This is not a new claim of finished photorealism, sustained FPS or subjective audio quality; the automated route runs without sound.
+
+All **seven Node configuration checks** and **16 Python release-evidence tests** passed. Shipping packaging completed in **33.98 seconds**. The **820,509,347-byte Windows ZIP** passed CRC and SHA-256 comparison against all **56 runtime files**; its SHA-256 is `85d4216feb095b06611eae1f45400acc84d3729eff23b91be8a3bfdeca844239`. The portable [archive proof](verification/v0.10.10-archive.json) records that identity. Validation applies to the default **DX12/SM6** rendering path. Existing SM5/DX11 terrain sampler failures for `M_Terrain`, `M_TerrainV07` and `M_TerrainV08` make that fallback unsupported; the same warnings occur in older v0.10.0/v0.10.1 logs.
+
+The AI now funds actual construction/upgrade bills, pauses competing optional production, adds battery capacity before vehicle assembly and preserves a funded assembly's charging opportunity. It counts the job's delivered ingredients once, prioritizes missing vehicle imports, and puts finite accepted trade deliveries before optional production buffers while retaining essential priorities. Extractors search reachable nearby positions on the same deposit. Defense placement covers exposed approaches, with an early paid tower in threat-enabled starts and bounded recovery after civilian losses.
+
+Workers and transports retain physical routes, bodies, cargo and reservations. Local contours avoid needless detours; workers return from charging to the actual job endpoint. Cached charging estimates include terrain travel, queues and docking, and decisions follow the saved simulation clock. Production refill excludes outbound pickup reservations. Construction pickup retains construction intent so eligible waiting builders can travel and load without removing the minimum core operating crew. Failed transport delivery can recover to another reachable depot. Strict persistence checks and accepted-payment rounding preserve those ledgers.
+
+Command-center and tower guns have independent all-direction mounts. Bug pursuit stops at building surfaces; old embedded enemies walk out physically. Open construction becomes opaque projectile cover at enclosure, while deliberate hits and splash still damage it. Initial shuttle installation work is **30 simulation seconds with three builders**, after the 12-second descent and 3-second hatch sequence; actual worker exit, travel and material delivery still take time. Other construction durations are unchanged.
+
+**Hostile economic pacing remains slow.** The final hostile objective passed at **32.189 simulation hours**, missing the original 18-hour target. The test-only window was extended to 72 hours without changing the goal, finite kit, threat rules or gameplay rates. Real extraction crews also load, haul and recharge, limiting export income. More seeds, longer survival, crowded-neighbor performance, beyond-full-battery job recovery, terrain/Rex polish and DX11 support remain open. Roads and persistent multiplayer remain deferred.
+
+### Diagnostic history (superseded)
+
+Earlier runs exposed material and 60 kWh transaction starvation, unreachable mine entrances, poor defense coverage, transport return-depot loops and charging/workstation errors. The preserved worker-starvation state recovered after **3210 simulation seconds** with a paid new worker and its original delivery/tower advancing; 43 focused physical worker/transport/energy/combat checks passed before the final full run. A later real export stall held 300 kg of an accepted 323.925 kg shipment for roughly ten hours because production consumed each new source batch. The authored priority correction physically settled that original shipment after **532.65 seconds**, paying **0.0323925 credits** without grants and passing strict reload.
+
+The first opt-in rendered harness crashed by looking up the core's empty generic recipe; it now resolves supported production options safely. An earlier long AI run reached its physical goals at 56.744 hours but failed strict reload because accepted floating-point payment left a -1.13e-12 kg residue. Accepted debits now clamp the residual to zero while retaining exact recipe escrow. A cache-age-dependent 1.75-second charging phase mismatch was fixed by anchoring decisions to saved simulation time. Focused fabrication, complete scenario-state and every-step charging continuation checks passed.
+
+An intermediate native report had **217/218 passes** because `ServiceAttendantsKeepChargingDependencies` expected an immediate charge outside the authored two-second cadence. Its fixture now waits for the real cadence; runtime behavior did not change. The final 218-case report supersedes it. Deliberately cancelled native/Shipping runs exited -1; those cancellations are not new crashes. Earlier successful rendered runs and archives under `Saved/Diagnostics/v01010-interim-playthrough`, `v01010-before-transport-rounding`, `v01010-before-export-priority` and `v01010-before-cadence-fixture` remain historical evidence, not the current deliverable. Exact intermediate timings, counts and limitations remain in the audit.
+
+Current loader contracts are colony format **9** and scenario-envelope format **7**. Release metadata derives them from writer/loader contracts. Changed Rules/AI fingerprints require a fresh scenario; old saves remain preserved. The following versioned sections are historical checkpoints and do not describe the current launcher or certify a different build.
+
+## v0.10.9 — historical local Rex steering and locomotion
+
+Mouse movement steers Rex; Shift runs at 14 km/h and Alt + mouse provides free look. Walking remains 5 km/h and world playback remains 1×. Acceleration, braking, bounded turns and interpolated heading replace immediate starts and rotation snaps. New walk/run clips blend by actual speed, with distance-driven paw phases and slope-aligned body pose; the mesh and photographic coat are unchanged. Controls and tuning are documented in the companion/interface designs and editable rules/graphics files.
+
+Editor compilation and Windows Shipping packaging passed. Four focused Rex native checks passed: route eligibility, sprint/acceleration/steering, walking interpolation/persistence, and third-person controls. The first three passed in `Saved/Automation/v0109-focused`; the fourth exposed an invalid blend-space sample/cache, which was repaired and passed a final rerun in `Saved/Automation/v0109-controls-final` without warnings. The final control check evaluates real skeletal paw motion and pause freezing. `Saved/v0109-build-verified.log` records successful packaging. No major suite, audit or rendered gameplay playthrough ran.
+
+At this checkpoint the launcher targeted `Builds/v0.10.9/Windows/Seige.exe`, and the published GitHub build was v0.10.6. The movement Rules fingerprint changed, requiring a new scenario. Earlier builds and saves were preserved. See [v0.10.9 notes](releases/v0.10.9.md).
+
+## v0.10.8 — historical local third-person Rex
+
+Rex roaming now uses an orbitable follow camera behind and above his visible animated body. Camera-relative WASD, 1× playback, pause/Escape and AI-observation ownership remain intact. Buildings and procedural terrain shorten the camera arm to prevent clipping. Presentation parameters live in `Graphics/scene.json`; gameplay rules and save format are unchanged.
+
+Editor compilation and Windows Shipping packaging passed. The single focused `Seige.Companions.ThirdPersonControls` native test passed without test warnings, including actual HUD entry, visible walk animation, following, obstruction handling and retained control/safety restrictions. No major suite, audit or rendered playthrough ran. At this checkpoint the launcher targeted `Builds/v0.10.8/Windows/Seige.exe`, and the published GitHub build was v0.10.6. See [v0.10.8 notes](releases/v0.10.8.md).
+
+## v0.10.7 — historical local camera and Rex corrections
+
+Zoom now preserves the manually selected camera pitch, including close zoom and terrain-clearance adjustments. The Rex button works in center-AI observation scenarios while retaining colony AI ownership and its command restrictions; the prior observer gates rejected entry and forced an exit on the next tick. Roaming retains 1× playback and safety restrictions, clears stale targeting, and explains why Rex is unavailable when aboard or taking shelter.
+
+Editor compilation and Windows Shipping packaging passed. Only three focused native tests ran: `Seige.Camera.PerspectiveTransformAndPan`, `Seige.Camera.SurveyAndSmoothZoom`, and `Seige.Companions.FirstPersonControls`; all passed with no test warnings. The Rex check goes through controller/HUD clicks for player and initialized Starting-AI scenarios, next-tick retention, pause/Escape and safety restrictions. No broad acceptance run, rendered playthrough, benchmark or major audit was performed. At this checkpoint the launcher targeted `Builds/v0.10.7/Windows/Seige.exe`; the published v0.10.6 package was unchanged. See [v0.10.7 notes](releases/v0.10.7.md).
 
 ## GitHub delivery — v0.10.6
 

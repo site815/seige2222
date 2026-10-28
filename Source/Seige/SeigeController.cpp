@@ -92,10 +92,12 @@ void ASeigeController::PlayerTick(float Dt)
         if(WasInputKeyJustPressed(EKeys::SpaceBar)){G->Paused=!G->Paused;SeigeAudio::PlayUi(GetWorld(),TEXT("select"));}
         if(WasInputKeyJustPressed(EKeys::F5))G->SaveGame();
         if(WasInputKeyJustPressed(EKeys::F9)){G->LoadGame();return;}
-        float X=0,Y=0;GetInputMouseDelta(X,Y);G->LookCompanion(FVector2D(X,-Y));
+        const bool FreeLook=IsInputKeyDown(EKeys::LeftAlt)||IsInputKeyDown(EKeys::RightAlt);
+        const bool Sprint=IsInputKeyDown(EKeys::LeftShift)||IsInputKeyDown(EKeys::RightShift);
+        float X=0,Y=0;GetInputMouseDelta(X,Y);G->LookCompanion(FVector2D(X,-Y),FreeLook);
         const float Forward=(IsInputKeyDown(EKeys::W)||IsInputKeyDown(EKeys::Up)?1.f:0.f)-(IsInputKeyDown(EKeys::S)||IsInputKeyDown(EKeys::Down)?1.f:0.f);
         const float Right=(IsInputKeyDown(EKeys::D)||IsInputKeyDown(EKeys::Right)?1.f:0.f)-(IsInputKeyDown(EKeys::A)||IsInputKeyDown(EKeys::Left)?1.f:0.f);
-        G->MoveCompanion(Forward,Right);G->UpdateCamera(Dt);if(PlayerCameraManager)PlayerCameraManager->UpdateCamera(Dt);
+        G->MoveCompanion(Forward,Right,Sprint);G->UpdateCamera(Dt);if(PlayerCameraManager)PlayerCameraManager->UpdateCamera(Dt);
         G->CursorOnWorld=false;return;
     }
     bool Consumed=false;

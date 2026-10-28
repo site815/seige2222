@@ -92,7 +92,7 @@ bool FSeigeCombatSystem::RefitBuilding(FSeigeSimulation& Sim,int32 Id,const TArr
     FSeigeBuilding* Factory=nullptr;int32 RequiredTier=1;for(const auto& W:Loadout)RequiredTier=FMath::Max(RequiredTier,Weapons[W].Size==TEXT("large")?3:Weapons[W].Size==TEXT("medium")?2:1);
     for(auto& Candidate:Sim.Buildings)if(Candidate.Health>0&&!Candidate.IsConstructing&&Candidate.Enabled&&Factories.Contains(Candidate.DefId)&&Factories[Candidate.DefId].MaximumTier>=RequiredTier&&Sim.WorkFraction(Candidate)>0&&BuildingServiceReach(Sim,*B,Candidate,ServiceMeters)&&Sim.HasSpendable(Candidate,Cost)&&Sim.Energy.CanConsume(Sim,Candidate.Id,Energy)){Factory=&Candidate;break;}
     if(!Factory){Error=TEXT("Building refit requires a specialist factory at its service port with the full module bill and energy");return false;}
-    if(!Sim.Energy.Consume(Sim,Factory->Id,Energy))return false;Pay(Factory->Inventory,Cost);EnergySpentKWh+=Energy;EnsureBuildings(Sim);auto& S=BuildingState[Id];S.Weapons=Loadout;S.Cooldowns.Init(0,Loadout.Num());RefitPlans.Remove(Factory->Id);Error.Empty();return true;
+    if(!Sim.Energy.Consume(Sim,Factory->Id,Energy))return false;Pay(Factory->Inventory,Cost);EnergySpentKWh+=Energy;EnsureBuildings(Sim);auto& S=BuildingState[Id];S.Weapons=Loadout;S.Cooldowns.Init(0,Loadout.Num());S.WeaponAim.Empty();RefitPlans.Remove(Factory->Id);Error.Empty();return true;
 }
 
 bool FSeigeCombatSystem::SetRefitPlan(const FSeigeSimulation& Sim,int32 Id,const TArray<FString>& Loadout,FString& Error)

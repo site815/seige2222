@@ -269,7 +269,7 @@ void ASeigeGameMode::RunNextUpdateSmoke()
     case 34:
     {
         TArray<FSeigeInspectionCandidate> Candidates;GatherInspectionCandidates(Candidates);
-        const auto* Pile=Candidates.FindByPredicate([&](const auto& C){return C.Ref==StockRef;});FVector2D Pixel;
+        const auto* Pile=Candidates.FindByPredicate([&](const auto& C){return C.Ref==StockRef;});FVector2D Pixel=FVector2D::ZeroVector;
         if(Check(Pile&&PC->ProjectWorldLocationToScreen(Pile->Bounds.GetCenter(),Pixel),TEXT("Ground stock projects through the unit picker")))PC->SetMouseLocation(FMath::RoundToInt(Pixel.X),FMath::RoundToInt(Pixel.Y));break;
     }
     case 35:

@@ -43,11 +43,6 @@
       "placement_index": 0
     },
     {
-      "definition": "solar_array",
-      "count": 2,
-      "placement_index": 26
-    },
-    {
       "definition": "robot_service_bay",
       "count": 1,
       "placement_index": 1
@@ -63,16 +58,6 @@
       "placement_index": 22
     },
     {
-      "definition": "robot_service_bay",
-      "count": 2,
-      "placement_index": 16
-    },
-    {
-      "definition": "robot_service_bay",
-      "count": 3,
-      "placement_index": 24
-    },
-    {
       "definition": "sensor",
       "count": 1,
       "placement_index": 2
@@ -83,14 +68,64 @@
       "placement_index": 3
     },
     {
-      "definition": "fuel_generator",
+      "definition": "substrate_works",
       "count": 1,
-      "placement_index": 25
+      "placement_index": 19
+    },
+    {
+      "definition": "circuit_works",
+      "count": 1,
+      "placement_index": 21
+    },
+    {
+      "definition": "biofuel_refinery",
+      "count": 1,
+      "placement_index": 20
+    },
+    {
+      "definition": "battery_bank",
+      "count": 1,
+      "placement_index": 27
+    },
+    {
+      "definition": "vehicle_factory",
+      "count": 1,
+      "placement_index": 29
     },
     {
       "definition": "worker_factory",
       "count": 1,
       "placement_index": 13
+    },
+    {
+      "definition": "solar_array",
+      "count": 2,
+      "placement_index": 26
+    },
+    {
+      "definition": "conductor_works",
+      "count": 1,
+      "placement_index": 18
+    },
+    {
+      "definition": "fuel_generator",
+      "count": 1,
+      "placement_index": 25
+    },
+    {
+      "definition": "robot_service_bay",
+      "count": 2,
+      "placement_index": 16
+    },
+    {
+      "definition": "depot",
+      "count": 1,
+      "placement_index": 23
+    },
+    {
+      "definition": "robot_service_bay",
+      "count": 3,
+      "placement_index": 24
     },
     {
       "definition": "turret",
@@ -103,36 +138,6 @@
       "placement_index": 15
     },
     {
-      "definition": "conductor_works",
-      "count": 1,
-      "placement_index": 18
-    },
-    {
-      "definition": "substrate_works",
-      "count": 1,
-      "placement_index": 19
-    },
-    {
-      "definition": "biofuel_refinery",
-      "count": 1,
-      "placement_index": 20
-    },
-    {
-      "definition": "circuit_works",
-      "count": 1,
-      "placement_index": 21
-    },
-    {
-      "definition": "battery_bank",
-      "count": 1,
-      "placement_index": 27
-    },
-    {
-      "definition": "depot",
-      "count": 1,
-      "placement_index": 23
-    },
-    {
       "definition": "ai_chip_works",
       "count": 1,
       "placement_index": 28,
@@ -142,6 +147,7 @@
   "developed_setup_seconds": 129600,
   "target_policy": "complete_and_staff_in_order",
   "support_recovery_policy": "restore_capacity_before_expansion",
+  "defense_recovery_policy": "first_planned_tower_before_exposure",
   "economy": {
     "solar_definition": "solar_array",
     "trade_definition": "trading_port",
@@ -160,16 +166,22 @@
     "core_replication_recipes": [],
     "bulk_input_policy": "remaining_output_bill",
     "export_policy": "surplus_shipment_value",
-    "export_reserve_horizon": "next_prerequisite"
+    "export_reserve_horizon": "next_prerequisite",
+    "production_priority_policy": "protect_development_inputs"
   },
   "upgrades": {
     "families": [
       "solar_array",
       "trading_port",
-      "turret"
+      "turret",
+      "vehicle_factory"
     ],
     "max_concurrent": 1,
     "defense_quiet_radius": 3000
+  },
+  "logistics": {
+    "factory_definition": "vehicle_factory",
+    "target_transports": 2
   },
   "developed_initialization": "established_manifest"
 }

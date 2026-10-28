@@ -52,7 +52,7 @@ bool FSeigeWallSystem::Plan(const FSeigeSimulation& Sim,const TArray<FVector2D>&
 {
     Out={};const auto* Core=Sim.Core();
     if(Sim.Escaped||Sim.Failed||!Core||Core->Health<=0||Core->IsConstructing){Error=TEXT("Deploy a command center before building walls");return false;}
-    if(Joints.Num()<2||Joints.Num()>MaximumJoints||LevelDefinitions.Num()!=3){Error=TEXT("Wall plan needs 2 to 64 joints");return false;}
+    if(Joints.Num()<2||Joints.Num()>MaximumJoints||LevelDefinitions.Num()!=3){Error=FString::Printf(TEXT("Wall plan needs 2 to %d joints"),MaximumJoints);return false;}
     const double Metres=Sim.MetersPerWorldUnit(),Radius=WidthMeters*.5/Metres;
     for(const auto& P:Joints)if(P.ContainsNaN()||FMath::Abs(P.X)+Radius>Sim.WorldHalfSize||FMath::Abs(P.Y)+Radius>Sim.WorldHalfSize){Error=TEXT("Wall joints must be inside the sector");return false;}
     // Test original edges before subdivision: a crossing can coincidentally
@@ -81,12 +81,16 @@ bool FSeigeWallSystem::Plan(const FSeigeSimulation& Sim,const TArray<FVector2D>&
         // Routing reserves each section's square plot immediately, including
         // its movement clearance. Never close that plot around a live unit.
         const double Plot=Sim.BuildingDefs[LevelDefinitions[0]].ReservedFootprint;
+        if(!Sim.Environment.CanStand(Mid,Plot*UE_SQRT_2)||!Sim.Environment.SegmentDry(S.A,S.B,Radius)){Error=TEXT("Wall foundations require dry land");return false;}
         const double WorkerClearance=Sim.Transport->GetNumberField(TEXT("path_clearance"));
         auto Occupies=[&](FVector2D P,double Clearance){return FMath::Abs(P.X-Mid.X)<Plot+Clearance&&FMath::Abs(P.Y-Mid.Y)<Plot+Clearance;};
         for(const auto& W:Sim.Workers.Bodies)if(W.State==TEXT("active")&&W.Outdoor&&Occupies(W.Position,Sim.Workers.BodyRadiusMeters()/Metres)){Error=TEXT("Wait for the worker to leave the wall corridor");return false;}
         for(const auto& C:Sim.Couriers)if(Occupies(C.Position,WorkerClearance)){Error=TEXT("Wait for the delivery worker to leave the wall corridor");return false;}
         for(const auto& B:Sim.Buildings)if(B.Health>0&&((B.TravellingBuilders>0&&Occupies(B.BuilderPosition,WorkerClearance))||(B.BuildersOnSite>0&&Occupies(Sim.BuildingAccessPoint(B),WorkerClearance)))){Error=TEXT("Wait for the construction crew to leave the wall corridor");return false;}
         for(const auto& R:Sim.Roads)if(R.Health>0&&((R.TravellingBuilders>0&&Occupies(R.BuilderPosition,WorkerClearance))||(R.BuildersOnSite>0&&Occupies(Sim.RoadAccessPoint(R),WorkerClearance)))){Error=TEXT("Wait for the road crew to leave the wall corridor");return false;}
+        const double TransportRadius=FMath::Max(Sim.TransportVehicles.Definition().BodySizeMeters.X,Sim.TransportVehicles.Definition().BodySizeMeters.Y)*.5/Metres;
+        for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&Occupies(V.Position,TransportRadius)){Error=TEXT("Wait for the cargo transport to leave the wall corridor");return false;}
+        for(const auto& Dog:Sim.Companions.Dogs)if(FSeigeCompanionSystem::IsOutside(Dog)&&Occupies(Dog.Position,Sim.Companions.BodyRadiusMeters/Metres)){Error=TEXT("Wait for Rex to leave the wall corridor");return false;}
         for(const auto& V:Sim.Combat.Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&Occupies(V.Position,Sim.Combat.Chassis[V.ChassisId].RadiusMeters/Metres)){Error=TEXT("Move the vehicle outside the wall corridor first");return false;}
         for(auto P:{S.A,Mid,S.B})if(FMath::Abs(P.X)+Radius>Sim.WorldHalfSize||FMath::Abs(P.Y)+Radius>Sim.WorldHalfSize||!Sim.IsVisible(P)){Error=TEXT("Wall plan must stay inside the sector and live sensor coverage");return false;}
         for(const auto& B:Sim.Buildings)if(B.Health>0)if(const auto* D=Sim.Definition(B))

@@ -33,6 +33,9 @@ bool BootstrapPlan(const FString& Directory,FString& Error)
             for(const TCHAR* Id:{TEXT("solar_array"),TEXT("robot_service_bay"),TEXT("extraction_mine"),TEXT("trading_port"),TEXT("sensor")})
             {auto T=MakeShared<FJsonObject>();T->SetStringField(TEXT("definition"),Id);T->SetNumberField(TEXT("count"),1);T->SetNumberField(TEXT("placement_index"),Index++);Targets.Add(MakeShared<FJsonValueObject>(T));}
             O->SetArrayField(TEXT("build_targets"),Targets);
+            // This isolated five-building bootstrap has no vehicle factory.
+            // Late paid fleet growth is covered by the full development gate.
+            O->GetObjectField(TEXT("logistics"))->SetNumberField(TEXT("target_transports"),0);
             Raw.Empty();if(!FJsonSerializer::Serialize(O.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw)))return false;
         }
         if(!FFileHelper::SaveStringToFile(Raw,*FPaths::Combine(Directory,File)))return false;
@@ -64,25 +67,41 @@ bool FSeigeStarterCombinations::RunTest(const FString& Parameters)
     FString Missing;for(const auto& Id:StandardTypes)if(!S.Nodes.ContainsByPredicate([&](const auto& N){return N.Resource==Id;}))Missing=Id;
     const double ImportPrice=S.TradeQuote(Missing,1,true);
     const TArray<FString> Required={TEXT("solar_array"),TEXT("robot_service_bay"),TEXT("extraction_mine"),TEXT("trading_port"),TEXT("sensor")};
-    auto Complete=[&](){for(const auto& Id:Required)if(!S.Buildings.ContainsByPredicate([&](const auto& B){return B.Health>0&&!B.IsConstructing&&B.Enabled&&B.DefId==Id&&B.Workers>=S.Definition(B)->Jobs;}))return false;return true;};
-    // Ordinary fixed-step simulation, physical workers, actual kit, roads, daylight
+    auto Provides=[&](const FSeigeBuilding& B,const FString& Id)
+    {const auto* Have=S.Definition(B);const auto& Want=S.BuildingDefs[Id];return Have&&(B.DefId==Id||(!Want.Family.IsEmpty()&&Have->Family==Want.Family&&Have->Level>Want.Level));};
+    auto Complete=[&](){for(const auto& Id:Required)if(!S.Buildings.ContainsByPredicate([&](const auto& B){return B.Health>0&&!B.IsConstructing&&B.Enabled&&Provides(B,Id)&&S.Workers.AssignedCount(B.Id)>=S.Definition(B)->Jobs;}))return false;return true;};
+    bool ObservedOperatingMine=false;
+    // Permanent crew may physically leave to haul or charge, and a paid upgrade
+    // retains the original capability. Neither is a missing bootstrap target.
+    // Separately observe actual powered, fully staffed extraction with output.
+    auto ObserveExtraction=[&]()
+    {for(const auto& B:S.Buildings)if(Provides(B,TEXT("extraction_mine"))&&B.Health>0&&!B.IsConstructing&&B.Enabled&&B.Workers>=S.Definition(B)->Jobs&&S.Energy.Fraction(B.Id)>0&&B.Inventory.FindRef(S.ExtractionResource(B))>0)ObservedOperatingMine=true;};
+    // Ordinary fixed-step simulation, physical workers, actual kit, daylight
     // and paid trade. Threats are explicitly disabled to isolate economic viability.
-    while(S.Time<86400&&!S.Failed&&(!Complete()||S.Credits<ImportPrice))Brain.Tick(S,10);
+    while(S.Time<86400&&!S.Failed&&(!Complete()||!ObservedOperatingMine||S.Credits<ImportPrice)){Brain.Tick(S,10);ObserveExtraction();}
     AddInfo(FString::Printf(TEXT("seed=%d time=%.0fs workers=%d credits=%.6f status=%s"),Seed,S.Time,S.Population,S.Credits,*Brain.GetStatus()));
+    const FString Snapshot=FPaths::Combine(Plan,TEXT("final-colony.json"));
+    if(!S.Save(Snapshot,Error)){AddError(TEXT("Cannot retain bootstrap state: ")+Error);return false;}
+    if(!Complete()||!ObservedOperatingMine||S.Credits<ImportPrice)
+    {
+        AddInfo(TEXT("Bootstrap diagnostic snapshot: ")+Snapshot);
+        for(const auto& B:S.Buildings)AddInfo(FString::Printf(TEXT("%s id=%d level=%d health=%.1f enabled=%d constructing=%d progress=%.3f assigned=%d onsite=%d jobs=%d power=%.3f status=%s"),*B.DefId,B.Id,S.Definition(B)->Level,B.Health,B.Enabled?1:0,B.IsConstructing?1:0,B.ConstructionProgress,S.Workers.AssignedCount(B.Id),B.Workers,S.Definition(B)->Jobs,S.Energy.Fraction(B.Id),*B.Status));
+    }
     if(!TestTrue(TEXT("Finite-kit paid bootstrap completes and staffs all five targets"),Complete()))return false;
     TestTrue(TEXT("Materials reached actual local inventories"),S.DeliveredUnits>0);
     TestTrue(TEXT("Local goods earned positive credits"),S.Credits>0);
-    const auto* Mine=S.Buildings.FindByPredicate([](const auto& B){return B.DefId==TEXT("extraction_mine");});
-    TestTrue(TEXT("Local extraction is powered and staffed"),Mine&&Mine->Workers>=S.Definition(*Mine)->Jobs&&S.Energy.Fraction(Mine->Id)>0);
-    auto* Port=S.Buildings.FindByPredicate([](const auto& B){return B.DefId==TEXT("trading_port");});
+    const auto* Mine=S.Buildings.FindByPredicate([&](const auto& B){return Provides(B,TEXT("extraction_mine"));});
+    TestTrue(TEXT("Local extraction has actual powered, staffed output and retains its permanent crew"),ObservedOperatingMine&&Mine&&S.Workers.AssignedCount(Mine->Id)>=S.Definition(*Mine)->Jobs);
+    auto* Port=S.Buildings.FindByPredicate([&](const auto& B){return Provides(B,TEXT("trading_port"));});
     if(!Port)return false;const int32 PortId=Port->Id;
     for(int32 I=0;I<1000&&!S.FindBuilding(PortId)->Shipment.Resource.IsEmpty();++I)S.Tick(1);
     const double Before=S.TotalStock(Missing),Credits=S.Credits,Price=S.TradeQuote(Missing,1,true);
     if(!S.TryTrade(PortId,Missing,1,true,Error)){AddError(TEXT("Earned-credit missing-raw import: ")+Error);return false;}
     TestTrue(TEXT("Import spends earned credits exactly"),FMath::IsNearlyEqual(S.Credits,Credits-Price,1.e-9));
     for(int32 I=0;I<1000&&!S.FindBuilding(PortId)->Shipment.Resource.IsEmpty();++I)S.Tick(1);
-    TestTrue(TEXT("Absent standard resource physically arrives"),S.TotalStock(Missing)>=Before+1-1.e-8);
+    TestTrue(TEXT("Absent standard resource physically arrives"),S.FindBuilding(PortId)->Shipment.Resource.IsEmpty()&&S.TotalStock(Missing)>=Before+1-1.e-8);
     TestFalse(TEXT("Economic bootstrap does not destroy the core"),S.Failed);
+    if(!S.Save(Snapshot,Error)){AddError(TEXT("Cannot retain final paid-import state: ")+Error);return false;}
     return true;
 }
 #endif

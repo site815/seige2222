@@ -6,6 +6,7 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "HAL/FileManager.h"
+#include "HAL/PlatformProcess.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "SeigeGameMode.h"
@@ -20,6 +21,7 @@ struct FSeigeStartingAIHarness
     static bool Initialize(ASeigeGameMode& G,FString& Error){return G.InitializeScenario(Error);}
     static FSeigeScenarioAI* CenterAI(ASeigeGameMode& G){return G.CenterBrain.Get();}
     static void RefreshTerrain(ASeigeGameMode& G){G.SimulationTerrainHeight(G.HomePosition());}
+    static void RebindTerrain(ASeigeGameMode& G){G.ConfigureCombatTerrain();}
     static double Height(ASeigeGameMode& G,FVector2D P){return G.SimulationTerrainHeight(P);}
 };
 namespace
@@ -75,7 +77,7 @@ TSharedRef<FJsonObject> AIProgressState(const FSeigeSimulation& S,const FSeigeSc
     return O;
 }
 
-bool RunStartingProgress(FAutomationTestBase& Test,int32 Seed,int32 Sector,double Hours,bool LiveTerrain,bool RequireIndustry)
+bool RunStartingProgress(FAutomationTestBase& Test,int32 Seed,int32 Sector,double Hours,bool LiveTerrain,bool RequireIndustry,bool RequireDevelopment=false,const FString& Snapshot=FString())
 {
     // Use the actual scenario initializer and its authoritative terrain binding.
     // An isolated simulation only has the rivers/cliffs shaped over a flat base,
@@ -110,21 +112,65 @@ bool RunStartingProgress(FAutomationTestBase& Test,int32 Seed,int32 Sector,doubl
         if(!Brain->Initialize(*Simulation,FPaths::ProjectDir()/TEXT("Rules"),FPaths::ProjectDir()/TEXT("AIFILES"),false,Error,false,false,SeigeSectorResourceSeed(Seed,Sector),Offset)){Test.AddError(Error);return false;}
     }
     auto& S=*Simulation;auto& AI=*Brain;
-    const FString Root=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Diagnostics/StartingAI"),FString::Printf(TEXT("seed-%d-sector-%d%s"),Seed,Sector,LiveTerrain?TEXT("-terrain"):TEXT("")));
+    if(!Snapshot.IsEmpty())
+    {
+        if(!S.Load(Snapshot,Error)){Test.AddError(TEXT("Cannot restore diagnostic snapshot: ")+Error);return false;}
+        if(Game)FSeigeStartingAIHarness::RebindTerrain(*Game);
+        Hours+=S.Time/3600;
+    }
+    const FString Root=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Diagnostics/StartingAI"),FString::Printf(TEXT("seed-%d-sector-%d%s%s"),Seed,Sector,LiveTerrain?TEXT("-terrain"):TEXT(""),Snapshot.IsEmpty()?TEXT(""):TEXT("-restored")));
     IFileManager::Get().MakeDirectory(*Root,true);
-    Test.TestEqual(TEXT("Starting AI has exactly the finite landing core"),S.Buildings.Num(),1);
-    Test.TestEqual(TEXT("Starting AI begins with zero credits"),S.Credits,0.);
+    if(Snapshot.IsEmpty())
+    {
+        Test.TestEqual(TEXT("Starting AI has exactly the finite landing core"),S.Buildings.Num(),1);
+        Test.TestEqual(TEXT("Starting AI begins with zero credits"),S.Credits,0.);
+    }
     Test.TestFalse(TEXT("Current scenarios have road construction disabled"),S.RoadsEnabled());
+    const bool TradeRecovery=!Snapshot.IsEmpty()&&FParse::Param(FCommandLine::Get(),TEXT("StartingAITradeRecovery"));
+    int32 RecoveryPort=0;FString RecoveryResource;double RecoveryQuantity=0,RecoveryQuote=0;bool TradeRecovered=false;
+    if(TradeRecovery)
+    {
+        for(const auto& B:S.Buildings)if(B.Health>0&&!B.Shipment.Resource.IsEmpty()&&!B.Shipment.Buy&&!B.Shipment.Departed)
+        {RecoveryPort=B.Id;RecoveryResource=B.Shipment.Resource;RecoveryQuantity=B.Shipment.Quantity;RecoveryQuote=B.Shipment.PriceCredits;break;}
+        if(!RecoveryPort){Test.AddError(TEXT("Trade recovery diagnostic requires a real accepted export awaiting local cargo"));return false;}
+        Test.AddInfo(FString::Printf(TEXT("TRADE_RECOVERY starts time=%.3f port=%d resource=%s quantity=%.9f ordinary_quote=%.9f"),S.Time,RecoveryPort,*RecoveryResource,RecoveryQuantity,RecoveryQuote));
+    }
     const int32 InitialBodies=S.Workers.Bodies.Num();int32 PaidWorkerCompletions=0,CompletedTruckDeliveries=0;double TruckDeliveredUnits=0;bool UnpaidBody=false;
+    const int32 InitialTransports=S.TransportVehicles.Bodies.Num(),InitialLiveTransports=S.TransportVehicles.LiveCount();int32 PaidTransportCompletions=0;bool UnpaidTransport=false;
+    auto Developed=[&]()
+    {
+        // Opt-in restoration is a diagnostic of paid transport recovery only;
+        // release acceptance always starts fresh with the full requirements.
+        if(!Snapshot.IsEmpty())return TradeRecovery?TradeRecovered:S.TransportVehicles.LiveCount()>InitialLiveTransports&&PaidTransportCompletions>0;
+        return S.ProducedUnits.FindRef(TEXT("components"))>=100&&S.ProducedUnits.FindRef(TEXT("circuits"))>=20&&
+            S.ProducedUnits.FindRef(TEXT("conductors"))>=100&&S.ProducedUnits.FindRef(TEXT("substrates"))>=100&&
+            S.Buildings.ContainsByPredicate([&](const auto& B){return B.Health>0&&!B.IsConstructing&&S.Definition(B)->Family==TEXT("vehicle_factory");})&&
+            S.TransportVehicles.LiveCount()>=2&&PaidTransportCompletions>0&&CompletedTruckDeliveries>=10;
+    };
     struct FTruckIntent{int32 Source,Target,Road;};TMap<int32,FTruckIntent> TruckIntents;
     TArray<TSharedPtr<FJsonValue>> Journal;double NextReport=1800;
     auto Report=[&]()
     {
         auto Milestone=AIProgressState(S,AI,Game);double TruckDistance=0;for(const auto& V:S.TransportVehicles.Bodies)TruckDistance+=V.DistanceMeters;
         Milestone->SetNumberField(TEXT("transport_distance_meters"),TruckDistance);Milestone->SetNumberField(TEXT("completed_truck_deliveries"),CompletedTruckDeliveries);Milestone->SetNumberField(TEXT("truck_delivered_units"),TruckDeliveredUnits);
+        Milestone->SetNumberField(TEXT("live_transports"),S.TransportVehicles.LiveCount());Milestone->SetNumberField(TEXT("paid_transport_completions"),PaidTransportCompletions);
         Journal.Add(MakeShared<FJsonValueObject>(Milestone));auto Document=MakeShared<FJsonObject>();Document->SetArrayField(TEXT("milestones"),Journal);
         Document->SetBoolField(TEXT("authoritative_game_terrain"),LiveTerrain);Document->SetNumberField(TEXT("initial_bodies"),InitialBodies);Document->SetNumberField(TEXT("paid_worker_completions"),PaidWorkerCompletions);
-        FString Text;if(!FJsonSerializer::Serialize(Document,TJsonWriterFactory<>::Create(&Text))||!FFileHelper::SaveStringToFile(Text,*FPaths::Combine(Root,TEXT("progress.json")))||!S.Save(FPaths::Combine(Root,TEXT("latest.json")),Error)||!S.Save(FPaths::Combine(Root,FString::Printf(TEXT("state-%06d.json"),FMath::RoundToInt(S.Time))),Error))Test.AddError(TEXT("Cannot write AI diagnostic: ")+Error);
+        // External readers can briefly hold a Windows file handle while a
+        // milestone is published. Retry only that I/O, with a tight bound;
+        // a persistent write/save error still fails the acceptance gate.
+        auto Write=[&](const FString& Name,TFunctionRef<bool()> Operation)
+        {
+            for(int32 Attempt=0;Attempt<5;++Attempt)
+            {Error.Empty();if(Operation())return true;if(Attempt<4)FPlatformProcess::SleepNoStats(.01f);}
+            Test.AddError(TEXT("Cannot write AI diagnostic ")+FPaths::Combine(Root,Name)+TEXT(": ")+(Error.IsEmpty()?TEXT("file serialization/write failed after five attempts"):Error));return false;
+        };
+        FString Text;
+        if(!FJsonSerializer::Serialize(Document,TJsonWriterFactory<>::Create(&Text)))Test.AddError(TEXT("Cannot serialize AI progress journal"));
+        else Write(TEXT("progress.json"),[&](){return FFileHelper::SaveStringToFile(Text,*FPaths::Combine(Root,TEXT("progress.json")));});
+        Write(TEXT("latest.json"),[&](){return S.Save(FPaths::Combine(Root,TEXT("latest.json")),Error);});
+        const FString StateFile=FString::Printf(TEXT("state-%06d.json"),FMath::RoundToInt(S.Time));
+        Write(StateFile,[&](){return S.Save(FPaths::Combine(Root,StateFile),Error);});
         Test.AddInfo(FString::Printf(TEXT("STARTING_AI seed=%d sector=%d terrain=%d time=%.0f buildings=%d roads=%d bodies=%d delivered=%.1f components=%.1f truck_deliveries=%d truck_m=%.1f status=%s"),Seed,Sector,LiveTerrain,S.Time,S.Buildings.Num(),S.Roads.Num(),S.Workers.Bodies.Num(),S.DeliveredUnits,S.ProducedUnits.FindRef(TEXT("components")),CompletedTruckDeliveries,TruckDistance,*AI.GetStatus()));
     };
     Report();
@@ -135,6 +181,7 @@ bool RunStartingProgress(FAutomationTestBase& Test,int32 Seed,int32 Sector,doubl
         // without rendering 72,000 frames per hour in this bounded diagnostic.
         if(Game)FSeigeStartingAIHarness::RefreshTerrain(*Game);
         const int32 BeforeBodies=S.Workers.Bodies.Num();int32 CommittedOutput=0;
+        const int32 BeforeTransports=S.TransportVehicles.Bodies.Num();int32 CommittedTransportOutput=0;for(const auto& Job:S.TransportVehicles.Jobs)if(Job.Committed)++CommittedTransportOutput;
         for(const auto& B:S.Buildings)if(B.ProductionCommitted)
             if(const auto* Recipe=S.Recipes.Find(B.CommittedRecipe))CommittedOutput+=Recipe->WorkerOutput;
         TSet<int32> ActiveTruckCouriers;
@@ -159,10 +206,16 @@ bool RunStartingProgress(FAutomationTestBase& Test,int32 Seed,int32 Sector,doubl
                     LoadedTrucks.Add({C.Id,C.TransportVehicleId,C.TargetId,C.RoadTargetId,C.Amount,V->Route.Last()});
             }
         }
+        const auto* PendingTrade=TradeRecovery?S.FindBuilding(RecoveryPort):nullptr;
+        const bool OriginalTradeInFlight=PendingTrade&&PendingTrade->Shipment.Departed&&!PendingTrade->Shipment.Buy&&PendingTrade->Shipment.Resource==RecoveryResource&&PendingTrade->Shipment.Quantity==RecoveryQuantity&&PendingTrade->Shipment.PriceCredits==RecoveryQuote;
         const double Before=S.Time,DeliveredBefore=S.DeliveredUnits;const int32 LostBefore=S.LostCouriers;AI.Tick(S,FMath::Min(Step,Hours*3600-S.Time));
+        if(OriginalTradeInFlight&&S.Events.ContainsByPredicate([&](const auto& E){return E.Time>Before&&E.Text==TEXT("Export paid: ")+S.Resources[RecoveryResource].Name;}))
+        {TradeRecovered=true;Test.AddInfo(FString::Printf(TEXT("TRADE_RECOVERY original physical shipment paid time=%.3f quantity=%.9f credits=%.9f"),S.Time,RecoveryQuantity,RecoveryQuote));}
         if(S.Time<=Before){Test.AddError(TEXT("Starting simulation stopped advancing"));break;}
         const int32 Created=S.Workers.Bodies.Num()-BeforeBodies;
         if(Created>0){PaidWorkerCompletions+=Created;if(Created>CommittedOutput)UnpaidBody=true;}
+        const int32 CreatedTransports=S.TransportVehicles.Bodies.Num()-BeforeTransports;
+        if(CreatedTransports>0){PaidTransportCompletions+=CreatedTransports;if(CreatedTransports>CommittedTransportOutput)UnpaidTransport=true;}
         for(const auto& Load:LoadedTrucks)
         {
             const auto* Vehicle=S.TransportVehicles.Find(Load.Vehicle);const auto* B=S.FindBuilding(Load.Target);const auto* R=S.FindRoad(Load.Road);
@@ -173,13 +226,16 @@ bool RunStartingProgress(FAutomationTestBase& Test,int32 Seed,int32 Sector,doubl
             {++CompletedTruckDeliveries;TruckDeliveredUnits+=Load.Amount;}
         }
         if(S.Time>=NextReport){Report();NextReport=S.Time+1800;}
-        if(RequireIndustry&&S.ProducedUnits.FindRef(TEXT("components"))>=10&&CompletedTruckDeliveries>0)break;
+        if(RequireDevelopment?Developed():RequireIndustry&&S.ProducedUnits.FindRef(TEXT("components"))>=10&&CompletedTruckDeliveries>0)break;
     }
     Report();
     Test.TestFalse(TEXT("Peaceful starting colony retains command"),S.Failed||S.Escaped);
     Test.TestTrue(TEXT("Starting AI develops without constructing any roads"),S.Roads.IsEmpty());
     Test.TestFalse(TEXT("Every new worker comes from an existing paid production batch"),UnpaidBody);
     Test.TestEqual(TEXT("All original and manufactured bodies remain individually accounted for"),S.Workers.Bodies.Num(),InitialBodies+PaidWorkerCompletions);
+    Test.TestFalse(TEXT("Every new cargo vehicle comes from a paid fabrication batch"),UnpaidTransport);
+    Test.TestEqual(TEXT("All original and assembled transport bodies remain accounted for"),S.TransportVehicles.Bodies.Num(),InitialTransports+PaidTransportCompletions);
+    if(RequireDevelopment)Test.TestTrue(Snapshot.IsEmpty()?TEXT("Finite kit develops the specialist chain and builds a real additional cargo vehicle"):TradeRecovery?TEXT("Restored colony physically completes and is paid for its original accepted export"):TEXT("Restored colony physically fabricates a paid additional cargo vehicle"),Developed());
     TSet<FString> Identities;bool Unique=true;for(const auto& W:S.Workers.Bodies){Unique&=!Identities.Contains(W.Id);Identities.Add(W.Id);}
     Test.TestTrue(TEXT("Worker body identities are unique"),Unique);
     if(RequireIndustry)
@@ -190,6 +246,9 @@ bool RunStartingProgress(FAutomationTestBase& Test,int32 Seed,int32 Sector,doubl
         double Distance=0;for(const auto& V:S.TransportVehicles.Bodies)Distance+=V.DistanceMeters;
         Test.TestTrue(TEXT("Real cargo vehicle travels between facilities"),Distance>100);
         Test.TestTrue(TEXT("A real truck completes a loaded delivery to another facility or construction site"),CompletedTruckDeliveries>0&&TruckDeliveredUnits>0);
+    }
+    if(RequireIndustry||RequireDevelopment)
+    {
         FSeigeSimulation Reloaded;
         if(!Reloaded.Initialize(FPaths::ProjectDir()/TEXT("Rules"),Error,false,false,S.GenerationSeed,S.Environment.WorldOffset)||!Reloaded.Load(FPaths::Combine(Root,TEXT("latest.json")),Error))Test.AddError(TEXT("Progress snapshot must pass inventory/body validation: ")+Error);
         else{Test.TestEqual(TEXT("Reload keeps exact worker bodies"),Reloaded.Workers.Bodies.Num(),S.Workers.Bodies.Num());Test.TestEqual(TEXT("Reload keeps exact delivered cargo"),Reloaded.DeliveredUnits,S.DeliveredUnits);}
@@ -215,6 +274,25 @@ bool FSeigeStartingAIIndustryTest::RunTest(const FString&)
     for(const auto& Case:{FIntPoint(815,4),FIntPoint(2222,0),FIntPoint(4242,8)})
         if(!RunStartingProgress(*this,Case.X,Case.Y,24,true,true))return false;
     return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeStartingAIDevelopmentTest,"Seige.AI.FiniteKitSelfDevelopmentOnGameTerrain",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeStartingAIDevelopmentTest::RunTest(const FString&)
+{
+    return RunStartingProgress(*this,815,4,72,true,true,true);
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeStartingAIRestoreDiagnostic,"Diagnostics.StartingAIRestore",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FSeigeStartingAIRestoreDiagnostic::RunTest(const FString&)
+{
+    FString Snapshot;double Hours=6;int32 Seed=815,Sector=4;
+    FParse::Value(FCommandLine::Get(),TEXT("StartingAISnapshot="),Snapshot);
+    FParse::Value(FCommandLine::Get(),TEXT("StartingAIHours="),Hours);
+    FParse::Value(FCommandLine::Get(),TEXT("StartingAISeed="),Seed);
+    FParse::Value(FCommandLine::Get(),TEXT("StartingAISector="),Sector);
+    if(Snapshot.IsEmpty()||!FMath::IsFinite(Hours)||Hours<=0||Hours>24||Sector<0||Sector>8)
+    {AddError(TEXT("Restoration requires explicit StartingAISnapshot, matching seed/sector and up to24 additional simulation hours"));return false;}
+    return RunStartingProgress(*this,Seed,Sector,Hours,true,false,true,Snapshot);
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeAIPermanentCrewReadinessTest,"Seige.AI.PermanentCrewKeepsExpansionFunded",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
@@ -373,7 +451,13 @@ bool FSeigeServiceChargeDependencyTest::RunTest(const FString&)
     auto& Attendant=S.Workers.Bodies[0];const FString Id=Attendant.Id;
     Attendant.CrewBuildingId=Attendant.BuildingId=A;Attendant.Activity=TEXT("operate");Attendant.Position=S.BuildingAccessPoint(*S.FindBuilding(B));Attendant.BatteryKWh=.03;
     auto& Second=S.Workers.Bodies[1];const FString SecondId=Second.Id;Second.CrewBuildingId=Second.BuildingId=B;Second.Activity=TEXT("operate");Second.Position=S.BuildingAccessPoint(*S.FindBuilding(B))+FVector2D(0,20);
-    S.Tick(.05);
+    // Charging decisions use absolute saved-clock boundaries. Starting this
+    // fixture between two boundaries must not require an immediate decision.
+    FString WorkerText;TSharedPtr<FJsonObject> WorkerPolicy;
+    if(!FFileHelper::LoadFileToString(WorkerText,*(FPaths::ProjectDir()/TEXT("Rules/workers.json")))||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(WorkerText),WorkerPolicy)||!WorkerPolicy.IsValid())
+    {AddError(TEXT("Cannot read the authored worker planning cadence"));return false;}
+    const double Cadence=WorkerPolicy->GetNumberField(TEXT("route_retry_seconds")),Step=S.FixedStepSeconds();
+    for(int32 I=0;I<=FMath::CeilToInt(Cadence/Step)&&S.Workers.Find(Id)->ChargingBuildingId==0;++I)S.Tick(Step);
     TestEqual(TEXT("A low-battery attendant returns to its own self-service berth even if another bay is closer"),S.Workers.Find(Id)->ChargingBuildingId,A);
     // Remove only A's physical connection during its journey. The real body
     // must release that failed charge request at its present position.

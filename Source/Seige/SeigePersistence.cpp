@@ -67,7 +67,7 @@ void ASeigeGameMode::LoadGame()
     FGuid GenerationId;
     if(!Metadata->HasTypedField<EJson::Number>(TEXT("format"))||!Metadata->TryGetNumberField(TEXT("format"),Format)||Format!=7)
     {Notice=TEXT("This scenario save is incompatible with version 0.9.0 (individual workers and world calendar). The existing save was not changed; start a new scenario.");return;}
-    if(!Metadata->TryGetNumberField(TEXT("calendar_elapsed_us"),StoredCalendar)||!FMath::IsFinite(StoredCalendar)||StoredCalendar<0||StoredCalendar>double(FSeigeWorldCalendar::MaximumElapsedMicroseconds)||StoredCalendar!=FMath::FloorToDouble(StoredCalendar))
+    if(!Metadata->HasTypedField<EJson::Number>(TEXT("calendar_elapsed_us"))||!Metadata->TryGetNumberField(TEXT("calendar_elapsed_us"),StoredCalendar)||!FMath::IsFinite(StoredCalendar)||StoredCalendar<0||StoredCalendar>double(FSeigeWorldCalendar::MaximumElapsedMicroseconds)||StoredCalendar!=FMath::FloorToDouble(StoredCalendar))
     {Notice=TEXT("Saved scenario calendar is invalid.");return;}
     for(const TCHAR* Field:{TEXT("camera_x"),TEXT("camera_y"),TEXT("zoom"),TEXT("speed")})
         if(!Metadata->HasTypedField<EJson::Number>(Field)){Notice=TEXT("Scenario save metadata is invalid.");return;}
@@ -95,7 +95,7 @@ void ASeigeGameMode::LoadGame()
     for(const auto& Value:*Fingerprints)
     {
         const auto Entry=Value->AsObject(); double Index=0; FString Fingerprint;
-        if(!Entry||!Entry->TryGetNumberField(TEXT("index"),Index)||Index<0||Index>8||FMath::FloorToDouble(Index)!=Index||Index==4||
+        if(!Entry||!Entry->HasTypedField<EJson::Number>(TEXT("index"))||!Entry->TryGetNumberField(TEXT("index"),Index)||Index<0||Index>8||FMath::FloorToDouble(Index)!=Index||Index==4||
            SavedFingerprints.Contains(int32(Index))||!Entry->TryGetStringField(TEXT("ai"),Fingerprint)) { Notice=TEXT("Saved AI metadata is invalid."); return; }
         SavedFingerprints.Add(int32(Index),Fingerprint);
     }
@@ -141,7 +141,10 @@ void ASeigeGameMode::LoadGame()
     ScenarioCalendar=Sim.Calendar;BindScenarioCalendar();
     EmptyRegionResources=MoveTemp(NewEmptyRegions);ConfigureCombatTerrain();SelectedFleetId=0;FleetOrderActive=false;
     ScenarioBackgroundBugs=StoredBackgroundBugs;ScenarioPeriodicAttacks=StoredPeriodicAttacks;
-    Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=SelectedRoadId=0; CancelRoadTool();CancelWallTool(); SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed; WinAcknowledged=StoredAcknowledged;
+    Observer=NewObserver; Ready=true; Accumulator=0; SelectedId=SelectedRoadId=SelectedCompanionId=0; CancelRoadTool();CancelWallTool(); SelectedBuild.Empty(); Paused=StoredPaused; Speed=StoredSpeed; WinAcknowledged=StoredAcknowledged;
+    // All load entry points, including F9 while roaming as Rex, discard navigation
+    // and selection from the old world only after the complete save is validated.
+    RegionViewHistory.Reset();
     ResetSimulationPresentation();
     CameraCenter=FVector(CameraX,CameraY,0);
     Zoom=StoredZoom; CameraYaw=StoredYaw; CameraPitch=StoredPitch; Screen=TEXT("playing");

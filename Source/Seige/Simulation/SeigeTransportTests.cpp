@@ -10,9 +10,16 @@ namespace
 {
 constexpr EAutomationTestFlags TransportTestFlags=EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter;
 FString Rules(){return FPaths::Combine(FPaths::ProjectDir(),TEXT("Rules"));}
+// Legacy road mechanics remain an explicitly opted-in subsystem fixture.
+// Shipping scenarios keep roads disabled and use the shared colony grid.
+bool InitializeRoadFixture(FSeigeSimulation& S,FString& Error,bool Background=false,bool Pulse=false)
+{
+    if(!S.Initialize(Rules(),Error,Background,Pulse))return false;
+    S.SetRoadsEnabledForTest(true);return true;
+}
 FString SaveFile(const FString& Name){return FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Automation/Transport"),Name+TEXT(".json"));}
 void Advance(FSeigeSimulation& S,double Duration){for(double Remaining=Duration;Remaining>UE_DOUBLE_SMALL_NUMBER;){const double Chunk=FMath::Min(10.,Remaining);S.Tick(Chunk);Remaining-=Chunk;}}
-bool Deploy(FSeigeSimulation& S,FString& Error){if(!S.Initialize(Rules(),Error,false,false))return false;for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);if(S.Buildings[0].IsConstructing){Error=TEXT("Physical worker deployment did not complete");return false;}S.Tick(20);return true;}
+bool Deploy(FSeigeSimulation& S,FString& Error){if(!InitializeRoadFixture(S,Error))return false;for(int32 I=0;I<400&&S.Buildings[0].IsConstructing;++I)S.Tick(10);if(S.Buildings[0].IsConstructing){Error=TEXT("Physical worker deployment did not complete");return false;}S.Tick(20);return true;}
 // Pay for the crew through the slow core replicator before measuring walking
 // and road assembly; worker-manufacture latency has its own lifecycle tests.
 bool PrepareStoredCrew(FSeigeSimulation& S,FString& Error)
@@ -56,7 +63,7 @@ bool FSeigePhasedWorkTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Assigned crew physically leaves the command access port"),FVector2D::Distance(Site->BuilderPosition,Start)>0);
     TestEqual(TEXT("Travelling crew cannot perform on-site work"),Site->BuildersOnSite,0);
     TestEqual(TEXT("Delivered materials alone do not advance construction"),Site->ConstructionProgress,0.);
-    if(!A.Save(SaveFile(TEXT("crew-travelling")),Error)||!B.Initialize(Rules(),Error)||!B.Load(SaveFile(TEXT("crew-travelling")),Error)){AddError(Error);return false;}
+    if(!A.Save(SaveFile(TEXT("crew-travelling")),Error)||!InitializeRoadFixture(B,Error)||!B.Load(SaveFile(TEXT("crew-travelling")),Error)){AddError(Error);return false;}
     TestTrue(TEXT("Saved crew remains at its actual travel position"),B.FindBuilding(SiteId)->BuilderPosition.Equals(Site->BuilderPosition,1.e-8));
     Advance(A,150);Advance(B,150);Site=A.FindBuilding(SiteId);
     TestTrue(TEXT("On-site crew performs partial construction"),Site->BuildersOnSite>0&&Site->ConstructionProgress>0&&Site->ConstructionProgress<1);
@@ -87,6 +94,8 @@ bool FSeigeTransportNetworkTest::RunTest(const FString& Parameters)
     const FVector2D A=S.BuildingAccessPoint(S.Buildings[0]),B(2200,0);
     TestFalse(TEXT("Road cannot be placed across reserved command plot"),S.CanPlaceRoad(FVector2D(-1000,0),FVector2D(1000,0),Error));
     const double Material=S.TotalStock(TEXT("alloy"))+InstalledAlloy(S);
+    const int32 WorkersBefore=S.Workers.Bodies.Num();
+    const double AlloyPerWorker=S.ProductionInputs(S.Buildings[0],S.TextRule(TEXT("population_recipe"))).FindRef(TEXT("alloy"));
     if(!S.PlaceRoad(A,B,Error)){AddError(Error);return false;}const int32 RoadId=S.Roads.Last().Id;
     TestEqual(TEXT("Unfinished road confers no transport benefit"),S.RouteSpeedMultiplier(A,B),1.);
     TestTrue(TEXT("Road order reserves rather than consuming physical material"),FMath::IsNearlyEqual(S.TotalStock(TEXT("alloy"))+InstalledAlloy(S),Material));
@@ -103,7 +112,7 @@ bool FSeigeTransportNetworkTest::RunTest(const FString& Parameters)
         if(!S.UpgradeRoad(RoadId,Error)){AddError(Error);return false;}
         TestEqual(TEXT("Upgrade keeps previous transport service active"),S.RouteSpeedMultiplier(A,B),Expected);
         Advance(S,150);
-        if(!S.Save(SaveFile(TEXT("road-upgrading")),Error)||!Loaded.Initialize(Rules(),Error)||!Loaded.Load(SaveFile(TEXT("road-upgrading")),Error)){AddError(Error);return false;}
+        if(!S.Save(SaveFile(TEXT("road-upgrading")),Error)||!InitializeRoadFixture(Loaded,Error)||!Loaded.Load(SaveFile(TEXT("road-upgrading")),Error)){AddError(Error);return false;}
         TestEqual(TEXT("Upgrade target survives save/load"),Loaded.FindRoad(RoadId)->TargetTier,S.FindRoad(RoadId)->TargetTier);
         const double Duration=S.TransportTiers[S.FindRoad(RoadId)->TargetTier].ConstructionSecondsPer100Meters*FVector2D::Distance(A,B)*S.MetersPerWorldUnit()/100+500;
         Advance(S,Duration);Advance(Loaded,Duration);
@@ -112,7 +121,7 @@ bool FSeigeTransportNetworkTest::RunTest(const FString& Parameters)
         FString Left,Right;FFileHelper::LoadFileToString(Left,*SaveFile(TEXT("road-a")));FFileHelper::LoadFileToString(Right,*SaveFile(TEXT("road-b")));
         TestEqual(TEXT("Road upgrades and cargo continue deterministically after loading"),Left,Right);
     }
-    TestTrue(TEXT("All transport tiers conserve stored plus installed construction material"),FMath::IsNearlyEqual(S.TotalStock(TEXT("alloy"))+InstalledAlloy(S),Material,1.e-5));
+    TestTrue(TEXT("All transport tiers conserve alloy across stock, construction and paid worker manufacture"),FMath::IsNearlyEqual(S.TotalStock(TEXT("alloy"))+InstalledAlloy(S)+(S.Workers.Bodies.Num()-WorkersBefore)*AlloyPerWorker,Material,1.e-5));
     TestFalse(TEXT("Maximum corridor tier cannot upgrade again"),S.UpgradeRoad(RoadId,Error));
     if(!S.Save(SaveFile(TEXT("valid")),Error))return false;
     FString Raw;FFileHelper::LoadFileToString(Raw,*SaveFile(TEXT("valid")));TSharedPtr<FJsonObject> Json;FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Json);
@@ -126,6 +135,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSeigeRoadPlanLengthsTest,"Seige.Simulation.Roa
 bool FSeigeRoadPlanLengthsTest::RunTest(const FString&)
 {
     FSeigeSimulation S;FString Error;if(!Deploy(S,Error)){AddError(Error);return false;}
+    // Flat subdivision fixture; hydrological routing is covered separately.
+    S.Environment.Enabled=false;
     const FVector2D Start(1000,0),Near(1050,0);TArray<FVector2D> Route;
     TestFalse(TEXT("A three-metre new link is too short to build"),S.CanPlaceRoad(Start,Near,Error));
     if(!TestTrue(TEXT("Road planner finds a legal detour rather than returning an unbuildable short edge"),S.FindRoadRoute(Start,Near,Route)))return false;

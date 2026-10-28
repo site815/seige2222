@@ -138,7 +138,7 @@ void FSeigeTransportVehicleSystem::StepDelivery(FSeigeSimulation& S,FSeigeTransp
         ReleaseHandler(S,V);if(C.Amount<=1.e-9){FinishDelivery(S,V,C.Id);return;}
         // Loaded goods return physically, retaining the sole cargo ledger.
         Target=Source&&Source->Health>0?Source:S.Core();if(!Target||Target->Health<=0){V.Status=TEXT("Cargo held: no surviving depot");return;}
-        C.TargetId=Target->Id;C.RoadTargetId=0;C.ForConstruction=false;C.Phase=TEXT("carrying");C.PhaseSeconds=0;Road=nullptr;V.Route.Empty();
+        C.TargetId=Target->Id;C.RoadTargetId=0;C.ForConstruction=false;C.RecoveryCargo=true;C.Phase=TEXT("carrying");C.PhaseSeconds=0;Road=nullptr;V.Route.Empty();
     }
     const bool Pickup=C.Amount<=1.e-9;
     auto RecoverInaccessibleService=[&]()
@@ -150,17 +150,35 @@ void FSeigeTransportVehicleSystem::StepDelivery(FSeigeSimulation& S,FSeigeTransp
         {
             RejectService();FinishDelivery(S,V,C.Id);return; // Release only the reservation; stock has not moved.
         }
-        const auto* Return=Source&&Source->Health>0?Source:S.Core();
-        if(Return&&Return->Health>0&&(C.RoadTargetId||C.TargetId!=Return->Id))
+        RejectService();
+        // The original source may itself have become inaccessible after new
+        // construction grades the terrain. Search actual reachable storage,
+        // retaining the same courier, cargo, source and physical vehicle.
+        TArray<int32> Candidates;
+        for(const auto& B:S.Buildings)
         {
-            RejectService();
-            // Keep the same loaded courier and physically return its cargo.
-            // Once returning, a second blocked edge cannot restore the old
-            // destination or bounce this load between the two endpoints.
-            C.TargetId=Return->Id;C.RoadTargetId=0;C.ForConstruction=false;C.Phase=TEXT("carrying");C.PhaseSeconds=0;
-            V.Status=TEXT("Returning cargo: destination inaccessible");
+            const auto* D=S.Definition(B);
+            if(B.Health<=0||B.IsConstructing||!B.Enabled||!D||D->StorageCapacity<=0||
+               (D->Jobs>0&&S.Workers.AssignedCount(B.Id)<=0)||
+               S.StorageRoom(B,C.Id)+1.e-8<C.Amount*S.Resources[C.Resource].LitresPerUnit||
+               RejectedServices.Contains(ServiceKey(C.SourceId,B.Id,0)))continue;
+            Candidates.Add(B.Id);
         }
-        else V.Status=TEXT("Cargo held: return route inaccessible");
+        auto Priority=[&](int32 Id){return Id==C.SourceId?0:(S.Core()&&Id==S.Core()->Id?1:2);};
+        Candidates.Sort([&](int32 A,int32 B)
+        {
+            const int32 PA=Priority(A),PB=Priority(B);if(PA!=PB)return PA<PB;
+            const double DA=(V.Position-S.BuildingAccessPoint(*S.FindBuilding(A))).SizeSquared(),DB=(V.Position-S.BuildingAccessPoint(*S.FindBuilding(B))).SizeSquared();
+            return DA==DB?A<B:DA<DB;
+        });
+        for(int32 Id:Candidates)
+        {
+            TArray<FVector2D> RecoveryRoute;
+            if(!FindServiceRoute(S,V.Position,S.BuildingAccessPoint(*S.FindBuilding(Id)),V.Heading,RecoveryRoute))continue;
+            C.TargetId=Id;C.RoadTargetId=0;C.ForConstruction=false;C.RecoveryCargo=true;C.Phase=TEXT("carrying");C.PhaseSeconds=0;
+            V.Route=MoveTemp(RecoveryRoute);V.RouteRevision=S.TransportRevision;V.Status=TEXT("Recovering cargo to reachable storage");return;
+        }
+        V.Status=TEXT("Cargo held: no reachable storage with capacity and crew");
     };
     const FVector2D Port=Pickup?S.BuildingAccessPoint(*Source):(Road?S.RoadAccessPoint(*Road):S.BuildingAccessPoint(*Target));
     if(V.Route.IsEmpty()||V.RouteRevision!=S.TransportRevision||FVector2D::Distance(V.Route.Last(),Port)*S.MetersPerWorldUnit()>Def.ServiceMeters+1.e-6)
@@ -201,7 +219,10 @@ void FSeigeTransportVehicleSystem::StepDelivery(FSeigeSimulation& S,FSeigeTransp
         {
             const FVector2D Door=V.Position+Side*Sign;
             if(!S.ClearWalkingLine(V.Position,Door,WorkerClearance)||!S.Mobility.MovementAllowed(S,TEXT("drone"),V.Position,Door))continue;
-            V.HandlerWorkerId=S.Workers.AcquireTransportHandler(S,V.Id,Pickup?C.SourceId:C.TargetId,Pickup?0:C.RoadTargetId,Door,!Pickup&&C.ForConstruction);
+            // Construction crews may fetch a missing load as well as unload
+            // it. Dropping this intent at pickup stranded a paid truck while
+            // its only eligible builder waited at the empty destination.
+            V.HandlerWorkerId=S.Workers.AcquireTransportHandler(S,V.Id,Pickup?C.SourceId:C.TargetId,Pickup?0:C.RoadTargetId,Door,C.ForConstruction);
             if(!V.HandlerWorkerId.IsEmpty())break;
         }
     }
@@ -220,14 +241,14 @@ void FSeigeTransportVehicleSystem::StepDelivery(FSeigeSimulation& S,FSeigeTransp
     {
         if(Road&&Road->IsConstructing){const auto Bill=S.RoadCost(Road->A,Road->B,Road->TargetTier);Delivered=FMath::Min(C.Amount,FMath::Max(0.,Bill.FindRef(C.Resource)-Road->InstalledMaterials.FindRef(C.Resource)-Road->ConstructionMaterials.FindRef(C.Resource)));Road->ConstructionMaterials.FindOrAdd(C.Resource)+=Delivered;}
         else if(Target&&Target->IsConstructing){Delivered=FMath::Min(C.Amount,FMath::Max(0.,S.ConstructionCost(*Target).FindRef(C.Resource)-Target->InstalledMaterials.FindRef(C.Resource)-Target->ConstructionMaterials.FindRef(C.Resource)));Target->ConstructionMaterials.FindOrAdd(C.Resource)+=Delivered;}
-        else {const auto* Return=Source&&Source->Health>0?Source:S.Core();if(!Return){V.Status=TEXT("Cargo held: no surviving depot");return;}C.TargetId=Return->Id;C.RoadTargetId=0;C.ForConstruction=false;C.PhaseSeconds=0;ReleaseHandler(S,V);V.Route.Empty();return;}
+        else {const auto* Return=Source&&Source->Health>0?Source:S.Core();if(!Return){V.Status=TEXT("Cargo held: no surviving depot");return;}C.TargetId=Return->Id;C.RoadTargetId=0;C.ForConstruction=false;C.RecoveryCargo=true;C.Phase=TEXT("carrying");C.PhaseSeconds=0;ReleaseHandler(S,V);V.Route.Empty();return;}
     }
     else if(Target){Delivered=FMath::Min(C.Amount,S.StorageRoom(*Target,C.Id)/S.Resources[C.Resource].LitresPerUnit);if(S.Resources[C.Resource].Discrete)Delivered=FMath::FloorToDouble(Delivered+1.e-9);Target->Inventory.FindOrAdd(C.Resource)+=Delivered;}
-    C.Amount=FMath::Max(0.,C.Amount-Delivered);S.DeliveredUnits+=Delivered;
+    C.Amount=FMath::Max(0.,C.Amount-Delivered);if(!C.RecoveryCargo)S.DeliveredUnits+=Delivered;
     if(C.Amount<=1.e-9){FinishDelivery(S,V,C.Id);return;}
     // No silent destruction when capacity or a changed bill leaves leftovers.
     // Return construction excess; full normal storage waits with its actual cargo.
-    if(C.ForConstruction&&Source&&Source->Health>0){C.ForConstruction=false;C.TargetId=Source->Id;C.RoadTargetId=0;C.PhaseSeconds=0;C.Phase=TEXT("carrying");ReleaseHandler(S,V);V.Route.Empty();}
+    if(C.ForConstruction&&Source&&Source->Health>0){C.ForConstruction=false;C.RecoveryCargo=true;C.TargetId=Source->Id;C.RoadTargetId=0;C.PhaseSeconds=0;C.Phase=TEXT("carrying");ReleaseHandler(S,V);V.Route.Empty();}
     else V.Status=TEXT("Cargo held: storage full");
 }
 void FSeigeTransportVehicleSystem::Tick(FSeigeSimulation& S,double Seconds)
@@ -281,7 +302,10 @@ void FSeigeTransportVehicleSystem::StepFabrication(FSeigeSimulation& S,double Se
         {
             bool Stock=true;for(const auto& P:Def.BuildCost)if(S.Spendable(*B,P.Key)+1.e-9<P.Value)Stock=false;
             if(!Stock||!S.Energy.Consume(S,B->Id,Def.BuildEnergyKWh)){++I;continue;}
-            for(const auto& P:Def.BuildCost)B->Inventory.FindOrAdd(P.Key)-=P.Value;J.Committed=true;
+            // Physical delivery sums can fall below the accepted bill by a few
+            // floating-point ulps. Match recipe payment: never persist negative
+            // inventory after a transaction admitted by the stock tolerance.
+            for(const auto& P:Def.BuildCost)B->Inventory.FindOrAdd(P.Key)=FMath::Max(0.,B->Inventory.FindRef(P.Key)-P.Value);J.Committed=true;
         }
         J.ProgressSeconds+=Seconds*Def.Factories.FindRef(B->DefId)*S.WorkFraction(*B);
         if(J.ProgressSeconds+1.e-9<Def.BuildSeconds){++I;continue;}

@@ -107,6 +107,9 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
     FString RecoveryPolicy;
     if(!Config->TryGetStringField(TEXT("support_recovery_policy"),RecoveryPolicy)||RecoveryPolicy!=TEXT("restore_capacity_before_expansion"))
     {Error=TEXT("Unsupported AI support_recovery_policy");return false;}
+    if(!Config->TryGetStringField(TEXT("defense_recovery_policy"),DefenseRecoveryPolicy)||
+       (DefenseRecoveryPolicy!=TEXT("first_planned_tower_before_exposure")&&DefenseRecoveryPolicy!=TEXT("first_planned_tower_after_civilian_loss")&&DefenseRecoveryPolicy!=TEXT("ordered_plan_only")))
+    {Error=TEXT("Unsupported AI defense_recovery_policy");return false;}
     const FObject* Economy=nullptr;
     if(!Config->TryGetObjectField(TEXT("economy"),Economy)||!Economy||!(*Economy)->TryGetStringField(TEXT("solar_definition"),SolarDefinition)||!(*Economy)->TryGetStringField(TEXT("trade_definition"),TradeDefinition)||!Colony.BuildMenu.Contains(SolarDefinition)||!Colony.BuildMenu.Contains(TradeDefinition)||Colony.BuildingDefs[SolarDefinition].Role!=TEXT("generator")||Colony.BuildingDefs[TradeDefinition].Role!=TEXT("trade")||!Number(*Economy,TEXT("export_batch"),ExportBatch,UE_DOUBLE_SMALL_NUMBER,10000,Error)||!Number(*Economy,TEXT("import_batch"),ImportBatch,UE_DOUBLE_SMALL_NUMBER,10000,Error))
     {Error=TEXT("Invalid AI economy bootstrap/trade settings");return false;}
@@ -121,6 +124,8 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
     {Error=TEXT("Invalid AI export_policy");return false;}
     if(!(*Economy)->TryGetStringField(TEXT("export_reserve_horizon"),ExportReserveHorizon)||(ExportReserveHorizon!=TEXT("next_prerequisite")&&ExportReserveHorizon!=TEXT("full_plan")))
     {Error=TEXT("Invalid AI export_reserve_horizon");return false;}
+    if(!(*Economy)->TryGetStringField(TEXT("production_priority_policy"),ProductionPriorityPolicy)||(ProductionPriorityPolicy!=TEXT("protect_development_inputs")&&ProductionPriorityPolicy!=TEXT("continuous")))
+    {Error=TEXT("Invalid AI production_priority_policy");return false;}
     FString ReplicationPolicy;const TArray<TSharedPtr<FJsonValue>>* ReplicationRecipes=nullptr;
     if(!(*Economy)->TryGetStringField(TEXT("core_replication_policy"),ReplicationPolicy)||ReplicationPolicy!=TEXT("worker_only")||!(*Economy)->TryGetArrayField(TEXT("core_replication_recipes"),ReplicationRecipes)||!ReplicationRecipes||!ReplicationRecipes->IsEmpty())
     {Error=TEXT("Invalid AI core_replication_policy or core_replication_recipes");return false;}
@@ -158,6 +163,14 @@ bool FSeigeScenarioAI::LoadConfig(const FSeigeSimulation& Colony, const FString&
         if(!Upgradable||UpgradeFamilies.Contains(Family)){Error=TEXT("AI upgrades.families must name distinct upgradable, buildable families");return false;}
         UpgradeFamilies.Add(Family);
     }
+    const FObject* Logistics=nullptr;
+    if(!Config->TryGetObjectField(TEXT("logistics"),Logistics)||!Logistics||
+       !(*Logistics)->TryGetStringField(TEXT("factory_definition"),TransportFactoryDefinition)||
+       !Colony.BuildMenu.Contains(TransportFactoryDefinition)||!Colony.TransportVehicles.Definition().Factories.Contains(TransportFactoryDefinition)||
+       !Integer(*Logistics,TEXT("target_transports"),DesiredTransports,0,16,Error))
+    {if(Error.IsEmpty())Error=TEXT("Invalid AI logistics factory or transport target");return false;}
+    if(DesiredTransports>0&&!Targets.ContainsByPredicate([&](const auto& T){return T.Definition==TransportFactoryDefinition&&!T.Optional;}))
+    {Error=TEXT("AI logistics factory must be a required build target");return false;}
     if(!Config->TryGetStringField(TEXT("developed_initialization"),DevelopedInitialization)||(DevelopedInitialization!=TEXT("established_manifest")&&DevelopedInitialization!=TEXT("simulated_history")))
     {Error=TEXT("Unsupported AI developed_initialization");return false;}
     if(!LoadEstablishedPreset(Colony,Preset,Error))return false;
@@ -337,7 +350,7 @@ namespace
     {
         for(const auto& Building:Colony.Buildings)
         {
-            if(Building.Health<=0||Building.Id==IgnoreId)continue;
+            if(!Colony.BuildingBlocksProjectiles(Building)||Building.Id==IgnoreId)continue;
             const auto* Definition=Colony.Definition(Building);
             if(Definition&&SeigeAISegmentHitsSquare(From,Point,Building.Position,Definition->Footprint))return false;
         }
@@ -369,7 +382,7 @@ int32 FSeigeScenarioAI::PlotDefenseCoverage(const FSeigeSimulation& Colony,const
     return Covered;
 }
 
-double FSeigeScenarioAI::DefenseBearing(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Origin,double Authored,double Radius) const
+double FSeigeScenarioAI::DefenseBearing(const FSeigeSimulation& Colony,const FSeigeBuildingDef& Definition,FVector2D Origin,double Authored,double Radius,double* SelectedRadius) const
 {
     // Armed perimeter plots follow where the colony is exposed rather than a
     // fixed compass spread. Exposed approaches are the probe points that
@@ -378,24 +391,27 @@ double FSeigeScenarioAI::DefenseBearing(const FSeigeSimulation& Colony,const FSe
     // with a clear line - typically the far side of buildings that block the
     // core's own lasers. Towers still under construction count as guns, so
     // consecutive orders spread instead of stacking on one gap. The bearing on
-    // the defense ring whose legal plot would reach the most exposed approaches
+    // the authored rings whose legal plot would reach the most exposed approaches
     // wins; ties keep the authored order, so with nothing exposed (or the
     // first_legal policy) placement is unchanged.
+    if(SelectedRadius)*SelectedRadius=Radius;
     if(DefenseCoveragePolicy!=TEXT("prefer_covered_approaches")||CoverageSamples<=0||Angles<=0)return Authored;
     const auto* Platform=Colony.Combat.BuildingPlatforms.Find(Definition.Id);
     const double Range=Platform?SeigeAIWeaponRange(Colony,Platform->Weapons):0;
     if(Range<=0)return Authored;
     const TArray<FSeigeAIFixedGun> Guns=SeigeAIFixedGuns(Colony,true);
-    TArray<FVector2D> Exposed;
-    auto AddExposed=[&](FVector2D Centre,double Footprint)
+    struct FApproach{FVector2D Position,Centre;double ProspectiveBody;};
+    TArray<FApproach> Exposed;
+    auto AddExposed=[&](FVector2D Centre,double Footprint,bool Prospective=false)
     {
         for(int32 Sample=0;Sample<CoverageSamples;++Sample)
         {
             const double Angle=Sample*UE_TWO_PI/CoverageSamples;const FVector2D Direction(FMath::Cos(Angle),FMath::Sin(Angle));
             const FVector2D Approach=Centre+Direction*(Footprint/FMath::Max(FMath::Abs(Direction.X),FMath::Abs(Direction.Y))+CoverageProbeMeters/Colony.MetersPerWorldUnit());
             bool Covered=false;
-            for(const auto& Gun:Guns)if(FVector2D::Distance(Gun.Position,Approach)<Gun.Range&&SeigeAIClearShot(Colony,Gun.Position,Approach,Gun.Id)){Covered=true;break;}
-            if(!Covered)Exposed.Add(Approach);
+            for(const auto& Gun:Guns)if(FVector2D::Distance(Gun.Position,Approach)<Gun.Range&&
+                (!Prospective||!SeigeAISegmentHitsSquare(Gun.Position,Approach,Centre,Footprint))&&SeigeAIClearShot(Colony,Gun.Position,Approach,Gun.Id)){Covered=true;break;}
+            if(!Covered)Exposed.Add({Approach,Centre,Prospective?Footprint:0});
         }
     };
     for(const auto& Building:Colony.Buildings)
@@ -408,18 +424,26 @@ double FSeigeScenarioAI::DefenseBearing(const FSeigeSimulation& Colony,const FSe
     if(const auto* Node=ExportNode(Colony))if(!NodeOccupied(Colony,*Node))
     {
         double Body=0;for(const auto& Pair:Colony.BuildingDefs)if(Pair.Value.ExtractionRates.Contains(Node->Resource))Body=FMath::Max(Body,Pair.Value.Footprint);
-        if(Body>0)AddExposed(Node->Position,Body);
+        if(Body>0)AddExposed(Node->Position,Body,true);
     }
     if(Exposed.IsEmpty())return Authored;
-    double Best=Authored;int32 BestReach=0;
+    double Best=Authored,BestRadius=Radius;int32 BestReach=0;
+    // A single inner ring cannot cover the outward faces of a mine or port
+    // built farther out. Search the same bounded paid plots as BuildNear.
+    for(double CandidateRadius=Radius;CandidateRadius<=RingLimit;CandidateRadius+=RingStep)
     for(int32 I=0;I<Angles;++I)
     {
-        const double Angle=Authored+I*UE_TWO_PI/Angles;const FVector2D Plot=Origin+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Radius;
+        const double Angle=Authored+I*UE_TWO_PI/Angles;const FVector2D Plot=Origin+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*CandidateRadius;
+        bool Clear=true;for(const auto& Node:Colony.Nodes)if(FVector2D::Distance(Plot,Node.Position)<NodeClearance+Definition.ReservedFootprint){Clear=false;break;}
+        if(!Clear)continue;
         FString Error;if(!Colony.CanPlaceBuilding(Definition.Id,Plot,Error))continue;
         int32 Reach=0;
-        for(const FVector2D& Approach:Exposed)if(FVector2D::Distance(Plot,Approach)<Range&&SeigeAIClearShot(Colony,Plot,Approach,INDEX_NONE))++Reach;
-        if(Reach>BestReach){BestReach=Reach;Best=Angle;}
+        for(const auto& Approach:Exposed)if(FVector2D::Distance(Plot,Approach.Position)<Range&&
+            (Approach.ProspectiveBody<=0||!SeigeAISegmentHitsSquare(Plot,Approach.Position,Approach.Centre,Approach.ProspectiveBody))&&
+            SeigeAIClearShot(Colony,Plot,Approach.Position,INDEX_NONE))++Reach;
+        if(Reach>BestReach){BestReach=Reach;Best=Angle;BestRadius=CandidateRadius;}
     }
+    if(SelectedRadius)*SelectedRadius=BestRadius;
     return Best;
 }
 
@@ -479,11 +503,11 @@ bool FSeigeScenarioAI::BuildNear(FSeigeSimulation& Colony, const FString& Defini
         Candidates.StableSort([Floor](const FPlot& A,const FPlot& B)
         {
             const bool AOk=A.Coverage>=Floor,BOk=B.Coverage>=Floor;if(AOk!=BOk)return AOk;
-            if(AOk&&FMath::Abs(A.GridDistance-B.GridDistance)>1.)return A.GridDistance<B.GridDistance;
+            if(AOk&&A.GridDistance!=B.GridDistance)return A.GridDistance<B.GridDistance;
             return A.Coverage>B.Coverage;
         });
     }
-    else Candidates.StableSort([Ranked](const FPlot& A,const FPlot& B){return A.Coverage!=B.Coverage?A.Coverage>B.Coverage:Ranked&&A.GridDistance+1.<B.GridDistance;});
+    else Candidates.StableSort([Ranked](const FPlot& A,const FPlot& B){return A.Coverage!=B.Coverage?A.Coverage>B.Coverage:Ranked&&A.GridDistance<B.GridDistance;});
     for(const auto& Candidate:Candidates)
     {
         FString Error;if(!PlaceConnectedBuilding(Colony,Definition,Candidate.Position,Error)){Status=Error;continue;}
@@ -539,11 +563,40 @@ bool FSeigeScenarioAI::PlaceConnectedBuilding(FSeigeSimulation& Colony,const FSt
         // the plot. Include the reserved footprint in the route preflight.
         if(!Core||!Colony.FindRoute(Colony.BuildingAccessPoint(*Core),Colony.BuildingAccessPoint(Preview),Route,-1,false,&Preview))
         {Error=TEXT("Workers cannot reach this construction access point");return false;}
+        const int32 Stations=FMath::Max(Colony.BuildingDefs[Definition].Jobs,Colony.RequiredBuilders(Preview));
+        const FVector2D Access=Colony.BuildingAccessPoint(Preview);
+        for(int32 Slot=0;Slot<Stations;++Slot)
+        {
+            const FVector2D Station=Colony.Workers.WorkstationPosition(Colony,Preview,Slot);
+            if(!Colony.FindRoute(Access,Station,Route,-1,false,&Preview)||!Colony.FindRoute(Station,Access,Route,-1,false,&Preview))
+            {Error=TEXT("Workers cannot safely reach and leave this worksite's stations");return false;}
+            if(!Colony.Workers.WorkstationHasChargingAccess(Colony,Station,&Preview,Slot))
+            {Error=TEXT("This worksite is beyond a safe physical return trip to worker charging");return false;}
+        }
         return Colony.PlaceBuilding(Definition,Position,Error);
     }
     FVector2D A,B;bool NeedsSegment=false;
     if(!FindPowerConnection(Colony,Preview,&Preview,A,B,NeedsSegment,Error))return false;
     return Colony.PlaceBuilding(Definition,Position,Error);
+}
+
+bool FSeigeScenarioAI::PlaceExtractorNear(FSeigeSimulation& Colony,const FString& Definition,const FSeigeNode& Node,FString& Error)
+{
+    if(PlaceConnectedBuilding(Colony,Definition,Node.Position,Error))return true;
+    // The deposit center can put the fixed access port on a cliff bank even
+    // though a nearby plot serves the same deposit with a traversable entrance.
+    // Search only inside the authored extraction radius; every candidate keeps
+    // normal visibility, geometry, route, reservation and payment checks.
+    const double Radius=Colony.Number(TEXT("extractor_snap_distance"));
+    for(int32 Ring=1;Ring<=4;++Ring)for(int32 I=0;I<Angles;++I)
+    {
+        const double Angle=I*UE_TWO_PI/Angles;
+        const FVector2D Position=Node.Position+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*(Radius*Ring/4.);
+        const auto* Bound=Colony.ExtractionNode(Definition,Position);
+        if(!Bound||Bound->Id!=Node.Id)continue;
+        if(PlaceConnectedBuilding(Colony,Definition,Position,Error))return true;
+    }
+    return false;
 }
 
 bool FSeigeScenarioAI::FindPowerConnection(const FSeigeSimulation& Colony,const FSeigeBuilding& Building,const FSeigeBuilding* ProspectivePlot,FVector2D& OutA,FVector2D& OutB,bool& NeedsSegment,FString& Error) const
@@ -620,24 +673,75 @@ bool FSeigeScenarioAI::ConnectPowerRoad(FSeigeSimulation& Colony,bool& Waiting)
 TMap<FString,double> FSeigeScenarioAI::ProductionGoals(const FSeigeSimulation& Colony) const
 {
     TMap<FString,double> Goals=ReserveTargets;
-    for(const auto& B:Colony.Buildings)if(B.Health>0&&B.Enabled&&!B.IsConstructing)
+    for(const auto& B:Colony.Buildings)if(B.Health>0&&(B.Enabled||BudgetedProcessor(Colony,B))&&!B.IsConstructing)
     {
-        // The core must not manufacture inputs merely because its own last
-        // selection requested them. Other real production remains a consumer.
-        if(Colony.Definition(B)->Role!=TEXT("core"))
-            for(const auto& P:Colony.ProductionInputs(B,Colony.ActiveProductionRecipe(B)))Goals.FindOrAdd(P.Key)+=P.Value*RecipeInputBuffer;
+        // Include paused specialists so their input buffers do not disappear
+        // when throttling, and the worker-only core's genuine component needs.
+        for(const auto& P:Colony.ProductionInputs(B,Colony.ActiveProductionRecipe(B)))Goals.FindOrAdd(P.Key)+=P.Value*RecipeInputBuffer;
+        if(Colony.Definition(B)->Role==TEXT("core"))
+            for(const auto& P:Colony.ProductionInputs(B,Colony.TextRule(TEXT("population_recipe"))))Goals.FindOrAdd(P.Key)+=P.Value*Colony.WorkerReserveTarget();
         if(const auto* E=Colony.Energy.Definition(B.DefId))if(!E->FuelResource.IsEmpty())Goals.FindOrAdd(E->FuelResource)+=Colony.Energy.FuelDemand(B.DefId,E->FuelResource)*FuelImportBufferCycles;
     }
-    FVector2D A,B;FString Target,Error;TMap<FString,double> Cost;
-    if(NextPowerRoad(Colony,A,B,Target,Error))Cost=Colony.RoadCost(A,B,Colony.InitialRoadTier());
-    else if(Target.IsEmpty())if(const auto* Next=NextConstructionTarget(Colony))Cost=Colony.BuildingDefs[Next->Definition].Cost;
-    for(const auto& P:Cost)Goals.FindOrAdd(P.Key)=FMath::Max(Goals.FindRef(P.Key),Colony.TotalStock(P.Key)+FMath::Max(0.,P.Value-Colony.ConstructionAvailable(P.Key)));
+    const auto Cost=NextDevelopmentBill(Colony);
+    for(const auto& P:Cost)Goals.FindOrAdd(P.Key)=FMath::Max(Goals.FindRef(P.Key),Colony.TotalStock(P.Key)+FMath::Max(0.,P.Value-DevelopmentAvailable(Colony,P.Key)));
     return Goals;
+}
+
+bool FSeigeScenarioAI::BudgetedProcessor(const FSeigeSimulation& Colony,const FSeigeBuilding& Building) const
+{
+    if(ProductionPriorityPolicy!=TEXT("protect_development_inputs"))return false;
+    const auto* D=Colony.Definition(Building);
+    const auto* R=Colony.Recipes.Find(Colony.ActiveProductionRecipe(Building));
+    return D&&D->Role==TEXT("processor")&&R&&R->WorkerOutput==0&&!R->Outputs.IsEmpty();
+}
+
+bool FSeigeScenarioAI::ManageIndustryProduction(FSeigeSimulation& Colony)
+{
+    if(ProductionPriorityPolicy!=TEXT("protect_development_inputs"))return false;
+    const auto Bill=NextDevelopmentBill(Colony),Goals=ProductionGoals(Colony);
+    const int32 EnergyFactory=TransportEnergyPriority(Colony);
+    const auto PriorityGrid=Colony.Energy.Info(Colony,EnergyFactory);
+    bool Changed=false;
+    for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.IsConstructing&&BudgetedProcessor(Colony,B))
+    {
+        const auto& Recipe=Colony.Recipes[Colony.ActiveProductionRecipe(B)];
+        bool Needed=false,Competes=false;
+        for(const auto& Output:Recipe.Outputs)if(Colony.TotalStock(Output.Key)+UE_DOUBLE_SMALL_NUMBER<Goals.FindRef(Output.Key))Needed=true;
+        for(const auto& Input:Colony.ProductionInputs(B,Recipe.Id))
+            if(Bill.FindRef(Input.Key)>DevelopmentAvailable(Colony,Input.Key)+UE_DOUBLE_SMALL_NUMBER)Competes=true;
+        bool EssentialFuel=false;
+        for(const auto& Generator:Colony.Buildings)if(Generator.Health>0&&Generator.Enabled&&!Generator.IsConstructing)
+            if(const auto* E=Colony.Energy.Definition(Generator.DefId))
+                if(!E->FuelResource.IsEmpty()&&Recipe.Outputs.FindRef(E->FuelResource)>0&&Colony.TotalStock(E->FuelResource)<Colony.Energy.FuelDemand(Generator.DefId,E->FuelResource)*FuelImportBufferCycles)EssentialFuel=true;
+        // A locally funded vehicle still needs one large, real energy payment.
+        // Small continuous batches must not consume every newly generated kWh.
+        // No energy is granted/reserved in the engine: ordinary defenses and
+        // worker charging retain their priority, and paid batches keep escrow.
+        const bool EnergyCompetes=EnergyFactory&&Colony.Energy.Info(Colony,B.Id).ComponentId==PriorityGrid.ComponentId&&!EssentialFuel;
+        const bool Run=(Needed||!Competes)&&!EnergyCompetes;
+        if(B.Enabled!=Run)
+        {
+            // Ordinary switches preserve both permanent crew and any already
+            // paid batch. No inventory reservation, refund or body relocation
+            // is invented; the same saved enabled state derives on reload.
+            Colony.ToggleBuilding(B.Id);Changed=true;
+        }
+    }
+    if(Changed)Status=TEXT("Balancing specialist production against the next development bill");
+    return Changed;
 }
 
 bool FSeigeScenarioAI::ManageCoreProduction(FSeigeSimulation& Colony)
 {
     const auto* Core=Command(Colony);if(!Core||Core->IsConstructing||!Core->Enabled||Core->ProductionCommitted)return false;
+    if(TransportEnergyPriority(Colony))
+    {
+        // Keep the reactor and job-driven worker fabrication operational, but
+        // do not start optional universal-replicator batches while saving up.
+        const FString Workers=Colony.TextRule(TEXT("population_recipe"));
+        if(Core->SelectedRecipe==Workers)return false;
+        FString Error;return Colony.SetProductionRecipe(Core->Id,Workers,Error);
+    }
     const auto Goals=ProductionGoals(Colony);FString Selected;double Best=-1;bool Funded=false;
     for(const auto& Id:CoreReplicationRecipes)
     {
@@ -700,7 +804,12 @@ double FSeigeScenarioAI::ManufacturedExportSurplus(const FSeigeSimulation& Colon
         for(const auto& Target:FinalCounts)FutureBills+=FMath::Max(0,Target.Value-CountLive(Colony,Target.Key))*Colony.BuildingDefs[Target.Key].Cost.FindRef(Resource);
     }
     else if(const auto* Next=NextConstructionTarget(Colony))
-        FutureBills+=Colony.BuildingDefs[Next->Definition].Cost.FindRef(Resource);
+        FutureBills+=Colony.BuildingDefs[Next->Definition].Cost.FindRef(Resource)+TransportMaterialGoals(Colony).FindRef(Resource);
+    else if(ConstructionPlanReady(Colony))
+        FutureBills=FMath::Max(FutureBills,NextDevelopmentBill(Colony).FindRef(Resource));
+    // Queued vehicles are real material consumers too. Until fabrication
+    // commits its local bill, exporting these goods would starve that queue.
+    FutureBills=FMath::Max(FutureBills,TransportMaterialGoals(Colony).FindRef(Resource));
     // In-progress plots count toward the plan, but their remaining paid bill
     // stays protected whether the goods are at source, in transit or on site.
     for(const auto& B:Colony.Buildings)if(B.Health>0&&B.IsConstructing)UninstalledBills+=FMath::Max(0.,Colony.ConstructionCost(B).FindRef(Resource)-B.InstalledMaterials.FindRef(Resource));
@@ -722,6 +831,8 @@ double FSeigeScenarioAI::ManufacturedExportSurplus(const FSeigeSimulation& Colon
 
 bool FSeigeScenarioAI::ManageTrade(FSeigeSimulation& Colony)
 {
+    // Existing paid shipments finish normally; defer only new transactions.
+    if(TransportEnergyPriority(Colony))return false;
     const FSeigeBuilding* Port=Colony.Buildings.FindByPredicate([&](const auto&B){return B.Health>0&&!B.IsConstructing&&B.Enabled&&Colony.Definition(B)->Role==TEXT("trade");});
     const auto* Node=ExportNode(Colony);if(!Port||!Node)return false;
     if(!Port->Shipment.Resource.IsEmpty())
@@ -767,7 +878,9 @@ bool FSeigeScenarioAI::ManageTrade(FSeigeSimulation& Colony)
     // Power connection precedes downstream expansion in MakeDecision. Trade
     // funds that same legal segment, not a guessed road reserve or a later factory.
     const auto* Construction=RoadTarget.IsEmpty()?NextConstructionTarget(Colony):nullptr;
-    if(Construction)for(const auto& P:Colony.BuildingDefs[Construction->Definition].Cost)Desired.FindOrAdd(P.Key)+=P.Value;
+    const auto DevelopmentBill=NextDevelopmentBill(Colony);
+    for(const auto& P:DevelopmentBill)Desired.FindOrAdd(P.Key)+=P.Value;
+    for(const auto& P:TransportMaterialGoals(Colony))Desired.FindOrAdd(P.Key)=FMath::Max(Desired.FindRef(P.Key),P.Value);
     TArray<FString> Ids;Desired.GetKeys(Ids);Ids.Sort();FString Missing;double Worst=0,CreditBuffer=0;
     for(const auto& Id:Ids)
     {
@@ -787,17 +900,31 @@ bool FSeigeScenarioAI::ManageTrade(FSeigeSimulation& Colony)
     // The next required construction takes precedence over routine input
     // buffers, with missing support first. Gross colony stock includes local
     // repair/production reserves that cannot actually pay that building bill.
-    if(HasRoadBill||Construction)
+    bool DirectTransportImport=false;
+    if(!DevelopmentBill.IsEmpty())
     {
-        const auto Cost=HasRoadBill?Colony.RoadCost(RoadA,RoadB,Colony.InitialRoadTier()):Colony.BuildingDefs[Construction->Definition].Cost;
+        const auto& Cost=DevelopmentBill;
         TArray<FString> Materials;Cost.GetKeys(Materials);Materials.Sort();
         double CriticalRatio=0;FString Critical;double Deficit=0;
         for(const auto& Id:Materials)
         {
-            const double Need=FMath::Max(0.,Cost[Id]-Colony.ConstructionAvailable(Id)),Ratio=Need/FMath::Max(Cost[Id],1.);
+            const double Need=FMath::Max(0.,Cost[Id]-DevelopmentAvailable(Colony,Id)),Ratio=Need/FMath::Max(Cost[Id],1.);
             if(Ratio>CriticalRatio){CriticalRatio=Ratio;Critical=Id;Deficit=Need;}
         }
-        if(!Critical.IsEmpty()){Missing=Critical;Desired.FindOrAdd(Critical)=Colony.TotalStock(Critical)+Deficit;}
+        if(!Critical.IsEmpty())
+        {
+            Missing=Critical;Desired.FindOrAdd(Critical)=Colony.TotalStock(Critical)+Deficit;
+            // A missing truck ingredient without an installed producer (for
+            // example battery modules) needs a direct purchase. Routine ore
+            // for an unrelated buffered recipe must not repeatedly preempt it.
+            const auto TransportBill=TransportMaterialGoals(Colony);
+            const bool HasProducer=Colony.Buildings.ContainsByPredicate([&](const auto& B)
+            {
+                if(B.Health<=0||B.IsConstructing||(!B.Enabled&&!BudgetedProcessor(Colony,B))||!HasPermanentCrew(Colony,B))return false;
+                const auto* R=Colony.Recipes.Find(Colony.ActiveProductionRecipe(B));return R&&R->Outputs.FindRef(Critical)>0;
+            });
+            DirectTransportImport=TransportBill.Contains(Critical)&&!HasProducer&&!SupportRecoveryTarget(Colony)&&!DefenseRecoveryTarget(Colony)&&!HasRoadBill&&RoadTarget.IsEmpty();
+        }
     }
     // Fund a useful input refill when a real producer cannot make one batch
     // of goods that the current plan needs. Expansion must not buy finished
@@ -813,7 +940,12 @@ bool FSeigeScenarioAI::ManageTrade(FSeigeSimulation& Colony)
         {BatchInputs.FindOrAdd(Input.Key)+=Input.Value;const double Buffer=Input.Value*RecipeInputBuffer;BufferedInputs.FindOrAdd(Input.Key)+=Colony.Resources[Input.Key].Class==TEXT("manufactured")?Buffer:FMath::Max(Buffer,Colony.ProductionInputBuffer(B,Id,Input.Key));}
     }
     TArray<FString> BatchResources;BatchInputs.GetKeys(BatchResources);BatchResources.Sort();double BatchRatio=0;
-    const bool EssentialConstruction=HasRoadBill||(Construction&&(Colony.BuildingDefs[Construction->Definition].RobotSupportCapacity>0||Colony.BuildingDefs[Construction->Definition].Role==TEXT("generator")||Colony.BuildingDefs[Construction->Definition].Role==TEXT("trade")));
+    const auto Grid=Colony.Energy.Info(Colony);
+    const bool PowerShortage=Grid.SuppliedKW+UE_DOUBLE_SMALL_NUMBER<Grid.DemandKW;
+    // An additional generator is not an emergency while the existing grid
+    // serves its actual load. Fund the installed refinery's cheaper feedstock
+    // then, instead of saving for a full shipment of finished construction metal.
+    const bool EssentialConstruction=DirectTransportImport||HasRoadBill||(Construction&&(Construction==DefenseRecoveryTarget(Colony)||Colony.BuildingDefs[Construction->Definition].RobotSupportCapacity>0||(Colony.BuildingDefs[Construction->Definition].Role==TEXT("generator")&&PowerShortage)||Colony.BuildingDefs[Construction->Definition].Role==TEXT("trade")));
     for(const auto& Id:BatchResources)
     {
         if(Id==Node->Resource)continue;
@@ -934,6 +1066,7 @@ bool FSeigeScenarioAI::GuardWorksite(FSeigeSimulation& Colony)
 const FSeigeAIBuildTarget* FSeigeScenarioAI::NextConstructionTarget(const FSeigeSimulation& Colony) const
 {
     if(const auto* Recovery=SupportRecoveryTarget(Colony))return Recovery;
+    if(const auto* Recovery=DefenseRecoveryTarget(Colony))return CountLive(Colony,Recovery->Definition)<Recovery->Count?Recovery:nullptr;
     if(Colony.RobotSupportCapacity<FMath::Max(Colony.TotalJobs,Colony.Population))
         for(const auto& B:Colony.Buildings)if(B.Health>0&&Colony.Definition(B)->Role==TEXT("service")&&(!B.Enabled||B.IsConstructing))return nullptr;
     for(const auto& Target:Targets)
@@ -941,7 +1074,7 @@ const FSeigeAIBuildTarget* FSeigeScenarioAI::NextConstructionTarget(const FSeige
         if(!IncludesTarget(Colony,Target.Definition))continue;
         int32 Living=0,Operational=0;
         for(const auto& B:Colony.Buildings)if(B.Health>0&&Meets(Colony,B,Target.Definition))
-        {if(!B.Enabled)return nullptr;++Living;if((!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&HasPermanentCrew(Colony,B))++Operational;}
+        {if(!B.Enabled&&!BudgetedProcessor(Colony,B))return nullptr;++Living;if((!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&HasPermanentCrew(Colony,B))++Operational;}
         if(Living<Target.Count)
         {
             // An unaffordable optional target is skipped, as in MakeDecision.
@@ -959,16 +1092,48 @@ const FSeigeAIBuildTarget* FSeigeScenarioAI::NextConstructionTarget(const FSeige
 const FSeigeAIBuildTarget* FSeigeScenarioAI::SupportRecoveryTarget(const FSeigeSimulation& Colony) const
 {
     if(Colony.RobotSupportCapacity>=FMath::Max(Colony.TotalJobs,Colony.Population))return nullptr;
-    int32 PotentialCapacity=0;
     for(const auto& B:Colony.Buildings)if(B.Health>0)
     {
         const auto* D=Colony.Definition(B);
         if(D->Role==TEXT("service")&&(!B.Enabled||B.IsConstructing))return nullptr;
-        if(!B.IsConstructing&&B.Enabled)PotentialCapacity+=D->RobotSupportCapacity;
     }
-    if(PotentialCapacity>=FMath::Max(Colony.TotalJobs,Colony.Population))return nullptr;
+    // RobotSupportCapacity is already the capacity of the actual completed,
+    // enabled charging berths. Do not mix that with obsolete population caps
+    // in building definitions or remove physical berths during a power outage.
     for(const auto& Target:Targets)
     {const auto& D=Colony.BuildingDefs[Target.Definition];if(D.Role==TEXT("service")&&D.RobotSupportCapacity>D.Jobs&&CountLive(Colony,Target.Definition)<Target.Count)return &Target;}
+    return nullptr;
+}
+
+const FSeigeAIBuildTarget* FSeigeScenarioAI::DefenseRecoveryTarget(const FSeigeSimulation& Colony) const
+{
+    const bool Proactive=DefenseRecoveryPolicy==TEXT("first_planned_tower_before_exposure");
+    if(!Proactive&&DefenseRecoveryPolicy!=TEXT("first_planned_tower_after_civilian_loss"))return nullptr;
+    int32 LostCivilians=0;
+    for(const auto& B:Colony.Buildings)if(B.Health<=0)
+    {const auto* D=Colony.Definition(B);if(D&&D->Role!=TEXT("core")&&D->Role!=TEXT("defense")&&D->Role!=TEXT("wall")&&D->Role!=TEXT("sensor"))++LostCivilians;}
+    // In hostile scenarios establish the first ordinary paid gun before
+    // exposing civilian work sites. Peaceful scenarios retain economic order.
+    if(LostCivilians==0&&!(Proactive&&(Colony.BackgroundBugsEnabled||Colony.PeriodicAttacksEnabled)))return nullptr;
+    // Start with the first paid milestone. Continued owned civilian losses
+    // justify one more tower at a time, bounded by the authored final plan.
+    for(const auto& Target:Targets)if(!Target.Optional&&Colony.BuildingDefs[Target.Definition].Role==TEXT("defense"))
+    {
+        int32 Limit=Target.Count;
+        for(const auto& Planned:Targets)if(!Planned.Optional&&Planned.Definition==Target.Definition)Limit=FMath::Max(Limit,Planned.Count);
+        DefenseRecoveryPlan=Target;
+        DefenseRecoveryPlan.Count=FMath::Min(Limit,Target.Count+FMath::Max(0,LostCivilians-1));
+        int32 Living=0,ReadyCount=0;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&Meets(Colony,B,Target.Definition))
+        {++Living;if(B.Enabled&&!B.IsConstructing&&HasPermanentCrew(Colony,B))++ReadyCount;}
+        if(ReadyCount>=DefenseRecoveryPlan.Count)return nullptr;
+        if(Living>=DefenseRecoveryPlan.Count)return &DefenseRecoveryPlan;
+        bool Affordable=true;for(const auto& P:Colony.BuildingDefs[Target.Definition].Cost)if(Colony.ConstructionAvailable(P.Key)+UE_DOUBLE_SMALL_NUMBER<P.Value)Affordable=false;
+        const bool CanTrade=Colony.Buildings.ContainsByPredicate([&](const auto& B){return B.Health>0&&B.Enabled&&!B.IsConstructing&&Colony.Definition(B)->Role==TEXT("trade");});
+        // A destroyed port and an unfunded gun must not block their own means
+        // of recovery. Restore ordinary economic prerequisites in that case.
+        return Affordable||CanTrade?&DefenseRecoveryPlan:nullptr;
+    }
     return nullptr;
 }
 
@@ -1010,6 +1175,8 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
     const bool SharedBudget=DecisionSchedulingPolicy==TEXT("shared_action_budget");
     if(SharedBudget&&GuardWorksite(Colony))return true;
     if(SharedBudget&&ManageCoreProduction(Colony))return true;
+    if(SharedBudget&&ManageIndustryProduction(Colony))return true;
+    if(SharedBudget&&ManageTransport(Colony))return true;
     bool WaitingForRoad=false;if(ConnectPowerRoad(Colony,WaitingForRoad))return true;
     if(SharedBudget&&ManageTrade(Colony))return true;
     bool WaitingForSupport=false;if(RecoverWorkerSupport(Colony,WaitingForSupport))return true;
@@ -1019,19 +1186,24 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
     // capacity, so an unpowered bay cannot create an expansion loop.
     if(WaitingForRoad)return false;
     if(WaitingForSupport)return false;
+    const auto* DefenseRecovery=DefenseRecoveryTarget(Colony);
+    if(!DefenseRecovery&&!TransportMaterialGoals(Colony).IsEmpty())
+    {Status=TransportEnergyPriority(Colony)?TEXT("Waiting for paid transport assembly energy"):TEXT("Funding paid cargo transport before further expansion");return false;}
     const FVector2D Origin = Core->Position;
     for (int32 Index = 0; Index < Targets.Num(); ++Index)
     {
-        const FSeigeAIBuildTarget& Target = Targets[Index];
+        const FSeigeAIBuildTarget& PlanEntry = Targets[Index];
+        if(DefenseRecovery&&DefenseRecovery->Definition!=PlanEntry.Definition)continue;
+        const FSeigeAIBuildTarget& Target = DefenseRecovery?*DefenseRecovery:PlanEntry;
         if(!IncludesTarget(Colony,Target.Definition))continue;
         for (const FSeigeBuilding& B : Colony.Buildings)
-            if (Meets(Colony, B, Target.Definition) && B.Health > 0 && !B.Enabled)
+            if (Meets(Colony, B, Target.Definition) && B.Health > 0 && !B.Enabled&&!BudgetedProcessor(Colony,B))
             { Colony.ToggleBuilding(B.Id); Status = TEXT("Re-enabled ") + Target.Definition; return true; }
         const int32 Existing = CountLive(Colony, Target.Definition);
         if (Existing >= Target.Count)
         {
             // A voluntary upgrade in progress keeps its plan entry satisfied.
-            int32 Operational=0;for(const auto& B:Colony.Buildings)if(Meets(Colony,B,Target.Definition)&&B.Health>0&&(!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&B.Enabled&&HasPermanentCrew(Colony,B))++Operational;
+            int32 Operational=0;for(const auto& B:Colony.Buildings)if(Meets(Colony,B,Target.Definition)&&B.Health>0&&(!B.IsConstructing||!B.UpgradeTarget.IsEmpty())&&(B.Enabled||BudgetedProcessor(Colony,B))&&HasPermanentCrew(Colony,B))++Operational;
             if(Operational<Target.Count){Status=TEXT("Waiting for completion and staffing: ")+Target.Definition;return false;}
             continue;
         }
@@ -1061,7 +1233,7 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
                     break;
                 }
                 FString Error;
-                if (PlaceConnectedBuilding(Colony,Target.Definition,Node->Position,Error)) { Status = TEXT("Built ") + Def.Name; return true; }
+                if (PlaceExtractorNear(Colony,Target.Definition,*Node,Error)) { Status = TEXT("Built ") + Def.Name; return true; }
                 Status = Error;
             }
         }
@@ -1082,7 +1254,7 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
                 FirstRadius=DefenseDistance;
                 // Armed plots then turn toward the approaches nothing covers yet
                 // (the authored spread stands when nothing is exposed).
-                if(Def.Role==TEXT("defense"))Angle=DefenseBearing(Colony,Def,Origin,Angle,FirstRadius);
+                if(Def.Role==TEXT("defense"))Angle=DefenseBearing(Colony,Def,Origin,Angle,FirstRadius,&FirstRadius);
             }
             if (BuildNear(Colony, Target.Definition, Origin, Angle,FirstRadius)) return true;
         }
@@ -1094,16 +1266,122 @@ bool FSeigeScenarioAI::MakeDecision(FSeigeSimulation& Colony)
     return ManageUpgrades(Colony);
 }
 
-bool FSeigeScenarioAI::ManageUpgrades(FSeigeSimulation& Colony)
+bool FSeigeScenarioAI::ConstructionPlanReady(const FSeigeSimulation& Colony) const
 {
-    // Voluntary in-place upgrades once every planned building stands: families
-    // in the configured order, lowest level first, only with the whole upgrade
-    // bill spare above the AI reserve targets. An upgrading tower stops firing,
-    // so defensive families wait until no live enemy is within the quiet radius.
-    if(MaxConcurrentUpgrades<=0||UpgradeFamilies.IsEmpty())return false;
+    for(const auto& Target:Targets)
+    {
+        if(!IncludesTarget(Colony,Target.Definition))continue;
+        int32 Count=0;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&Meets(Colony,B,Target.Definition))
+        {
+            if(!B.Enabled&&!BudgetedProcessor(Colony,B)||B.IsConstructing&&B.UpgradeTarget.IsEmpty()||!HasPermanentCrew(Colony,B))return false;
+            ++Count;
+        }
+        if(Count<Target.Count&&!Target.Optional)return false;
+    }
+    return true;
+}
+
+TMap<FString,double> FSeigeScenarioAI::TransportMaterialGoals(const FSeigeSimulation& Colony) const
+{
+    TMap<FString,double> Result;
+    const auto& Transports=Colony.TransportVehicles;
+    bool HasFactory=false;
+    for(const auto& B:Colony.Buildings)if(B.Health>0&&B.Enabled&&!B.IsConstructing&&Transports.Definition().Factories.Contains(B.DefId)&&HasPermanentCrew(Colony,B)){HasFactory=true;break;}
+    if(!HasFactory)return Result;
+    int32 Pending=0,Committed=0;
+    for(const auto& Job:Transports.Jobs)if(const auto* Factory=Colony.FindBuilding(Job.FactoryId))if(Factory->Health>0)
+    {++Pending;if(Job.Committed)++Committed;}
+    const int32 Wanted=FMath::Max(0,DesiredTransports-Transports.LiveCount());
+    const int32 Unpaid=FMath::Max(Pending,Wanted)-Committed;
+    for(const auto& P:Transports.Definition().BuildCost)if(Unpaid>0)Result.Add(P.Key,P.Value*Unpaid);
+    return Result;
+}
+
+int32 FSeigeScenarioAI::TransportEnergyPriority(const FSeigeSimulation& Colony) const
+{
+    if(ProductionPriorityPolicy!=TEXT("protect_development_inputs")||SupportRecoveryTarget(Colony)||DefenseRecoveryTarget(Colony))return 0;
+    const auto& Def=Colony.TransportVehicles.Definition();
+    for(const auto& Job:Colony.TransportVehicles.Jobs)if(!Job.Committed)
+    {
+        const auto* Factory=Colony.FindBuilding(Job.FactoryId);
+        if(!Factory||Factory->Health<=0||Factory->IsConstructing||!Factory->Enabled||!HasPermanentCrew(Colony,*Factory))continue;
+        bool Funded=true;for(const auto& Cost:Def.BuildCost)if(Colony.Spendable(*Factory,Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value)Funded=false;
+        if(!Funded)continue;
+        const auto Grid=Colony.Energy.Info(Colony,Factory->Id);
+        // Do not halt the economy indefinitely when storage or generation
+        // itself is missing. Normal supply/recovery planning must remain free.
+        if(!Grid.Connected||Grid.CapacityKWh+UE_DOUBLE_SMALL_NUMBER<Def.BuildEnergyKWh)continue;
+        double EssentialDemand=Grid.DemandKW;
+        for(const auto& B:Colony.Buildings)if(B.Health>0&&B.Enabled&&!B.IsConstructing&&BudgetedProcessor(Colony,B)&&Colony.Energy.Info(Colony,B.Id).ComponentId==Grid.ComponentId)
+            if(const auto* E=Colony.Energy.Definition(B.DefId))EssentialDemand-=E->IdleKW;
+        if(Grid.GenerationKW<=FMath::Max(0.,EssentialDemand)+UE_DOUBLE_SMALL_NUMBER&&Grid.StoredKWh+UE_DOUBLE_SMALL_NUMBER<Def.BuildEnergyKWh)continue;
+        return Factory->Id;
+    }
+    return 0;
+}
+
+double FSeigeScenarioAI::DevelopmentAvailable(const FSeigeSimulation& Colony,const FString& Resource) const
+{
+    double Available=Colony.ConstructionAvailable(Resource);
+    if(TransportMaterialGoals(Colony).IsEmpty()||SupportRecoveryTarget(Colony)||DefenseRecoveryTarget(Colony))return Available;
+    FVector2D A,B;FString Road,Error;
+    if(NextPowerRoad(Colony,A,B,Road,Error)||!Road.IsEmpty())return Available;
+    TSet<int32> Counted;
+    for(const auto& Job:Colony.TransportVehicles.Jobs)if(!Job.Committed&&!Counted.Contains(Job.FactoryId))
+    {
+        Counted.Add(Job.FactoryId);const auto* Factory=Colony.FindBuilding(Job.FactoryId);
+        if(!Factory||Factory->Health<=0||Factory->IsConstructing||!Factory->Enabled||!HasPermanentCrew(Colony,*Factory))continue;
+        const double OwnBill=Colony.TransportVehicles.Demand(Colony,Factory->Id,Resource);
+        const double OtherDemand=FMath::Max(0.,Colony.Demand(*Factory,Resource,false)-OwnBill);
+        // ConstructionAvailable intentionally hides all factory operating
+        // reserves from unrelated plots. The current vehicle job can use its
+        // own already delivered ingredients; count those once, retaining all
+        // other jobs, repair buffers, accepted construction and pickup claims.
+        Available+=FMath::Min(OwnBill,FMath::Max(0.,Colony.Spendable(*Factory,Resource)-OtherDemand));
+    }
+    return Available;
+}
+
+bool FSeigeScenarioAI::ManageTransport(FSeigeSimulation& Colony)
+{
+    if(DefenseRecoveryTarget(Colony))return false;
+    if(Colony.TransportVehicles.LiveCount()+Colony.TransportVehicles.Jobs.Num()>=DesiredTransports)return false;
+    for(const auto& B:Colony.Buildings)
+    {
+        if(B.Health<=0||B.IsConstructing||!B.Enabled||!Colony.TransportVehicles.Definition().Factories.Contains(B.DefId)||!HasPermanentCrew(Colony,B))continue;
+        FString Error;
+        if(Colony.TransportVehicles.QueueVehicle(Colony,B.Id,Error))
+        {Status=TEXT("Queued paid cargo transport assembly");return true;}
+    }
+    return false;
+}
+
+TMap<FString,double> FSeigeScenarioAI::NextDevelopmentBill(const FSeigeSimulation& Colony) const
+{
+    FVector2D A,B;FString Target,Error;
+    if(NextPowerRoad(Colony,A,B,Target,Error))return Colony.RoadCost(A,B,Colony.InitialRoadTier());
+    if(!Target.IsEmpty())return {};
+    const auto TransportBill=TransportMaterialGoals(Colony);
+    if(!TransportBill.IsEmpty()&&!SupportRecoveryTarget(Colony)&&!DefenseRecoveryTarget(Colony))return TransportBill;
+    if(const auto* Construction=NextConstructionTarget(Colony))return Colony.BuildingDefs[Construction->Definition].Cost;
+    if(!ConstructionPlanReady(Colony))return {};
+    // Saving up for the next upgrade is the same economic job as saving for
+    // its initial plot. Do not wait for random leftover stock to cover it.
+    const auto Candidates=UpgradeCandidates(Colony);
+    if(Candidates.IsEmpty())return {};
+    auto Bill=Colony.Definition(*Colony.FindBuilding(Candidates[0]))->UpgradeCost;
+    for(auto& P:Bill)P.Value+=ReserveTargets.FindRef(P.Key);
+    return Bill;
+}
+
+TArray<int32> FSeigeScenarioAI::UpgradeCandidates(const FSeigeSimulation& Colony) const
+{
+    TArray<int32> Result;
+    if(MaxConcurrentUpgrades<=0||UpgradeFamilies.IsEmpty())return Result;
     int32 Active=0;for(const auto& B:Colony.Buildings)if(B.Health>0&&!B.UpgradeTarget.IsEmpty())++Active;
-    if(Active>=MaxConcurrentUpgrades)return false;
-    const auto* Core=Command(Colony);if(!Core)return false;
+    if(Active>=MaxConcurrentUpgrades)return Result;
+    const auto* Core=Command(Colony);if(!Core)return Result;
     bool Quiet=true;for(const auto& E:Colony.Enemies)if(E.Health>0&&FVector2D::Distance(E.Position,Core->Position)<UpgradeQuietRadius){Quiet=false;break;}
     for(const FString& Family:UpgradeFamilies)
     {
@@ -1111,17 +1389,29 @@ bool FSeigeScenarioAI::ManageUpgrades(FSeigeSimulation& Colony)
         for(const auto& B:Colony.Buildings)
         {
             const auto* D=Colony.Definition(B);
-            if(!D||D->Family!=Family||D->NextUpgrade.IsEmpty()||B.Health<D->Health||B.IsConstructing||!B.Enabled)continue;
+            if(!D||D->Family!=Family||D->NextUpgrade.IsEmpty()||B.Health<D->Health||B.IsConstructing||!B.Enabled||!B.Shipment.Resource.IsEmpty()||B.ProductionCommitted)continue;
             const int32 BestLevel=Best?Colony.Definition(*Best)->Level:0;
             if(!Best||D->Level<BestLevel||(D->Level==BestLevel&&B.Id<Best->Id))Best=&B;
         }
         if(!Best)continue;
         const auto* D=Colony.Definition(*Best);
         if(!Quiet&&D->Role==TEXT("defense"))continue;
+        Result.Add(Best->Id);
+    }
+    return Result;
+}
+
+bool FSeigeScenarioAI::ManageUpgrades(FSeigeSimulation& Colony)
+{
+    // Preserve opportunistic affordable upgrades, while the shared next-bill
+    // goal gives trade and production one concrete upgrade to fund first.
+    for(int32 Id:UpgradeCandidates(Colony))
+    {
+        const auto* Best=Colony.FindBuilding(Id);const auto* D=Colony.Definition(*Best);
         bool Affordable=true;
         for(const auto& Cost:D->UpgradeCost)if(Colony.ConstructionAvailable(Cost.Key)-ReserveTargets.FindRef(Cost.Key)+UE_DOUBLE_SMALL_NUMBER<Cost.Value){Affordable=false;break;}
         if(!Affordable)continue;
-        const int32 Id=Best->Id;const FString Name=D->Name;FString Error;
+        const FString Name=D->Name;FString Error;
         if(Colony.UpgradeBuilding(Id,Error)){Status=TEXT("Upgrading ")+Name;return true;}
         Status=Error;
     }
@@ -1139,6 +1429,8 @@ void FSeigeScenarioAI::RunDecisionCycle(FSeigeSimulation& Colony)
         // road placement must not leave an otherwise idle trade port unused.
         GuardWorksite(Colony);
         ManageCoreProduction(Colony);
+        ManageIndustryProduction(Colony);
+        ManageTransport(Colony);
         ManageTrade(Colony);
     }
     for(int32 Action=0;Action<MaxActions;++Action)if(!MakeDecision(Colony))break;

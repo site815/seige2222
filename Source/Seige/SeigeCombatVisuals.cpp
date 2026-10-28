@@ -1,5 +1,6 @@
 #include "SeigeGameMode.h"
 #include "SeigeHardpointLayout.h"
+#include "SeigeTurretMount.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "Math/RotationMatrix.h"
@@ -27,12 +28,19 @@ FVector AimBarrel(UStaticMeshComponent* Barrel,FVector Pivot,FVector End,double 
     const FVector Direction=(End-Pivot).GetSafeNormal();
     if(!Direction.IsNearlyZero())
     {
-        Barrel->SetWorldLocation(Pivot+Direction*CenterDistance);
-        // Engine cylinders extend along local Z. Only the barrel pitches;
-        // its support and the vehicle/building stay planted on the ground.
-        Barrel->SetWorldRotation(FRotationMatrix::MakeFromZ(Direction).Rotator());
+        if(auto* Gimbal=Barrel->GetAttachParent();Gimbal&&Gimbal->ComponentHasTag(TEXT("seige_weapon_gimbal")))
+        {
+            // Receiver, emitter, missile cells and barrel share the articulated
+            // pitch joint; the circular bearing/yoke remain on the azimuth base.
+            Gimbal->SetWorldRotation(FRotationMatrix::MakeFromX(Direction).Rotator());
+        }
+        else
+        {
+            Barrel->SetWorldLocation(Pivot+Direction*CenterDistance);
+            Barrel->SetWorldRotation(FRotationMatrix::MakeFromZ(Direction).Rotator());
+        }
     }
-    return Barrel->GetComponentTransform().TransformPosition(FVector(0,0,50));
+    return Barrel->GetComponentTransform().TransformPosition(Barrel->ComponentHasTag(TEXT("seige_missile_pod"))?FVector(50,0,0):FVector(0,0,50));
 }
 }
 void ASeigeGameMode::ConfigureCombatTerrain()
@@ -139,30 +147,76 @@ void ASeigeGameMode::SyncCombatVisuals(const FSeigeSimulation& Colony,FVector2D 
             for(const auto& Id:Weapons){const auto* Mounted=C.Weapons.Find(Id);Sizes.Add(!Mounted?0:Mounted->Size==TEXT("large")?4:Mounted->Size==TEXT("medium")?2:1);}
             if(!SeigePackHardpointBanks(Sizes,CoreMountCells))continue;
         }
+        double ShipScale=1,Descent=0;
+        if(D->Role==TEXT("core"))
+        {
+            double Footprint=D->Footprint;for(const auto& Pair:Colony.BuildingDefs)if(Pair.Value.Role==TEXT("core")&&Pair.Value.Level==1){Footprint=Pair.Value.Footprint;break;}
+            const double ShipSize=Footprint*2*RenderScale;ShipScale=ShipSize/848.586975;
+            if(!Colony.DeploymentGrounded)Descent=(1.-FMath::SmoothStep(0.,1.,Colony.DeploymentElapsed/Colony.Workers.DeploymentDescentSeconds()))*ShipSize*1.7;
+            const FString Key=Prefix+FString::Printf(TEXT("azimuth_ring_%d"),B.Id);const bool New=!Visuals.Contains(Key);auto* Ring=Actor(Key);
+            if(New)
+            {
+                for(double Height:{1010.,1230.})
+                {
+                    Part(Ring,TEXT("Cylinder"),FVector(0,0,Height*ShipScale),FVector(7.02*ShipScale,7.02*ShipScale,.15*ShipScale),Dark);
+                    Part(Ring,TEXT("Cylinder"),FVector(0,0,(Height+9)*ShipScale),FVector(6.98*ShipScale,6.98*ShipScale,.06*ShipScale),Trim);
+                }
+                for(int32 I=0;I<24;++I)
+                {
+                    const double Yaw=I*15.;const FVector R=FRotator(0,Yaw,0).RotateVector(FVector(319*ShipScale,0,1120*ShipScale));
+                    Part(Ring,TEXT("Cube"),R,FVector(.60*ShipScale,.16*ShipScale,2.1*ShipScale),Panel,FRotator(0,Yaw,0));
+                }
+            }
+            Ring->SetActorLocation(RenderPosition(P,Descent));
+        }
         for(int32 I=0;I<Weapons.Num();++I)if(const auto* Weapon=C.Weapons.Find(Weapons[I]))
         {
             const FString Key=Prefix+FString::Printf(TEXT("mount_%d_%d_%s"),B.Id,I,*Weapons[I]);const bool New=!Visuals.Contains(Key);auto* A=Actor(Key);
             const double S=Weapon->Size==TEXT("large")?4.:Weapon->Size==TEXT("medium")?2.:1.;
-            if(New){Part(A,TEXT("Cylinder"),FVector(0,0,12*S),FVector(S*.48,S*.48,S*.22),Panel);Part(A,TEXT("Cube"),FVector(0,0,34*S),FVector(S*.50,S*.5,S*.35),Trim);Part(A,Weapon->Family==TEXT("missile")?TEXT("Cube"):TEXT("Cylinder"),FVector(70*S,0,34*S),Weapon->Family==TEXT("missile")?FVector(S*1.4,S*.45,S*.45):FVector(S*.12,S*.12,S*1.6),WeaponColor(Weapon->Family),Weapon->Family==TEXT("missile")?FRotator::ZeroRotator:FRotator(90,0,0));if(Weapon->Family!=TEXT("missile"))TagLastBarrel(A,I,Weapons[I]);}
-            const int32 Cols=FMath::Max(1,FMath::CeilToInt(FMath::Sqrt(double(Weapons.Num()))));
-            FVector2D Mount((I/Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols,(I%Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols);
-            double MountZ=250;
-            if(D->Role==TEXT("core"))
+            if(New)
             {
-                double Footprint=D->Footprint;for(const auto& Pair:Colony.BuildingDefs)if(Pair.Value.Role==TEXT("core")&&Pair.Value.Level==1){Footprint=Pair.Value.Footprint;break;}
-                const double ShipSize=Footprint*2*RenderScale,ShipScale=ShipSize/848.586975;
-                // Locations are computed largest-first, then mapped back to
-                // each unchanged simulation weapon/shot-event slot.
-                const FIntVector& Cell=CoreMountCells[I];
-                const int32 Bank=Cell.X,CellX=Cell.Y,CellY=Cell.Z;
-                const double CellWidth=50.; // Authored 50 cm small socket; module dimensions are physical, not map-scaled.
-                Mount=FVector2D(309*ShipScale,((Bank==0?267.:-267.)*ShipScale)+(CellX+S*.5-2)*CellWidth)/RenderScale;
-                MountZ=1120*ShipScale+(CellY+S*.5-2)*CellWidth;
-                if(!Colony.DeploymentGrounded)MountZ+=(1.-FMath::SmoothStep(0.,1.,Colony.DeploymentElapsed/Colony.Workers.DeploymentDescentSeconds()))*ShipSize*1.7;
+                if(D->Role!=TEXT("core"))
+                {
+                    const double Stem=SeigeTowerBearingHeightCm-250.;
+                    Part(A,TEXT("Cylinder"),FVector(0,0,-Stem*.5),FVector(.30*S,.30*S,Stem/100.),Panel);
+                    Part(A,TEXT("Cylinder"),FVector(0,0,-Stem+8),FVector(.70*S,.70*S,.16),Dark);
+                }
+                Part(A,TEXT("Cylinder"),FVector(0,0,10*S),FVector(S*.48,S*.48,S*.20),Panel);
+                Part(A,TEXT("Cylinder"),FVector(0,0,21*S),FVector(S*.46,S*.46,S*.04),Trim);
+                for(double Side:{-1.,1.})
+                {
+                    Part(A,TEXT("Cube"),FVector(0,Side*20*S,28*S),FVector(S*.18,S*.07,S*.23),Trim);
+                    Part(A,TEXT("Cylinder"),FVector(0,Side*24*S,34*S),FVector(S*.13,S*.13,S*.04),Dark,FRotator(0,0,90));
+                }
+                auto* Gimbal=NewObject<USceneComponent>(A);Gimbal->SetupAttachment(A->GetRootComponent());Gimbal->SetRelativeLocation(FVector(0,0,34*S));Gimbal->ComponentTags.Add(TEXT("seige_weapon_gimbal"));Gimbal->RegisterComponent();A->AddInstanceComponent(Gimbal);
+                auto GunPart=[&](const FString& Shape,FVector Position,FVector Scale,FLinearColor Color,FRotator Rotation=FRotator::ZeroRotator)
+                {Part(A,Shape,Position,Scale,Color,Rotation);TInlineComponentArray<UStaticMeshComponent*> Parts(A);Parts.Last()->AttachToComponent(Gimbal,FAttachmentTransformRules::KeepRelativeTransform);};
+                GunPart(TEXT("Cube"),FVector(-8*S,0,0),FVector(.30*S,.32*S,.30*S),Panel);
+                const bool Missile=Weapon->Family==TEXT("missile");
+                GunPart(Missile?TEXT("Cube"):TEXT("Cylinder"),FVector(35*S,0,0),Missile?FVector(.60*S,.36*S,.36*S):FVector(.12*S,.12*S,.60*S),WeaponColor(Weapon->Family),Missile?FRotator::ZeroRotator:FRotator(-90,0,0));
+                TagLastBarrel(A,I,Weapons[I]);
+                if(Missile)
+                {
+                    TInlineComponentArray<UStaticMeshComponent*> Parts(A);Parts.Last()->ComponentTags.Add(TEXT("seige_missile_pod"));
+                    for(double Y:{-9.,9.})for(double Z:{-9.,9.})GunPart(TEXT("Cylinder"),FVector(66*S,Y*S,Z*S),FVector(.11*S,.11*S,.035*S),Dark,FRotator(-90,0,0));
+                }
+                else
+                {
+                    GunPart(TEXT("Cylinder"),FVector(60*S,0,0),FVector(.18*S,.18*S,.08*S),Trim,FRotator(-90,0,0));
+                    GunPart(TEXT("Cylinder"),FVector(65*S,0,0),FVector(.10*S,.10*S,.025*S),WeaponColor(Weapon->Family),FRotator(-90,0,0));
+                }
             }
-            A->SetActorLocation(RenderPosition(P+Mount,MountZ));
-            A->SetActorRotation(FVector(B.LastShotPosition-B.Position,0).Rotation());A->SetActorHiddenInGame(B.IsConstructing&&!D->DeploymentDefense);
-            if(B.LastShotTime>=0)if(auto* Barrel=FindBarrel(A,I,Weapons[I]))AimBarrel(Barrel,A->GetActorTransform().TransformPosition(FVector(0,0,34*S)),RenderPosition(B.LastShotPosition+Offset,150),70*S);
+            FVector2D Aim;const bool Tracking=C.BuildingWeaponAim(Colony,B.Id,I,Aim);
+            const double Yaw=Tracking?FMath::RadiansToDegrees(FMath::Atan2(Aim.Y-B.Position.Y,Aim.X-B.Position.X)):(D->Role==TEXT("core")&&CoreMountCells[I].X==1?180.:0.);
+            FVector Mount;
+            if(D->Role==TEXT("core"))Mount=SeigeOrbitingBankMount(CoreMountCells[I],S,ShipScale,Yaw)+FVector(0,0,Descent);
+            else
+            {
+                const int32 Cols=FMath::Max(1,FMath::CeilToInt(FMath::Sqrt(double(Weapons.Num()))));
+                Mount=FVector((I/Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols*RenderScale,(I%Cols-(Cols-1)*.5)*D->Footprint*1.35/Cols*RenderScale,SeigeTowerBearingHeightCm);
+            }
+            A->SetActorLocation(RenderPosition(P,0)+Mount);A->SetActorRotation(FRotator(0,Yaw,0));A->SetActorHiddenInGame(B.IsConstructing&&!D->DeploymentDefense);
+            if(Tracking)if(auto* Barrel=FindBarrel(A,I,Weapons[I]))AimBarrel(Barrel,A->GetActorTransform().TransformPosition(FVector(0,0,34*S)),RenderPosition(Aim+Offset,150),35*S);
         }
     }
     for(const auto& P:C.Projectiles)

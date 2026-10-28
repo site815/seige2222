@@ -10,7 +10,7 @@ bool FSeigeCombatSystem::ClearFriendlyFire(const FSeigeSimulation& Sim,const FSt
 {
     // Check the intended line only. Spread, splash and later unit movement
     // still use the physical projectile collision path and can hit allies.
-    for(const auto& B:Sim.Buildings)if(B.Health>0&&!(Kind==TEXT("building")&&B.Id==Owner)&&HitBox(From,Aim,B.Position,Sim.Definition(B)->Footprint)<=1){if(Blocker)*Blocker=Sim.Definition(B)->Name;return false;}
+    for(const auto& B:Sim.Buildings)if(Sim.BuildingBlocksProjectiles(B)&&!(Kind==TEXT("building")&&B.Id==Owner)&&HitBox(From,Aim,B.Position,Sim.Definition(B)->Footprint)<=1){if(Blocker)*Blocker=Sim.Definition(B)->Name;return false;}
     for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&!(Kind==TEXT("vehicle")&&V.Id==Owner)&&HitCircle(From,Aim,V.Position,Chassis[V.ChassisId].RadiusMeters/MetresPerUnit)<=1){if(Blocker)*Blocker=Chassis[V.ChassisId].Name;return false;}
     for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&HitCircle(From,Aim,V.Position,Sim.Mobility.ClearanceMeters(TEXT("transport"))/MetresPerUnit)<=1){if(Blocker)*Blocker=Sim.TransportVehicles.Definition().Name;return false;}
     for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D)&&HitCircle(From,Aim,D.Position,Sim.Companions.BodyRadiusMeters/MetresPerUnit)<=1){if(Blocker)*Blocker=Sim.Companions.Name;return false;}
@@ -34,7 +34,7 @@ FSeigeCombatSystem::FFireControl FSeigeCombatSystem::QueryFire(const FSeigeSimul
         if(B->Health<=0)return Hold(TEXT("Destroyed"));
         if(!B->Enabled)return Hold(TEXT("Disabled"));
         if(B->IsConstructing&&!Sim.Definition(*B)->DeploymentDefense)return Hold(TEXT("Under construction"));
-        if(BuildingWeaponWork(Sim,Owner)<=0)return Hold(Sim.Energy.Fraction(Owner)<=0?TEXT("Waiting for road-grid power"):TEXT("Waiting for workers or upkeep"));
+        if(BuildingWeaponWork(Sim,Owner)<=0)return Hold(Sim.Energy.Fraction(Owner)<=0?TEXT("Waiting for grid power"):TEXT("Waiting for workers or upkeep"));
     }
     else if(V)
     {
@@ -73,6 +73,20 @@ FString FSeigeCombatSystem::BuildingFireStatus(const FSeigeSimulation& Sim,int32
         if(Result.Ready)return Result.Status;Reasons.AddUnique(Result.Status);
     }
     return FString::Join(Reasons,TEXT("; "));
+}
+bool FSeigeCombatSystem::BuildingWeaponAim(const FSeigeSimulation& Sim,int32 Id,int32 Slot,FVector2D& Aim) const
+{
+    const auto* B=Sim.FindBuilding(Id);const auto* State=BuildingState.Find(Id);
+    if(!B||!State||!State->Weapons.IsValidIndex(Slot))return false;
+    const auto* Weapon=Weapons.Find(State->Weapons[Slot]);if(!Weapon)return false;
+    if(B->LastShotTime>=0&&Sim.Time-B->LastShotTime<=.15)
+        if(const auto* Previous=State->WeaponAim.Find(Slot)){Aim=*Previous;return true;}
+    // Acquisition is omnidirectional and shared with actual fire control. A
+    // reloading mount keeps tracking; unpowered/disabled mounts hold their aim.
+    const auto Target=QueryFire(Sim,TEXT("building"),Id,B->Position,*Weapon,0,false);
+    if(Target.TargetId)if(const auto* Enemy=Sim.Enemies.FindByPredicate([&](const auto& E){return E.Id==Target.TargetId&&E.Health>0;})){Aim=Enemy->Position;return true;}
+    if(const auto* Previous=State->WeaponAim.Find(Slot)){Aim=*Previous;return true;}
+    return false;
 }
 bool FSeigeCombatSystem::DefensivePosition(const FSeigeSimulation& Sim,const FSeigeVehicle& V,FVector2D Anchor,FVector2D& Position) const
 {
@@ -136,6 +150,7 @@ bool FSeigeCombatSystem::Fire(FSeigeSimulation& Sim,const FString& Kind,int32 Ow
     if(Kind==TEXT("building")){auto* B=Sim.FindBuilding(Owner);if(!B||(!W.Ammo.IsEmpty()&&Sim.Spendable(*B,W.Ammo)+1.e-8<W.AmmoPerShot)||!Sim.Energy.CanConsume(Sim,Owner,W.EnergyKWh,ESeigeEnergyPurpose::DefensiveShot))return false;if(!Sim.Energy.Consume(Sim,Owner,W.EnergyKWh,ESeigeEnergyPurpose::DefensiveShot))return false;if(!W.Ammo.IsEmpty())B->Inventory.FindOrAdd(W.Ammo)=FMath::Max(0.,B->Inventory.FindRef(W.Ammo)-W.AmmoPerShot);B->LastShotTime=Sim.Time;B->LastShotPosition=Target->Position;}
     else{auto* V=FindVehicle(Owner);if(!V||V->BatteryKWh+1.e-8<W.EnergyKWh||(!W.Ammo.IsEmpty()&&V->Inventory.FindRef(W.Ammo)+1.e-8<W.AmmoPerShot))return false;V->BatteryKWh=FMath::Max(0.,V->BatteryKWh-W.EnergyKWh);if(!W.Ammo.IsEmpty())V->Inventory.FindOrAdd(W.Ammo)=FMath::Max(0.,V->Inventory.FindRef(W.Ammo)-W.AmmoPerShot);}
     ++ShotsFired;EnergySpentKWh+=W.EnergyKWh;AmmoSpent+=W.AmmoPerShot;
+    if(Kind==TEXT("building"))if(auto* State=BuildingState.Find(Owner))State->WeaponAim.Add(WeaponSlot,Target->Position);
     const double Angle=FMath::Atan2(Target->Position.Y-Position.Y,Target->Position.X-Position.X)+FMath::DegreesToRadians((Random.FRand()*2-1)*W.AccuracyDegrees);
     FSeigeProjectile P;P.Id=NextId++;P.OwnerId=Owner;P.OwnerKind=Kind;P.TargetEnemyId=TargetId;P.WeaponId=W.Id;P.WeaponSlot=WeaponSlot;P.Position=P.PreviousPosition=Position;P.Velocity=FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*W.SpeedMetersSecond/MetresPerUnit;P.RemainingMeters=W.RangeMeters;
     if(W.SpeedMetersSecond==0){P.Velocity=FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*W.RangeMeters/MetresPerUnit;bool Remove=false;const double Before=Hits;AdvanceProjectile(Sim,P,1,Remove);ShotEvents.Add({Sim.Time,Owner,Kind,W.Family,Position,P.Position,Hits>Before,W.Id,WeaponSlot,4});if(auto* B=Kind==TEXT("building")?Sim.FindBuilding(Owner):nullptr)B->LastShotPosition=FVector2D(FMath::Clamp(P.Position.X,-Sim.WorldHalfSize,Sim.WorldHalfSize),FMath::Clamp(P.Position.Y,-Sim.WorldHalfSize,Sim.WorldHalfSize));}else Projectiles.Add(P);return true;
@@ -153,10 +168,10 @@ void FSeigeCombatSystem::Impact(FSeigeSimulation& Sim,const FSeigeProjectile& P,
 void FSeigeCombatSystem::AdvanceProjectile(FSeigeSimulation& Sim,FSeigeProjectile& P,double Seconds,bool& Remove)
 {
     const auto& W=Weapons[P.WeaponId];P.PreviousPosition=P.Position;
-    if(W.HomingDegreesSecond>0&&P.TargetEnemyId>0)if(const auto* E=Sim.Enemies.FindByPredicate([&](const auto& V){return V.Id==P.TargetEnemyId&&V.Health>0;})){const double A=FMath::Atan2(P.Velocity.Y,P.Velocity.X),B=FMath::Atan2(E->Position.Y-P.Position.Y,E->Position.X-P.Position.X),Delta=FMath::UnwindRadians(B-A),Turn=FMath::Clamp(Delta,-FMath::DegreesToRadians(W.HomingDegreesSecond)*Seconds,FMath::DegreesToRadians(W.HomingDegreesSecond)*Seconds);P.Velocity=FVector2D(FMath::Cos(A+Turn),FMath::Sin(A+Turn))*W.SpeedMetersSecond/MetresPerUnit;}
+    if(W.HomingDegreesSecond>0&&P.TargetKind==TEXT("enemy")&&P.TargetEnemyId>0)if(const auto* E=Sim.Enemies.FindByPredicate([&](const auto& V){return V.Id==P.TargetEnemyId&&V.Health>0;})){const double A=FMath::Atan2(P.Velocity.Y,P.Velocity.X),B=FMath::Atan2(E->Position.Y-P.Position.Y,E->Position.X-P.Position.X),Delta=FMath::UnwindRadians(B-A),Turn=FMath::Clamp(Delta,-FMath::DegreesToRadians(W.HomingDegreesSecond)*Seconds,FMath::DegreesToRadians(W.HomingDegreesSecond)*Seconds);P.Velocity=FVector2D(FMath::Cos(A+Turn),FMath::Sin(A+Turn))*W.SpeedMetersSecond/MetresPerUnit;}
     const double Travel=FMath::Min(P.RemainingMeters,P.Velocity.Size()*Seconds*MetresPerUnit);const FVector2D End=P.Position+P.Velocity.GetSafeNormal()*Travel/MetresPerUnit;double Best=2;int32 HitId=0;FString Kind;
     auto Accept=[&](double T,const FString& K,int32 I){if(K==P.OwnerKind&&I==P.OwnerId)return;if(T<Best){Best=T;Kind=K;HitId=I;}};
-    for(const auto& B:Sim.Buildings)if(B.Health>0)Accept(HitBox(P.Position,End,B.Position,Sim.Definition(B)->Footprint),TEXT("building"),B.Id);
+    for(const auto& B:Sim.Buildings)if(B.Health>0&&(Sim.BuildingBlocksProjectiles(B)||(P.TargetKind==TEXT("building")&&P.TargetEnemyId==B.Id)))Accept(HitBox(P.Position,End,B.Position,Sim.Definition(B)->Footprint),TEXT("building"),B.Id);
     for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4)Accept(HitCircle(P.Position,End,V.Position,Chassis[V.ChassisId].RadiusMeters/MetresPerUnit),TEXT("vehicle"),V.Id);
     for(const auto& E:Sim.Enemies)if(E.Health>0)Accept(HitCircle(P.Position,End,E.Position,EnemyRadiusMeters/MetresPerUnit),TEXT("enemy"),E.Id);for(const auto& V:Sim.TransportVehicles.Bodies)if(V.Health>0&&!V.Embarked&&!V.Evacuated)Accept(HitCircle(P.Position,End,V.Position,Sim.Mobility.ClearanceMeters(TEXT("transport"))/MetresPerUnit),TEXT("transport"),V.Id);
     for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D))Accept(HitCircle(P.Position,End,D.Position,Sim.Companions.BodyRadiusMeters/MetresPerUnit),TEXT("companion"),D.Id);
@@ -223,9 +238,9 @@ void FSeigeCombatSystem::Tick(FSeigeSimulation& Sim,double Seconds,bool Defensiv
      for(int32 I=0;I<State.Weapons.Num();++I){const auto& W=Weapons[State.Weapons[I]];double Available=Seconds*Work;while(Work>0&&Available+1.e-8>=State.Cooldowns[I]){Available=FMath::Max(0.,Available-State.Cooldowns[I]);State.Cooldowns[I]=0;const auto Control=QueryFire(Sim,TEXT("building"),B.Id,B.Position,W,0);if(!Control.Ready||!Fire(Sim,TEXT("building"),B.Id,B.Position,Control.TargetId,W,I)){Available=0;break;}State.Cooldowns[I]=W.ReloadSeconds;}State.Cooldowns[I]=FMath::Max(0.,State.Cooldowns[I]-Available);}}
     for(auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4){for(int32 I=0;I<V.Weapons.Num();++I){const auto& W=Weapons[V.Weapons[I]];double Available=Seconds;while(Available+1.e-8>=V.Cooldowns[I]){Available=FMath::Max(0.,Available-V.Cooldowns[I]);V.Cooldowns[I]=0;const auto Control=QueryFire(Sim,TEXT("vehicle"),V.Id,V.Position,W,0);if(!Control.Ready||!Fire(Sim,TEXT("vehicle"),V.Id,V.Position,Control.TargetId,W,I)){Available=0;break;}V.Cooldowns[I]=W.ReloadSeconds;}V.Cooldowns[I]=FMath::Max(0.,V.Cooldowns[I]-Available);}}
     for(const auto& E:Sim.Enemies)if(E.Health>0&&E.Id%100<int32(BugRangedFraction*100))
-    {double& Cooldown=BugCooldowns.FindOrAdd(E.Id);Cooldown=FMath::Max(0.,Cooldown-Seconds);if(Cooldown>0||Projectiles.Num()>=MaximumProjectiles)continue;FVector2D Aim=FVector2D::ZeroVector;double Best=BugRangeMeters/MetresPerUnit;bool Found=false;for(const auto& B:Sim.Buildings)if(B.Health>0&&FVector2D::Distance(E.Position,B.Position)<Best){Aim=B.Position;Best=FVector2D::Distance(E.Position,B.Position);Found=true;}for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&FVector2D::Distance(E.Position,V.Position)<Best){Aim=V.Position;Best=FVector2D::Distance(E.Position,V.Position);Found=true;}for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D)&&FVector2D::Distance(E.Position,D.Position)<Best){Aim=D.Position;Best=FVector2D::Distance(E.Position,D.Position);Found=true;}
-    for(const auto& Body:Sim.Workers.Bodies)if(Sim.Workers.IsExposed(Body)&&FVector2D::Distance(E.Position,Body.Position)<Best){Aim=Body.Position;Best=FVector2D::Distance(E.Position,Body.Position);Found=true;}
-    if(!Found)continue;const auto& W=Weapons[BugWeapon];const double Angle=FMath::Atan2(Aim.Y-E.Position.Y,Aim.X-E.Position.X)+FMath::DegreesToRadians((Random.FRand()*2-1)*W.AccuracyDegrees);FSeigeProjectile P;P.Id=NextId++;P.OwnerId=E.Id;P.OwnerKind=TEXT("enemy");P.WeaponId=BugWeapon;P.Position=P.PreviousPosition=E.Position;P.Velocity=FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*W.SpeedMetersSecond/MetresPerUnit;P.RemainingMeters=W.RangeMeters;Projectiles.Add(P);Cooldown=BugFireInterval;}
+    {double& Cooldown=BugCooldowns.FindOrAdd(E.Id);Cooldown=FMath::Max(0.,Cooldown-Seconds);if(Cooldown>0||Projectiles.Num()>=MaximumProjectiles)continue;FVector2D Aim=FVector2D::ZeroVector;double Best=BugRangeMeters/MetresPerUnit;bool Found=false;int32 TargetBuilding=0;for(const auto& B:Sim.Buildings)if(B.Health>0&&FVector2D::Distance(E.Position,B.Position)<Best){Aim=B.Position;Best=FVector2D::Distance(E.Position,B.Position);Found=true;TargetBuilding=B.Id;}for(const auto& V:Vehicles)if(V.Health>0&&!V.Embarked&&!V.Evacuated&&V.SectorIndex==4&&FVector2D::Distance(E.Position,V.Position)<Best){Aim=V.Position;Best=FVector2D::Distance(E.Position,V.Position);Found=true;TargetBuilding=0;}for(const auto& D:Sim.Companions.Dogs)if(Sim.Companions.IsOutside(D)&&FVector2D::Distance(E.Position,D.Position)<Best){Aim=D.Position;Best=FVector2D::Distance(E.Position,D.Position);Found=true;TargetBuilding=0;}
+    for(const auto& Body:Sim.Workers.Bodies)if(Sim.Workers.IsExposed(Body)&&FVector2D::Distance(E.Position,Body.Position)<Best){Aim=Body.Position;Best=FVector2D::Distance(E.Position,Body.Position);Found=true;TargetBuilding=0;}
+    if(!Found)continue;const auto& W=Weapons[BugWeapon];const double Angle=FMath::Atan2(Aim.Y-E.Position.Y,Aim.X-E.Position.X)+FMath::DegreesToRadians((Random.FRand()*2-1)*W.AccuracyDegrees);FSeigeProjectile P;P.Id=NextId++;P.OwnerId=E.Id;P.OwnerKind=TEXT("enemy");if(TargetBuilding){P.TargetKind=TEXT("building");P.TargetEnemyId=TargetBuilding;}P.WeaponId=BugWeapon;P.Position=P.PreviousPosition=E.Position;P.Velocity=FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*W.SpeedMetersSecond/MetresPerUnit;P.RemainingMeters=W.RangeMeters;Projectiles.Add(P);Cooldown=BugFireInterval;}
     for(int32 I=Projectiles.Num()-1;I>=0;--I){if(Projectiles[I].SectorIndex!=4)continue;bool Remove=false;AdvanceProjectile(Sim,Projectiles[I],Seconds,Remove);if(Remove)Projectiles.RemoveAt(I);}
     for(auto It=BugCooldowns.CreateIterator();It;++It)if(!Sim.Enemies.ContainsByPredicate([&](const auto& E){return E.Id==It.Key()&&E.Health>0;}))It.RemoveCurrent();
 }

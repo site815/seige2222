@@ -22,6 +22,7 @@ export function readConfiguration(root = defaultRoot) {
   return {
     rules: readRules(path.join(root, 'Rules')),
     ai: read('AIFILES/colony_ai.json'),
+    transportVehicles: read('Rules/transport_vehicles.json'),
     developed: read('AIFILES/developed_start.json'),
     ui: read('Interface/ui.json'),
     graphics: read('Graphics/scene.json'),
@@ -122,6 +123,17 @@ export function validateConfiguration(data) {
   number(graphics.maximum_camera_pitch, 'Graphics maximum_camera_pitch', 60, 85);
   if (graphics.camera_pitch < graphics.minimum_camera_pitch || graphics.camera_pitch > graphics.maximum_camera_pitch) fail('Graphics default camera pitch lies outside orbit limits');
   number(graphics.camera_ground_clearance_cm, 'Graphics camera_ground_clearance_cm', 100, 500);
+  number(graphics.companion_camera_distance_cm, 'Graphics companion_camera_distance_cm', 150, 600);
+  number(graphics.companion_camera_target_height_cm, 'Graphics companion_camera_target_height_cm', 30, 120);
+  number(graphics.companion_camera_pitch, 'Graphics companion_camera_pitch', -75, 25);
+  number(graphics.companion_camera_min_pitch, 'Graphics companion_camera_min_pitch', -80, -30);
+  number(graphics.companion_camera_max_pitch, 'Graphics companion_camera_max_pitch', 0, 30);
+  number(graphics.companion_camera_clearance_cm, 'Graphics companion_camera_clearance_cm', 15, 60);
+  number(graphics.companion_camera_probe_radius_cm, 'Graphics companion_camera_probe_radius_cm', 5, 25);
+  number(graphics.companion_camera_return_response, 'Graphics companion_camera_return_response', 1, 20);
+  number(graphics.companion_ground_probe_cm, 'Graphics companion_ground_probe_cm', 20, 100);
+  number(graphics.companion_maximum_ground_tilt, 'Graphics companion_maximum_ground_tilt', 0, 35);
+  if (graphics.companion_camera_pitch < graphics.companion_camera_min_pitch || graphics.companion_camera_pitch > graphics.companion_camera_max_pitch || graphics.companion_camera_clearance_cm < graphics.companion_camera_probe_radius_cm) fail('Invalid companion camera orbit limits or clearance');
   number(graphics.sun_intensity, 'Graphics sun_intensity', .1, 20);
   number(graphics.sky_intensity, 'Graphics sky_intensity', .1, 5);
   number(graphics.cloud_shadow_strength, 'Graphics cloud_shadow_strength', 0, 1);
@@ -167,7 +179,6 @@ export function validateConfiguration(data) {
   number(graphics.ridge_height, 'Graphics ridge_height', 0, 1500);
   if (1500 + graphics.rolling_terrain_amplitude + graphics.micro_terrain_amplitude + graphics.ridge_height >= 6000) fail('Graphics relief exceeds ground-trace bounds');
   if (graphics.minimum_zoom > graphics.default_zoom) fail('Graphics minimum_zoom exceeds default_zoom');
-  if (graphics.minimum_zoom >= graphics.default_zoom * .45) fail('Graphics minimum_zoom must lie below the close-view transition');
   number(graphics.forest_candidates, 'Graphics forest_candidates', 1000, 200000, true);
   number(graphics.near_forest_candidates, 'Graphics near_forest_candidates', 100, 30000, true);
   number(graphics.grass_shadow_distance_m, 'Graphics grass_shadow_distance_m', 0, 500);
@@ -233,6 +244,7 @@ export function validateConfiguration(data) {
   number(ai.developed_setup_action_limit, 'AI developed_setup_action_limit', 1, 512, true);
   if (ai.target_policy !== 'complete_and_staff_in_order') fail('Unsupported AI target_policy');
   if (ai.support_recovery_policy !== 'restore_capacity_before_expansion') fail('Unsupported AI support_recovery_policy');
+  if (!['first_planned_tower_before_exposure','first_planned_tower_after_civilian_loss','ordered_plan_only'].includes(ai.defense_recovery_policy)) fail('Unsupported AI defense_recovery_policy');
   const economy=object(ai.economy,'AI economy');
   if(buildable(economy.solar_definition,'AI solar_definition').role!=='generator'||buildable(economy.trade_definition,'AI trade_definition').role!=='trade')fail('AI bootstrap needs a generator and trading port');
   number(economy.export_batch,'AI export_batch',1e-8,10000);number(economy.import_batch,'AI import_batch',1e-8,10000);
@@ -241,6 +253,7 @@ export function validateConfiguration(data) {
   if(!['remaining_output_bill','recipe_buffers'].includes(economy.bulk_input_policy))fail('Unsupported AI bulk_input_policy');
   if(!['surplus_shipment_value','local_raw_only'].includes(economy.export_policy))fail('Unsupported AI export_policy');
   if(!['next_prerequisite','full_plan'].includes(economy.export_reserve_horizon))fail('Unsupported AI export_reserve_horizon');
+  if(!['protect_development_inputs','continuous'].includes(economy.production_priority_policy))fail('Unsupported AI production_priority_policy');
   if(economy.core_replication_policy!=='worker_only')fail('Unsupported AI core_replication_policy');
   const replicationRecipes=array(economy.core_replication_recipes,'AI core_replication_recipes',0,0), replicationSeen=new Set();
   for(const id of replicationRecipes){const recipe=data.rules.recipes.recipes.find(r=>r.id===id);if(replicationSeen.has(id)||!recipe||recipe.worker_output>0||!Object.keys(recipe.outputs).length||!buildings.get(scenario.core_definition).allowed_recipes.includes(id))fail(`Invalid AI core_replication_recipes entry: ${id}`);replicationSeen.add(id);}
@@ -277,6 +290,11 @@ export function validateConfiguration(data) {
     finalCounts.set(target.definition, target.count);
   }
   const upgrades = object(ai.upgrades, 'AI upgrades'), upgradeFamilies = new Set();
+  const aiLogistics = object(ai.logistics, 'AI logistics');
+  const factory = buildable(aiLogistics.factory_definition, 'AI logistics.factory_definition');
+  if (factory.role !== 'vehicle_factory' || !data.transportVehicles?.factories?.[factory.id]) fail('AI logistics factory must support autonomous transport assembly');
+  number(aiLogistics.target_transports, 'AI logistics.target_transports', 0, 16, true);
+  if (aiLogistics.target_transports > 0 && !targets.some(target => target.definition === factory.id && !target.optional)) fail('AI logistics factory must be a required build target');
   number(upgrades.max_concurrent, 'AI upgrades.max_concurrent', 0, 8, true);
   number(upgrades.defense_quiet_radius, 'AI upgrades.defense_quiet_radius', 0, extent * 2);
   for (const family of array(upgrades.families, 'AI upgrades.families', 0, 32)) {

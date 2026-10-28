@@ -168,6 +168,10 @@ def packaged_result(data, version, package_inputs, source_inputs, runtime_files)
         issues.append('Packaged gameplay route is incomplete or failed')
     if rep.get('main_test_speed') != 10 or rep.get('walking_probe_speed') != 1:
         issues.append('Packaged gameplay did not use the required 10x route and 1x movement probe')
+    if any(rep.get(key) is not True for key in ('deployment_carry_observed', 'deployment_work_observed', 'paid_defense_tower_completed')):
+        issues.append('Fresh-colony deployment or paid defense construction was not observed')
+    if type(rep.get('transport_segments')) is not int or rep['transport_segments'] != 0:
+        issues.append('Current roadless playthrough unexpectedly created roads')
     samples = data.get('socket_samples')
     if not isinstance(samples, list) or not samples:
         samples = []
@@ -232,6 +236,25 @@ def git_state(root):
         return {'source_commit': 'unknown', 'source_state_error': str(error)}
 
 
+def current_save_formats(root):
+    """Read writer/loader contracts instead of repeating stale release constants.
+
+    The scenario envelope and each colony snapshot have independent versions.
+    Fail closed when either source contract is absent or no longer recognizable.
+    """
+    formats = {}
+    for label, filename, field in (
+            ('colony', 'Source/Seige/Simulation/SeigeSimulation.cpp', 'save_format'),
+            ('scenario', 'Source/Seige/SeigePersistence.cpp', 'format')):
+        source = (root / filename).read_text(encoding='utf-8-sig')
+        writers = set(re.findall(r'SetNumberField\(\s*TEXT\("' + field + r'"\)\s*,\s*(\d+)\s*\)', source))
+        loaders = set(re.findall(r'\bFormat\s*!=\s*(\d+)\b', source))
+        if len(writers) != 1 or writers != loaders:
+            raise ValueError(f'{label} save writer/loader format is missing, ambiguous or inconsistent')
+        formats[label] = int(writers.pop())
+    return formats
+
+
 def record(args, root=ROOT):
     result = {
         'schema_version': 2, 'version': args.version, 'engine': '5.8.3', 'platform': 'Windows x64 Shipping',
@@ -239,14 +262,16 @@ def record(args, root=ROOT):
         'record_date': datetime.date.today().isoformat(), **git_state(root),
     }
     rules_version = read_json(root / 'Rules/buildings.json').get('version', '')
-    result.update(rules_version=rules_version, save_format=7, save_compatibility_policy={
-        'required_format': 7,
+    formats = current_save_formats(root)
+    result.update(rules_version=rules_version, save_format=formats['colony'], scenario_metadata_format=formats['scenario'], save_compatibility_policy={
+        'required_format': formats['colony'],
+        'required_scenario_metadata_format': formats['scenario'],
         'required_rules_version': rules_version,
         'requires_matching_rules_fingerprint': True,
         'requires_matching_ai_fingerprints_for_saved_ai_colonies': True,
         'fingerprint_input': 'Parsed Rules and AIFILES JSON; whitespace, line endings and equivalent number spelling do not alter compatibility.',
         'project_version_only_change_invalidates_saves': False,
-        'note': 'Valid format-7 saves with matching rules version and content fingerprints remain eligible to load; this is a loader policy, not a claim that every historical save was tested.',
+        'note': f"Valid colony format-{formats['colony']} snapshots inside scenario format-{formats['scenario']} envelopes with matching rules version and content fingerprints remain eligible to load; this is a loader policy, not a claim that every historical save was tested.",
     })
     source_manifest = manifest(source_paths(root), root)
     result['source_asset_manifest'] = source_manifest

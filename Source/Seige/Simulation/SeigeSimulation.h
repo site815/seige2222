@@ -122,6 +122,9 @@ struct FSeigeCourier
     FString WorkerId, Phase=TEXT("pickup");
     double ReservedAmount=0, PhaseSeconds=0;
     bool SourceDeployment=false, SelfTransfer=false;
+    // Diverted truck cargo remains the same physical load; recovery unloading
+    // does not earn credit for completing its original requested delivery.
+    bool RecoveryCargo=false;
 };
 struct FSeigeEnemy
 {
@@ -185,6 +188,7 @@ public:
     FVector2D BuildingAccessPoint(const FSeigeBuilding& Building) const;
     FVector2D RoadAccessPoint(const FSeigeTransportSegment& Road) const;
     FString ConstructionStage(const FSeigeBuilding& Building) const;
+    bool BuildingBlocksProjectiles(const FSeigeBuilding& Building) const;
     double ConstructionPhaseProgress(const FSeigeBuilding& Building, int32 PhaseIndex) const;
     bool CanUpgradeBuilding(int32 Id,FString& Error) const;
     // Level-1 blueprint an upgraded definition grows from (itself for level 1).
@@ -305,19 +309,24 @@ private:
     friend class FSeigeWallSystem;
     friend class FSeigeWorkerSystem;
     friend class FSeigeTransportVehicleSystem;
+    friend class FSeigeCompanionSystem;
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FSeigeTransportNetworkTest;
+    friend class FSeigeEnemySurfaceTest;
+    friend class FSeigeBatchEnergyTest;
     friend class FSeigeCompanionGriefMovementTest;
     friend class FSeigeAutomaticWorkerReserveTest;
     friend class FSeigeCargoMovementParityTest;
     friend class FSeigeRoadMovementRegressionTest;
     friend class FSeigeReplicatorWorkforceTest;
     friend class FSeigeStoredWorkerLifecycleTest;
+    friend class FSeigeWorkerReserveProgressTest;
     friend class FSeigeRobotSupportTest;
     friend class FSeigeRoadRepairTest;
     friend class FSeigeExtractionMineTest;
     friend class FSeigeMineIncomingStorageTest;
     friend class FSeigeLogisticsPriorityTest;
+    friend class FSeigeClaimedProductionRefillTest;
     friend class FSeigeConstructionSourceTest;
     friend class FSeigeReachableSupplyTest;
     friend class FSeigeRawInputBufferTest;

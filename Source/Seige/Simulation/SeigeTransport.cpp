@@ -214,20 +214,31 @@ bool FSeigeSimulation::FindRoute(FVector2D From,FVector2D To,TArray<FVector2D>& 
             if(Cost>=0&&Best+Cost<Distance[Other]){Distance[Other]=Best+Cost;Previous[Other]=Current;}
         }
     }
-    if(Previous[1]==INDEX_NONE)
+    const bool HasGraphRoute=Previous[1]!=INDEX_NONE;
+    const double BaseStep=Profile?FMath::Max(Profile->SampleMeters/MetersPerWorldUnit(),Clearance*2):0;
+    const double Margin=FMath::Max(BaseStep*8,FVector2D::Distance(From,To)*.5);
+    const FVector2D Minimum(FMath::Max(-WorldHalfSize+Clearance,FMath::Min(From.X,To.X)-Margin),FMath::Max(-WorldHalfSize+Clearance,FMath::Min(From.Y,To.Y)-Margin));
+    const FVector2D Maximum(FMath::Min(WorldHalfSize-Clearance,FMath::Max(From.X,To.X)+Margin),FMath::Min(WorldHalfSize-Clearance,FMath::Max(From.Y,To.Y)+Margin));
+    bool LeavesLocalEnvelope=false;
+    if(HasGraphRoute&&!RoadPlan&&Profile)for(int32 At=1;At!=0;At=Previous[At])
     {
-        if(RoadPlan||!Profile)return Remember(false);
+        const FVector2D P=Points[At];
+        if(P.X<Minimum.X||P.X>Maximum.X||P.Y<Minimum.Y||P.Y>Maximum.Y){LeavesLocalEnvelope=true;break;}
+    }
+    if(!HasGraphRoute||LeavesLocalEnvelope)
+    {
+        auto FindContour=[&]()
+        {
+        if(RoadPlan||!Profile)return false;
         // Building/road visibility corners cannot describe a contour across
-        // an otherwise open hillside. Only after that cheap graph fails, use
-        // a bounded terrain grid with the very same physical edge validator.
+        // an otherwise open hillside. A distant geography waypoint can also
+        // conceal a nearby contour: compare the bounded local grid when that
+        // cheap graph leaves its local envelope, retaining the existing valid
+        // route if this search cannot improve it. Physical checks are identical.
         // Exact endpoint links preserve body/cargo positions; no grid snapping
         // is applied to the simulation. Results and edges reuse topology caches.
         constexpr int32 MaximumGridNodes=4096;
-        const double BaseStep=FMath::Max(Profile->SampleMeters/MetersPerWorldUnit(),Clearance*2);
-        const double Margin=FMath::Max(BaseStep*8,FVector2D::Distance(From,To)*.5);
-        const FVector2D Minimum(FMath::Max(-WorldHalfSize+Clearance,FMath::Min(From.X,To.X)-Margin),FMath::Max(-WorldHalfSize+Clearance,FMath::Min(From.Y,To.Y)-Margin));
-        const FVector2D Maximum(FMath::Min(WorldHalfSize-Clearance,FMath::Max(From.X,To.X)+Margin),FMath::Min(WorldHalfSize-Clearance,FMath::Max(From.Y,To.Y)+Margin));
-        if(Minimum.X>Maximum.X||Minimum.Y>Maximum.Y)return Remember(false);
+        if(Minimum.X>Maximum.X||Minimum.Y>Maximum.Y)return false;
         double Step=BaseStep;int32 Columns=0,Rows=0;
         do{Columns=FMath::FloorToInt((Maximum.X-Minimum.X)/Step)+1;Rows=FMath::FloorToInt((Maximum.Y-Minimum.Y)/Step)+1;if(int64(Columns)*Rows>MaximumGridNodes)Step*=1.25;}while(int64(Columns)*Rows>MaximumGridNodes);
         const int32 Cells=Columns*Rows,Start=Cells,Goal=Cells+1;
@@ -253,8 +264,8 @@ bool FSeigeSimulation::FindRoute(FVector2D From,FVector2D To,TArray<FVector2D>& 
             for(int32 DY=-1;DY<=1;++DY)for(int32 DX=-1;DX<=1;++DX)
             {if(Current!=Start&&DX==0&&DY==0)continue;const int32 NX=X+DX,NY=Y+DY;if(NX>=0&&NX<Columns&&NY>=0&&NY<Rows)Link(NY*Columns+NX);}
         }
-        if(Parent[Goal]==INDEX_NONE)return Remember(false);
-        TArray<FVector2D> Contour;for(int32 At=Goal;At!=Start;At=Parent[At]){if(At==INDEX_NONE)return Remember(false);Contour.Add(Location(At));}
+        if(Parent[Goal]==INDEX_NONE||(HasGraphRoute&&Cost[Goal]>=Distance[1]))return false;
+        TArray<FVector2D> Contour;for(int32 At=Goal;At!=Start;At=Parent[At]){if(At==INDEX_NONE)return false;Contour.Add(Location(At));}
         // Remove unnecessary grid turns only when the same full edge checks
         // approve the longer chord. The final point remains exactly To.
         FVector2D LastPoint=From;
@@ -266,7 +277,10 @@ bool FSeigeSimulation::FindRoute(FVector2D From,FVector2D To,TArray<FVector2D>& 
             for(int32 Candidate=At-1;Candidate>=EndLookahead;--Candidate)if(EdgeCost(LastPoint,Contour[Candidate])>=0)Furthest=Candidate;
             Route.Add(Contour[Furthest]);LastPoint=Contour[Furthest];At=Furthest-1;
         }
-        return Remember(true);
+        return true;
+        };
+        if(FindContour())return Remember(true);
+        if(!HasGraphRoute)return Remember(false);
     }
     TArray<FVector2D> Reverse;for(int I=1;I!=0;I=Previous[I]){if(I==INDEX_NONE)return Remember(false);Reverse.Add(Points[I]);}
     FVector2D Last=From;
